@@ -218,17 +218,6 @@ export const tools: Tool[] = [
       "Generate custom QR codes for URLs, text, phone numbers. Add colors and logos. Download as PNG or SVG.",
   },
   {
-    slug: "remove-background",
-    name: "Remove Background",
-    description: "Remove image backgrounds with AI, get transparent PNG",
-    emoji: "\u2728",
-    category: "utility",
-    acceptedFormats: [".jpg", ".jpeg", ".png", ".webp"],
-    metaTitle: "Remove Background - Free Online Tool | ZapFile",
-    metaDescription:
-      "Remove image backgrounds automatically with AI. Get transparent PNG. No uploads, fully private.",
-  },
-  {
     slug: "svg-to-png",
     name: "SVG to PNG",
     description: "Convert SVG vector files to PNG with custom size",
