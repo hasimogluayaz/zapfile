@@ -5,7 +5,11 @@ import toast from "react-hot-toast";
 import ToolLayout from "@/components/ToolLayout";
 import FileDropzone from "@/components/FileDropzone";
 import DownloadButton from "@/components/DownloadButton";
-import { formatFileSize, getFileNameWithoutExtension, downloadBlob } from "@/lib/utils";
+import {
+  formatFileSize,
+  getFileNameWithoutExtension,
+  downloadBlob,
+} from "@/lib/utils";
 
 type WatermarkPosition =
   | "center"
@@ -44,7 +48,7 @@ export default function WatermarkImagePage() {
       fSize: number,
       alpha: number,
       pos: WatermarkPosition,
-      fillColor: string
+      fillColor: string,
     ) => {
       const canvas = canvasRef.current;
       if (!canvas) return;
@@ -125,13 +129,20 @@ export default function WatermarkImagePage() {
 
       setPreview(canvas.toDataURL("image/png"));
     },
-    []
+    [],
   );
 
   // Redraw live preview whenever any setting changes
   useEffect(() => {
     if (imgRef.current) {
-      drawWatermark(imgRef.current, watermarkText, fontSize, opacity, position, color);
+      drawWatermark(
+        imgRef.current,
+        watermarkText,
+        fontSize,
+        opacity,
+        position,
+        color,
+      );
     }
   }, [watermarkText, fontSize, opacity, position, color, drawWatermark]);
 
@@ -151,29 +162,26 @@ export default function WatermarkImagePage() {
       img.src = URL.createObjectURL(f);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [drawWatermark]
+    [drawWatermark],
   );
 
   const handleApplyAndDownload = () => {
     const canvas = canvasRef.current;
     if (!canvas || !file) return;
     setProcessing(true);
-    canvas.toBlob(
-      (blob) => {
-        setProcessing(false);
-        if (blob) {
-          setResultBlob(blob);
-          const objectUrl = URL.createObjectURL(blob);
-          setResultPreview(objectUrl);
-          const baseName = getFileNameWithoutExtension(file.name);
-          downloadBlob(blob, `${baseName}-watermarked.png`);
-          toast.success("Watermark applied and downloaded!");
-        } else {
-          toast.error("Failed to export image.");
-        }
-      },
-      "image/png"
-    );
+    canvas.toBlob((blob) => {
+      setProcessing(false);
+      if (blob) {
+        setResultBlob(blob);
+        const objectUrl = URL.createObjectURL(blob);
+        setResultPreview(objectUrl);
+        const baseName = getFileNameWithoutExtension(file.name);
+        downloadBlob(blob, `${baseName}-watermarked.png`);
+        toast.success("Watermark applied and downloaded!");
+      } else {
+        toast.error("Failed to export image.");
+      }
+    }, "image/png");
   };
 
   const reset = () => {
@@ -208,10 +216,12 @@ export default function WatermarkImagePage() {
               {/* Left: Live preview */}
               <div className="glass rounded-xl p-3 space-y-2">
                 <div className="flex items-center justify-between">
-                  <p className="text-[12px] font-medium text-t-secondary">Live Preview</p>
+                  <p className="text-[12px] font-medium text-brand-muted">
+                    Live Preview
+                  </p>
                   <button
                     onClick={reset}
-                    className="text-[11px] text-t-tertiary hover:text-red-400 transition-colors"
+                    className="text-[11px] text-brand-muted hover:text-red-400 transition-colors"
                   >
                     Remove
                   </button>
@@ -224,22 +234,24 @@ export default function WatermarkImagePage() {
                     className="w-full rounded-lg border border-white/10 object-contain max-h-72"
                   />
                 ) : (
-                  <div className="h-40 flex items-center justify-center rounded-lg border border-white/10 text-[12px] text-t-tertiary">
+                  <div className="h-40 flex items-center justify-center rounded-lg border border-white/10 text-[12px] text-brand-muted">
                     Loading…
                   </div>
                 )}
-                <p className="text-[11px] text-t-tertiary truncate">
+                <p className="text-[11px] text-brand-muted truncate">
                   {file.name} &middot; {formatFileSize(file.size)}
                 </p>
               </div>
 
               {/* Right: Controls */}
               <div className="glass rounded-xl p-4 space-y-4">
-                <h3 className="text-[13px] font-semibold text-t-primary">Watermark Settings</h3>
+                <h3 className="text-[13px] font-semibold text-brand-text">
+                  Watermark Settings
+                </h3>
 
                 {/* Text */}
                 <div>
-                  <label className="block text-[12px] text-t-secondary mb-1.5">
+                  <label className="block text-[12px] text-brand-muted mb-1.5">
                     Watermark Text
                   </label>
                   <input
@@ -247,15 +259,19 @@ export default function WatermarkImagePage() {
                     value={watermarkText}
                     onChange={(e) => setWatermarkText(e.target.value)}
                     placeholder="Enter watermark text"
-                    className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-[13px] text-t-primary placeholder:text-t-tertiary focus:outline-none focus:border-brand-indigo/50 transition-colors"
+                    className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-[13px] text-brand-text placeholder:text-brand-muted/50 focus:outline-none focus:border-brand-indigo/50 transition-colors"
                   />
                 </div>
 
                 {/* Font size */}
                 <div>
                   <div className="flex justify-between mb-1.5">
-                    <label className="text-[12px] text-t-secondary">Font Size</label>
-                    <span className="text-[12px] font-mono text-t-secondary">{fontSize}px</span>
+                    <label className="text-[12px] text-brand-muted">
+                      Font Size
+                    </label>
+                    <span className="text-[12px] font-mono text-brand-muted">
+                      {fontSize}px
+                    </span>
                   </div>
                   <input
                     type="range"
@@ -267,16 +283,20 @@ export default function WatermarkImagePage() {
                     className="w-full accent-brand-indigo"
                   />
                   <div className="flex justify-between mt-0.5">
-                    <span className="text-[10px] text-t-tertiary">12</span>
-                    <span className="text-[10px] text-t-tertiary">200</span>
+                    <span className="text-[10px] text-brand-muted">12</span>
+                    <span className="text-[10px] text-brand-muted">200</span>
                   </div>
                 </div>
 
                 {/* Opacity */}
                 <div>
                   <div className="flex justify-between mb-1.5">
-                    <label className="text-[12px] text-t-secondary">Opacity</label>
-                    <span className="text-[12px] font-mono text-t-secondary">{opacity}%</span>
+                    <label className="text-[12px] text-brand-muted">
+                      Opacity
+                    </label>
+                    <span className="text-[12px] font-mono text-brand-muted">
+                      {opacity}%
+                    </span>
                   </div>
                   <input
                     type="range"
@@ -288,14 +308,16 @@ export default function WatermarkImagePage() {
                     className="w-full accent-brand-indigo"
                   />
                   <div className="flex justify-between mt-0.5">
-                    <span className="text-[10px] text-t-tertiary">10%</span>
-                    <span className="text-[10px] text-t-tertiary">100%</span>
+                    <span className="text-[10px] text-brand-muted">10%</span>
+                    <span className="text-[10px] text-brand-muted">100%</span>
                   </div>
                 </div>
 
                 {/* Color */}
                 <div>
-                  <label className="block text-[12px] text-t-secondary mb-1.5">Color</label>
+                  <label className="block text-[12px] text-brand-muted mb-1.5">
+                    Color
+                  </label>
                   <div className="flex items-center gap-3">
                     <input
                       type="color"
@@ -303,20 +325,30 @@ export default function WatermarkImagePage() {
                       onChange={(e) => setColor(e.target.value)}
                       className="w-10 h-10 rounded-lg cursor-pointer border border-white/10 bg-white/5 p-0.5"
                     />
-                    <span className="text-[12px] font-mono text-t-secondary">{color}</span>
+                    <span className="text-[12px] font-mono text-brand-muted">
+                      {color}
+                    </span>
                   </div>
                 </div>
 
                 {/* Position */}
                 <div>
-                  <label className="block text-[12px] text-t-secondary mb-1.5">Position</label>
+                  <label className="block text-[12px] text-brand-muted mb-1.5">
+                    Position
+                  </label>
                   <select
                     value={position}
-                    onChange={(e) => setPosition(e.target.value as WatermarkPosition)}
-                    className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-[13px] text-t-primary focus:outline-none focus:border-brand-indigo/50 transition-colors appearance-none cursor-pointer"
+                    onChange={(e) =>
+                      setPosition(e.target.value as WatermarkPosition)
+                    }
+                    className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-[13px] text-brand-text focus:outline-none focus:border-brand-indigo/50 transition-colors appearance-none cursor-pointer"
                   >
                     {positionOptions.map((opt) => (
-                      <option key={opt.value} value={opt.value} className="bg-bg-primary text-t-primary">
+                      <option
+                        key={opt.value}
+                        value={opt.value}
+                        className="bg-bg-primary text-brand-text"
+                      >
                         {opt.label}
                       </option>
                     ))}
@@ -329,7 +361,7 @@ export default function WatermarkImagePage() {
                   disabled={processing || !watermarkText.trim()}
                   className={`w-full py-3 rounded-xl font-semibold text-[14px] text-white transition-all mt-2 ${
                     processing || !watermarkText.trim()
-                      ? "bg-white/10 cursor-not-allowed text-t-tertiary"
+                      ? "bg-white/10 cursor-not-allowed text-brand-muted"
                       : "bg-gradient-brand hover:shadow-lg hover:shadow-brand-indigo/25 hover:scale-[1.02] active:scale-[0.98]"
                   }`}
                 >
@@ -341,7 +373,9 @@ export default function WatermarkImagePage() {
             {/* Result download if already generated */}
             {resultBlob && resultPreview && (
               <div className="glass rounded-xl p-4 space-y-3">
-                <p className="text-[13px] font-medium text-t-primary">Last Export</p>
+                <p className="text-[13px] font-medium text-brand-text">
+                  Last Export
+                </p>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={resultPreview}
@@ -356,7 +390,7 @@ export default function WatermarkImagePage() {
                   />
                   <button
                     onClick={reset}
-                    className="px-6 py-2.5 rounded-xl text-[13px] font-semibold text-t-secondary bg-white/5 hover:bg-white/10 transition-colors"
+                    className="px-6 py-2.5 rounded-xl text-[13px] font-semibold text-brand-muted bg-white/5 hover:bg-white/10 transition-colors"
                   >
                     New Image
                   </button>

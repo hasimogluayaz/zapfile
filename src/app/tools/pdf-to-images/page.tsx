@@ -1,271 +1,282 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import toast from "react-hot-toast";
 import ToolLayout from "@/components/ToolLayout";
 import FileDropzone from "@/components/FileDropzone";
-import ProcessButton from "@/components/ProcessButton";
-import DownloadButton from "@/components/DownloadButton";
 import ProgressBar from "@/components/ProgressBar";
-import { formatFileSize, getFileNameWithoutExtension } from "@/lib/utils";
+import {
+  formatFileSize,
+  getFileNameWithoutExtension,
+  downloadBlob,
+} from "@/lib/utils";
+
+interface PageImage {
+  pageNum: number;
+  dataUrl: string;
+  blob: Blob;
+}
 
 export default function PdfToImagesPage() {
   const [file, setFile] = useState<File | null>(null);
-  const [pageCount, setPageCount] = useState<number>(0);
-  const [selectedPages, setSelectedPages] = useState<Set<number>>(new Set());
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [resultBlob, setResultBlob] = useState<Blob | null>(null);
-  const [resultFilename, setResultFilename] = useState("");
+  const [format, setFormat] = useState<"png" | "jpeg">("png");
+  const [quality, setQuality] = useState(92);
+  const [scale, setScale] = useState(2);
+  const [images, setImages] = useState<PageImage[]>([]);
+  const [, setPageCount] = useState(0);
 
-  const handleFileSelected = useCallback(async (files: File[]) => {
-    const selected = files[0];
-    if (!selected) return;
-
-    setFile(selected);
-    setResultBlob(null);
+  const handleFilesSelected = (files: File[]) => {
+    setFile(files[0]);
+    setImages([]);
     setProgress(0);
-
-    try {
-      const { PDFDocument } = await import("pdf-lib");
-      const arrayBuffer = await selected.arrayBuffer();
-      const pdfDoc = await PDFDocument.load(arrayBuffer, {
-        ignoreEncryption: true,
-      });
-      const count = pdfDoc.getPageCount();
-      setPageCount(count);
-
-      const allPages = new Set<number>();
-      for (let i = 0; i < count; i++) {
-        allPages.add(i);
-      }
-      setSelectedPages(allPages);
-    } catch (err) {
-      toast.error("Failed to read PDF file. It may be corrupted.");
-      console.error(err);
-    }
-  }, []);
-
-  const togglePage = (index: number) => {
-    setSelectedPages((prev) => {
-      const next = new Set(prev);
-      if (next.has(index)) {
-        next.delete(index);
-      } else {
-        next.add(index);
-      }
-      return next;
-    });
-  };
-
-  const selectAll = () => {
-    const allPages = new Set<number>();
-    for (let i = 0; i < pageCount; i++) {
-      allPages.add(i);
-    }
-    setSelectedPages(allPages);
-  };
-
-  const selectNone = () => {
-    setSelectedPages(new Set());
   };
 
   const handleProcess = async () => {
-    if (!file || selectedPages.size === 0) return;
-
+    if (!file) return;
     setProcessing(true);
-    setProgress(0);
-    setResultBlob(null);
+    setProgress(5);
 
     try {
-      const { PDFDocument } = await import("pdf-lib");
-      const JSZip = (await import("jszip")).default;
+      const pdfjsUrl =
+        "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/build/pdf.min.mjs";
+      const workerUrl =
+        "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/build/pdf.worker.min.mjs";
+
+      const pdfjsLib = await import(/* webpackIgnore: true */ pdfjsUrl);
+      pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
+
+      setProgress(10);
 
       const arrayBuffer = await file.arrayBuffer();
-      const srcDoc = await PDFDocument.load(arrayBuffer, {
-        ignoreEncryption: true,
-      });
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      setPageCount(pdf.numPages);
+      setProgress(20);
 
-      const sortedPages = Array.from(selectedPages).sort((a, b) => a - b);
-      const zip = new JSZip();
-      const baseName = getFileNameWithoutExtension(file.name);
+      const results: PageImage[] = [];
 
-      for (let i = 0; i < sortedPages.length; i++) {
-        const pageIndex = sortedPages[i];
-        const newDoc = await PDFDocument.create();
-        const [copiedPage] = await newDoc.copyPages(srcDoc, [pageIndex]);
-        newDoc.addPage(copiedPage);
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const viewport = page.getViewport({ scale });
 
-        const pdfBytes = await newDoc.save();
-        zip.file(`${baseName}_page_${pageIndex + 1}.pdf`, pdfBytes);
+        const canvas = document.createElement("canvas");
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        const ctx = canvas.getContext("2d")!;
 
-        setProgress(((i + 1) / sortedPages.length) * 90);
+        await page.render({ canvasContext: ctx, viewport }).promise;
+
+        const mimeType = format === "png" ? "image/png" : "image/jpeg";
+        const qualityParam = format === "jpeg" ? quality / 100 : undefined;
+
+        const blob = await new Promise<Blob>((resolve) => {
+          canvas.toBlob((b) => resolve(b!), mimeType, qualityParam);
+        });
+
+        const dataUrl = canvas.toDataURL(mimeType, qualityParam);
+        results.push({ pageNum: i, dataUrl, blob });
+
+        setProgress(20 + Math.round((i / pdf.numPages) * 75));
       }
 
-      setProgress(95);
-      const zipBlob = await zip.generateAsync({ type: "blob" });
+      setImages(results);
       setProgress(100);
-
-      const filename = `${baseName}_pages.zip`;
-      setResultBlob(zipBlob);
-      setResultFilename(filename);
       toast.success(
-        `Extracted ${sortedPages.length} page${sortedPages.length > 1 ? "s" : ""} successfully!`
+        `Converted ${results.length} page${results.length > 1 ? "s" : ""} to ${format.toUpperCase()}!`,
       );
-    } catch (err) {
-      toast.error("Failed to extract pages. Please try again.");
-      console.error(err);
+    } catch (error) {
+      console.error(error);
+      toast.error(
+        "Failed to convert PDF. The file may be corrupted or password protected.",
+      );
     } finally {
       setProcessing(false);
     }
   };
 
-  const handleReset = () => {
+  const downloadSingle = (img: PageImage) => {
+    const ext = format === "png" ? "png" : "jpg";
+    const baseName = getFileNameWithoutExtension(file!.name);
+    downloadBlob(img.blob, `${baseName}_page${img.pageNum}.${ext}`);
+  };
+
+  const downloadAll = async () => {
+    if (images.length === 1) {
+      downloadSingle(images[0]);
+      return;
+    }
+    const JSZip = (await import("jszip")).default;
+    const zip = new JSZip();
+    const ext = format === "png" ? "png" : "jpg";
+    const baseName = getFileNameWithoutExtension(file!.name);
+    images.forEach((img) => {
+      zip.file(`${baseName}_page${img.pageNum}.${ext}`, img.blob);
+    });
+    const zipBlob = await zip.generateAsync({ type: "blob" });
+    downloadBlob(zipBlob, `${baseName}_images.zip`);
+  };
+
+  const reset = () => {
     setFile(null);
-    setPageCount(0);
-    setSelectedPages(new Set());
-    setResultBlob(null);
+    setImages([]);
     setProgress(0);
+    setPageCount(0);
   };
 
   return (
     <ToolLayout
       toolName="PDF to Images"
-      toolDescription="Extract individual pages from a PDF file. Each page is saved as a separate PDF, packaged in a convenient ZIP download."
+      toolDescription="Convert PDF pages to high-quality PNG or JPG images."
     >
-      <div className="space-y-6">
-        {/* File Drop */}
-        {!file ? (
-          <FileDropzone
-            onFilesSelected={handleFileSelected}
-            accept={{ "application/pdf": [".pdf"] }}
-            multiple={false}
-            label="Drop your PDF file here or click to browse"
-            formats={["pdf"]}
-          />
-        ) : (
-          <div className="space-y-6">
-            {/* File info */}
-            <div className="glass rounded-xl p-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-brand-indigo/20 flex items-center justify-center">
-                  <svg
-                    className="w-5 h-5 text-brand-indigo"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={1.5}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-brand-text font-medium text-sm">
-                    {file.name}
-                  </p>
-                  <p className="text-brand-muted text-xs">
-                    {formatFileSize(file.size)} &middot; {pageCount} page
-                    {pageCount !== 1 ? "s" : ""}
-                  </p>
-                </div>
+      {!file ? (
+        <FileDropzone
+          onFilesSelected={handleFilesSelected}
+          accept={{ "application/pdf": [".pdf"] }}
+          formats={["PDF"]}
+        />
+      ) : images.length === 0 ? (
+        <div className="space-y-6">
+          <div className="glass rounded-xl p-6">
+            <div className="flex items-center gap-4">
+              <div className="flex-1">
+                <p className="font-medium text-brand-text">{file.name}</p>
+                <p className="text-sm text-brand-muted">
+                  {formatFileSize(file.size)}
+                </p>
               </div>
               <button
-                onClick={handleReset}
-                className="text-brand-muted hover:text-brand-text transition-colors text-sm"
+                onClick={reset}
+                className="text-sm text-brand-muted hover:text-red-400 transition-colors"
               >
-                Change file
+                Remove
               </button>
             </div>
+          </div>
 
-            {/* Page selection */}
-            {pageCount > 0 && (
-              <div className="glass rounded-xl p-6 space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-brand-text font-semibold">
-                    Select Pages to Extract
-                  </h3>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={selectAll}
-                      className="text-xs px-3 py-1 rounded-lg bg-white/5 text-brand-muted hover:text-brand-text hover:bg-white/10 transition-colors"
-                    >
-                      Select All
-                    </button>
-                    <button
-                      onClick={selectNone}
-                      className="text-xs px-3 py-1 rounded-lg bg-white/5 text-brand-muted hover:text-brand-text hover:bg-white/10 transition-colors"
-                    >
-                      Deselect All
-                    </button>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-2">
-                  {Array.from({ length: pageCount }, (_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => togglePage(i)}
-                      className={`
-                        aspect-square rounded-lg text-sm font-medium transition-all duration-200
-                        ${
-                          selectedPages.has(i)
-                            ? "bg-brand-indigo text-white shadow-lg shadow-brand-indigo/25"
-                            : "bg-white/5 text-brand-muted hover:bg-white/10 hover:text-brand-text"
-                        }
-                      `}
-                    >
-                      {i + 1}
-                    </button>
-                  ))}
-                </div>
-
-                <p className="text-xs text-brand-muted">
-                  {selectedPages.size} of {pageCount} page
-                  {pageCount !== 1 ? "s" : ""} selected
-                </p>
+          {/* Format selector */}
+          <div className="glass rounded-xl p-4 space-y-4">
+            <div>
+              <p className="text-sm font-medium text-brand-text mb-3">
+                Output Format
+              </p>
+              <div className="flex gap-3">
+                {(["png", "jpeg"] as const).map((f) => (
+                  <button
+                    key={f}
+                    onClick={() => setFormat(f)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      format === f
+                        ? "bg-brand-indigo text-white"
+                        : "bg-white/5 text-brand-muted hover:bg-white/10"
+                    }`}
+                  >
+                    {f === "png" ? "PNG (lossless)" : "JPG (smaller file)"}
+                  </button>
+                ))}
               </div>
-            )}
-
-            {/* Progress */}
-            {processing && (
-              <ProgressBar progress={progress} label="Extracting pages..." />
-            )}
-
-            {/* Actions */}
-            <div className="flex flex-wrap items-center gap-4">
-              <ProcessButton
-                onClick={handleProcess}
-                disabled={selectedPages.size === 0 || !file}
-                loading={processing}
-                label="Extract Pages"
-                loadingLabel="Extracting..."
-              />
-
-              {resultBlob && (
-                <DownloadButton
-                  blob={resultBlob}
-                  filename={resultFilename}
-                  label={`Download ZIP (${formatFileSize(resultBlob.size)})`}
-                />
-              )}
             </div>
 
-            {/* Result info */}
-            {resultBlob && (
-              <div className="glass rounded-xl p-4">
-                <p className="text-sm text-brand-muted">
-                  Each selected page has been extracted as an individual PDF file
-                  and packaged into a ZIP archive for easy download.
-                </p>
+            {format === "jpeg" && (
+              <div>
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-brand-muted">Quality</span>
+                  <span className="text-brand-text font-medium">
+                    {quality}%
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min={10}
+                  max={100}
+                  value={quality}
+                  onChange={(e) => setQuality(Number(e.target.value))}
+                  className="w-full accent-brand-indigo"
+                />
               </div>
             )}
+
+            <div>
+              <div className="flex justify-between text-sm mb-2">
+                <span className="text-brand-muted">Resolution</span>
+                <span className="text-brand-text font-medium">{scale}x</span>
+              </div>
+              <input
+                type="range"
+                min={1}
+                max={4}
+                step={0.5}
+                value={scale}
+                onChange={(e) => setScale(Number(e.target.value))}
+                className="w-full accent-brand-indigo"
+              />
+              <div className="flex justify-between text-xs text-brand-muted mt-1">
+                <span>1x (Fast)</span>
+                <span>4x (Best quality)</span>
+              </div>
+            </div>
           </div>
-        )}
-      </div>
+
+          {processing && (
+            <ProgressBar progress={progress} label="Converting pages..." />
+          )}
+
+          {!processing && (
+            <button
+              onClick={handleProcess}
+              className="w-full sm:w-auto px-8 py-3 rounded-xl font-semibold text-white bg-gradient-brand hover:shadow-lg hover:shadow-brand-indigo/25 hover:scale-[1.02] active:scale-[0.98] transition-all"
+            >
+              Convert to Images
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-brand-muted">
+              {images.length} page{images.length > 1 ? "s" : ""} converted
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={downloadAll}
+                className="px-6 py-2.5 rounded-xl font-semibold text-white bg-emerald-600 hover:bg-emerald-500 transition-colors"
+              >
+                {images.length > 1 ? "Download All (ZIP)" : "Download"}
+              </button>
+              <button
+                onClick={reset}
+                className="px-6 py-2.5 rounded-xl font-semibold text-brand-text bg-white/5 hover:bg-white/10 transition-colors"
+              >
+                Convert Another
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            {images.map((img) => (
+              <div key={img.pageNum} className="glass rounded-xl p-3 group">
+                <div className="relative">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={img.dataUrl}
+                    alt={`Page ${img.pageNum}`}
+                    className="w-full rounded-lg border border-white/10"
+                  />
+                  <button
+                    onClick={() => downloadSingle(img)}
+                    className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center text-white text-sm font-medium"
+                  >
+                    Download
+                  </button>
+                </div>
+                <p className="text-xs text-brand-muted mt-2 text-center">
+                  Page {img.pageNum} &middot; {formatFileSize(img.blob.size)}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </ToolLayout>
   );
 }

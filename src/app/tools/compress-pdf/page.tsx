@@ -10,8 +10,21 @@ import ProgressBar from "@/components/ProgressBar";
 import FileSizeCompare from "@/components/FileSizeCompare";
 import { formatFileSize, getFileNameWithoutExtension } from "@/lib/utils";
 
+type CompressionLevel = "light" | "medium" | "maximum";
+
+const compressionLevels: Record<
+  CompressionLevel,
+  { label: string; desc: string }
+> = {
+  light: { label: "Light", desc: "Better quality, less compression" },
+  medium: { label: "Medium", desc: "Balanced quality and size" },
+  maximum: { label: "Maximum", desc: "Smallest file size" },
+};
+
 export default function CompressPdfPage() {
   const [file, setFile] = useState<File | null>(null);
+  const [compressionLevel, setCompressionLevel] =
+    useState<CompressionLevel>("medium");
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [resultBlob, setResultBlob] = useState<Blob | null>(null);
@@ -70,14 +83,30 @@ export default function CompressPdfPage() {
       }
       setProgress(85);
 
-      // Save with object-stream optimization to reduce file size
-      const compressedBytes = await compressedDoc.save({
-        useObjectStreams: true,
-        addDefaultPage: false,
-      });
+      // Strip metadata for maximum compression
+      if (compressionLevel === "maximum") {
+        compressedDoc.setTitle("");
+        compressedDoc.setAuthor("");
+        compressedDoc.setSubject("");
+        compressedDoc.setKeywords([]);
+        compressedDoc.setProducer("");
+        compressedDoc.setCreator("");
+      }
+
+      // Build save options based on compression level
+      const saveOptions: { useObjectStreams: boolean; addDefaultPage?: boolean } =
+        compressionLevel === "light"
+          ? { useObjectStreams: false }
+          : compressionLevel === "medium"
+            ? { useObjectStreams: true }
+            : { useObjectStreams: true, addDefaultPage: false };
+
+      const compressedBytes = await compressedDoc.save(saveOptions);
       setProgress(95);
 
-      const blob = new Blob([compressedBytes.buffer as ArrayBuffer], { type: "application/pdf" });
+      const blob = new Blob([compressedBytes.buffer as ArrayBuffer], {
+        type: "application/pdf",
+      });
       setResultBlob(blob);
       setCompressedSize(blob.size);
       setProgress(100);
@@ -99,7 +128,7 @@ export default function CompressPdfPage() {
     } finally {
       setProcessing(false);
     }
-  }, [file]);
+  }, [file, compressionLevel]);
 
   const handleReset = useCallback(() => {
     setFile(null);
@@ -180,6 +209,37 @@ export default function CompressPdfPage() {
           </div>
         )}
 
+        {/* Compression Level Selector */}
+        {file && !resultBlob && (
+          <div className="glass rounded-xl p-6">
+            <h3 className="font-medium text-brand-text mb-4">
+              Compression Level
+            </h3>
+            <div className="grid grid-cols-3 gap-3">
+              {(Object.keys(compressionLevels) as CompressionLevel[]).map(
+                (level) => (
+                  <button
+                    key={level}
+                    onClick={() => setCompressionLevel(level)}
+                    className={`p-4 rounded-lg text-center transition-all ${
+                      compressionLevel === level
+                        ? "bg-brand-indigo/20 border border-brand-indigo text-brand-text"
+                        : "bg-white/5 border border-white/10 text-brand-muted hover:border-white/20"
+                    }`}
+                  >
+                    <p className="font-bold text-lg">
+                      {compressionLevels[level].label}
+                    </p>
+                    <p className="text-xs mt-1 opacity-70">
+                      {compressionLevels[level].desc}
+                    </p>
+                  </button>
+                )
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Progress Bar */}
         {processing && (
           <ProgressBar progress={progress} label="Compressing PDF..." />
@@ -187,7 +247,10 @@ export default function CompressPdfPage() {
 
         {/* Size Comparison */}
         {resultBlob && originalSize > 0 && compressedSize > 0 && (
-          <FileSizeCompare originalSize={originalSize} newSize={compressedSize} />
+          <FileSizeCompare
+            originalSize={originalSize}
+            newSize={compressedSize}
+          />
         )}
 
         {/* Action Buttons */}

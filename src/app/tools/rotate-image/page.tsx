@@ -5,7 +5,11 @@ import toast from "react-hot-toast";
 import ToolLayout from "@/components/ToolLayout";
 import FileDropzone from "@/components/FileDropzone";
 import DownloadButton from "@/components/DownloadButton";
-import { formatFileSize, getFileNameWithoutExtension, downloadBlob } from "@/lib/utils";
+import {
+  formatFileSize,
+  getFileNameWithoutExtension,
+  downloadBlob,
+} from "@/lib/utils";
 
 export default function RotateImagePage() {
   const [file, setFile] = useState<File | null>(null);
@@ -38,7 +42,7 @@ export default function RotateImagePage() {
       setPreview(canvas.toDataURL("image/png"));
       setResultBlob(null);
     },
-    []
+    [],
   );
 
   // Re-draw whenever rotation or flip state changes and an image is loaded
@@ -66,10 +70,10 @@ export default function RotateImagePage() {
       img.onerror = () => toast.error("Failed to load image.");
       img.src = URL.createObjectURL(f);
     },
-    [redrawTransform]
+    [redrawTransform],
   );
 
-  const rotateLeft = () => setRotation((r) => ((r - 90 + 360) % 360));
+  const rotateLeft = () => setRotation((r) => (r - 90 + 360) % 360);
   const rotateRight = () => setRotation((r) => (r + 90) % 360);
   const toggleFlipH = () => setFlipH((v) => !v);
   const toggleFlipV = () => setFlipV((v) => !v);
@@ -84,19 +88,16 @@ export default function RotateImagePage() {
     const canvas = canvasRef.current;
     if (!canvas || !file) return;
     setProcessing(true);
-    canvas.toBlob(
-      (blob) => {
-        setProcessing(false);
-        if (blob) {
-          const baseName = getFileNameWithoutExtension(file.name);
-          downloadBlob(blob, `${baseName}-rotated.png`);
-          toast.success("Image downloaded!");
-        } else {
-          toast.error("Failed to export image.");
-        }
-      },
-      "image/png"
-    );
+    canvas.toBlob((blob) => {
+      setProcessing(false);
+      if (blob) {
+        const baseName = getFileNameWithoutExtension(file.name);
+        downloadBlob(blob, `${baseName}-rotated.png`);
+        toast.success("Image downloaded!");
+      } else {
+        toast.error("Failed to export image.");
+      }
+    }, "image/png");
   };
 
   // Current canvas dimensions for display
@@ -133,7 +134,15 @@ export default function RotateImagePage() {
           <FileDropzone
             onFilesSelected={handleFilesSelected}
             accept={{
-              "image/*": [".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp", ".tiff"],
+              "image/*": [
+                ".jpg",
+                ".jpeg",
+                ".png",
+                ".webp",
+                ".gif",
+                ".bmp",
+                ".tiff",
+              ],
             }}
             formats={["JPG", "PNG", "WEBP"]}
             label="Drop your image here or click to browse"
@@ -144,22 +153,30 @@ export default function RotateImagePage() {
             <div className="glass rounded-xl p-4">
               <div className="flex items-center justify-between mb-3">
                 <div>
-                  <p className="text-[13px] font-medium text-t-primary truncate max-w-[260px]">
+                  <p className="text-[13px] font-medium text-brand-text truncate max-w-[260px]">
                     {file.name}
                   </p>
-                  <p className="text-[12px] text-t-tertiary">
+                  <p className="text-[12px] text-brand-muted">
                     {formatFileSize(file.size)}
                     {originalDims.w > 0 && (
-                      <> &middot; Original: {originalDims.w} &times; {originalDims.h}px</>
+                      <>
+                        {" "}
+                        &middot; Original: {originalDims.w} &times;{" "}
+                        {originalDims.h}px
+                      </>
                     )}
                     {currentDims && (
-                      <> &middot; Current: {currentDims.w} &times; {currentDims.h}px</>
+                      <>
+                        {" "}
+                        &middot; Current: {currentDims.w} &times;{" "}
+                        {currentDims.h}px
+                      </>
                     )}
                   </p>
                 </div>
                 <button
                   onClick={reset}
-                  className="text-[12px] text-t-tertiary hover:text-red-400 transition-colors flex-shrink-0"
+                  className="text-[12px] text-brand-muted hover:text-red-400 transition-colors flex-shrink-0"
                 >
                   Remove
                 </button>
@@ -181,8 +198,10 @@ export default function RotateImagePage() {
             <div className="glass rounded-xl p-4 space-y-4">
               {/* Rotation indicator */}
               <div className="flex items-center justify-between">
-                <span className="text-[13px] text-t-secondary font-medium">Transform</span>
-                <span className="text-[12px] font-mono px-2.5 py-1 rounded-lg bg-white/5 text-t-secondary border border-white/10">
+                <span className="text-[13px] text-brand-muted font-medium">
+                  Transform
+                </span>
+                <span className="text-[12px] font-mono px-2.5 py-1 rounded-lg bg-white/5 text-brand-muted border border-white/10">
                   {rotation}&deg;
                   {flipH && " · Flip H"}
                   {flipV && " · Flip V"}
@@ -194,7 +213,7 @@ export default function RotateImagePage() {
                 <button
                   onClick={rotateLeft}
                   title="Rotate Left 90°"
-                  className="flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-t-secondary hover:text-t-primary transition-all text-[12px] font-medium"
+                  className="flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-brand-muted hover:text-brand-text transition-all text-[12px] font-medium"
                 >
                   <span className="text-lg leading-none">↺</span>
                   <span>Rotate Left</span>
@@ -213,7 +232,7 @@ export default function RotateImagePage() {
                   className={`flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl transition-all text-[12px] font-medium ${
                     flipH
                       ? "bg-brand-indigo text-white"
-                      : "bg-white/5 hover:bg-white/10 text-t-secondary hover:text-t-primary"
+                      : "bg-white/5 hover:bg-white/10 text-brand-muted hover:text-brand-text"
                   }`}
                 >
                   <span className="text-lg leading-none">↔</span>
@@ -225,7 +244,7 @@ export default function RotateImagePage() {
                   className={`flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl transition-all text-[12px] font-medium ${
                     flipV
                       ? "bg-brand-indigo text-white"
-                      : "bg-white/5 hover:bg-white/10 text-t-secondary hover:text-t-primary"
+                      : "bg-white/5 hover:bg-white/10 text-brand-muted hover:text-brand-text"
                   }`}
                 >
                   <span className="text-lg leading-none">↕</span>
@@ -237,7 +256,7 @@ export default function RotateImagePage() {
               {(rotation !== 0 || flipH || flipV) && (
                 <button
                   onClick={handleReset}
-                  className="w-full py-2 rounded-xl text-[12px] text-t-tertiary hover:text-t-secondary bg-white/5 hover:bg-white/10 transition-colors"
+                  className="w-full py-2 rounded-xl text-[12px] text-brand-muted hover:text-brand-text bg-white/5 hover:bg-white/10 transition-colors"
                 >
                   Reset to Original
                 </button>
@@ -250,7 +269,7 @@ export default function RotateImagePage() {
               disabled={processing || !preview}
               className={`w-full py-3 rounded-xl font-semibold text-[14px] text-white transition-all ${
                 processing || !preview
-                  ? "bg-white/10 cursor-not-allowed text-t-tertiary"
+                  ? "bg-white/10 cursor-not-allowed text-brand-muted"
                   : "bg-gradient-brand hover:shadow-lg hover:shadow-brand-indigo/25 hover:scale-[1.02] active:scale-[0.98]"
               }`}
             >

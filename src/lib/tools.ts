@@ -82,17 +82,6 @@ export const tools: Tool[] = [
     metaDescription:
       "Rotate PDF pages 90, 180 or 270 degrees. Rotate individual pages or all at once. Free online tool.",
   },
-  {
-    slug: "protect-pdf",
-    name: "Protect PDF",
-    description: "Add password protection to your PDF files",
-    emoji: "\ud83d\udd12",
-    category: "pdf",
-    acceptedFormats: [".pdf"],
-    metaTitle: "Protect PDF - Free Online Tool | ZapFile",
-    metaDescription:
-      "Add password protection to PDF files. Encrypt your documents securely in the browser. No uploads.",
-  },
   // Image Tools
   {
     slug: "compress-image",
@@ -141,7 +130,8 @@ export const tools: Tool[] = [
   {
     slug: "rotate-image",
     name: "Rotate Image",
-    description: "Rotate images 90, 180, 270 degrees or flip horizontally/vertically",
+    description:
+      "Rotate images 90, 180, 270 degrees or flip horizontally/vertically",
     emoji: "\ud83d\udd04",
     category: "image",
     acceptedFormats: [".jpg", ".jpeg", ".png", ".webp"],
@@ -159,6 +149,17 @@ export const tools: Tool[] = [
     metaTitle: "Add Watermark to Image - Free Online Tool | ZapFile",
     metaDescription:
       "Add custom text watermarks to images. Control position, opacity, size and color. Free and private.",
+  },
+  {
+    slug: "remove-background",
+    name: "Remove Background",
+    description: "Remove image backgrounds instantly using AI",
+    emoji: "\u2728",
+    category: "image",
+    acceptedFormats: [".jpg", ".jpeg", ".png", ".webp"],
+    metaTitle: "Remove Background - Free Online AI Tool | ZapFile",
+    metaDescription:
+      "Remove image backgrounds instantly using AI. Works with photos, portraits, and product images. 100% private, browser-based.",
   },
   {
     slug: "image-to-pdf",

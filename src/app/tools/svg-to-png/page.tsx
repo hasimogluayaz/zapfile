@@ -87,7 +87,9 @@ export default function SvgToPngPage() {
       if (!ctx) throw new Error("Canvas not supported");
 
       const img = new Image();
-      const svgBlob = new Blob([svgContent], { type: "image/svg+xml;charset=utf-8" });
+      const svgBlob = new Blob([svgContent], {
+        type: "image/svg+xml;charset=utf-8",
+      });
       const url = URL.createObjectURL(svgBlob);
 
       await new Promise<void>((resolve, reject) => {
@@ -147,17 +149,27 @@ export default function SvgToPngPage() {
               <div>
                 <p className="font-medium text-brand-text">{file.name}</p>
               </div>
-              <button onClick={reset} className="text-sm text-brand-muted hover:text-red-400 transition-colors">
+              <button
+                onClick={reset}
+                className="text-sm text-brand-muted hover:text-red-400 transition-colors"
+              >
                 Remove
               </button>
             </div>
             {svgContent && (
-              <div
-                className="flex justify-center p-4 bg-white/5 rounded-lg"
-                dangerouslySetInnerHTML={{
-                  __html: svgContent.replace(/<svg/, '<svg style="max-height:200px;max-width:100%"'),
-                }}
-              />
+              <div className="flex justify-center p-4 bg-white/5 rounded-lg">
+                {/* Safe SVG preview via blob URL — no dangerouslySetInnerHTML */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={URL.createObjectURL(
+                    new Blob([svgContent], {
+                      type: "image/svg+xml;charset=utf-8",
+                    }),
+                  )}
+                  alt="SVG Preview"
+                  className="max-h-[200px] max-w-full object-contain"
+                />
+              </div>
             )}
           </div>
 
@@ -166,7 +178,9 @@ export default function SvgToPngPage() {
             <h3 className="font-medium text-brand-text mb-4">Output Size</h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm text-brand-muted mb-2">Width (px)</label>
+                <label className="block text-sm text-brand-muted mb-2">
+                  Width (px)
+                </label>
                 <input
                   type="number"
                   min="1"
@@ -177,7 +191,9 @@ export default function SvgToPngPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm text-brand-muted mb-2">Height (px)</label>
+                <label className="block text-sm text-brand-muted mb-2">
+                  Height (px)
+                </label>
                 <input
                   type="number"
                   min="1"
@@ -195,7 +211,9 @@ export default function SvgToPngPage() {
                 onChange={(e) => setLockRatio(e.target.checked)}
                 className="accent-brand-indigo"
               />
-              <span className="text-sm text-brand-muted">Lock aspect ratio</span>
+              <span className="text-sm text-brand-muted">
+                Lock aspect ratio
+              </span>
             </label>
           </div>
 
