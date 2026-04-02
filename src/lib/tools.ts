@@ -138,6 +138,39 @@ export const tools: Tool[] = [
     metaDescription:
       "Crop images with preset aspect ratios (1:1, 16:9, 4:3) or free-form selection. Free online tool.",
   },
+  {
+    slug: "rotate-image",
+    name: "Rotate Image",
+    description: "Rotate images 90, 180, 270 degrees or flip horizontally/vertically",
+    emoji: "\ud83d\udd04",
+    category: "image",
+    acceptedFormats: [".jpg", ".jpeg", ".png", ".webp"],
+    metaTitle: "Rotate Image - Free Online Tool | ZapFile",
+    metaDescription:
+      "Rotate images 90, 180, 270 degrees or flip horizontally and vertically. Free, private, browser-based tool.",
+  },
+  {
+    slug: "watermark-image",
+    name: "Add Watermark",
+    description: "Add text or image watermark to photos",
+    emoji: "\ud83d\udcdd",
+    category: "image",
+    acceptedFormats: [".jpg", ".jpeg", ".png", ".webp"],
+    metaTitle: "Add Watermark to Image - Free Online Tool | ZapFile",
+    metaDescription:
+      "Add custom text watermarks to images. Control position, opacity, size and color. Free and private.",
+  },
+  {
+    slug: "image-to-pdf",
+    name: "Image to PDF",
+    description: "Convert JPG, PNG or WEBP images to PDF document",
+    emoji: "\ud83d\udcc4",
+    category: "image",
+    acceptedFormats: [".jpg", ".jpeg", ".png", ".webp"],
+    metaTitle: "Image to PDF - Free Online Tool | ZapFile",
+    metaDescription:
+      "Convert JPG, PNG, or WEBP images to PDF. Combine multiple images into one PDF. Free, private, browser-based.",
+  },
   // Video & Audio Tools
   {
     slug: "compress-video",
