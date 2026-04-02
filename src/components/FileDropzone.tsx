@@ -3,6 +3,7 @@
 import { useCallback } from "react";
 import { useDropzone, type Accept, type FileRejection } from "react-dropzone";
 import toast from "react-hot-toast";
+import { useI18n } from "@/lib/i18n";
 
 interface FileDropzoneProps {
   onFilesSelected: (files: File[]) => void;
@@ -27,9 +28,10 @@ export default function FileDropzone({
   accept,
   multiple = false,
   maxSize,
-  label = "Drop your file here or click to browse",
+  label,
   formats = [],
 }: FileDropzoneProps) {
+  const { t } = useI18n();
   const acceptedExtensions = getAcceptedExtensions(accept);
 
   const onDrop = useCallback(
@@ -104,11 +106,11 @@ export default function FileDropzone({
         </div>
         <div>
           <p className="text-[13px] font-medium text-t-primary">
-            {isDragActive ? "Drop here" : label}
+            {isDragActive ? "Drop here" : label || t("tool.dropLabel")}
           </p>
           {!isDragActive && (
             <p className="text-[12px] text-t-tertiary mt-0.5">
-              or drag and drop
+              {t("tool.dropSub")}
             </p>
           )}
         </div>
