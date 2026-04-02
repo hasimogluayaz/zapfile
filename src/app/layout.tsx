@@ -69,6 +69,9 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "https://zapfile.xyz",
   },
+  verification: {
+    google: "4k5LW57dXwNJkEYKplc4-IM_6uM5vskgXOZKLZRtGto",
+  },
 };
 
 const jsonLd = {
