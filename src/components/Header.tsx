@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 
 export default function Header() {
@@ -11,7 +12,7 @@ export default function Header() {
       <div className="max-w-5xl mx-auto px-5">
         <div className="flex items-center justify-between h-14">
           <Link href="/" className="flex items-center gap-2 focus-ring rounded">
-            <span className="text-lg">&#x26A1;</span>
+            <Image src="/android-chrome-192x192.png" alt="ZapFile" width={28} height={28} className="rounded-sm" />
             <span className="text-[15px] font-semibold text-t-primary">ZapFile</span>
           </Link>
 
