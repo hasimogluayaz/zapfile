@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Toaster } from "react-hot-toast";
 import ClientProviders from "@/components/ClientProviders";
+import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -170,6 +172,8 @@ export default function RootLayout({
             }}
           />
           {children}
+          <SpeedInsights />
+          <Analytics />
         </ClientProviders>
       </body>
     </html>

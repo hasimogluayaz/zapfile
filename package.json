@@ -12,6 +12,8 @@
     "@ffmpeg/ffmpeg": "^0.12.15",
     "@ffmpeg/util": "^0.12.2",
     "@imgly/background-removal": "^1.7.0",
+    "@vercel/analytics": "^2.0.1",
+    "@vercel/speed-insights": "^2.0.0",
     "browser-image-compression": "^2.0.2",
     "file-saver": "^2.0.5",
     "jszip": "^3.10.1",
