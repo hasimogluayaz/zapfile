@@ -16,7 +16,8 @@ export default function RemoveBackgroundPage() {
   const [progressLabel, setProgressLabel] = useState("Processing...");
   const [result, setResult] = useState<Blob | null>(null);
   const [resultPreview, setResultPreview] = useState<string | null>(null);
-  const libraryLoadedRef = useRef(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const moduleRef = useRef<any>(null);
 
   const handleFilesSelected = (files: File[]) => {
     const f = files[0];
@@ -29,22 +30,6 @@ export default function RemoveBackgroundPage() {
     reader.readAsDataURL(f);
   };
 
-  const loadLibrary = async () => {
-    if (libraryLoadedRef.current) return;
-    await new Promise<void>((resolve, reject) => {
-      if (document.querySelector('script[data-bgremoval]')) {
-        resolve();
-        return;
-      }
-      const script = document.createElement("script");
-      script.src = "https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/dist/index.umd.min.js";
-      script.setAttribute("data-bgremoval", "true");
-      script.onload = () => { libraryLoadedRef.current = true; resolve(); };
-      script.onerror = () => reject(new Error("Failed to load AI library. Check your internet connection."));
-      document.head.appendChild(script);
-    });
-  };
-
   const handleProcess = async () => {
     if (!file) return;
     setProcessing(true);
@@ -52,33 +37,30 @@ export default function RemoveBackgroundPage() {
     setProgressLabel("Loading AI library...");
 
     try {
-      await loadLibrary();
-      setProgress(15);
-      setProgressLabel("Downloading AI model (~40MB, first time only)...");
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const bgRemoval = (window as any).imglyBackgroundRemoval;
-      if (!bgRemoval?.removeBackground) {
-        throw new Error("Background removal library not available.");
+      // Load via native ESM import (bypass webpack + TypeScript)
+      if (!moduleRef.current) {
+        const cdnUrl = "https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.5.1/dist/index.js";
+        moduleRef.current = await import(/* webpackIgnore: true */ cdnUrl);
       }
 
-      setProgress(20);
+      const { removeBackground } = moduleRef.current;
+      setProgress(15);
+      setProgressLabel("Downloading AI model (first time ~40MB)...");
 
-      const blob: Blob = await bgRemoval.removeBackground(file, {
-        publicPath: "https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/dist/",
+      const blob: Blob = await removeBackground(file, {
+        publicPath: "https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.5.1/dist/",
         progress: (key: string, current: number, total: number) => {
           if (total > 0) {
             const pct = Math.round((current / total) * 100);
-            if (key.includes("fetch")) {
+            if (key.includes("fetch") || key.includes("download")) {
               setProgressLabel(`Downloading model: ${pct}%`);
-              setProgress(20 + Math.round(pct * 0.6));
-            } else {
+              setProgress(15 + Math.round(pct * 0.6));
+            } else if (key.includes("compute") || key.includes("inference")) {
               setProgressLabel(`Processing image: ${pct}%`);
-              setProgress(80 + Math.round(pct * 0.18));
+              setProgress(75 + Math.round(pct * 0.23));
             }
           }
         },
-        model: "medium",
       });
 
       setResult(blob);
@@ -87,9 +69,8 @@ export default function RemoveBackgroundPage() {
       setProgressLabel("Done!");
       toast.success("Background removed successfully!");
     } catch (error) {
-      console.error(error);
-      const msg = error instanceof Error ? error.message : "Failed to remove background.";
-      toast.error(msg);
+      console.error("Background removal error:", error);
+      toast.error("Failed to remove background. Please try again or use a different image.");
     } finally {
       setProcessing(false);
     }
@@ -146,9 +127,9 @@ export default function RemoveBackgroundPage() {
           )}
 
           <div className="glass rounded-xl p-4 text-sm text-brand-muted space-y-1">
-            <p>⚡ AI runs entirely in your browser — no uploads, 100% private</p>
-            <p>📦 First use downloads ~40MB model (cached for future use)</p>
-            <p>⏱️ Processing takes 10-60 seconds depending on your device</p>
+            <p>&#9889; AI runs entirely in your browser — no uploads, 100% private</p>
+            <p>&#128230; First use downloads ~40MB model (cached for future use)</p>
+            <p>&#9201; Processing takes 10-60 seconds depending on your device</p>
           </div>
         </div>
       ) : (
