@@ -12,8 +12,8 @@ export default function Header() {
       <div className="max-w-5xl mx-auto px-5">
         <div className="flex items-center justify-between h-14">
           <Link href="/" className="flex items-center gap-2 focus-ring rounded">
-            <Image src="/android-chrome-192x192.png" alt="ZapFile" width={28} height={28} className="rounded-sm" />
-            <span className="text-[15px] font-semibold text-t-primary">ZapFile</span>
+            <Image src="/android-chrome-192x192.png" alt="ZapFile" width={36} height={36} className="rounded-sm" />
+            <span className="text-[17px] font-bold text-t-primary">ZapFile</span>
           </Link>
 
           <Link
