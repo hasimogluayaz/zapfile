@@ -1,0 +1,156 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+
+/* ========== Theme Colors ========== */
+:root {
+  --bg: #ffffff;
+  --bg-secondary: #fafafa;
+  --surface: #ffffff;
+  --border: #e5e7eb;
+  --border-light: #f3f4f6;
+  --text-primary: #111827;
+  --text-secondary: #6b7280;
+  --text-tertiary: #9ca3af;
+  --accent: #6366f1;
+  --accent-hover: #4f46e5;
+  --accent-light: rgba(99, 102, 241, 0.08);
+  --accent-muted: rgba(99, 102, 241, 0.15);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #09090b;
+    --bg-secondary: #111113;
+    --surface: #18181b;
+    --border: #27272a;
+    --border-light: #1e1e22;
+    --text-primary: #fafafa;
+    --text-secondary: #a1a1aa;
+    --text-tertiary: #71717a;
+    --accent: #818cf8;
+    --accent-hover: #6366f1;
+    --accent-light: rgba(129, 140, 248, 0.1);
+    --accent-muted: rgba(129, 140, 248, 0.18);
+  }
+}
+
+/* ========== Base ========== */
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-inter, "Inter", system-ui, -apple-system, sans-serif);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: var(--accent-muted);
+}
+
+/* ========== Scrollbar ========== */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
+
+/* ========== Utilities ========== */
+.gradient-text {
+  background: linear-gradient(135deg, #6366f1, #a78bfa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
+  animation: shimmer 1.5s infinite;
+}
+@keyframes shimmer {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+
+/* ========== Focus ========== */
+.focus-ring:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ========== Dropzone ========== */
+.dropzone {
+  border: 1.5px dashed var(--border);
+  transition: all 0.2s;
+}
+.dropzone:hover, .dropzone-active {
+  border-color: var(--accent);
+  background: var(--accent-light);
+}
+
+/* ========== Legacy class overrides for tool pages ========== */
+/* Maps old white-opacity classes to theme-aware equivalents */
+.glass {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.bg-white\/5,
+.bg-white\/\[0\.02\],
+.bg-white\/\[0\.03\],
+.bg-white\/\[0\.04\],
+.bg-white\/\[0\.05\],
+.bg-white\/\[0\.06\],
+.bg-white\/\[0\.015\] {
+  background-color: var(--bg-secondary) !important;
+}
+
+.bg-white\/10,
+.bg-white\/\[0\.08\],
+.bg-white\/\[0\.1\] {
+  background-color: var(--bg-secondary) !important;
+}
+
+.hover\:bg-white\/10:hover,
+.hover\:bg-white\/\[0\.08\]:hover,
+.hover\:bg-white\/\[0\.04\]:hover {
+  background-color: var(--accent-light) !important;
+}
+
+.border-white\/5,
+.border-white\/10,
+.border-white\/\[0\.04\],
+.border-white\/\[0\.06\],
+.border-white\/\[0\.08\],
+.border-white\/\[0\.1\] {
+  border-color: var(--border) !important;
+}
+
+.focus\:border-brand-indigo\/50:focus,
+.focus\:border-brand-indigo\/40:focus {
+  border-color: var(--accent) !important;
+}
+
+/* Legacy gradient */
+.bg-gradient-brand {
+  background: linear-gradient(135deg, #6366f1, #a78bfa) !important;
+}
+
+/* Form elements */
+input, select, textarea {
+  color: var(--text-primary);
+}
+input::placeholder, textarea::placeholder {
+  color: var(--text-tertiary);
+}

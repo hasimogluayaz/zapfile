@@ -1,0 +1,49 @@
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
+          { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+        ],
+      },
+    ];
+  },
+  webpack: (config, { isServer, webpack }) => {
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        path: false,
+        crypto: false,
+        module: false,
+        perf_hooks: false,
+        os: false,
+      };
+
+      // Completely exclude @imgly/background-removal and onnxruntime from bundling
+      // They will be loaded via CDN at runtime instead
+      config.externals = [
+        ...(Array.isArray(config.externals) ? config.externals : config.externals ? [config.externals] : []),
+        {
+          "@imgly/background-removal": "commonjs @imgly/background-removal",
+          "onnxruntime-web": "commonjs onnxruntime-web",
+          "onnxruntime-node": "commonjs onnxruntime-node",
+        },
+      ];
+    }
+
+    if (isServer) {
+      config.externals = config.externals || [];
+      if (Array.isArray(config.externals)) {
+        config.externals.push("onnxruntime-node", "@imgly/background-removal");
+      }
+    }
+
+    return config;
+  },
+};
+
+export default nextConfig;

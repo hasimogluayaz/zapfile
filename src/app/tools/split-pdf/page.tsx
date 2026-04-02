@@ -1,0 +1,339 @@
+"use client";
+
+import { useState, useCallback } from "react";
+import toast from "react-hot-toast";
+import ToolLayout from "@/components/ToolLayout";
+import FileDropzone from "@/components/FileDropzone";
+import ProcessButton from "@/components/ProcessButton";
+import DownloadButton from "@/components/DownloadButton";
+import ProgressBar from "@/components/ProgressBar";
+import { formatFileSize, getFileNameWithoutExtension } from "@/lib/utils";
+
+interface PageRange {
+  start: number;
+  end: number;
+}
+
+function parsePageRanges(input: string, totalPages: number): PageRange[] | null {
+  const ranges: PageRange[] = [];
+  const parts = input.split(",").map((s) => s.trim()).filter(Boolean);
+
+  for (const part of parts) {
+    if (part.includes("-")) {
+      const [startStr, endStr] = part.split("-").map((s) => s.trim());
+      const start = parseInt(startStr, 10);
+      const end = parseInt(endStr, 10);
+
+      if (isNaN(start) || isNaN(end) || start < 1 || end < 1 || start > totalPages || end > totalPages || start > end) {
+        return null;
+      }
+
+      ranges.push({ start, end });
+    } else {
+      const page = parseInt(part, 10);
+      if (isNaN(page) || page < 1 || page > totalPages) {
+        return null;
+      }
+      ranges.push({ start: page, end: page });
+    }
+  }
+
+  return ranges.length > 0 ? ranges : null;
+}
+
+function formatRange(range: PageRange): string {
+  return range.start === range.end
+    ? `page-${range.start}`
+    : `pages-${range.start}-${range.end}`;
+}
+
+export default function SplitPdfPage() {
+  const [file, setFile] = useState<File | null>(null);
+  const [totalPages, setTotalPages] = useState(0);
+  const [rangeInput, setRangeInput] = useState("");
+  const [processing, setProcessing] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [resultBlob, setResultBlob] = useState<Blob | null>(null);
+  const [resultFilename, setResultFilename] = useState("split-pdfs.zip");
+
+  const handleFilesSelected = useCallback(async (files: File[]) => {
+    const selected = files[0];
+    if (!selected) return;
+
+    if (selected.type !== "application/pdf" && !selected.name.toLowerCase().endsWith(".pdf")) {
+      toast.error("Please select a valid PDF file.");
+      return;
+    }
+
+    try {
+      const arrayBuffer = await selected.arrayBuffer();
+      const { PDFDocument } = await import("pdf-lib");
+      const doc = await PDFDocument.load(arrayBuffer, {
+        ignoreEncryption: true,
+      });
+      const pageCount = doc.getPageCount();
+
+      setFile(selected);
+      setTotalPages(pageCount);
+      setRangeInput("");
+      setResultBlob(null);
+      setProgress(0);
+
+      toast.success(`PDF loaded with ${pageCount} page${pageCount !== 1 ? "s" : ""}.`);
+    } catch (error) {
+      console.error("Error loading PDF:", error);
+      toast.error("Failed to load PDF. The file may be corrupted or encrypted.");
+    }
+  }, []);
+
+  const handleSplit = useCallback(async () => {
+    if (!file || totalPages === 0) return;
+
+    const trimmed = rangeInput.trim();
+    if (!trimmed) {
+      toast.error("Please enter page ranges to split.");
+      return;
+    }
+
+    const ranges = parsePageRanges(trimmed, totalPages);
+    if (!ranges) {
+      toast.error(
+        `Invalid page ranges. Use format like "1-3, 5, 7-9". Pages must be between 1 and ${totalPages}.`
+      );
+      return;
+    }
+
+    setProcessing(true);
+    setProgress(0);
+    setResultBlob(null);
+
+    try {
+      const { PDFDocument } = await import("pdf-lib");
+      const JSZip = (await import("jszip")).default;
+      setProgress(10);
+
+      const arrayBuffer = await file.arrayBuffer();
+      const srcDoc = await PDFDocument.load(arrayBuffer, {
+        ignoreEncryption: true,
+      });
+      setProgress(25);
+
+      const zip = new JSZip();
+      const baseName = getFileNameWithoutExtension(file.name);
+
+      for (let i = 0; i < ranges.length; i++) {
+        const range = ranges[i];
+        const newDoc = await PDFDocument.create();
+
+        // pdf-lib uses 0-based indexing; user input is 1-based
+        const pageIndices: number[] = [];
+        for (let p = range.start - 1; p <= range.end - 1; p++) {
+          pageIndices.push(p);
+        }
+
+        const copiedPages = await newDoc.copyPages(srcDoc, pageIndices);
+        for (const page of copiedPages) {
+          newDoc.addPage(page);
+        }
+
+        const pdfBytes = await newDoc.save({ useObjectStreams: true });
+        const rangeLabel = formatRange(range);
+        zip.file(`${baseName}_${rangeLabel}.pdf`, pdfBytes);
+
+        setProgress(25 + ((i + 1) / ranges.length) * 60);
+      }
+
+      setProgress(90);
+
+      const zipBlob = await zip.generateAsync({
+        type: "blob",
+        compression: "DEFLATE",
+        compressionOptions: { level: 6 },
+      });
+
+      setResultBlob(zipBlob);
+      setResultFilename(`${baseName}-split.zip`);
+      setProgress(100);
+
+      toast.success(
+        `Split into ${ranges.length} PDF${ranges.length !== 1 ? "s" : ""}. Ready to download as ZIP.`
+      );
+    } catch (error) {
+      console.error("Split error:", error);
+      toast.error("Failed to split PDF. Please try again.");
+    } finally {
+      setProcessing(false);
+    }
+  }, [file, totalPages, rangeInput]);
+
+  const handleReset = useCallback(() => {
+    setFile(null);
+    setTotalPages(0);
+    setRangeInput("");
+    setResultBlob(null);
+    setProgress(0);
+  }, []);
+
+  return (
+    <ToolLayout
+      toolName="Split PDF"
+      toolDescription="Extract specific pages or page ranges from a PDF file. Download the results as a ZIP archive."
+    >
+      <div className="space-y-6">
+        {/* File Drop Area */}
+        {!file && (
+          <FileDropzone
+            onFilesSelected={handleFilesSelected}
+            accept={{ "application/pdf": [".pdf"] }}
+            multiple={false}
+            label="Drop your PDF here or click to browse"
+            formats={["pdf"]}
+          />
+        )}
+
+        {/* File Info & Page Count */}
+        {file && (
+          <div className="glass rounded-xl p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center">
+                  <svg
+                    className="w-6 h-6 text-red-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={1.5}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-brand-text font-medium">{file.name}</p>
+                  <p className="text-sm text-brand-muted">
+                    {formatFileSize(file.size)} &middot; {totalPages} page
+                    {totalPages !== 1 ? "s" : ""}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={handleReset}
+                className="text-brand-muted hover:text-brand-text transition-colors p-2 rounded-lg hover:bg-white/5"
+                title="Remove file"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Page Range Input */}
+        {file && totalPages > 0 && !resultBlob && (
+          <div className="glass rounded-xl p-6 space-y-4">
+            <div>
+              <label
+                htmlFor="pageRanges"
+                className="block text-sm font-medium text-brand-text mb-2"
+              >
+                Page Ranges
+              </label>
+              <input
+                id="pageRanges"
+                type="text"
+                value={rangeInput}
+                onChange={(e) => setRangeInput(e.target.value)}
+                placeholder={`e.g. 1-3, 5, 7-${totalPages}`}
+                className="w-full px-4 py-3 rounded-xl bg-brand-card border border-white/10 text-brand-text placeholder:text-brand-muted focus:outline-none focus:border-brand-indigo/50 transition-colors"
+              />
+              <p className="text-xs text-brand-muted mt-2">
+                Enter page numbers and ranges separated by commas. Each range becomes a separate PDF file.
+                Valid pages: 1 to {totalPages}.
+              </p>
+            </div>
+
+            {/* Quick select buttons */}
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setRangeInput(`1-${totalPages}`)}
+                className="px-3 py-1.5 text-xs rounded-lg bg-white/5 text-brand-muted hover:text-brand-text hover:bg-white/10 transition-colors"
+              >
+                All pages
+              </button>
+              {totalPages > 1 && (
+                <button
+                  onClick={() =>
+                    setRangeInput(
+                      Array.from({ length: totalPages }, (_, i) => String(i + 1)).join(", ")
+                    )
+                  }
+                  className="px-3 py-1.5 text-xs rounded-lg bg-white/5 text-brand-muted hover:text-brand-text hover:bg-white/10 transition-colors"
+                >
+                  Each page separately
+                </button>
+              )}
+              {totalPages >= 2 && (
+                <button
+                  onClick={() => {
+                    const mid = Math.ceil(totalPages / 2);
+                    setRangeInput(`1-${mid}, ${mid + 1}-${totalPages}`);
+                  }}
+                  className="px-3 py-1.5 text-xs rounded-lg bg-white/5 text-brand-muted hover:text-brand-text hover:bg-white/10 transition-colors"
+                >
+                  Split in half
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Progress Bar */}
+        {processing && (
+          <ProgressBar progress={progress} label="Splitting PDF..." />
+        )}
+
+        {/* Action Buttons */}
+        <div className="flex flex-wrap items-center gap-4">
+          {file && !resultBlob && (
+            <ProcessButton
+              onClick={handleSplit}
+              disabled={!file || !rangeInput.trim()}
+              loading={processing}
+              label="Split PDF"
+              loadingLabel="Splitting..."
+            />
+          )}
+          {resultBlob && (
+            <>
+              <DownloadButton
+                blob={resultBlob}
+                filename={resultFilename}
+                label="Download ZIP"
+              />
+              <button
+                onClick={handleReset}
+                className="px-6 py-3 rounded-xl font-semibold text-brand-muted border border-white/10 hover:text-brand-text hover:border-white/20 transition-all duration-300"
+              >
+                Split Another PDF
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </ToolLayout>
+  );
+}
