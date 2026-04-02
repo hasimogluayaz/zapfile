@@ -1,27 +1,32 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
 import { tools } from "@/lib/tools";
-
-const footerLinks = [
-  {
-    title: "Product",
-    links: [
-      { label: "All Tools", href: "/tools" },
-      { label: "PDF Tools", href: "/tools#pdf" },
-      { label: "Image Tools", href: "/tools#image" },
-      { label: "Video & Audio", href: "/tools#video" },
-    ],
-  },
-  {
-    title: "Legal",
-    links: [
-      { label: "Privacy Policy", href: "/privacy" },
-      { label: "Terms of Service", href: "/terms" },
-    ],
-  },
-];
+import { useI18n } from "@/lib/i18n";
 
 export default function Footer() {
+  const { t } = useI18n();
+
+  const footerLinks = [
+    {
+      title: t("footer.product"),
+      links: [
+        { label: t("footer.allTools"), href: "/tools" },
+        { label: t("footer.pdfTools"), href: "/tools#pdf" },
+        { label: t("footer.imageTools"), href: "/tools#image" },
+        { label: t("footer.videoAudio"), href: "/tools#video" },
+      ],
+    },
+    {
+      title: t("footer.legal"),
+      links: [
+        { label: t("footer.privacy"), href: "/privacy" },
+        { label: t("footer.terms"), href: "/terms" },
+      ],
+    },
+  ];
+
   return (
     <footer className="border-t border-border mt-auto bg-bg-secondary">
       <div className="max-w-6xl mx-auto px-5 py-12">
@@ -41,8 +46,7 @@ export default function Footer() {
               </span>
             </div>
             <p className="text-[12px] text-t-tertiary leading-relaxed max-w-[220px]">
-              Fast, free, and private file tools. Everything runs in your
-              browser — your files never leave your device.
+              {t("footer.brand")}
             </p>
           </div>
 
@@ -69,7 +73,7 @@ export default function Footer() {
           {/* Popular Tools */}
           <div>
             <p className="text-[12px] font-semibold text-t-primary uppercase tracking-wider mb-3">
-              Popular Tools
+              {t("footer.popular")}
             </p>
             <div className="space-y-2">
               {tools.slice(0, 5).map((tool) => (
@@ -88,17 +92,16 @@ export default function Footer() {
         {/* Bottom bar */}
         <div className="border-t border-border pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-[12px] text-t-tertiary">
-            &copy; {new Date().getFullYear()} ZapFile. All processing happens in
-            your browser.
+            &copy; {new Date().getFullYear()} ZapFile. {t("footer.copyright")}
           </p>
           <div className="flex items-center gap-4 text-[12px] text-t-tertiary">
             <span className="flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              {tools.length} Free Tools
+              {t("footer.freeTools", { count: tools.length })}
             </span>
             <span className="flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-accent" />
-              No Sign-up Required
+              {t("footer.noSignup")}
             </span>
           </div>
         </div>

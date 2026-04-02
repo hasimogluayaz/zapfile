@@ -13,14 +13,14 @@ export default function PrivacyPage() {
       <Header />
       <main className="flex-1">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <h1 className="text-3xl font-bold text-brand-text mb-8">
+          <h1 className="text-3xl font-bold text-t-primary mb-8">
             Privacy Policy
           </h1>
 
-          <div className="prose prose-invert max-w-none space-y-6 text-brand-muted">
+          <div className="prose max-w-none space-y-6 text-t-secondary">
             <p>Last updated: January 2025</p>
 
-            <h2 className="text-xl font-semibold text-brand-text mt-8">
+            <h2 className="text-xl font-semibold text-t-primary mt-8">
               Your Privacy Matters
             </h2>
             <p>
@@ -29,7 +29,7 @@ export default function PrivacyPage() {
               never uploaded to any server.
             </p>
 
-            <h2 className="text-xl font-semibold text-brand-text mt-8">
+            <h2 className="text-xl font-semibold text-t-primary mt-8">
               Data We Don&apos;t Collect
             </h2>
             <ul className="list-disc pl-6 space-y-2">
@@ -40,7 +40,7 @@ export default function PrivacyPage() {
               </li>
             </ul>
 
-            <h2 className="text-xl font-semibold text-brand-text mt-8">
+            <h2 className="text-xl font-semibold text-t-primary mt-8">
               Data We May Collect
             </h2>
             <ul className="list-disc pl-6 space-y-2">
@@ -54,7 +54,7 @@ export default function PrivacyPage() {
               </li>
             </ul>
 
-            <h2 className="text-xl font-semibold text-brand-text mt-8">
+            <h2 className="text-xl font-semibold text-t-primary mt-8">
               Third-Party Services
             </h2>
             <p>
@@ -63,7 +63,7 @@ export default function PrivacyPage() {
               Google&apos;s ad settings.
             </p>
 
-            <h2 className="text-xl font-semibold text-brand-text mt-8">
+            <h2 className="text-xl font-semibold text-t-primary mt-8">
               Contact
             </h2>
             <p>

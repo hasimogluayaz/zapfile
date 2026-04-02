@@ -26,9 +26,7 @@ function analyzeText(text: string): Stat[] {
         (text.trim().length > 0 ? 1 : 0);
 
   const avgWordLength =
-    words > 0
-      ? (charactersNoSpaces / words).toFixed(1)
-      : "0";
+    words > 0 ? (charactersNoSpaces / words).toFixed(1) : "0";
 
   const readingTimeMinutes = words / 200;
   const readingTime =
@@ -44,7 +42,10 @@ function analyzeText(text: string): Stat[] {
 
   return [
     { label: "Characters", value: characters.toLocaleString() },
-    { label: "Characters (no spaces)", value: charactersNoSpaces.toLocaleString() },
+    {
+      label: "Characters (no spaces)",
+      value: charactersNoSpaces.toLocaleString(),
+    },
     { label: "Words", value: words.toLocaleString() },
     { label: "Sentences", value: sentences.toLocaleString() },
     { label: "Paragraphs", value: paragraphs.toLocaleString() },
@@ -72,13 +73,13 @@ export default function WordCounterPage() {
         {/* Text input */}
         <div className="glass rounded-2xl p-6">
           <div className="flex items-center justify-between mb-3">
-            <label className="text-sm font-medium text-brand-muted">
+            <label className="text-sm font-medium text-t-secondary">
               Enter or paste your text
             </label>
             {text.length > 0 && (
               <button
                 onClick={handleClear}
-                className="px-3 py-1.5 text-xs rounded-lg bg-white/5 text-brand-muted hover:bg-white/10 hover:text-brand-text transition-colors"
+                className="px-3 py-1.5 text-xs rounded-lg bg-bg-secondary text-t-secondary hover:bg-bg-tertiary hover:text-t-primary transition-colors"
               >
                 Clear
               </button>
@@ -89,21 +90,18 @@ export default function WordCounterPage() {
             onChange={(e) => setText(e.target.value)}
             placeholder="Start typing or paste your text here..."
             rows={10}
-            className="w-full px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-brand-text placeholder:text-brand-muted/50 focus:outline-none focus:border-brand-indigo/40 text-sm leading-relaxed resize-none transition-colors"
+            className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border text-t-primary placeholder:text-t-tertiary focus:outline-none focus:border-accent text-sm leading-relaxed resize-none transition-colors"
           />
         </div>
 
         {/* Statistics grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
           {stats.map((stat) => (
-            <div
-              key={stat.label}
-              className="glass rounded-2xl p-5 text-center"
-            >
+            <div key={stat.label} className="glass rounded-2xl p-5 text-center">
               <p className="text-2xl sm:text-3xl font-bold gradient-text">
                 {stat.value}
               </p>
-              <p className="text-sm text-brand-muted mt-1">{stat.label}</p>
+              <p className="text-sm text-t-secondary mt-1">{stat.label}</p>
             </div>
           ))}
         </div>

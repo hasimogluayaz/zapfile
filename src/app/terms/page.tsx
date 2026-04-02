@@ -13,14 +13,14 @@ export default function TermsPage() {
       <Header />
       <main className="flex-1">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <h1 className="text-3xl font-bold text-brand-text mb-8">
+          <h1 className="text-3xl font-bold text-t-primary mb-8">
             Terms of Service
           </h1>
 
-          <div className="prose prose-invert max-w-none space-y-6 text-brand-muted">
+          <div className="prose max-w-none space-y-6 text-t-secondary">
             <p>Last updated: January 2025</p>
 
-            <h2 className="text-xl font-semibold text-brand-text mt-8">
+            <h2 className="text-xl font-semibold text-t-primary mt-8">
               Acceptance of Terms
             </h2>
             <p>
@@ -28,7 +28,7 @@ export default function TermsPage() {
               to these terms of service.
             </p>
 
-            <h2 className="text-xl font-semibold text-brand-text mt-8">
+            <h2 className="text-xl font-semibold text-t-primary mt-8">
               Service Description
             </h2>
             <p>
@@ -37,7 +37,7 @@ export default function TermsPage() {
               uploaded to our servers.
             </p>
 
-            <h2 className="text-xl font-semibold text-brand-text mt-8">
+            <h2 className="text-xl font-semibold text-t-primary mt-8">
               Disclaimer
             </h2>
             <p>
@@ -47,7 +47,7 @@ export default function TermsPage() {
               files.
             </p>
 
-            <h2 className="text-xl font-semibold text-brand-text mt-8">
+            <h2 className="text-xl font-semibold text-t-primary mt-8">
               Limitation of Liability
             </h2>
             <p>
@@ -56,7 +56,7 @@ export default function TermsPage() {
               corruption.
             </p>
 
-            <h2 className="text-xl font-semibold text-brand-text mt-8">
+            <h2 className="text-xl font-semibold text-t-primary mt-8">
               Changes
             </h2>
             <p>

@@ -1,7 +1,10 @@
+"use client";
+
 import Link from "next/link";
 import Header from "./Header";
 import Footer from "./Footer";
 import AdPlaceholder from "./AdPlaceholder";
+import { useI18n } from "@/lib/i18n";
 
 interface ToolLayoutProps {
   children: React.ReactNode;
@@ -14,6 +17,8 @@ export default function ToolLayout({
   toolName,
   toolDescription,
 }: ToolLayoutProps) {
+  const { t } = useI18n();
+
   return (
     <>
       <Header />
@@ -22,7 +27,7 @@ export default function ToolLayout({
           {/* Breadcrumb */}
           <nav className="flex items-center gap-1.5 text-[12px] text-t-tertiary mb-6">
             <Link href="/" className="hover:text-accent transition-colors">
-              Home
+              {t("tool.home")}
             </Link>
             <svg
               className="w-3 h-3 text-t-tertiary/40"
@@ -38,7 +43,7 @@ export default function ToolLayout({
               />
             </svg>
             <Link href="/tools" className="hover:text-accent transition-colors">
-              Tools
+              {t("tool.tools")}
             </Link>
             <svg
               className="w-3 h-3 text-t-tertiary/40"
@@ -84,7 +89,7 @@ export default function ToolLayout({
                 d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
               />
             </svg>
-            Your files never leave your browser
+            {t("tool.privacy")}
           </div>
 
           <AdPlaceholder position="bottom" />

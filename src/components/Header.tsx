@@ -4,18 +4,21 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import {
-  tools,
-  categoryLabels,
-  categoryEmojis,
-  type ToolCategory,
-} from "@/lib/tools";
+import { tools, categoryEmojis, type ToolCategory } from "@/lib/tools";
+import { useI18n, type Locale } from "@/lib/i18n";
 
 const categories: ToolCategory[] = ["pdf", "image", "video", "utility"];
+const catKeys: Record<ToolCategory, string> = {
+  pdf: "cat.pdf",
+  image: "cat.image",
+  video: "cat.video",
+  utility: "cat.utility",
+};
 
 export default function Header() {
   const pathname = usePathname();
   const [showDropdown, setShowDropdown] = useState(false);
+  const { locale, setLocale, t } = useI18n();
 
   return (
     <header className="sticky top-0 z-50 bg-bg/90 backdrop-blur-xl border-b border-border">
@@ -40,6 +43,23 @@ export default function Header() {
 
           {/* Nav */}
           <div className="flex items-center gap-1">
+            {/* Language switcher */}
+            <div className="flex items-center bg-bg-secondary rounded-lg border border-border mr-2">
+              {(["en", "tr"] as Locale[]).map((lang) => (
+                <button
+                  key={lang}
+                  onClick={() => setLocale(lang)}
+                  className={`px-2.5 py-1.5 text-[12px] font-medium rounded-md transition-colors ${
+                    locale === lang
+                      ? "bg-accent text-white"
+                      : "text-t-secondary hover:text-t-primary"
+                  }`}
+                >
+                  {lang.toUpperCase()}
+                </button>
+              ))}
+            </div>
+
             {/* Tools Dropdown */}
             <div className="relative">
               <button
@@ -52,7 +72,7 @@ export default function Header() {
                     : "text-t-secondary hover:text-t-primary hover:bg-bg-secondary"
                 }`}
               >
-                All Tools
+                {t("nav.allTools")}
                 <svg
                   className={`w-3.5 h-3.5 transition-transform ${showDropdown ? "rotate-180" : ""}`}
                   fill="none"
@@ -79,13 +99,13 @@ export default function Header() {
                     <div className="grid grid-cols-2 gap-6">
                       {categories.map((cat) => {
                         const catTools = tools.filter(
-                          (t) => t.category === cat,
+                          (t2) => t2.category === cat,
                         );
                         return (
                           <div key={cat}>
                             <p className="text-[11px] font-semibold uppercase tracking-wider text-t-tertiary mb-2.5 flex items-center gap-1.5">
                               <span>{categoryEmojis[cat]}</span>
-                              {categoryLabels[cat]}
+                              {t(catKeys[cat])}
                             </p>
                             <div className="space-y-0.5">
                               {catTools.map((tool) => (
@@ -110,7 +130,7 @@ export default function Header() {
                         onClick={() => setShowDropdown(false)}
                         className="text-[13px] font-medium text-accent hover:text-accent-hover transition-colors flex items-center gap-1"
                       >
-                        View all {tools.length} tools
+                        {t("nav.viewAll", { count: tools.length })}
                         <svg
                           className="w-3.5 h-3.5"
                           fill="none"
@@ -131,7 +151,7 @@ export default function Header() {
               )}
             </div>
 
-            {/* Individual category links on desktop */}
+            {/* Browse All link */}
             <Link
               href="/tools"
               className={`hidden md:block text-[13px] font-medium px-3.5 py-2 rounded-lg transition-colors ${
@@ -140,7 +160,7 @@ export default function Header() {
                   : "text-t-secondary hover:text-t-primary hover:bg-bg-secondary"
               }`}
             >
-              Browse All
+              {t("nav.browseAll")}
             </Link>
           </div>
         </div>
