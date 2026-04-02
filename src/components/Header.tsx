@@ -116,7 +116,10 @@ export default function Header() {
                                   className="block px-2.5 py-1.5 rounded-lg text-[13px] text-t-secondary hover:text-accent hover:bg-accent-light transition-colors"
                                 >
                                   <span className="mr-1.5">{tool.emoji}</span>
-                                  {tool.name}
+                                  {t(`tool.${tool.slug}.name`) !==
+                                  `tool.${tool.slug}.name`
+                                    ? t(`tool.${tool.slug}.name`)
+                                    : tool.name}
                                 </Link>
                               ))}
                             </div>

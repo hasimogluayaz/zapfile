@@ -5,6 +5,7 @@ import Header from "./Header";
 import Footer from "./Footer";
 import AdPlaceholder from "./AdPlaceholder";
 import { useI18n } from "@/lib/i18n";
+import { usePathname } from "next/navigation";
 
 interface ToolLayoutProps {
   children: React.ReactNode;
@@ -18,6 +19,17 @@ export default function ToolLayout({
   toolDescription,
 }: ToolLayoutProps) {
   const { t } = useI18n();
+  const pathname = usePathname();
+  const slug = pathname?.split("/").pop() || "";
+
+  const finalName =
+    slug && t(`tool.${slug}.name`) !== `tool.${slug}.name`
+      ? t(`tool.${slug}.name`)
+      : toolName;
+  const finalDesc =
+    slug && t(`tool.${slug}.desc`) !== `tool.${slug}.desc`
+      ? t(`tool.${slug}.desc`)
+      : toolDescription;
 
   return (
     <>
@@ -58,16 +70,16 @@ export default function ToolLayout({
                 d="M9 5l7 7-7 7"
               />
             </svg>
-            <span className="text-t-secondary font-medium">{toolName}</span>
+            <span className="text-t-secondary font-medium">{finalName}</span>
           </nav>
 
           <AdPlaceholder position="top" />
 
           {/* Tool header */}
           <div className="mb-8">
-            <h1 className="text-2xl font-bold text-t-primary">{toolName}</h1>
+            <h1 className="text-2xl font-bold text-t-primary">{finalName}</h1>
             <p className="text-[14px] text-t-secondary mt-2 leading-relaxed">
-              {toolDescription}
+              {finalDesc}
             </p>
           </div>
 

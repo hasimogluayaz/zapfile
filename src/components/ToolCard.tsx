@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Tool } from "@/lib/tools";
+import { useI18n } from "@/lib/i18n";
 
 // Color map for each tool category + specific tools for variety
 const toolColors: Record<string, { bg: string; text: string }> = {
@@ -36,6 +37,7 @@ const defaultColor = { bg: "bg-indigo-50", text: "text-indigo-500" };
 
 export default function ToolCard({ tool }: { tool: Tool }) {
   const colors = toolColors[tool.slug] || defaultColor;
+  const { t } = useI18n();
 
   return (
     <Link
@@ -50,10 +52,14 @@ export default function ToolCard({ tool }: { tool: Tool }) {
       </div>
       <div className="min-w-0 pt-0.5">
         <p className="text-[14px] font-semibold text-t-primary group-hover:text-accent transition-colors">
-          {tool.name}
+          {t(`tool.${tool.slug}.name`) !== `tool.${tool.slug}.name`
+            ? t(`tool.${tool.slug}.name`)
+            : tool.name}
         </p>
         <p className="text-[12px] text-t-tertiary mt-1 line-clamp-2 leading-relaxed">
-          {tool.description}
+          {t(`tool.${tool.slug}.desc`) !== `tool.${tool.slug}.desc`
+            ? t(`tool.${tool.slug}.desc`)
+            : tool.description}
         </p>
       </div>
     </Link>

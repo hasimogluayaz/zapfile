@@ -79,6 +79,65 @@ const translations: Record<Locale, Record<string, string>> = {
     "tools.all": "All",
     "tools.noResults": 'No tools match "{query}"',
 
+    // Tools Metadata
+    "tool.compress-pdf.name": "Compress PDF",
+    "tool.compress-pdf.desc": "Reduce PDF file size while maintaining quality",
+    "tool.merge-pdf.name": "Merge PDF",
+    "tool.merge-pdf.desc": "Combine multiple PDF files into one document",
+    "tool.split-pdf.name": "Split PDF",
+    "tool.split-pdf.desc": "Extract specific pages from a PDF file",
+    "tool.pdf-to-images.name": "PDF to Images",
+    "tool.pdf-to-images.desc": "Convert PDF pages to PNG or JPG images",
+    "tool.rotate-pdf.name": "Rotate PDF",
+    "tool.rotate-pdf.desc": "Rotate PDF pages individually or all at once",
+
+    "tool.compress-image.name": "Compress Image",
+    "tool.compress-image.desc": "Reduce image file size with quality control",
+    "tool.resize-image.name": "Resize Image",
+    "tool.resize-image.desc":
+      "Change image dimensions with aspect ratio control",
+    "tool.convert-image.name": "Convert Image",
+    "tool.convert-image.desc":
+      "Convert between PNG, JPG, WEBP and AVIF formats",
+    "tool.crop-image.name": "Crop Image",
+    "tool.crop-image.desc":
+      "Crop images with preset ratios or custom selection",
+    "tool.rotate-image.name": "Rotate Image",
+    "tool.rotate-image.desc":
+      "Rotate images 90, 180, 270 degrees or flip horizontally/vertically",
+    "tool.watermark-image.name": "Add Watermark",
+    "tool.watermark-image.desc": "Add text or image watermark to photos",
+    "tool.remove-background.name": "Remove Background",
+    "tool.remove-background.desc":
+      "Remove image backgrounds instantly using AI",
+    "tool.image-to-pdf.name": "Image to PDF",
+    "tool.image-to-pdf.desc": "Convert JPG, PNG or WEBP images to PDF document",
+
+    "tool.compress-video.name": "Compress Video",
+    "tool.compress-video.desc": "Reduce video file size with quality options",
+    "tool.extract-audio.name": "Extract Audio",
+    "tool.extract-audio.desc": "Extract audio track from video as MP3 or WAV",
+    "tool.video-to-gif.name": "Video to GIF",
+    "tool.video-to-gif.desc": "Convert video clips to animated GIF images",
+
+    "tool.qr-generator.name": "QR Code Generator",
+    "tool.qr-generator.desc": "Generate QR codes with custom colors and logo",
+    "tool.svg-to-png.name": "SVG to PNG",
+    "tool.svg-to-png.desc": "Convert SVG vector files to PNG with custom size",
+    "tool.base64-encode.name": "Base64 Encoder",
+    "tool.base64-encode.desc": "Encode files or text to Base64 and decode back",
+    "tool.color-picker.name": "Color Picker",
+    "tool.color-picker.desc": "Pick colors and convert between HEX, RGB, HSL",
+    "tool.json-formatter.name": "JSON Formatter",
+    "tool.json-formatter.desc":
+      "Format, minify, and validate JSON data instantly",
+    "tool.hash-generator.name": "Hash Generator",
+    "tool.hash-generator.desc":
+      "Generate SHA-1, SHA-256, SHA-384, SHA-512 hashes",
+    "tool.word-counter.name": "Word Counter",
+    "tool.word-counter.desc":
+      "Count words, characters, sentences and reading time",
+
     // 404
     "404.title": "Page not found",
     "404.subtitle":
@@ -151,6 +210,73 @@ const translations: Record<Locale, Record<string, string>> = {
     "tools.search": "Ara...",
     "tools.all": "Hepsi",
     "tools.noResults": '"{query}" ile eşleşen araç bulunamadı',
+
+    // Tools Metadata
+    "tool.compress-pdf.name": "PDF Küçültme",
+    "tool.compress-pdf.desc": "Kaliteyi koruyarak PDF dosya boyutunu küçültün",
+    "tool.merge-pdf.name": "PDF Birleştirme",
+    "tool.merge-pdf.desc": "Birden fazla PDF dosyasını tek belgede birleştirin",
+    "tool.split-pdf.name": "PDF Ayırma",
+    "tool.split-pdf.desc": "PDF dosyasından belirli sayfaları çıkarın",
+    "tool.pdf-to-images.name": "PDF'i Resme Çevirme",
+    "tool.pdf-to-images.desc":
+      "PDF sayfalarını PNG veya JPG resimlerine dönüştürün",
+    "tool.rotate-pdf.name": "PDF Döndürme",
+    "tool.rotate-pdf.desc": "PDF sayfalarını tek tek veya topluca döndürün",
+
+    "tool.compress-image.name": "Resim Küçültme",
+    "tool.compress-image.desc":
+      "Resim dosya boyutunu kalite kontrolüyle küçültün",
+    "tool.resize-image.name": "Resim Boyutlandırma",
+    "tool.resize-image.desc":
+      "Resim boyutlarını en boy oranını koruyarak değiştirin",
+    "tool.convert-image.name": "Resim Çevirici",
+    "tool.convert-image.desc":
+      "Resimleri PNG, JPG, WEBP ve AVIF formatları arasında çevirin",
+    "tool.crop-image.name": "Resim Kırpma",
+    "tool.crop-image.desc": "Resimleri serbestçe veya belirli oranlarda kırpın",
+    "tool.rotate-image.name": "Resim Döndürücü",
+    "tool.rotate-image.desc":
+      "Resimleri 90, 180, 270 derece döndürün veya aynalayın",
+    "tool.watermark-image.name": "Filigran Ekleme",
+    "tool.watermark-image.desc": "Resimlere yazı veya logo filigranı ekleyin",
+    "tool.remove-background.name": "Arka Plan Silici",
+    "tool.remove-background.desc":
+      "Yapay zeka ile saniyeler içinde resim arka planını temizleyin",
+    "tool.image-to-pdf.name": "Resmi PDF Yapma",
+    "tool.image-to-pdf.desc":
+      "JPG, PNG veya WEBP resimlerini PDF belgesine çevirin",
+
+    "tool.compress-video.name": "Video Küçültme",
+    "tool.compress-video.desc":
+      "Kalite seçenekleriyle video dosya boyutunu küçültün",
+    "tool.extract-audio.name": "Müzik Çıkartma",
+    "tool.extract-audio.desc":
+      "Videodaki sesi MP3 veya WAV olarak dışa aktarın",
+    "tool.video-to-gif.name": "Videodan GIF Yapma",
+    "tool.video-to-gif.desc":
+      "Video kliplerini hareketli GIF resimlerine dönüştürün",
+
+    "tool.qr-generator.name": "QR Kod Oluşturucu",
+    "tool.qr-generator.desc": "Özel renk ve logolu QR kodlar oluşturun",
+    "tool.svg-to-png.name": "SVG'den PNG'ye",
+    "tool.svg-to-png.desc":
+      "SVG vektörlerini istediğiniz boyutta PNG'ye dönüştürün",
+    "tool.base64-encode.name": "Base64 Çevirici",
+    "tool.base64-encode.desc":
+      "Dosyaları veya metni Base64 olarak kodlayın ve çözün",
+    "tool.color-picker.name": "Renk Seçici",
+    "tool.color-picker.desc":
+      "HEX, RGB, HSL arasında renkleri bulun ve dönüştürün",
+    "tool.json-formatter.name": "JSON Formatlayıcı",
+    "tool.json-formatter.desc":
+      "JSON verilerini anında biçimlendirin, küçültün ve doğrulayın",
+    "tool.hash-generator.name": "Hash Üretici",
+    "tool.hash-generator.desc":
+      "SHA-1, SHA-256, SHA-384, SHA-512 şifreleme özetleri hesaplayın",
+    "tool.word-counter.name": "Kelime Sayacı",
+    "tool.word-counter.desc":
+      "Metindeki kelime, harf, cümle sayısını ve okuma süresini hesaplayın",
 
     // 404
     "404.title": "Sayfa bulunamadı",
