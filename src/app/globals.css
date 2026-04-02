@@ -2,43 +2,61 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
 
-/* ========== Theme Colors ========== */
+/* ========== Theme Colors — Light First ========== */
 :root {
   --bg: #ffffff;
-  --bg-secondary: #fafafa;
+  --bg-secondary: #f8f9fb;
+  --bg-tertiary: #f1f3f7;
   --surface: #ffffff;
-  --border: #e5e7eb;
-  --border-light: #f3f4f6;
-  --text-primary: #111827;
-  --text-secondary: #6b7280;
-  --text-tertiary: #9ca3af;
+  --surface-hover: #f8f9fb;
+  --border: #e8eaee;
+  --border-light: #f0f1f4;
+  --text-primary: #1a1d26;
+  --text-secondary: #5a6070;
+  --text-tertiary: #8c92a4;
   --accent: #6366f1;
   --accent-hover: #4f46e5;
-  --accent-light: rgba(99, 102, 241, 0.08);
-  --accent-muted: rgba(99, 102, 241, 0.15);
+  --accent-light: rgba(99, 102, 241, 0.06);
+  --accent-muted: rgba(99, 102, 241, 0.12);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+  --shadow-card-hover:
+    0 8px 24px rgba(99, 102, 241, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #09090b;
-    --bg-secondary: #111113;
-    --surface: #18181b;
-    --border: #27272a;
-    --border-light: #1e1e22;
-    --text-primary: #fafafa;
-    --text-secondary: #a1a1aa;
-    --text-tertiary: #71717a;
+    --bg: #0f1117;
+    --bg-secondary: #161820;
+    --bg-tertiary: #1c1e28;
+    --surface: #1c1e28;
+    --surface-hover: #22252f;
+    --border: #2a2d38;
+    --border-light: #22252f;
+    --text-primary: #f0f1f5;
+    --text-secondary: #9498a8;
+    --text-tertiary: #6b7085;
     --accent: #818cf8;
     --accent-hover: #6366f1;
-    --accent-light: rgba(129, 140, 248, 0.1);
-    --accent-muted: rgba(129, 140, 248, 0.18);
+    --accent-light: rgba(129, 140, 248, 0.08);
+    --accent-muted: rgba(129, 140, 248, 0.15);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.4);
+    --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.15);
+    --shadow-card-hover:
+      0 8px 24px rgba(129, 140, 248, 0.1), 0 2px 8px rgba(0, 0, 0, 0.2);
   }
 }
 
 /* ========== Base ========== */
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+}
 
 body {
   background: var(--bg);
@@ -50,17 +68,27 @@ body {
 
 ::selection {
   background: var(--accent-muted);
+  color: var(--accent);
 }
 
 /* ========== Scrollbar ========== */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-tertiary);
+}
 
 /* ========== Utilities ========== */
 .gradient-text {
-  background: linear-gradient(135deg, #6366f1, #a78bfa);
+  background: linear-gradient(135deg, #6366f1, #a78bfa, #ec4899);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -74,12 +102,21 @@ body {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
   animation: shimmer 1.5s infinite;
 }
 @keyframes shimmer {
-  from { transform: translateX(-100%); }
-  to { transform: translateX(100%); }
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
 }
 
 /* ========== Focus ========== */
@@ -90,22 +127,26 @@ body {
 
 /* ========== Dropzone ========== */
 .dropzone {
-  border: 1.5px dashed var(--border);
-  transition: all 0.2s;
+  border: 2px dashed var(--border);
+  background: var(--bg-secondary);
+  transition: all 0.25s ease;
 }
-.dropzone:hover, .dropzone-active {
+.dropzone:hover,
+.dropzone-active {
   border-color: var(--accent);
   background: var(--accent-light);
+  box-shadow: 0 0 0 4px var(--accent-light);
 }
 
-/* ========== Legacy class overrides for tool pages ========== */
-/* Maps old white-opacity classes to theme-aware equivalents */
+/* ========== Glass card for tool pages ========== */
 .glass {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 16px;
+  box-shadow: var(--shadow-card);
 }
 
+/* ========== Legacy class overrides ========== */
 .bg-white\/5,
 .bg-white\/\[0\.02\],
 .bg-white\/\[0\.03\],
@@ -119,7 +160,7 @@ body {
 .bg-white\/10,
 .bg-white\/\[0\.08\],
 .bg-white\/\[0\.1\] {
-  background-color: var(--bg-secondary) !important;
+  background-color: var(--bg-tertiary) !important;
 }
 
 .hover\:bg-white\/10:hover,
@@ -144,13 +185,52 @@ body {
 
 /* Legacy gradient */
 .bg-gradient-brand {
-  background: linear-gradient(135deg, #6366f1, #a78bfa) !important;
+  background: linear-gradient(135deg, #6366f1, #818cf8) !important;
 }
 
 /* Form elements */
-input, select, textarea {
+input,
+select,
+textarea {
   color: var(--text-primary);
 }
-input::placeholder, textarea::placeholder {
+input::placeholder,
+textarea::placeholder {
   color: var(--text-tertiary);
+}
+
+/* ========== Animations ========== */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.4s ease-out;
+}
+.animate-fade-up {
+  animation: fade-up 0.5s ease-out;
 }

@@ -9,32 +9,83 @@ interface ToolLayoutProps {
   toolDescription: string;
 }
 
-export default function ToolLayout({ children, toolName, toolDescription }: ToolLayoutProps) {
+export default function ToolLayout({
+  children,
+  toolName,
+  toolDescription,
+}: ToolLayoutProps) {
   return (
     <>
       <Header />
       <main className="flex-1">
         <div className="max-w-2xl mx-auto px-5 py-8">
+          {/* Breadcrumb */}
           <nav className="flex items-center gap-1.5 text-[12px] text-t-tertiary mb-6">
-            <Link href="/" className="hover:text-t-secondary transition-colors">Home</Link>
-            <span className="text-t-tertiary/40">/</span>
-            <Link href="/tools" className="hover:text-t-secondary transition-colors">Tools</Link>
-            <span className="text-t-tertiary/40">/</span>
-            <span className="text-t-secondary">{toolName}</span>
+            <Link href="/" className="hover:text-accent transition-colors">
+              Home
+            </Link>
+            <svg
+              className="w-3 h-3 text-t-tertiary/40"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
+            <Link href="/tools" className="hover:text-accent transition-colors">
+              Tools
+            </Link>
+            <svg
+              className="w-3 h-3 text-t-tertiary/40"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
+            <span className="text-t-secondary font-medium">{toolName}</span>
           </nav>
 
           <AdPlaceholder position="top" />
 
-          <div className="mb-6">
-            <h1 className="text-xl font-semibold text-t-primary">{toolName}</h1>
-            <p className="text-[13px] text-t-secondary mt-1">{toolDescription}</p>
+          {/* Tool header */}
+          <div className="mb-8">
+            <h1 className="text-2xl font-bold text-t-primary">{toolName}</h1>
+            <p className="text-[14px] text-t-secondary mt-2 leading-relaxed">
+              {toolDescription}
+            </p>
           </div>
 
+          {/* Tool content */}
           <div className="animate-fade-up">{children}</div>
 
-          <p className="mt-10 text-center text-[11px] text-t-tertiary">
-            &#x26A1; Your files never leave your browser
-          </p>
+          {/* Privacy badge */}
+          <div className="mt-12 flex items-center justify-center gap-2 text-[12px] text-t-tertiary">
+            <svg
+              className="w-3.5 h-3.5 text-emerald-500"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+              />
+            </svg>
+            Your files never leave your browser
+          </div>
 
           <AdPlaceholder position="bottom" />
         </div>
