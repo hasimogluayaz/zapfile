@@ -39,13 +39,9 @@ export default function PdfToImagesPage() {
     setProgress(5);
 
     try {
-      const pdfjsUrl =
-        "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/build/pdf.min.mjs";
-      const workerUrl =
-        "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/build/pdf.worker.min.mjs";
-
-      const pdfjsLib = await import(/* webpackIgnore: true */ pdfjsUrl);
-      pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const pdfjsLib = await import("pdfjs-dist" as any);
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 
       setProgress(10);
 

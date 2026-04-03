@@ -29,12 +29,11 @@ export default function PdfToExcelPage() {
       const arrayBuffer = await file.arrayBuffer();
       setProgress(20);
 
-      const pdfjsLib = await import("pdfjs-dist" as string);
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
-
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const pdf = await (pdfjsLib as any).getDocument({ data: arrayBuffer })
-        .promise;
+      const pdfjsLib = await import("pdfjs-dist" as any);
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
       setProgress(40);
 
       const XLSX = await import("xlsx");
@@ -42,8 +41,7 @@ export default function PdfToExcelPage() {
 
       for (let i = 0; i < pdf.numPages; i++) {
         const page = await pdf.getPage(i + 1);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const textContent = await (page as any).getTextContent();
+        const textContent = await page.getTextContent();
 
         // Group text items by Y position to detect rows
         const items = textContent.items as {

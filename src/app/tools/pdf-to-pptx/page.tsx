@@ -29,8 +29,9 @@ export default function PdfToPptxPage() {
       const arrayBuffer = await file.arrayBuffer();
       setProgress(20);
 
-      const pdfjsLib = await import("pdfjs-dist" as string);
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const pdfjsLib = await import("pdfjs-dist" as any);
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
       setProgress(30);

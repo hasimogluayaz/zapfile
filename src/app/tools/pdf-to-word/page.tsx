@@ -28,12 +28,11 @@ export default function PdfToWordPage() {
     try {
       const arrayBuffer = await file.arrayBuffer();
 
-      const pdfjsLib = await import("pdfjs-dist" as string);
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
-
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const pdf = await (pdfjsLib as any).getDocument({ data: arrayBuffer })
-        .promise;
+      const pdfjsLib = await import("pdfjs-dist" as any);
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
       setProgress(50);
 
       const { Document, Packer, Paragraph, TextRun, PageBreak } =
@@ -42,8 +41,7 @@ export default function PdfToWordPage() {
       const paragraphs: any[] = [];
 
       for (let i = 0; i < pdf.numPages; i++) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const page = await (pdf as any).getPage(i + 1);
+        const page = await pdf.getPage(i + 1);
         const textContent = await page.getTextContent();
         const pageText = (textContent.items as { str: string }[])
           .map((item) => item.str)

@@ -1,14 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   async headers() {
+    const coepHeaders = [
+      { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
+      { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+    ];
     return [
-      {
-        source: "/:path*",
-        headers: [
-          { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
-          { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
-        ],
-      },
+      { source: "/tools/compress-video", headers: coepHeaders },
+      { source: "/tools/extract-audio", headers: coepHeaders },
+      { source: "/tools/video-to-gif", headers: coepHeaders },
     ];
   },
   webpack: (config, { isServer, webpack }) => {
