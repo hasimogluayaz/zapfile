@@ -101,7 +101,8 @@ export default function PdfPageNumbersPage() {
       }
 
       const pdfBytes = await pdfDoc.save();
-      const blob = new Blob([pdfBytes as any], { type: "application/pdf" });
+      const uint8Array = new Uint8Array(pdfBytes);
+      const blob = new Blob([uint8Array], { type: "application/pdf" });
       setResultBlob(blob);
       setProgress(100);
       toast.success("Page numbers added!");

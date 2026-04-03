@@ -21,12 +21,20 @@ const nextConfig = {
         module: false,
         perf_hooks: false,
         os: false,
+        net: false,
+        tls: false,
+        https: false,
+        http: false,
       };
 
       // Completely exclude @imgly/background-removal and onnxruntime from bundling
       // They will be loaded via CDN at runtime instead
       config.externals = [
-        ...(Array.isArray(config.externals) ? config.externals : config.externals ? [config.externals] : []),
+        ...(Array.isArray(config.externals)
+          ? config.externals
+          : config.externals
+            ? [config.externals]
+            : []),
         {
           "@imgly/background-removal": "commonjs @imgly/background-removal",
           "onnxruntime-web": "commonjs onnxruntime-web",
@@ -34,6 +42,12 @@ const nextConfig = {
         },
       ];
     }
+
+    config.plugins.push(
+      new webpack.NormalModuleReplacementPlugin(/^node:/, (resource) => {
+        resource.request = resource.request.replace(/^node:/, "");
+      }),
+    );
 
     if (isServer) {
       config.externals = config.externals || [];

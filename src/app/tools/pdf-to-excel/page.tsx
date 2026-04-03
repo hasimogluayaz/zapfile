@@ -32,7 +32,9 @@ export default function PdfToExcelPage() {
       const pdfjsLib = await import("pdfjs-dist" as string);
       pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
-      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const pdf = await (pdfjsLib as any).getDocument({ data: arrayBuffer })
+        .promise;
       setProgress(40);
 
       const XLSX = await import("xlsx");
@@ -40,10 +42,14 @@ export default function PdfToExcelPage() {
 
       for (let i = 0; i < pdf.numPages; i++) {
         const page = await pdf.getPage(i + 1);
-        const textContent = await page.getTextContent();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const textContent = await (page as any).getTextContent();
 
         // Group text items by Y position to detect rows
-        const items = textContent.items as any[];
+        const items = textContent.items as {
+          str: string;
+          transform: number[];
+        }[];
         const rows: Map<number, string[]> = new Map();
 
         items.forEach((item) => {

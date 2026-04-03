@@ -1,0 +1,45 @@
+﻿  Ôû▓ Next.js 14.2.35
+
+   Creating an optimized production build ...
+ Ô£ô Compiled successfully
+   Linting and checking validity of types ...
+cmd.exe : 
+At line:1 char:1
++ cmd.exe /c "npx next build" > 
+build.log 2>&1  ; Get-Content bu
+ild.log ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~
+    + CategoryInfo          : N 
+   otSpecified: (:String) [],   
+  RemoteException
+    + FullyQualifiedErrorId : N 
+   ativeCommandError
+ 
+Failed to compile.
+
+./src/app/tools/pdf-page-numbers
+/page.tsx
+104:42  Error: Unexpected any. S
+pecify a different type.  @types
+cript-eslint/no-explicit-any
+
+./src/app/tools/pdf-to-excel/pag
+e.tsx
+46:44  Error: Unexpected any. Sp
+ecify a different type.  @typesc
+ript-eslint/no-explicit-any
+
+./src/app/tools/pdf-to-word/page
+.tsx
+39:25  Error: Unexpected any. Sp
+ecify a different type.  @typesc
+ript-eslint/no-explicit-any
+44:48  Error: Unexpected any. Sp
+ecify a different type.  @typesc
+ript-eslint/no-explicit-any
+
+info  - Need to disable some ESL
+int rules? Learn more here: http
+s://nextjs.org/docs/basic-featur
+es/eslint#disabling-rules

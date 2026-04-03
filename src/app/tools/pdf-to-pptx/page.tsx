@@ -35,7 +35,9 @@ export default function PdfToPptxPage() {
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
       setProgress(30);
 
-      const PptxGenJS = (await import("pptxgenjs")).default;
+      // Only import large modules when we actually need them
+      const PptxGenModule = await import("pptxgenjs");
+      const PptxGenJS = PptxGenModule.default || PptxGenModule;
       const pptx = new PptxGenJS();
 
       for (let i = 0; i < pdf.numPages; i++) {
