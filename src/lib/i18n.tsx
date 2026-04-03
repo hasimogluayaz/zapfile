@@ -137,6 +137,21 @@ const translations: Record<Locale, Record<string, string>> = {
     "tool.word-counter.name": "Word Counter",
     "tool.word-counter.desc":
       "Count words, characters, sentences and reading time",
+    "tool.pdf-to-word.name": "PDF to Word",
+    "tool.pdf-to-word.desc":
+      "Convert PDF documents to editable Word (DOCX) files",
+    "tool.pdf-to-excel.name": "PDF to Excel",
+    "tool.pdf-to-excel.desc":
+      "Extract tables from PDF to Excel (XLSX) spreadsheets",
+    "tool.pdf-to-pptx.name": "PDF to PowerPoint",
+    "tool.pdf-to-pptx.desc":
+      "Convert PDF pages to PowerPoint (PPTX) presentations",
+    "tool.word-to-pdf.name": "Word to PDF",
+    "tool.word-to-pdf.desc": "Convert Word (DOCX) documents to PDF format",
+    "tool.pdf-page-numbers.name": "PDF Page Numbers",
+    "tool.pdf-page-numbers.desc": "Add page numbers to your PDF document",
+    "tool.ocr.name": "OCR - Image to Text",
+    "tool.ocr.desc": "Extract text from images using AI-powered OCR",
 
     // 404
     "404.title": "Page not found",
@@ -277,6 +292,21 @@ const translations: Record<Locale, Record<string, string>> = {
     "tool.word-counter.name": "Kelime Sayacı",
     "tool.word-counter.desc":
       "Metindeki kelime, harf, cümle sayısını ve okuma süresini hesaplayın",
+    "tool.pdf-to-word.name": "PDF'den Word'e",
+    "tool.pdf-to-word.desc":
+      "PDF belgelerini düzenlenebilir Word (DOCX) dosyalarına dönüştürün",
+    "tool.pdf-to-excel.name": "PDF'den Excel'e",
+    "tool.pdf-to-excel.desc":
+      "PDF'deki tabloları Excel (XLSX) dosyasına aktarın",
+    "tool.pdf-to-pptx.name": "PDF'den PowerPoint'e",
+    "tool.pdf-to-pptx.desc":
+      "PDF sayfalarını PowerPoint (PPTX) sunumuna dönüştürün",
+    "tool.word-to-pdf.name": "Word'den PDF'e",
+    "tool.word-to-pdf.desc": "Word (DOCX) belgelerini PDF formatına çevirin",
+    "tool.pdf-page-numbers.name": "PDF Sayfa Numarası",
+    "tool.pdf-page-numbers.desc": "PDF belgenize sayfa numaraları ekleyin",
+    "tool.ocr.name": "OCR - Görüntüden Metin",
+    "tool.ocr.desc": "Görüntülerden yapay zeka ile metin çıkarın",
 
     // 404
     "404.title": "Sayfa bulunamadı",

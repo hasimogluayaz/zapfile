@@ -82,6 +82,73 @@ export const tools: Tool[] = [
     metaDescription:
       "Rotate PDF pages 90, 180 or 270 degrees. Rotate individual pages or all at once. Free online tool.",
   },
+  {
+    slug: "pdf-to-word",
+    name: "PDF to Word",
+    description: "Convert PDF documents to editable Word (DOCX) files",
+    emoji: "\ud83d\udcdd",
+    category: "pdf",
+    acceptedFormats: [".pdf"],
+    metaTitle: "PDF to Word Converter - Free Online Tool | ZapFile",
+    metaDescription:
+      "Convert PDF files to editable Word documents (DOCX). Fast, free, and 100% private.",
+  },
+  {
+    slug: "pdf-to-excel",
+    name: "PDF to Excel",
+    description: "Extract tables from PDF to Excel (XLSX) spreadsheets",
+    emoji: "\ud83d\udcca",
+    category: "pdf",
+    acceptedFormats: [".pdf"],
+    metaTitle: "PDF to Excel Converter - Free Online Tool | ZapFile",
+    metaDescription:
+      "Extract tables and data from PDF files to Excel spreadsheets. Browser-based, no uploads.",
+  },
+  {
+    slug: "pdf-to-pptx",
+    name: "PDF to PowerPoint",
+    description: "Convert PDF pages to PowerPoint (PPTX) presentations",
+    emoji: "\ud83d\udcfd\ufe0f",
+    category: "pdf",
+    acceptedFormats: [".pdf"],
+    metaTitle: "PDF to PowerPoint Converter - Free Online Tool | ZapFile",
+    metaDescription:
+      "Convert PDF files to PowerPoint presentations. Each page becomes a slide. Free and private.",
+  },
+  {
+    slug: "word-to-pdf",
+    name: "Word to PDF",
+    description: "Convert Word (DOCX) documents to PDF format",
+    emoji: "\ud83d\udcc4",
+    category: "pdf",
+    acceptedFormats: [".docx"],
+    metaTitle: "Word to PDF Converter - Free Online Tool | ZapFile",
+    metaDescription:
+      "Convert Word documents to PDF format. Preserves formatting. Free, private, browser-based.",
+  },
+  {
+    slug: "pdf-page-numbers",
+    name: "PDF Page Numbers",
+    description: "Add page numbers to your PDF document",
+    emoji: "\ud83d\udd22",
+    category: "pdf",
+    acceptedFormats: [".pdf"],
+    metaTitle: "Add Page Numbers to PDF - Free Online Tool | ZapFile",
+    metaDescription:
+      "Add page numbers to PDF documents. Choose position and format. Free, browser-based tool.",
+  },
+  // Image Tools
+  {
+    slug: "ocr",
+    name: "OCR - Image to Text",
+    description: "Extract text from images using AI-powered OCR",
+    emoji: "\ud83d\udd0d",
+    category: "image",
+    acceptedFormats: [".jpg", ".jpeg", ".png", ".webp"],
+    metaTitle: "OCR Image to Text - Free Online Tool | ZapFile",
+    metaDescription:
+      "Extract text from images using OCR. Supports multiple languages. Free, private, browser-based.",
+  },
   // Image Tools
   {
     slug: "compress-image",

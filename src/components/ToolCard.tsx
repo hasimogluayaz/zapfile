@@ -31,6 +31,13 @@ const toolColors: Record<string, { bg: string; text: string }> = {
   "json-formatter": { bg: "bg-yellow-50", text: "text-yellow-600" },
   "hash-generator": { bg: "bg-gray-100", text: "text-gray-500" },
   "word-counter": { bg: "bg-blue-50", text: "text-blue-500" },
+  // New tools
+  "pdf-to-word": { bg: "bg-blue-50", text: "text-blue-600" },
+  "pdf-to-excel": { bg: "bg-emerald-50", text: "text-emerald-600" },
+  "pdf-to-pptx": { bg: "bg-orange-50", text: "text-orange-600" },
+  "word-to-pdf": { bg: "bg-red-50", text: "text-red-500" },
+  "pdf-page-numbers": { bg: "bg-violet-50", text: "text-violet-500" },
+  ocr: { bg: "bg-cyan-50", text: "text-cyan-600" },
 };
 
 const defaultColor = { bg: "bg-indigo-50", text: "text-indigo-500" };
