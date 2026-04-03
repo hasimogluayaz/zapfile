@@ -43,22 +43,13 @@ export default function PdfToWordPage() {
       for (let i = 0; i < pdf.numPages; i++) {
         const page = await pdf.getPage(i + 1);
         const textContent = await page.getTextContent();
-        const pageText = (textContent.items as { str: string }[])
-          .map((item) => item.str)
-          .join(" ");
+        const items = textContent.items as {
+          str: string;
+          transform: number[];
+          height: number;
+        }[];
 
-        if (pageText.trim()) {
-          paragraphs.push(
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: pageText,
-                  size: 24,
-                }),
-              ],
-            }),
-          );
-        } else {
+        if (items.length === 0) {
           paragraphs.push(
             new Paragraph({
               children: [
@@ -71,6 +62,61 @@ export default function PdfToWordPage() {
               ],
             }),
           );
+        } else {
+          // Group text items into lines by Y position
+          const lines: { y: number; items: { x: number; str: string; height: number }[] }[] = [];
+          for (const item of items) {
+            if (!item.str.trim() && item.str !== " ") continue;
+            const y = Math.round(item.transform[5]);
+            const x = item.transform[4];
+            const h = item.height || 12;
+            let line = lines.find((l) => Math.abs(l.y - y) < h * 0.5);
+            if (!line) {
+              line = { y, items: [] };
+              lines.push(line);
+            }
+            line.items.push({ x, str: item.str, height: h });
+          }
+
+          // Sort lines top to bottom (PDF Y is bottom-up)
+          lines.sort((a, b) => b.y - a.y);
+
+          // Sort items within each line left to right
+          for (const line of lines) {
+            line.items.sort((a, b) => a.x - b.x);
+          }
+
+          // Detect paragraph breaks (gap > 1.5x line height)
+          let currentBlock: string[] = [];
+          const flushBlock = () => {
+            if (currentBlock.length === 0) return;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const children: any[] = [];
+            currentBlock.forEach((line, k) => {
+              if (k > 0) {
+                children.push(new TextRun({ text: line, size: 24, break: 1 }));
+              } else {
+                children.push(new TextRun({ text: line, size: 24 }));
+              }
+            });
+            paragraphs.push(new Paragraph({ children, spacing: { after: 200 } }));
+            currentBlock = [];
+          };
+
+          for (let j = 0; j < lines.length; j++) {
+            const lineText = lines[j].items.map((it) => it.str).join("").trim();
+            if (!lineText) continue;
+
+            if (j > 0) {
+              const gap = lines[j - 1].y - lines[j].y;
+              const avgHeight = lines[j].items[0]?.height || 12;
+              if (gap > avgHeight * 1.8) {
+                flushBlock();
+              }
+            }
+            currentBlock.push(lineText);
+          }
+          flushBlock();
         }
 
         if (i < pdf.numPages - 1) {
