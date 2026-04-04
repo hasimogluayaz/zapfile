@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Toaster } from "react-hot-toast";
 import ClientProviders from "@/components/ClientProviders";
+
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
@@ -92,18 +93,33 @@ const jsonLd = {
   },
   browserRequirements: "Requires a modern web browser with JavaScript enabled",
   featureList: [
-    "Compress PDF",
     "Merge PDF",
     "Split PDF",
+    "PDF to Images",
     "Image Compression",
     "Image Conversion",
+    "Image Blur & Pixelate",
+    "Favicon Generator",
+    "EXIF Viewer",
+    "Image Collage Maker",
+    "Meme Generator",
+    "GIF Maker",
     "Video Compression",
+    "Video Trimming",
     "Audio Extraction",
+    "Audio Conversion",
     "QR Code Generator",
-    "Background Removal",
+    "Password Generator",
+    "Regex Tester",
+    "Diff Checker",
+    "Markdown Editor",
     "JSON Formatter",
+    "XML Formatter",
+    "CSV to JSON",
     "Hash Generator",
     "Word Counter",
+    "Unit Converter",
+    "Pomodoro Timer",
   ],
 };
 
@@ -121,6 +137,8 @@ export default function RootLayout({
             <script dangerouslySetInnerHTML={{ __html: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${process.env.NEXT_PUBLIC_GA_ID}');` }} />
           </>
         )}
+        <link rel="manifest" href="/site.webmanifest" />
+        <meta name="theme-color" content="#6366f1" />
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link
           rel="icon"

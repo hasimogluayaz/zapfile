@@ -102,7 +102,7 @@ export default function ToolsPage() {
           {/* Results */}
           {filteredTools.length === 0 ? (
             <p className="text-center text-t-tertiary text-[13px] py-12">
-              No tools match &ldquo;{search}&rdquo;
+              {t("tools.noResults", { query: search })}
             </p>
           ) : grouped ? (
             grouped.map((g) => (

@@ -3,8 +3,9 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ToolCard from "@/components/ToolCard";
-import { tools, categoryEmojis, type ToolCategory } from "@/lib/tools";
+import { tools, categoryEmojis, getToolBySlug, type ToolCategory } from "@/lib/tools";
 import { useI18n } from "@/lib/i18n";
+import { useRecentTools } from "@/hooks/useRecentTools";
 import Link from "next/link";
 
 const categories: ToolCategory[] = ["pdf", "image", "video", "utility"];
@@ -17,6 +18,10 @@ const catKeys: Record<ToolCategory, string> = {
 
 export default function Home() {
   const { t } = useI18n();
+  const { recentSlugs } = useRecentTools();
+  const recentTools = recentSlugs
+    .map((slug) => getToolBySlug(slug))
+    .filter(Boolean) as NonNullable<ReturnType<typeof getToolBySlug>>[];
 
   return (
     <>
@@ -123,6 +128,53 @@ export default function Home() {
             </div>
           </div>
         </section>
+
+        {/* Recent Tools */}
+        {recentTools.length > 0 && (
+          <section className="max-w-6xl mx-auto px-5 pb-8">
+            <div className="flex items-center gap-3 mb-4">
+              <svg
+                className="w-5 h-5 text-accent"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <h2 className="text-[18px] font-bold text-t-primary">
+                {t("recently.title")}
+              </h2>
+            </div>
+            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+              {recentTools.map((tool) => (
+                <Link
+                  key={tool.slug}
+                  href={`/tools/${tool.slug}`}
+                  className="flex-shrink-0 flex items-center gap-3 px-4 py-3 rounded-xl bg-surface border border-border hover:border-accent/20 hover:shadow-card-hover transition-all duration-200 min-w-[200px] max-w-[260px]"
+                >
+                  <span className="text-xl">{tool.emoji}</span>
+                  <div className="min-w-0">
+                    <p className="text-[13px] font-semibold text-t-primary truncate">
+                      {t(`tool.${tool.slug}.name`) !== `tool.${tool.slug}.name`
+                        ? t(`tool.${tool.slug}.name`)
+                        : tool.name}
+                    </p>
+                    <p className="text-[11px] text-t-tertiary truncate">
+                      {t(`tool.${tool.slug}.desc`) !== `tool.${tool.slug}.desc`
+                        ? t(`tool.${tool.slug}.desc`)
+                        : tool.description}
+                    </p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Tools */}
         <section className="max-w-6xl mx-auto px-5 pb-20">

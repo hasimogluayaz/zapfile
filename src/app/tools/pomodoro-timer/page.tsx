@@ -1,0 +1,379 @@
+"use client";
+
+import { useState, useEffect, useRef, useCallback } from "react";
+import toast from "react-hot-toast";
+import ToolLayout from "@/components/ToolLayout";
+
+type TimerState = "work" | "short-break" | "long-break";
+type PlayState = "idle" | "running" | "paused";
+
+function formatTime(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+}
+
+function playBeep() {
+  try {
+    const ctx = new AudioContext();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.frequency.value = 800;
+    gain.gain.value = 0.3;
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    setTimeout(() => {
+      osc.stop();
+      ctx.close();
+    }, 200);
+  } catch {
+    // Audio not available
+  }
+}
+
+export default function PomodoroTimerPage() {
+  const [workDuration, setWorkDuration] = useState(25);
+  const [shortBreakDuration, setShortBreakDuration] = useState(5);
+  const [longBreakDuration, setLongBreakDuration] = useState(15);
+  const [sessionsBeforeLong, setSessionsBeforeLong] = useState(4);
+
+  const [timerState, setTimerState] = useState<TimerState>("work");
+  const [playState, setPlayState] = useState<PlayState>("idle");
+  const [timeLeft, setTimeLeft] = useState(25 * 60);
+  const [currentSession, setCurrentSession] = useState(1);
+
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const originalTitle = useRef("");
+
+  const getTotalSeconds = useCallback(
+    (state: TimerState): number => {
+      switch (state) {
+        case "work":
+          return workDuration * 60;
+        case "short-break":
+          return shortBreakDuration * 60;
+        case "long-break":
+          return longBreakDuration * 60;
+      }
+    },
+    [workDuration, shortBreakDuration, longBreakDuration]
+  );
+
+  // Store original title on mount
+  useEffect(() => {
+    originalTitle.current = document.title;
+    return () => {
+      document.title = originalTitle.current;
+    };
+  }, []);
+
+  // Update document title
+  useEffect(() => {
+    if (playState === "running" || playState === "paused") {
+      const label =
+        timerState === "work"
+          ? "Work"
+          : timerState === "short-break"
+          ? "Break"
+          : "Long Break";
+      document.title = `${formatTime(timeLeft)} - ${label} | Pomodoro`;
+    } else {
+      document.title = originalTitle.current;
+    }
+  }, [timeLeft, timerState, playState]);
+
+  // Timer tick
+  useEffect(() => {
+    if (playState === "running") {
+      intervalRef.current = setInterval(() => {
+        setTimeLeft((prev) => {
+          if (prev <= 1) {
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } else {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    }
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [playState]);
+
+  // Handle timer completion
+  useEffect(() => {
+    if (timeLeft === 0 && playState === "running") {
+      playBeep();
+      handleTimerComplete();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timeLeft, playState]);
+
+  const handleTimerComplete = () => {
+    if (timerState === "work") {
+      if (currentSession >= sessionsBeforeLong) {
+        setTimerState("long-break");
+        setTimeLeft(longBreakDuration * 60);
+        toast.success("Great work! Time for a long break.");
+      } else {
+        setTimerState("short-break");
+        setTimeLeft(shortBreakDuration * 60);
+        toast.success("Work session done! Take a short break.");
+      }
+    } else {
+      // Break finished
+      if (timerState === "long-break") {
+        setCurrentSession(1);
+      } else {
+        setCurrentSession((prev) => prev + 1);
+      }
+      setTimerState("work");
+      setTimeLeft(workDuration * 60);
+      toast.success("Break over! Time to focus.");
+    }
+  };
+
+  const handleStart = () => {
+    if (playState === "idle") {
+      setTimeLeft(getTotalSeconds(timerState));
+    }
+    setPlayState("running");
+  };
+
+  const handlePause = () => {
+    setPlayState("paused");
+  };
+
+  const handleReset = () => {
+    setPlayState("idle");
+    setTimerState("work");
+    setTimeLeft(workDuration * 60);
+    setCurrentSession(1);
+  };
+
+  const handleSkip = () => {
+    setPlayState("idle");
+    if (timerState === "work") {
+      if (currentSession >= sessionsBeforeLong) {
+        setTimerState("long-break");
+        setTimeLeft(longBreakDuration * 60);
+      } else {
+        setTimerState("short-break");
+        setTimeLeft(shortBreakDuration * 60);
+      }
+    } else {
+      if (timerState === "long-break") {
+        setCurrentSession(1);
+      } else {
+        setCurrentSession((prev) => prev + 1);
+      }
+      setTimerState("work");
+      setTimeLeft(workDuration * 60);
+    }
+  };
+
+  // Update timeLeft when durations change in idle state
+  useEffect(() => {
+    if (playState === "idle") {
+      setTimeLeft(getTotalSeconds(timerState));
+    }
+  }, [workDuration, shortBreakDuration, longBreakDuration, playState, timerState, getTotalSeconds]);
+
+  // SVG progress ring
+  const radius = 120;
+  const circumference = 2 * Math.PI * radius;
+  const totalSeconds = getTotalSeconds(timerState);
+  const progress = totalSeconds > 0 ? timeLeft / totalSeconds : 0;
+  const strokeDashoffset = circumference * (1 - progress);
+
+  const isWork = timerState === "work";
+  const ringColor = isWork ? "stroke-indigo-500" : "stroke-emerald-500";
+  const stateLabel =
+    timerState === "work"
+      ? "Focus"
+      : timerState === "short-break"
+      ? "Short Break"
+      : "Long Break";
+
+  return (
+    <ToolLayout
+      toolName="Pomodoro Timer"
+      toolDescription="Focus timer with work and break intervals"
+    >
+      <div className="space-y-6">
+        {/* Timer Display */}
+        <div className="glass rounded-xl p-8 flex flex-col items-center">
+          {/* State Label */}
+          <div className="mb-6">
+            <span
+              className={`px-4 py-1.5 rounded-full text-sm font-semibold ${
+                isWork
+                  ? "bg-indigo-500/20 text-indigo-400"
+                  : "bg-emerald-500/20 text-emerald-400"
+              }`}
+            >
+              {stateLabel}
+            </span>
+            <span className="text-sm text-t-tertiary ml-3">
+              Session {currentSession}/{sessionsBeforeLong}
+            </span>
+          </div>
+
+          {/* SVG Circle Timer */}
+          <div className="relative w-[280px] h-[280px]">
+            <svg
+              className="w-full h-full -rotate-90"
+              viewBox="0 0 280 280"
+            >
+              {/* Background circle */}
+              <circle
+                cx="140"
+                cy="140"
+                r={radius}
+                fill="none"
+                stroke="currentColor"
+                className="text-bg-secondary"
+                strokeWidth="8"
+              />
+              {/* Progress circle */}
+              <circle
+                cx="140"
+                cy="140"
+                r={radius}
+                fill="none"
+                className={ringColor}
+                strokeWidth="8"
+                strokeLinecap="round"
+                strokeDasharray={circumference}
+                strokeDashoffset={strokeDashoffset}
+                style={{ transition: "stroke-dashoffset 0.5s ease" }}
+              />
+            </svg>
+            {/* Time display */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-5xl font-bold text-t-primary font-mono tracking-wider">
+                {formatTime(timeLeft)}
+              </span>
+              <span className="text-sm text-t-tertiary mt-2">
+                {playState === "running"
+                  ? "Running"
+                  : playState === "paused"
+                  ? "Paused"
+                  : "Ready"}
+              </span>
+            </div>
+          </div>
+
+          {/* Controls */}
+          <div className="flex gap-3 mt-8">
+            {playState === "running" ? (
+              <button
+                onClick={handlePause}
+                className="px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:shadow-lg transition-all"
+              >
+                Pause
+              </button>
+            ) : (
+              <button
+                onClick={handleStart}
+                className="px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:shadow-lg transition-all"
+              >
+                {playState === "paused" ? "Resume" : "Start"}
+              </button>
+            )}
+            <button
+              onClick={handleSkip}
+              className="px-4 py-2 rounded-lg text-t-secondary bg-bg-secondary border border-border hover:text-t-primary transition-colors"
+            >
+              Skip
+            </button>
+            <button
+              onClick={handleReset}
+              className="px-4 py-2 rounded-lg text-t-secondary bg-bg-secondary border border-border hover:text-t-primary transition-colors"
+            >
+              Reset
+            </button>
+          </div>
+        </div>
+
+        {/* Settings */}
+        <div className="glass rounded-xl p-6">
+          <h3 className="text-sm font-semibold text-t-primary mb-4">Settings</h3>
+          <div className="space-y-5">
+            {/* Work Duration */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm text-t-secondary">Work Duration</label>
+                <span className="text-sm text-t-primary font-mono">{workDuration} min</span>
+              </div>
+              <input
+                type="range"
+                min="1"
+                max="60"
+                value={workDuration}
+                onChange={(e) => setWorkDuration(parseInt(e.target.value))}
+                className="w-full h-2 bg-bg-secondary rounded-lg appearance-none cursor-pointer accent-indigo-500"
+              />
+            </div>
+
+            {/* Short Break */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm text-t-secondary">Short Break</label>
+                <span className="text-sm text-t-primary font-mono">{shortBreakDuration} min</span>
+              </div>
+              <input
+                type="range"
+                min="1"
+                max="30"
+                value={shortBreakDuration}
+                onChange={(e) => setShortBreakDuration(parseInt(e.target.value))}
+                className="w-full h-2 bg-bg-secondary rounded-lg appearance-none cursor-pointer accent-emerald-500"
+              />
+            </div>
+
+            {/* Long Break */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm text-t-secondary">Long Break</label>
+                <span className="text-sm text-t-primary font-mono">{longBreakDuration} min</span>
+              </div>
+              <input
+                type="range"
+                min="1"
+                max="60"
+                value={longBreakDuration}
+                onChange={(e) => setLongBreakDuration(parseInt(e.target.value))}
+                className="w-full h-2 bg-bg-secondary rounded-lg appearance-none cursor-pointer accent-emerald-500"
+              />
+            </div>
+
+            {/* Sessions before long break */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm text-t-secondary">Sessions before long break</label>
+                <span className="text-sm text-t-primary font-mono">{sessionsBeforeLong}</span>
+              </div>
+              <input
+                type="range"
+                min="2"
+                max="8"
+                value={sessionsBeforeLong}
+                onChange={(e) => setSessionsBeforeLong(parseInt(e.target.value))}
+                className="w-full h-2 bg-bg-secondary rounded-lg appearance-none cursor-pointer accent-indigo-500"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </ToolLayout>
+  );
+}

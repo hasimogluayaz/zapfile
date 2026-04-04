@@ -28,6 +28,30 @@
     0 8px 24px rgba(99, 102, 241, 0.1), 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
+/* ========== Dark Theme ========== */
+[data-theme="dark"] {
+  --bg: #0f1117;
+  --bg-secondary: #1a1c25;
+  --bg-tertiary: #252830;
+  --surface: #1a1c25;
+  --surface-hover: #22242d;
+  --border: #2a2d38;
+  --border-light: #23252e;
+  --text-primary: #f1f2f6;
+  --text-secondary: #a0a4b8;
+  --text-tertiary: #6b6f82;
+  --accent: #818cf8;
+  --accent-hover: #6366f1;
+  --accent-light: rgba(129, 140, 248, 0.1);
+  --accent-muted: rgba(129, 140, 248, 0.15);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.15);
+  --shadow-card-hover:
+    0 8px 24px rgba(129, 140, 248, 0.15), 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
 /* ========== Base ========== */
 html {
   scroll-behavior: smooth;

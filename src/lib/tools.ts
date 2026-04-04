@@ -28,17 +28,6 @@ export const categoryEmojis: Record<ToolCategory, string> = {
 export const tools: Tool[] = [
   // PDF Tools
   {
-    slug: "compress-pdf",
-    name: "Compress PDF",
-    description: "Reduce PDF file size while maintaining quality",
-    emoji: "\ud83d\uddc3\ufe0f",
-    category: "pdf",
-    acceptedFormats: [".pdf"],
-    metaTitle: "Compress PDF - Free Online Tool | ZapFile",
-    metaDescription:
-      "Compress PDF files instantly in your browser. No uploads, no limits. Reduce file size while maintaining quality.",
-  },
-  {
     slug: "merge-pdf",
     name: "Merge PDF",
     description: "Combine multiple PDF files into one document",
@@ -83,50 +72,6 @@ export const tools: Tool[] = [
       "Rotate PDF pages 90, 180 or 270 degrees. Rotate individual pages or all at once. Free online tool.",
   },
   {
-    slug: "pdf-to-word",
-    name: "PDF to Word",
-    description: "Convert PDF documents to editable Word (DOCX) files",
-    emoji: "\ud83d\udcdd",
-    category: "pdf",
-    acceptedFormats: [".pdf"],
-    metaTitle: "PDF to Word Converter - Free Online Tool | ZapFile",
-    metaDescription:
-      "Convert PDF files to editable Word documents (DOCX). Fast, free, and 100% private.",
-  },
-  {
-    slug: "pdf-to-excel",
-    name: "PDF to Excel",
-    description: "Extract tables from PDF to Excel (XLSX) spreadsheets",
-    emoji: "\ud83d\udcca",
-    category: "pdf",
-    acceptedFormats: [".pdf"],
-    metaTitle: "PDF to Excel Converter - Free Online Tool | ZapFile",
-    metaDescription:
-      "Extract tables and data from PDF files to Excel spreadsheets. Browser-based, no uploads.",
-  },
-  {
-    slug: "pdf-to-pptx",
-    name: "PDF to PowerPoint",
-    description: "Convert PDF pages to PowerPoint (PPTX) presentations",
-    emoji: "\ud83d\udcfd\ufe0f",
-    category: "pdf",
-    acceptedFormats: [".pdf"],
-    metaTitle: "PDF to PowerPoint Converter - Free Online Tool | ZapFile",
-    metaDescription:
-      "Convert PDF files to PowerPoint presentations. Each page becomes a slide. Free and private.",
-  },
-  {
-    slug: "word-to-pdf",
-    name: "Word to PDF",
-    description: "Convert Word (DOCX) documents to PDF format",
-    emoji: "\ud83d\udcc4",
-    category: "pdf",
-    acceptedFormats: [".docx"],
-    metaTitle: "Word to PDF Converter - Free Online Tool | ZapFile",
-    metaDescription:
-      "Convert Word documents to PDF format. Preserves formatting. Free, private, browser-based.",
-  },
-  {
     slug: "pdf-page-numbers",
     name: "PDF Page Numbers",
     description: "Add page numbers to your PDF document",
@@ -136,18 +81,6 @@ export const tools: Tool[] = [
     metaTitle: "Add Page Numbers to PDF - Free Online Tool | ZapFile",
     metaDescription:
       "Add page numbers to PDF documents. Choose position and format. Free, browser-based tool.",
-  },
-  // Image Tools
-  {
-    slug: "ocr",
-    name: "OCR - Image to Text",
-    description: "Extract text from images using AI-powered OCR",
-    emoji: "\ud83d\udd0d",
-    category: "image",
-    acceptedFormats: [".jpg", ".jpeg", ".png", ".webp"],
-    metaTitle: "OCR Image to Text - Free Online Tool | ZapFile",
-    metaDescription:
-      "Extract text from images using OCR. Supports multiple languages. Free, private, browser-based.",
   },
   // Image Tools
   {
@@ -218,17 +151,6 @@ export const tools: Tool[] = [
       "Add custom text watermarks to images. Control position, opacity, size and color. Free and private.",
   },
   {
-    slug: "remove-background",
-    name: "Remove Background",
-    description: "Remove image backgrounds instantly using AI",
-    emoji: "\u2728",
-    category: "image",
-    acceptedFormats: [".jpg", ".jpeg", ".png", ".webp"],
-    metaTitle: "Remove Background - Free Online AI Tool | ZapFile",
-    metaDescription:
-      "Remove image backgrounds instantly using AI. Works with photos, portraits, and product images. 100% private, browser-based.",
-  },
-  {
     slug: "image-to-pdf",
     name: "Image to PDF",
     description: "Convert JPG, PNG or WEBP images to PDF document",
@@ -238,6 +160,83 @@ export const tools: Tool[] = [
     metaTitle: "Image to PDF - Free Online Tool | ZapFile",
     metaDescription:
       "Convert JPG, PNG, or WEBP images to PDF. Combine multiple images into one PDF. Free, private, browser-based.",
+  },
+  {
+    slug: "blur-image",
+    name: "Blur Image",
+    description: "Blur or pixelate areas of an image for privacy",
+    emoji: "\ud83c\udf2b\ufe0f",
+    category: "image",
+    acceptedFormats: [".jpg", ".jpeg", ".png", ".webp"],
+    metaTitle: "Blur & Pixelate Image - Free Online Tool | ZapFile",
+    metaDescription:
+      "Blur or pixelate areas of images to hide sensitive information. Free, private, browser-based.",
+  },
+  {
+    slug: "favicon-generator",
+    name: "Favicon Generator",
+    description: "Generate all favicon sizes from a single image",
+    emoji: "\u2b50",
+    category: "image",
+    acceptedFormats: [".jpg", ".jpeg", ".png", ".webp", ".svg"],
+    metaTitle: "Favicon Generator - Free Online Tool | ZapFile",
+    metaDescription:
+      "Generate all favicon sizes (16x16, 32x32, 180x180, 192x192, 512x512) from one image. Download as ZIP.",
+  },
+  {
+    slug: "exif-viewer",
+    name: "EXIF Viewer",
+    description: "View and remove image metadata (EXIF data)",
+    emoji: "\ud83d\udcf7",
+    category: "image",
+    acceptedFormats: [".jpg", ".jpeg", ".png", ".webp"],
+    metaTitle: "EXIF Viewer & Remover - Free Online Tool | ZapFile",
+    metaDescription:
+      "View and remove EXIF metadata from images. See camera info, GPS data, and more. Free and private.",
+  },
+  {
+    slug: "image-collage",
+    name: "Image Collage",
+    description: "Create photo collages with multiple layout options",
+    emoji: "\ud83d\uddbc\ufe0f",
+    category: "image",
+    acceptedFormats: [".jpg", ".jpeg", ".png", ".webp"],
+    metaTitle: "Image Collage Maker - Free Online Tool | ZapFile",
+    metaDescription:
+      "Create beautiful photo collages. Multiple layouts, adjustable spacing. Free, private, browser-based.",
+  },
+  {
+    slug: "meme-generator",
+    name: "Meme Generator",
+    description: "Add text to images to create memes",
+    emoji: "\ud83d\ude02",
+    category: "image",
+    acceptedFormats: [".jpg", ".jpeg", ".png", ".webp"],
+    metaTitle: "Meme Generator - Free Online Tool | ZapFile",
+    metaDescription:
+      "Create memes by adding text to images. Customize font, size, and position. Free online meme maker.",
+  },
+  {
+    slug: "image-to-base64",
+    name: "Image to Base64",
+    description: "Convert images to Base64 encoded strings",
+    emoji: "\ud83d\udd24",
+    category: "image",
+    acceptedFormats: [".jpg", ".jpeg", ".png", ".webp", ".svg", ".gif"],
+    metaTitle: "Image to Base64 Converter - Free Online Tool | ZapFile",
+    metaDescription:
+      "Convert images to Base64 strings for embedding in HTML/CSS. Free, private, browser-based.",
+  },
+  {
+    slug: "gif-maker",
+    name: "GIF Maker",
+    description: "Create animated GIFs from multiple images",
+    emoji: "\ud83c\udfac",
+    category: "image",
+    acceptedFormats: [".jpg", ".jpeg", ".png", ".webp"],
+    metaTitle: "GIF Maker - Free Online Tool | ZapFile",
+    metaDescription:
+      "Create animated GIFs from multiple images. Set frame delay and size. Free and private.",
   },
   // Video & Audio Tools
   {
@@ -273,6 +272,39 @@ export const tools: Tool[] = [
     metaDescription:
       "Convert video clips to GIF. Set start/end time and quality. Browser-based, no uploads.",
   },
+  {
+    slug: "trim-video",
+    name: "Trim Video",
+    description: "Cut video clips by setting start and end time",
+    emoji: "\u2702\ufe0f",
+    category: "video",
+    acceptedFormats: [".mp4", ".webm", ".mov"],
+    metaTitle: "Trim Video - Free Online Tool | ZapFile",
+    metaDescription:
+      "Trim and cut video clips by setting start and end time. Free, private, browser-based tool.",
+  },
+  {
+    slug: "trim-audio",
+    name: "Trim Audio",
+    description: "Cut audio files by setting start and end time",
+    emoji: "\u2702\ufe0f",
+    category: "video",
+    acceptedFormats: [".mp3", ".wav", ".ogg", ".aac", ".m4a"],
+    metaTitle: "Trim Audio - Free Online Tool | ZapFile",
+    metaDescription:
+      "Trim and cut audio files by setting start and end time. Supports MP3, WAV, OGG. Free and private.",
+  },
+  {
+    slug: "audio-converter",
+    name: "Audio Converter",
+    description: "Convert between MP3, WAV, OGG, and AAC formats",
+    emoji: "\ud83d\udd04",
+    category: "video",
+    acceptedFormats: [".mp3", ".wav", ".ogg", ".aac", ".m4a", ".flac"],
+    metaTitle: "Audio Converter - Free Online Tool | ZapFile",
+    metaDescription:
+      "Convert audio files between MP3, WAV, OGG, and AAC formats. Free, private, browser-based.",
+  },
   // Utility Tools
   {
     slug: "qr-generator",
@@ -296,7 +328,6 @@ export const tools: Tool[] = [
     metaDescription:
       "Convert SVG files to PNG with custom dimensions. High-quality rendering. Free and private.",
   },
-  // Bonus tools
   {
     slug: "base64-encode",
     name: "Base64 Encoder",
@@ -323,7 +354,7 @@ export const tools: Tool[] = [
     slug: "json-formatter",
     name: "JSON Formatter",
     description: "Format, minify, and validate JSON data instantly",
-    emoji: "\uD83D\uDCCB",
+    emoji: "\ud83d\udccb",
     category: "utility",
     acceptedFormats: [],
     metaTitle: "JSON Formatter & Validator - Free Online Tool | ZapFile",
@@ -334,7 +365,7 @@ export const tools: Tool[] = [
     slug: "hash-generator",
     name: "Hash Generator",
     description: "Generate SHA-1, SHA-256, SHA-384, SHA-512 hashes",
-    emoji: "\uD83D\uDD10",
+    emoji: "\ud83d\udd10",
     category: "utility",
     acceptedFormats: [],
     metaTitle: "Hash Generator (SHA-256, SHA-512) - Free Online Tool | ZapFile",
@@ -345,12 +376,144 @@ export const tools: Tool[] = [
     slug: "word-counter",
     name: "Word Counter",
     description: "Count words, characters, sentences and reading time",
-    emoji: "\uD83D\uDCDD",
+    emoji: "\ud83d\udcdd",
     category: "utility",
     acceptedFormats: [],
     metaTitle: "Word Counter & Text Analyzer - Free Online Tool | ZapFile",
     metaDescription:
       "Count words, characters, sentences, paragraphs and estimate reading time. Free online tool.",
+  },
+  {
+    slug: "password-generator",
+    name: "Password Generator",
+    description: "Generate strong, secure random passwords",
+    emoji: "\ud83d\udd10",
+    category: "utility",
+    acceptedFormats: [],
+    metaTitle: "Password Generator - Free Secure Tool | ZapFile",
+    metaDescription:
+      "Generate strong, secure random passwords with customizable length and character types. Free and private.",
+  },
+  {
+    slug: "diff-checker",
+    name: "Diff Checker",
+    description: "Compare two texts and highlight differences",
+    emoji: "\ud83d\udcca",
+    category: "utility",
+    acceptedFormats: [],
+    metaTitle: "Diff Checker - Compare Text Online | ZapFile",
+    metaDescription:
+      "Compare two texts side by side and find differences. Highlight additions and deletions. Free online tool.",
+  },
+  {
+    slug: "markdown-editor",
+    name: "Markdown Editor",
+    description: "Write and preview Markdown with live rendering",
+    emoji: "\u270d\ufe0f",
+    category: "utility",
+    acceptedFormats: [],
+    metaTitle: "Markdown Editor & Preview - Free Online Tool | ZapFile",
+    metaDescription:
+      "Write Markdown with live preview. Export as HTML. Free, private, browser-based.",
+  },
+  {
+    slug: "url-encoder",
+    name: "URL Encoder/Decoder",
+    description: "Encode or decode URL strings instantly",
+    emoji: "\ud83d\udd17",
+    category: "utility",
+    acceptedFormats: [],
+    metaTitle: "URL Encoder/Decoder - Free Online Tool | ZapFile",
+    metaDescription:
+      "Encode and decode URL strings instantly. Supports full URL and component encoding. Free online tool.",
+  },
+  {
+    slug: "timestamp-converter",
+    name: "Timestamp Converter",
+    description: "Convert between Unix timestamps and human dates",
+    emoji: "\ud83d\udd50",
+    category: "utility",
+    acceptedFormats: [],
+    metaTitle: "Unix Timestamp Converter - Free Online Tool | ZapFile",
+    metaDescription:
+      "Convert Unix timestamps to human-readable dates and vice versa. Multiple formats supported. Free online tool.",
+  },
+  {
+    slug: "lorem-ipsum",
+    name: "Lorem Ipsum Generator",
+    description: "Generate placeholder text for designs and layouts",
+    emoji: "\ud83d\udcdd",
+    category: "utility",
+    acceptedFormats: [],
+    metaTitle: "Lorem Ipsum Generator - Free Online Tool | ZapFile",
+    metaDescription:
+      "Generate Lorem Ipsum placeholder text. Choose paragraphs, sentences, or words. Copy to clipboard instantly.",
+  },
+  {
+    slug: "regex-tester",
+    name: "Regex Tester",
+    description: "Test and debug regular expressions with live matching",
+    emoji: "\ud83d\udd0d",
+    category: "utility",
+    acceptedFormats: [],
+    metaTitle: "Regex Tester - Free Online Tool | ZapFile",
+    metaDescription:
+      "Test regular expressions with live matching and highlighting. Supports flags. Free online regex tool.",
+  },
+  {
+    slug: "csv-json",
+    name: "CSV \u2194 JSON",
+    description: "Convert between CSV and JSON formats",
+    emoji: "\ud83d\udcca",
+    category: "utility",
+    acceptedFormats: [],
+    metaTitle: "CSV to JSON Converter - Free Online Tool | ZapFile",
+    metaDescription:
+      "Convert CSV to JSON and JSON to CSV instantly. Free, private, browser-based tool.",
+  },
+  {
+    slug: "xml-formatter",
+    name: "XML Formatter",
+    description: "Format, minify, and validate XML data",
+    emoji: "\ud83d\udccb",
+    category: "utility",
+    acceptedFormats: [],
+    metaTitle: "XML Formatter & Validator - Free Online Tool | ZapFile",
+    metaDescription:
+      "Format, beautify, and validate XML data. Free, private, browser-based tool.",
+  },
+  {
+    slug: "yaml-formatter",
+    name: "YAML Formatter",
+    description: "Format and validate YAML data with JSON conversion",
+    emoji: "\ud83d\udccb",
+    category: "utility",
+    acceptedFormats: [],
+    metaTitle: "YAML Formatter & Validator - Free Online Tool | ZapFile",
+    metaDescription:
+      "Format, beautify, and validate YAML data. Convert YAML to JSON. Free online tool.",
+  },
+  {
+    slug: "unit-converter",
+    name: "Unit Converter",
+    description: "Convert between px, rem, cm, inches and more",
+    emoji: "\ud83d\udccf",
+    category: "utility",
+    acceptedFormats: [],
+    metaTitle: "Unit Converter (px/rem/cm/inch) - Free Online Tool | ZapFile",
+    metaDescription:
+      "Convert between CSS units (px, rem, em, vw), length units (cm, mm, inch) and more. Free online tool.",
+  },
+  {
+    slug: "pomodoro-timer",
+    name: "Pomodoro Timer",
+    description: "Focus timer with work and break intervals",
+    emoji: "\ud83c\udf45",
+    category: "utility",
+    acceptedFormats: [],
+    metaTitle: "Pomodoro Timer - Free Online Tool | ZapFile",
+    metaDescription:
+      "Stay focused with the Pomodoro technique. Customizable work and break intervals. Free online timer.",
   },
 ];
 

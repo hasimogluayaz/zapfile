@@ -3,44 +3,36 @@
 import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { useI18n } from "@/lib/i18n";
 
 export default function NotFound() {
-  const { t } = useI18n();
-
   return (
     <>
       <Header />
-      <main className="flex-1 flex items-center justify-center">
-        <div className="text-center px-5 py-20">
-          <p className="text-7xl font-extrabold gradient-text mb-4">404</p>
-          <h1 className="text-2xl font-bold text-t-primary mb-2">
-            {t("404.title")}
-          </h1>
-          <p className="text-t-secondary text-[14px] mb-8 max-w-sm mx-auto">
-            {t("404.subtitle")}
-          </p>
+      <div className="min-h-[70vh] flex flex-col items-center justify-center px-5 py-16">
+        <p className="text-8xl font-bold bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent mb-4">
+          404
+        </p>
+        <h1 className="text-2xl font-bold text-t-primary mb-2">
+          Page Not Found
+        </h1>
+        <p className="text-t-secondary text-[15px] mb-8 text-center max-w-md">
+          The page you&apos;re looking for doesn&apos;t exist or has been moved.
+        </p>
+        <div className="flex items-center gap-3">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-[14px] font-semibold bg-accent text-white hover:bg-accent-hover transition-all hover:shadow-lg hover:shadow-accent/20"
+            className="px-5 py-2.5 rounded-lg text-[13px] font-medium text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:opacity-90 transition-opacity"
           >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M10 19l-7-7m0 0l7-7m-7 7h18"
-              />
-            </svg>
-            {t("404.cta")}
+            Go Home
+          </Link>
+          <Link
+            href="/tools"
+            className="px-5 py-2.5 rounded-lg text-[13px] font-medium text-t-secondary bg-bg-secondary border border-border hover:text-t-primary hover:bg-bg-tertiary transition-colors"
+          >
+            Browse Tools
           </Link>
         </div>
-      </main>
+      </div>
       <Footer />
     </>
   );
