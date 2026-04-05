@@ -8,6 +8,7 @@ import ProcessButton from "@/components/ProcessButton";
 import DownloadButton from "@/components/DownloadButton";
 import ProgressBar from "@/components/ProgressBar";
 import { formatFileSize, getFileNameWithoutExtension } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 
 function parseTime(str: string): number {
   const parts = str.trim().split(":").map(Number);
@@ -29,6 +30,7 @@ function formatTime(seconds: number): string {
 }
 
 export default function TrimAudioPage() {
+  const { t } = useI18n();
   const [file, setFile] = useState<File | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [duration, setDuration] = useState(0);
@@ -87,15 +89,15 @@ export default function TrimAudioPage() {
     const end = parseTime(endTime);
 
     if (start < 0 || end < 0) {
-      toast.error("Invalid time format. Use MM:SS or HH:MM:SS.");
+      toast.error(t("trimaud.invalidTime"));
       return;
     }
     if (start >= end) {
-      toast.error("Start time must be before end time.");
+      toast.error(t("trimaud.startBeforeEnd"));
       return;
     }
     if (end > Math.ceil(duration)) {
-      toast.error("End time exceeds audio duration.");
+      toast.error(t("trimaud.exceedsDuration"));
       return;
     }
 
@@ -103,7 +105,7 @@ export default function TrimAudioPage() {
     setProgress(0);
 
     try {
-      toast.loading("Loading audio processor...", { id: "ffmpeg-load" });
+      toast.loading(t("trimaud.loading"), { id: "ffmpeg-load" });
       const { ffmpeg, fetchFile } = await loadFFmpeg();
       toast.dismiss("ffmpeg-load");
 
@@ -141,12 +143,12 @@ export default function TrimAudioPage() {
       const url = URL.createObjectURL(blob);
       setResultUrl(url);
 
-      toast.success("Audio trimmed successfully!");
+      toast.success(t("trimaud.success"));
 
       await ffmpeg.deleteFile(inputName);
       await ffmpeg.deleteFile(outputName);
     } catch (error) {
-      toast.error("Failed to trim audio. Please try a different file.");
+      toast.error(t("trimaud.fail"));
       console.error(error);
     } finally {
       setProcessing(false);
@@ -272,15 +274,15 @@ export default function TrimAudioPage() {
           </div>
 
           {processing && (
-            <ProgressBar progress={progress} label="Trimming audio..." />
+            <ProgressBar progress={progress} label={t("trimaud.trimming")} />
           )}
 
           <ProcessButton
             onClick={handleProcess}
             loading={processing}
             disabled={!file}
-            label="Trim Audio"
-            loadingLabel="Trimming..."
+            label={t("trimaud.button")}
+            loadingLabel={t("trimaud.trimming")}
           />
 
           <p className="text-xs text-t-secondary text-center">
@@ -313,7 +315,7 @@ export default function TrimAudioPage() {
             <DownloadButton
               blob={result}
               filename={`${getFileNameWithoutExtension(file.name)}_trimmed${file.name.substring(file.name.lastIndexOf("."))}`}
-              label="Download Trimmed Audio"
+              label={t("trimaud.download")}
             />
             <button
               onClick={reset}

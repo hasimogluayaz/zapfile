@@ -7,6 +7,7 @@ import FileDropzone from "@/components/FileDropzone";
 import DownloadButton from "@/components/DownloadButton";
 import ProgressBar from "@/components/ProgressBar";
 import { formatFileSize } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 
 interface ImageItem {
   file: File;
@@ -15,6 +16,7 @@ interface ImageItem {
 }
 
 export default function ImageToPdfPage() {
+  const { t } = useI18n();
   const [images, setImages] = useState<ImageItem[]>([]);
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -122,10 +124,10 @@ export default function ImageToPdfPage() {
       const blob = new Blob([pdfBytes.buffer as ArrayBuffer], { type: "application/pdf" });
       setResultBlob(blob);
       setProgress(100);
-      toast.success(`PDF created with ${images.length} page${images.length > 1 ? "s" : ""}!`);
+      toast.success(t("img2pdf.success").replace("{count}", String(images.length)));
     } catch (error) {
       console.error(error);
-      toast.error("Failed to create PDF. Please try again.");
+      toast.error(t("img2pdf.fail"));
     } finally {
       setProcessing(false);
     }
@@ -148,7 +150,7 @@ export default function ImageToPdfPage() {
           <>
             {/* Page size selector */}
             <div className="glass rounded-xl p-4">
-              <p className="text-sm font-medium text-brand-text mb-3">Page Size</p>
+              <p className="text-sm font-medium text-brand-text mb-3">{t("img2pdf.pageSize")}</p>
               <div className="flex gap-3">
                 {(["a4", "letter", "fit"] as const).map((size) => (
                   <button
@@ -160,7 +162,7 @@ export default function ImageToPdfPage() {
                         : "bg-white/5 text-brand-muted hover:bg-white/10"
                     }`}
                   >
-                    {size === "a4" ? "A4" : size === "letter" ? "Letter" : "Fit to Image"}
+                    {size === "a4" ? "A4" : size === "letter" ? "Letter" : t("img2pdf.fitToImage")}
                   </button>
                 ))}
               </div>
@@ -168,7 +170,7 @@ export default function ImageToPdfPage() {
 
             {/* Image list */}
             <div className="glass rounded-xl p-4 space-y-3">
-              <p className="text-sm font-medium text-brand-text">{images.length} image{images.length > 1 ? "s" : ""} — drag to reorder</p>
+              <p className="text-sm font-medium text-brand-text">{t("img2pdf.dragReorder").replace("{count}", String(images.length))}</p>
               {images.map((img, idx) => (
                 <div key={img.id} className="flex items-center gap-3 bg-white/5 rounded-lg p-3">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -182,7 +184,7 @@ export default function ImageToPdfPage() {
                       onClick={() => moveImage(img.id, "up")}
                       disabled={idx === 0}
                       className="p-1.5 rounded text-brand-muted hover:text-brand-text disabled:opacity-30 transition-colors"
-                      title="Move up"
+                      title={t("ui.moveUp")}
                     >
                       ↑
                     </button>
@@ -190,14 +192,14 @@ export default function ImageToPdfPage() {
                       onClick={() => moveImage(img.id, "down")}
                       disabled={idx === images.length - 1}
                       className="p-1.5 rounded text-brand-muted hover:text-brand-text disabled:opacity-30 transition-colors"
-                      title="Move down"
+                      title={t("ui.moveDown")}
                     >
                       ↓
                     </button>
                     <button
                       onClick={() => removeImage(img.id)}
                       className="p-1.5 rounded text-brand-muted hover:text-red-400 transition-colors"
-                      title="Remove"
+                      title={t("ui.remove")}
                     >
                       ✕
                     </button>
@@ -206,14 +208,14 @@ export default function ImageToPdfPage() {
               ))}
             </div>
 
-            {processing && <ProgressBar progress={progress} label="Creating PDF..." />}
+            {processing && <ProgressBar progress={progress} label={t("img2pdf.creating")} />}
 
             {!processing && !resultBlob && (
               <button
                 onClick={handleProcess}
                 className="w-full sm:w-auto px-8 py-3 rounded-xl font-semibold text-white bg-gradient-brand hover:shadow-lg hover:shadow-brand-indigo/25 hover:scale-[1.02] active:scale-[0.98] transition-all"
               >
-                Convert to PDF
+                {t("img2pdf.convert")}
               </button>
             )}
 
@@ -224,7 +226,7 @@ export default function ImageToPdfPage() {
                   onClick={() => setResultBlob(null)}
                   className="px-6 py-3 rounded-xl font-semibold text-brand-text bg-white/5 hover:bg-white/10 transition-colors"
                 >
-                  Convert Again
+                  {t("img2pdf.again")}
                 </button>
               </div>
             )}

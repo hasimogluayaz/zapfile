@@ -10,6 +10,7 @@ import {
   getFileNameWithoutExtension,
   downloadBlob,
 } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 
 interface PageImage {
   pageNum: number;
@@ -18,6 +19,7 @@ interface PageImage {
 }
 
 export default function PdfToImagesPage() {
+  const { t } = useI18n();
   const [file, setFile] = useState<File | null>(null);
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -79,13 +81,11 @@ export default function PdfToImagesPage() {
       setImages(results);
       setProgress(100);
       toast.success(
-        `Converted ${results.length} page${results.length > 1 ? "s" : ""} to ${format.toUpperCase()}!`,
+        t("pdfimg.success", { count: results.length, format: format.toUpperCase() }),
       );
     } catch (error) {
       console.error(error);
-      toast.error(
-        "Failed to convert PDF. The file may be corrupted or password protected.",
-      );
+      toast.error(t("pdfimg.fail"));
     } finally {
       setProcessing(false);
     }
@@ -145,7 +145,7 @@ export default function PdfToImagesPage() {
                 onClick={reset}
                 className="text-sm text-brand-muted hover:text-red-400 transition-colors"
               >
-                Remove
+                {t("ui.remove")}
               </button>
             </div>
           </div>
@@ -154,7 +154,7 @@ export default function PdfToImagesPage() {
           <div className="glass rounded-xl p-4 space-y-4">
             <div>
               <p className="text-sm font-medium text-brand-text mb-3">
-                Output Format
+                {t("pdfimg.outputFormat")}
               </p>
               <div className="flex gap-3">
                 {(["png", "jpeg"] as const).map((f) => (
@@ -167,7 +167,7 @@ export default function PdfToImagesPage() {
                         : "bg-white/5 text-brand-muted hover:bg-white/10"
                     }`}
                   >
-                    {f === "png" ? "PNG (lossless)" : "JPG (smaller file)"}
+                    {f === "png" ? t("pdfimg.pngLossless") : t("pdfimg.jpgSmaller")}
                   </button>
                 ))}
               </div>
@@ -194,7 +194,7 @@ export default function PdfToImagesPage() {
 
             <div>
               <div className="flex justify-between text-sm mb-2">
-                <span className="text-brand-muted">Resolution</span>
+                <span className="text-brand-muted">{t("pdfimg.resolution")}</span>
                 <span className="text-brand-text font-medium">{scale}x</span>
               </div>
               <input
@@ -207,14 +207,14 @@ export default function PdfToImagesPage() {
                 className="w-full accent-brand-indigo"
               />
               <div className="flex justify-between text-xs text-brand-muted mt-1">
-                <span>1x (Fast)</span>
-                <span>4x (Best quality)</span>
+                <span>{t("pdfimg.1x")}</span>
+                <span>{t("pdfimg.4x")}</span>
               </div>
             </div>
           </div>
 
           {processing && (
-            <ProgressBar progress={progress} label="Converting pages..." />
+            <ProgressBar progress={progress} label={t("pdfimg.converting")} />
           )}
 
           {!processing && (
@@ -222,7 +222,7 @@ export default function PdfToImagesPage() {
               onClick={handleProcess}
               className="w-full sm:w-auto px-8 py-3 rounded-xl font-semibold text-white bg-gradient-brand hover:shadow-lg hover:shadow-brand-indigo/25 hover:scale-[1.02] active:scale-[0.98] transition-all"
             >
-              Convert to Images
+              {t("pdfimg.convert")}
             </button>
           )}
         </div>
@@ -230,20 +230,20 @@ export default function PdfToImagesPage() {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <p className="text-sm text-brand-muted">
-              {images.length} page{images.length > 1 ? "s" : ""} converted
+              {t("pdfimg.converted", { count: images.length })}
             </p>
             <div className="flex gap-3">
               <button
                 onClick={downloadAll}
                 className="px-6 py-2.5 rounded-xl font-semibold text-white bg-emerald-600 hover:bg-emerald-500 transition-colors"
               >
-                {images.length > 1 ? "Download All (ZIP)" : "Download"}
+                {images.length > 1 ? t("ui.downloadZip") : t("ui.download")}
               </button>
               <button
                 onClick={reset}
                 className="px-6 py-2.5 rounded-xl font-semibold text-brand-text bg-white/5 hover:bg-white/10 transition-colors"
               >
-                Convert Another
+                {t("pdfimg.another")}
               </button>
             </div>
           </div>
@@ -255,18 +255,18 @@ export default function PdfToImagesPage() {
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={img.dataUrl}
-                    alt={`Page ${img.pageNum}`}
+                    alt={t("pdfimg.page", { num: img.pageNum })}
                     className="w-full rounded-lg border border-white/10"
                   />
                   <button
                     onClick={() => downloadSingle(img)}
                     className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center text-white text-sm font-medium"
                   >
-                    Download
+                    {t("ui.download")}
                   </button>
                 </div>
                 <p className="text-xs text-brand-muted mt-2 text-center">
-                  Page {img.pageNum} &middot; {formatFileSize(img.blob.size)}
+                  {t("pdfimg.page", { num: img.pageNum })} &middot; {formatFileSize(img.blob.size)}
                 </p>
               </div>
             ))}

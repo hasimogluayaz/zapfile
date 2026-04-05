@@ -10,6 +10,7 @@ import {
   getFileNameWithoutExtension,
   downloadBlob,
 } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 
 type WatermarkPosition =
   | "center"
@@ -27,6 +28,7 @@ const positionOptions: { value: WatermarkPosition; label: string }[] = [
 ];
 
 export default function WatermarkImagePage() {
+  const { t } = useI18n();
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
@@ -158,7 +160,7 @@ export default function WatermarkImagePage() {
         imgRef.current = img;
         drawWatermark(img, watermarkText, fontSize, opacity, position, color);
       };
-      img.onerror = () => toast.error("Failed to load image.");
+      img.onerror = () => toast.error(t("ui.failedLoad"));
       img.src = URL.createObjectURL(f);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -177,9 +179,9 @@ export default function WatermarkImagePage() {
         setResultPreview(objectUrl);
         const baseName = getFileNameWithoutExtension(file.name);
         downloadBlob(blob, `${baseName}-watermarked.png`);
-        toast.success("Watermark applied and downloaded!");
+        toast.success(t("wm.success"));
       } else {
-        toast.error("Failed to export image.");
+        toast.error(t("ui.failedExport"));
       }
     }, "image/png");
   };
@@ -217,13 +219,13 @@ export default function WatermarkImagePage() {
               <div className="glass rounded-xl p-3 space-y-2">
                 <div className="flex items-center justify-between">
                   <p className="text-[12px] font-medium text-brand-muted">
-                    Live Preview
+                    {t("ui.livePreview")}
                   </p>
                   <button
                     onClick={reset}
                     className="text-[11px] text-brand-muted hover:text-red-400 transition-colors"
                   >
-                    Remove
+                    {t("ui.remove")}
                   </button>
                 </div>
                 {preview ? (
@@ -252,13 +254,13 @@ export default function WatermarkImagePage() {
                 {/* Text */}
                 <div>
                   <label className="block text-[12px] text-brand-muted mb-1.5">
-                    Watermark Text
+                    {t("wm.watermarkText")}
                   </label>
                   <input
                     type="text"
                     value={watermarkText}
                     onChange={(e) => setWatermarkText(e.target.value)}
-                    placeholder="Enter watermark text"
+                    placeholder={t("wm.enterText")}
                     className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-[13px] text-brand-text placeholder:text-brand-muted/50 focus:outline-none focus:border-brand-indigo/50 transition-colors"
                   />
                 </div>
@@ -267,7 +269,7 @@ export default function WatermarkImagePage() {
                 <div>
                   <div className="flex justify-between mb-1.5">
                     <label className="text-[12px] text-brand-muted">
-                      Font Size
+                      {t("wm.fontSize")}
                     </label>
                     <span className="text-[12px] font-mono text-brand-muted">
                       {fontSize}px
@@ -292,7 +294,7 @@ export default function WatermarkImagePage() {
                 <div>
                   <div className="flex justify-between mb-1.5">
                     <label className="text-[12px] text-brand-muted">
-                      Opacity
+                      {t("wm.opacity")}
                     </label>
                     <span className="text-[12px] font-mono text-brand-muted">
                       {opacity}%

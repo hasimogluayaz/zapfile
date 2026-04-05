@@ -9,6 +9,7 @@ import DownloadButton from "@/components/DownloadButton";
 import ProgressBar from "@/components/ProgressBar";
 import FileSizeCompare from "@/components/FileSizeCompare";
 import { formatFileSize } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 
 type Preset = "quick" | "balanced" | "quality";
 type Resolution = "original" | "1080" | "720" | "480";
@@ -49,6 +50,7 @@ const audioBitrateOptions = [
 ];
 
 export default function CompressVideoPage() {
+  const { t } = useI18n();
   const [file, setFile] = useState<File | null>(null);
   const [preset, setPreset] = useState<Preset>("balanced");
   const [crf, setCrf] = useState(28);
@@ -98,7 +100,7 @@ export default function CompressVideoPage() {
     setProgress(0);
 
     try {
-      toast.loading("Loading video processor...", { id: "ffmpeg-load" });
+      toast.loading(t("compvid.loading"), { id: "ffmpeg-load" });
       const { ffmpeg, fetchFile } = await loadFFmpeg();
       toast.dismiss("ffmpeg-load");
 
@@ -142,12 +144,12 @@ export default function CompressVideoPage() {
         type: "video/mp4",
       });
       setResult(blob);
-      toast.success("Video compressed successfully!");
+      toast.success(t("compvid.success"));
 
       await ffmpeg.deleteFile(inputName);
       await ffmpeg.deleteFile("output.mp4");
     } catch (error) {
-      toast.error("Failed to compress video. Try a smaller file.");
+      toast.error(t("compvid.fail"));
       console.error(error);
     } finally {
       setProcessing(false);
@@ -193,7 +195,7 @@ export default function CompressVideoPage() {
 
           {/* Quick Presets */}
           <div className="glass rounded-xl p-6">
-            <h3 className="font-medium text-brand-text mb-4">Quick Presets</h3>
+            <h3 className="font-medium text-brand-text mb-4">{t("compvid.quickPresets")}</h3>
             <div className="grid grid-cols-3 gap-3">
               {(Object.keys(presetSettings) as Preset[]).map((p) => (
                 <button
@@ -206,10 +208,10 @@ export default function CompressVideoPage() {
                   }`}
                 >
                   <p className="font-medium text-sm">
-                    {presetSettings[p].label}
+                    {p === "quick" ? t("compvid.quick") : p === "balanced" ? t("compvid.balanced") : t("compvid.qualityPreset")}
                   </p>
                   <p className="text-xs mt-1 opacity-70">
-                    {presetSettings[p].desc}
+                    {p === "quick" ? t("compvid.smallestFile") : p === "balanced" ? t("compvid.goodRatio") : t("compvid.bestQuality")}
                   </p>
                 </button>
               ))}
@@ -222,7 +224,7 @@ export default function CompressVideoPage() {
               onClick={() => setShowAdvanced(!showAdvanced)}
               className="w-full p-4 flex items-center justify-between text-brand-text hover:bg-white/5 transition-colors"
             >
-              <span className="font-medium text-sm">Advanced Settings</span>
+              <span className="font-medium text-sm">{t("compvid.advanced")}</span>
               <svg
                 className={`w-4 h-4 transition-transform ${showAdvanced ? "rotate-180" : ""}`}
                 fill="none"
@@ -244,7 +246,7 @@ export default function CompressVideoPage() {
                 <div>
                   <div className="flex justify-between mb-2">
                     <label className="text-sm text-brand-muted">
-                      Quality (CRF)
+                      {t("compvid.crf")}
                     </label>
                     <span className="text-sm font-medium text-brand-text">
                       {crf}
@@ -259,15 +261,15 @@ export default function CompressVideoPage() {
                     className="w-full accent-brand-indigo"
                   />
                   <div className="flex justify-between text-xs text-brand-muted mt-1">
-                    <span>Best quality (18)</span>
-                    <span>Smallest file (51)</span>
+                    <span>{t("compvid.bestCrf")}</span>
+                    <span>{t("compvid.smallestCrf")}</span>
                   </div>
                 </div>
 
                 {/* Resolution */}
                 <div>
                   <label className="block text-sm text-brand-muted mb-2">
-                    Resolution
+                    {t("compvid.resolution")}
                   </label>
                   <div className="grid grid-cols-4 gap-2">
                     {resolutionOptions.map((opt) => (
@@ -289,7 +291,7 @@ export default function CompressVideoPage() {
                 {/* Encoding Speed */}
                 <div>
                   <label className="block text-sm text-brand-muted mb-2">
-                    Encoding Speed
+                    {t("compvid.encodingSpeed")}
                   </label>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     {encodingSpeedOptions.map((opt) => (
@@ -302,7 +304,7 @@ export default function CompressVideoPage() {
                             : "bg-white/5 text-brand-muted hover:bg-white/10"
                         }`}
                       >
-                        <p className="text-xs font-medium">{opt.label}</p>
+                        <p className="text-xs font-medium">{opt.value === "ultrafast" ? t("compvid.ultrafast") : opt.value === "fast" ? t("compvid.fast") : opt.value === "medium" ? t("compvid.medium") : t("compvid.slow")}</p>
                       </button>
                     ))}
                   </div>
@@ -311,7 +313,7 @@ export default function CompressVideoPage() {
                 {/* Audio Bitrate */}
                 <div>
                   <label className="block text-sm text-brand-muted mb-2">
-                    Audio Bitrate
+                    {t("compvid.audioBitrate")}
                   </label>
                   <div className="grid grid-cols-4 gap-2">
                     {audioBitrateOptions.map((opt) => (
@@ -334,20 +336,19 @@ export default function CompressVideoPage() {
           </div>
 
           {processing && (
-            <ProgressBar progress={progress} label="Compressing video..." />
+            <ProgressBar progress={progress} label={t("compvid.compressing")} />
           )}
 
           <ProcessButton
             onClick={handleProcess}
             loading={processing}
             disabled={!file}
-            label="Compress Video"
-            loadingLabel="Compressing..."
+            label={t("compvid.button")}
+            loadingLabel={t("compvid.compressing")}
           />
 
           <p className="text-xs text-brand-muted text-center">
-            Note: First use may take a moment to load the video processor
-            (~30MB).
+            {t("ui.ffmpegNote")}
           </p>
         </div>
       ) : (
@@ -358,13 +359,13 @@ export default function CompressVideoPage() {
             <DownloadButton
               blob={result}
               filename={`compressed-${file.name.replace(/\.[^.]+$/, "")}.mp4`}
-              label="Download Compressed Video"
+              label={t("compvid.download")}
             />
             <button
               onClick={reset}
               className="px-6 py-3 rounded-xl font-semibold text-brand-text bg-white/5 hover:bg-white/10 transition-colors"
             >
-              Process Another Video
+              {t("compvid.another")}
             </button>
           </div>
         </div>

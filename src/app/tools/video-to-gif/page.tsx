@@ -8,6 +8,7 @@ import ProcessButton from "@/components/ProcessButton";
 import DownloadButton from "@/components/DownloadButton";
 import ProgressBar from "@/components/ProgressBar";
 import { formatFileSize, getFileNameWithoutExtension } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 
 type GifPreset = "high" | "medium" | "low";
 
@@ -21,6 +22,7 @@ const gifPresets: Record<
 };
 
 export default function VideoToGifPage() {
+  const { t } = useI18n();
   const [file, setFile] = useState<File | null>(null);
   const [preset, setPreset] = useState<GifPreset>("medium");
   const [fps, setFps] = useState(10);
@@ -83,7 +85,7 @@ export default function VideoToGifPage() {
     const dur = parseFloat(duration) || 5;
 
     if (start < 0 || start >= videoDuration) {
-      toast.error("Invalid start time");
+      toast.error(t("vid2gif.invalidStart"));
       return;
     }
 
@@ -91,7 +93,7 @@ export default function VideoToGifPage() {
     setProgress(0);
 
     try {
-      toast.loading("Loading video processor...", { id: "ffmpeg-load" });
+      toast.loading(t("vid2gif.creating"), { id: "ffmpeg-load" });
       const { ffmpeg, fetchFile } = await loadFFmpeg();
       toast.dismiss("ffmpeg-load");
 
@@ -125,14 +127,12 @@ export default function VideoToGifPage() {
         type: "image/gif",
       });
       setResult(blob);
-      toast.success("GIF created successfully!");
+      toast.success(t("vid2gif.success"));
 
       await ffmpeg.deleteFile(inputName);
       await ffmpeg.deleteFile("output.gif");
     } catch (error) {
-      toast.error(
-        "Failed to create GIF. Try shorter duration or lower quality.",
-      );
+      toast.error(t("vid2gif.fail"));
       console.error(error);
     } finally {
       setProcessing(false);
@@ -180,11 +180,11 @@ export default function VideoToGifPage() {
 
           {/* Timing */}
           <div className="glass rounded-xl p-6">
-            <h3 className="font-medium text-brand-text mb-4">Timing</h3>
+            <h3 className="font-medium text-brand-text mb-4">{t("vid2gif.timing")}</h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm text-brand-muted mb-2">
-                  Start time (seconds)
+                  {t("vid2gif.startTime")}
                 </label>
                 <input
                   type="number"
@@ -197,7 +197,7 @@ export default function VideoToGifPage() {
               </div>
               <div>
                 <label className="block text-sm text-brand-muted mb-2">
-                  Duration (seconds)
+                  {t("vid2gif.duration")}
                 </label>
                 <input
                   type="number"
@@ -210,14 +210,14 @@ export default function VideoToGifPage() {
               </div>
             </div>
             <p className="text-xs text-brand-muted mt-2">
-              Tip: Keep GIFs under 10 seconds for best results.
+              {t("vid2gif.tip")}
             </p>
           </div>
 
           {/* Quick Presets */}
           <div className="glass rounded-xl p-6">
             <h3 className="font-medium text-brand-text mb-4">
-              Quality Presets
+              {t("vid2gif.qualityPresets")}
             </h3>
             <div className="grid grid-cols-3 gap-3">
               {(Object.keys(gifPresets) as GifPreset[]).map((q) => (
@@ -232,7 +232,7 @@ export default function VideoToGifPage() {
                       : "bg-white/5 border border-white/10 text-brand-muted hover:border-white/20"
                   }`}
                 >
-                  <p className="text-sm font-medium">{gifPresets[q].label}</p>
+                  <p className="text-sm font-medium">{q === "high" ? t("vid2gif.high") : q === "medium" ? t("vid2gif.medium") : t("vid2gif.low")}</p>
                 </button>
               ))}
             </div>
@@ -244,7 +244,7 @@ export default function VideoToGifPage() {
               onClick={() => setShowAdvanced(!showAdvanced)}
               className="w-full p-4 flex items-center justify-between text-brand-text hover:bg-white/5 transition-colors"
             >
-              <span className="font-medium text-sm">Advanced Settings</span>
+              <span className="font-medium text-sm">{t("vid2gif.advanced")}</span>
               <svg
                 className={`w-4 h-4 transition-transform ${showAdvanced ? "rotate-180" : ""}`}
                 fill="none"
@@ -266,7 +266,7 @@ export default function VideoToGifPage() {
                 <div>
                   <div className="flex justify-between mb-2">
                     <label className="text-sm text-brand-muted">
-                      Frame Rate
+                      {t("vid2gif.frameRate")}
                     </label>
                     <span className="text-sm font-medium text-brand-text">
                       {fps} FPS
@@ -312,7 +312,7 @@ export default function VideoToGifPage() {
                 {/* Max Colors */}
                 <div>
                   <label className="block text-sm text-brand-muted mb-2">
-                    Max Colors
+                    {t("vid2gif.maxColors")}
                   </label>
                   <div className="grid grid-cols-3 gap-2">
                     {[64, 128, 256].map((c) => (
@@ -335,22 +335,22 @@ export default function VideoToGifPage() {
           </div>
 
           {processing && (
-            <ProgressBar progress={progress} label="Creating GIF..." />
+            <ProgressBar progress={progress} label={t("vid2gif.creating")} />
           )}
 
           <ProcessButton
             onClick={handleProcess}
             loading={processing}
             disabled={!file}
-            label="Create GIF"
-            loadingLabel="Creating..."
+            label={t("vid2gif.create")}
+            loadingLabel={t("vid2gif.creating")}
           />
         </div>
       ) : (
         <div className="space-y-6">
           <div className="glass rounded-xl p-6 text-center">
             <p className="text-brand-text font-medium">
-              GIF created successfully
+              {t("vid2gif.success")}
             </p>
             <p className="text-sm text-brand-muted mt-1">
               Size: {formatFileSize(result.size)} &middot; {fps} FPS &middot;{" "}
@@ -363,7 +363,7 @@ export default function VideoToGifPage() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={URL.createObjectURL(result)}
-              alt="Generated GIF"
+              alt={t("vid2gif.generatedGif")}
               className="max-w-full max-h-96 rounded-lg border border-white/10"
             />
           </div>
@@ -372,7 +372,7 @@ export default function VideoToGifPage() {
             <DownloadButton
               blob={result}
               filename={`${getFileNameWithoutExtension(file.name)}.gif`}
-              label="Download GIF"
+              label={t("vid2gif.download")}
             />
             <button
               onClick={reset}

@@ -9,11 +9,13 @@ import DownloadButton from "@/components/DownloadButton";
 import ProgressBar from "@/components/ProgressBar";
 import FileSizeCompare from "@/components/FileSizeCompare";
 import { formatFileSize, getFileNameWithoutExtension } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 
 type RotationDegrees = 90 | 180 | 270;
 type RotationMode = "all" | "specific";
 
 export default function RotatePdfPage() {
+  const { t } = useI18n();
   const [file, setFile] = useState<File | null>(null);
   const [pageCount, setPageCount] = useState<number>(0);
   const [rotationDegrees, setRotationDegrees] = useState<RotationDegrees>(90);
@@ -43,7 +45,7 @@ export default function RotatePdfPage() {
       setRotationMode("all");
       setSelectedPages(new Set());
     } catch (err) {
-      toast.error("Failed to read PDF file. It may be corrupted.");
+      toast.error(t("rotpdf.loadFail"));
       console.error(err);
     }
   }, []);
@@ -103,10 +105,10 @@ export default function RotatePdfPage() {
       const rotatedCount =
         rotationMode === "all" ? pages.length : selectedPages.size;
       toast.success(
-        `Rotated ${rotatedCount} page${rotatedCount !== 1 ? "s" : ""} by ${rotationDegrees} degrees!`
+        t("rotpdf.success", { count: rotatedCount, deg: rotationDegrees })
       );
     } catch (err) {
-      toast.error("Failed to rotate PDF. Please try again.");
+      toast.error(t("rotpdf.fail"));
       console.error(err);
     } finally {
       setProcessing(false);
@@ -122,9 +124,9 @@ export default function RotatePdfPage() {
   };
 
   const rotationOptions: { value: RotationDegrees; label: string }[] = [
-    { value: 90, label: "90 CW" },
-    { value: 180, label: "180" },
-    { value: 270, label: "270 CW" },
+    { value: 90, label: t("rotpdf.90cw") },
+    { value: 180, label: t("rotpdf.180") },
+    { value: 270, label: t("rotpdf.270cw") },
   ];
 
   return (
@@ -176,13 +178,13 @@ export default function RotatePdfPage() {
                 onClick={handleReset}
                 className="text-brand-muted hover:text-brand-text transition-colors text-sm"
               >
-                Change file
+                {t("rotpdf.changeFile")}
               </button>
             </div>
 
             {/* Rotation Angle */}
             <div className="glass rounded-xl p-6 space-y-4">
-              <h3 className="text-brand-text font-semibold">Rotation Angle</h3>
+              <h3 className="text-brand-text font-semibold">{t("rotpdf.angle")}</h3>
               <div className="flex gap-3">
                 {rotationOptions.map((opt) => (
                   <button
@@ -223,7 +225,7 @@ export default function RotatePdfPage() {
             {/* Rotation Mode */}
             <div className="glass rounded-xl p-6 space-y-4">
               <h3 className="text-brand-text font-semibold">
-                Pages to Rotate
+                {t("rotpdf.pages")}
               </h3>
               <div className="flex gap-3">
                 <button
@@ -237,7 +239,7 @@ export default function RotatePdfPage() {
                     }
                   `}
                 >
-                  All Pages
+                  {t("rotpdf.allPages")}
                 </button>
                 <button
                   onClick={() => setRotationMode("specific")}
@@ -250,7 +252,7 @@ export default function RotatePdfPage() {
                     }
                   `}
                 >
-                  Specific Pages
+                  {t("rotpdf.specific")}
                 </button>
               </div>
 
@@ -276,8 +278,7 @@ export default function RotatePdfPage() {
                     ))}
                   </div>
                   <p className="text-xs text-brand-muted">
-                    {selectedPages.size} page{selectedPages.size !== 1 ? "s" : ""}{" "}
-                    selected
+                    {t("rotpdf.selected", { count: selectedPages.size })}
                   </p>
                 </div>
               )}
@@ -285,7 +286,7 @@ export default function RotatePdfPage() {
 
             {/* Progress */}
             {processing && (
-              <ProgressBar progress={progress} label="Rotating pages..." />
+              <ProgressBar progress={progress} label={t("rotpdf.rotating")} />
             )}
 
             {/* Actions */}
@@ -297,8 +298,8 @@ export default function RotatePdfPage() {
                   (rotationMode === "specific" && selectedPages.size === 0)
                 }
                 loading={processing}
-                label={`Rotate ${rotationDegrees}\u00B0`}
-                loadingLabel="Rotating..."
+                label={t("rotpdf.button", { deg: rotationDegrees })}
+                loadingLabel={t("rotpdf.rotating")}
               />
 
               {resultBlob && (

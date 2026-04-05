@@ -8,6 +8,7 @@ import ProcessButton from "@/components/ProcessButton";
 import DownloadButton from "@/components/DownloadButton";
 import ProgressBar from "@/components/ProgressBar";
 import { formatFileSize, getFileNameWithoutExtension } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 
 type AudioFormat = "mp3" | "wav" | "aac";
 
@@ -43,6 +44,7 @@ const bitrateOptions = [
 ];
 
 export default function ExtractAudioPage() {
+  const { t } = useI18n();
   const [file, setFile] = useState<File | null>(null);
   const [format, setFormat] = useState<AudioFormat>("mp3");
   const [bitrate, setBitrate] = useState("192k");
@@ -85,7 +87,7 @@ export default function ExtractAudioPage() {
     setProgress(0);
 
     try {
-      toast.loading("Loading audio processor...", { id: "ffmpeg-load" });
+      toast.loading(t("extaud.loading"), { id: "ffmpeg-load" });
       const { ffmpeg, fetchFile } = await loadFFmpeg();
       toast.dismiss("ffmpeg-load");
 
@@ -153,14 +155,12 @@ export default function ExtractAudioPage() {
       const url = URL.createObjectURL(blob);
       setAudioUrl(url);
 
-      toast.success("Audio extracted successfully!");
+      toast.success(t("extaud.success"));
 
       await ffmpeg.deleteFile(inputName);
       await ffmpeg.deleteFile(outputName);
     } catch (error) {
-      toast.error(
-        "Failed to extract audio. The video may not contain an audio track.",
-      );
+      toast.error(t("extaud.fail"));
       console.error(error);
     } finally {
       setProcessing(false);
@@ -210,7 +210,7 @@ export default function ExtractAudioPage() {
 
           {/* Output Format */}
           <div className="glass rounded-xl p-6">
-            <h3 className="font-medium text-brand-text mb-4">Output Format</h3>
+            <h3 className="font-medium text-brand-text mb-4">{t("extaud.outputFormat")}</h3>
             <div className="grid grid-cols-3 gap-3">
               {(Object.keys(formatInfo) as AudioFormat[]).map((f) => (
                 <button
@@ -224,7 +224,7 @@ export default function ExtractAudioPage() {
                 >
                   <p className="font-bold text-sm">{formatInfo[f].label}</p>
                   <p className="text-xs mt-1 opacity-70">
-                    {formatInfo[f].desc}
+                    {f === "mp3" ? t("extaud.compressed") : f === "aac" ? t("extaud.betterQuality") : t("extaud.uncompressed")}
                   </p>
                 </button>
               ))}
@@ -235,7 +235,7 @@ export default function ExtractAudioPage() {
           {showBitrate && (
             <div className="glass rounded-xl p-6">
               <h3 className="font-medium text-brand-text mb-4">
-                Audio Bitrate
+                {t("extaud.bitrate")}
               </h3>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {bitrateOptions.map((opt) => (
@@ -249,7 +249,7 @@ export default function ExtractAudioPage() {
                     }`}
                   >
                     <p className="font-medium text-sm">{opt.label}</p>
-                    <p className="text-xs mt-1 opacity-70">{opt.desc}</p>
+                    <p className="text-xs mt-1 opacity-70">{opt.value === "128k" ? t("extaud.goodSpeech") : opt.value === "192k" ? t("extaud.balanced") : opt.value === "256k" ? t("extaud.highQuality") : t("extaud.maxQuality")}</p>
                   </button>
                 ))}
               </div>
@@ -257,20 +257,19 @@ export default function ExtractAudioPage() {
           )}
 
           {processing && (
-            <ProgressBar progress={progress} label="Extracting audio..." />
+            <ProgressBar progress={progress} label={t("extaud.extracting")} />
           )}
 
           <ProcessButton
             onClick={handleProcess}
             loading={processing}
             disabled={!file}
-            label="Extract Audio"
-            loadingLabel="Extracting..."
+            label={t("extaud.button")}
+            loadingLabel={t("extaud.extracting")}
           />
 
           <p className="text-xs text-brand-muted text-center">
-            Note: First use may take a moment to load the audio processor
-            (~30MB).
+            {t("ui.ffmpegNote")}
           </p>
         </div>
       ) : (
@@ -278,7 +277,7 @@ export default function ExtractAudioPage() {
           {/* Result info */}
           <div className="glass rounded-xl p-6 text-center">
             <p className="text-brand-text font-medium">
-              Audio extracted successfully
+              {t("extaud.success")}
             </p>
             <p className="text-sm text-brand-muted mt-1">
               Format: {formatInfo[format].label} &middot; Size:{" "}
@@ -307,7 +306,7 @@ export default function ExtractAudioPage() {
               onClick={reset}
               className="px-6 py-3 rounded-xl font-semibold text-brand-text bg-white/5 hover:bg-white/10 transition-colors"
             >
-              Process Another Video
+              {t("extaud.another")}
             </button>
           </div>
         </div>

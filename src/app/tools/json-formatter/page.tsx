@@ -3,10 +3,12 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
 import ToolLayout from "@/components/ToolLayout";
+import { useI18n } from "@/lib/i18n";
 
 type IndentType = "2" | "4" | "tab";
 
 export default function JSONFormatterPage() {
+  const { t } = useI18n();
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
   const [error, setError] = useState("");
@@ -25,7 +27,7 @@ export default function JSONFormatterPage() {
 
   const handleFormat = () => {
     if (!input.trim()) {
-      setError("Please enter some JSON to format.");
+      setError(t("json.enterJson"));
       setOutput("");
       return;
     }
@@ -34,19 +36,19 @@ export default function JSONFormatterPage() {
       const formatted = JSON.stringify(parsed, null, getIndent());
       setOutput(formatted);
       setError("");
-      toast.success("JSON formatted successfully!");
+      toast.success(t("json.formatSuccess"));
     } catch (e) {
       const message =
-        e instanceof SyntaxError ? e.message : "Invalid JSON input.";
+        e instanceof SyntaxError ? e.message : t("json.invalidJson");
       setError(message);
       setOutput("");
-      toast.error("Invalid JSON");
+      toast.error(t("json.invalidJson"));
     }
   };
 
   const handleMinify = () => {
     if (!input.trim()) {
-      setError("Please enter some JSON to minify.");
+      setError(t("json.enterJson"));
       setOutput("");
       return;
     }
@@ -55,19 +57,19 @@ export default function JSONFormatterPage() {
       const minified = JSON.stringify(parsed);
       setOutput(minified);
       setError("");
-      toast.success("JSON minified successfully!");
+      toast.success(t("json.minifySuccess"));
     } catch (e) {
       const message =
-        e instanceof SyntaxError ? e.message : "Invalid JSON input.";
+        e instanceof SyntaxError ? e.message : t("json.invalidJson");
       setError(message);
       setOutput("");
-      toast.error("Invalid JSON");
+      toast.error(t("json.invalidJson"));
     }
   };
 
   const handleValidate = () => {
     if (!input.trim()) {
-      setError("Please enter some JSON to validate.");
+      setError(t("json.enterJson"));
       setOutput("");
       return;
     }
@@ -75,13 +77,13 @@ export default function JSONFormatterPage() {
       JSON.parse(input);
       setError("");
       setOutput("");
-      toast.success("Valid JSON!");
+      toast.success(t("json.validJson"));
     } catch (e) {
       const message =
-        e instanceof SyntaxError ? e.message : "Invalid JSON input.";
+        e instanceof SyntaxError ? e.message : t("json.invalidJson");
       setError(message);
       setOutput("");
-      toast.error("Invalid JSON");
+      toast.error(t("json.invalidJson"));
     }
   };
 
@@ -89,9 +91,9 @@ export default function JSONFormatterPage() {
     if (!output) return;
     try {
       await navigator.clipboard.writeText(output);
-      toast.success("Copied to clipboard!");
+      toast.success(t("ui.copied"));
     } catch {
-      toast.error("Failed to copy.");
+      toast.error(t("ui.copyFailed"));
     }
   };
 
@@ -129,7 +131,7 @@ export default function JSONFormatterPage() {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             {/* Indentation options */}
             <div className="flex items-center gap-3">
-              <span className="text-sm text-brand-muted">Indent:</span>
+              <span className="text-sm text-brand-muted">{t("ui.indent")}</span>
               <div className="flex gap-1.5">
                 {(
                   [
@@ -159,13 +161,13 @@ export default function JSONFormatterPage() {
                 onClick={loadSample}
                 className="px-3 py-1.5 text-xs rounded-lg bg-white/[0.04] text-brand-muted hover:bg-white/[0.08] hover:text-brand-text transition-all font-medium"
               >
-                Sample
+                {t("json.sample")}
               </button>
               <button
                 onClick={clearAll}
                 className="px-3 py-1.5 text-xs rounded-lg bg-white/[0.04] text-brand-muted hover:bg-white/[0.08] hover:text-brand-text transition-all font-medium"
               >
-                Clear
+                {t("ui.clear")}
               </button>
             </div>
           </div>
@@ -174,7 +176,7 @@ export default function JSONFormatterPage() {
         {/* Input */}
         <div className="glass rounded-2xl p-6">
           <label className="block text-sm text-brand-muted mb-2">
-            Input JSON
+            {t("json.inputJson")}
           </label>
           <textarea
             value={input}
@@ -195,19 +197,19 @@ export default function JSONFormatterPage() {
             onClick={handleFormat}
             className="py-3 rounded-xl text-sm font-semibold transition-all bg-gradient-brand text-white shadow-lg shadow-brand-indigo/25 hover:shadow-brand-indigo/40"
           >
-            Format
+            {t("ui.format")}
           </button>
           <button
             onClick={handleMinify}
             className="py-3 rounded-xl text-sm font-semibold transition-all bg-gradient-brand text-white shadow-lg shadow-brand-indigo/25 hover:shadow-brand-indigo/40"
           >
-            Minify
+            {t("ui.minify")}
           </button>
           <button
             onClick={handleValidate}
             className="py-3 rounded-xl text-sm font-semibold transition-all bg-white/[0.04] text-brand-muted hover:bg-white/[0.08] hover:text-brand-text border border-white/[0.08]"
           >
-            Validate
+            {t("ui.validate")}
           </button>
         </div>
 
@@ -230,7 +232,7 @@ export default function JSONFormatterPage() {
               </svg>
               <div>
                 <p className="text-sm font-medium text-red-400">
-                  Invalid JSON
+                  {t("json.invalidJson")}
                 </p>
                 <p className="text-xs text-red-400/70 mt-1 font-mono">
                   {error}
@@ -250,7 +252,7 @@ export default function JSONFormatterPage() {
                   onClick={copyToClipboard}
                   className="px-3 py-1.5 text-xs rounded-lg bg-brand-indigo/20 text-brand-indigo hover:bg-brand-indigo/30 transition-colors font-medium"
                 >
-                  Copy
+                  {t("ui.copy")}
                 </button>
                 <button
                   onClick={() => {
@@ -260,7 +262,7 @@ export default function JSONFormatterPage() {
                   }}
                   className="px-3 py-1.5 text-xs rounded-lg bg-white/[0.04] text-brand-muted hover:bg-white/[0.08] hover:text-brand-text transition-colors font-medium"
                 >
-                  Use as Input
+                  {t("json.useAsInput")}
                 </button>
               </div>
             </div>

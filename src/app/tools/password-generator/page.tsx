@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
 import ToolLayout from "@/components/ToolLayout";
+import { useI18n } from "@/lib/i18n";
 
 interface PasswordOptions {
   length: number;
@@ -22,7 +23,7 @@ const CHAR_SETS = {
 function getStrength(
   length: number,
   options: PasswordOptions
-): { label: string; color: string; percent: number } {
+): { strengthKey: string; color: string; percent: number } {
   const typesEnabled = [
     options.uppercase,
     options.lowercase,
@@ -31,15 +32,15 @@ function getStrength(
   ].filter(Boolean).length;
 
   if (length < 8) {
-    return { label: "Weak", color: "bg-red-500", percent: 25 };
+    return { strengthKey: "pw.weak", color: "bg-red-500", percent: 25 };
   }
   if (length < 12) {
-    return { label: "Medium", color: "bg-yellow-500", percent: 50 };
+    return { strengthKey: "pw.medium", color: "bg-yellow-500", percent: 50 };
   }
   if (length < 16 || typesEnabled < 4) {
-    return { label: "Strong", color: "bg-emerald-500", percent: 75 };
+    return { strengthKey: "pw.strong", color: "bg-emerald-500", percent: 75 };
   }
-  return { label: "Very Strong", color: "bg-emerald-400", percent: 100 };
+  return { strengthKey: "pw.veryStrong", color: "bg-emerald-400", percent: 100 };
 }
 
 function generatePassword(options: PasswordOptions): string {
@@ -58,6 +59,7 @@ function generatePassword(options: PasswordOptions): string {
 }
 
 export default function PasswordGeneratorPage() {
+  const { t } = useI18n();
   const [options, setOptions] = useState<PasswordOptions>({
     length: 16,
     uppercase: true,
@@ -82,9 +84,9 @@ export default function PasswordGeneratorPage() {
     if (!password) return;
     try {
       await navigator.clipboard.writeText(password);
-      toast.success("Password copied to clipboard");
+      toast.success(t("pw.copied"));
     } catch {
-      toast.error("Failed to copy to clipboard");
+      toast.error(t("ui.copyFailed"));
     }
   };
 
@@ -96,17 +98,17 @@ export default function PasswordGeneratorPage() {
       newOptions.numbers ||
       newOptions.symbols;
     if (!anyEnabled) {
-      toast.error("At least one character type must be enabled");
+      toast.error(t("pw.mustEnable"));
       return;
     }
     setOptions(newOptions);
   };
 
   const checkboxes: { key: keyof Omit<PasswordOptions, "length">; label: string }[] = [
-    { key: "uppercase", label: "Uppercase (A-Z)" },
-    { key: "lowercase", label: "Lowercase (a-z)" },
-    { key: "numbers", label: "Numbers (0-9)" },
-    { key: "symbols", label: "Symbols (!@#$%^&*)" },
+    { key: "uppercase", label: t("pw.uppercase") },
+    { key: "lowercase", label: t("pw.lowercase") },
+    { key: "numbers", label: t("pw.numbers") },
+    { key: "symbols", label: t("pw.symbols") },
   ];
 
   return (
@@ -118,13 +120,13 @@ export default function PasswordGeneratorPage() {
         {/* Password Display */}
         <div className="glass rounded-2xl p-6">
           <label className="text-sm font-medium text-t-secondary mb-3 block">
-            Generated Password
+            {t("pw.generated")}
           </label>
           <div className="relative">
             <div className="w-full px-4 py-4 rounded-xl bg-bg-secondary border border-border text-t-primary font-mono text-lg leading-relaxed break-all select-all min-h-[60px]">
               {password || (
                 <span className="text-t-tertiary">
-                  Enable at least one character type
+                  {t("pw.enableOne")}
                 </span>
               )}
             </div>
@@ -133,9 +135,9 @@ export default function PasswordGeneratorPage() {
           {/* Strength Indicator */}
           <div className="mt-4">
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-xs text-t-secondary">Strength</span>
+              <span className="text-xs text-t-secondary">{t("pw.strength")}</span>
               <span className="text-xs font-semibold text-t-primary">
-                {strength.label}
+                {t(strength.strengthKey)}
               </span>
             </div>
             <div className="w-full h-2 rounded-full bg-bg-secondary overflow-hidden">
@@ -153,13 +155,13 @@ export default function PasswordGeneratorPage() {
               disabled={!password}
               className="px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:opacity-90 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
-              Copy
+              {t("ui.copy")}
             </button>
             <button
               onClick={generate}
               className="px-6 py-3 rounded-xl font-semibold text-t-primary bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] transition-all"
             >
-              Regenerate
+              {t("ui.regenerate")}
             </button>
           </div>
         </div>
@@ -167,13 +169,13 @@ export default function PasswordGeneratorPage() {
         {/* Settings */}
         <div className="glass rounded-2xl p-6">
           <h3 className="text-sm font-medium text-t-secondary mb-5">
-            Settings
+            {t("ui.settings")}
           </h3>
 
           {/* Length Slider */}
           <div className="mb-6">
             <div className="flex items-center justify-between mb-2">
-              <label className="text-sm text-t-primary">Password Length</label>
+              <label className="text-sm text-t-primary">{t("pw.length")}</label>
               <span className="text-sm font-semibold text-t-primary tabular-nums">
                 {options.length}
               </span>

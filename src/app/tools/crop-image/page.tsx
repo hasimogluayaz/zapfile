@@ -6,6 +6,7 @@ import ToolLayout from "@/components/ToolLayout";
 import FileDropzone from "@/components/FileDropzone";
 import DownloadButton from "@/components/DownloadButton";
 import { getFileNameWithoutExtension, getFileExtension } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 
 interface CropArea {
   x: number;
@@ -24,6 +25,7 @@ const presetRatios = [
 ];
 
 export default function CropImagePage() {
+  const { t } = useI18n();
   const [file, setFile] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [imgSize, setImgSize] = useState({ w: 0, h: 0 });
@@ -131,7 +133,7 @@ export default function CropImagePage() {
 
   const handleCrop = async () => {
     if (!file || crop.width <= 0 || crop.height <= 0) {
-      toast.error("Please select an area to crop.");
+      toast.error(t("crop.noArea"));
       return;
     }
 
@@ -178,10 +180,10 @@ export default function CropImagePage() {
 
       setResult(blob);
       setResultPreview(URL.createObjectURL(blob));
-      toast.success(`Cropped to ${Math.round(crop.width)} x ${Math.round(crop.height)}!`);
+      toast.success(t("crop.success", { w: Math.round(crop.width), h: Math.round(crop.height) }));
     } catch (error) {
       console.error(error);
-      toast.error("Failed to crop image.");
+      toast.error(t("crop.fail"));
     }
   };
 
@@ -235,7 +237,7 @@ export default function CropImagePage() {
                         : "bg-white/5 text-brand-muted hover:bg-white/10 hover:text-brand-text"
                     }`}
                   >
-                    {preset.label}
+                    {preset.value === null ? t("crop.free") : preset.label}
                   </button>
                 ))}
               </div>
@@ -285,10 +287,10 @@ export default function CropImagePage() {
 
             {/* Crop info */}
             <div className="glass rounded-xl p-4 text-center text-sm text-brand-muted">
-              Selection: {Math.round(crop.width)} &times; {Math.round(crop.height)}px
+              {t("crop.selection", { w: Math.round(crop.width), h: Math.round(crop.height) })}
               {crop.width > 0 && crop.height > 0 && (
                 <span className="ml-2">
-                  (from {Math.round(crop.x)}, {Math.round(crop.y)})
+                  {t("crop.from", { x: Math.round(crop.x), y: Math.round(crop.y) })}
                 </span>
               )}
             </div>
@@ -303,7 +305,7 @@ export default function CropImagePage() {
                     : "bg-white/10 cursor-not-allowed text-brand-muted"
                 }`}
               >
-                Crop Image
+                {t("crop.button")}
               </button>
               <button onClick={reset} className="px-6 py-3 rounded-xl text-brand-muted hover:text-brand-text transition-colors">
                 Cancel
@@ -329,13 +331,13 @@ export default function CropImagePage() {
               <DownloadButton
                 blob={result}
                 filename={`${getFileNameWithoutExtension(file.name)}-cropped${getFileExtension(file.name)}`}
-                label="Download Cropped Image"
+                label={t("crop.download")}
               />
               <button
                 onClick={reset}
                 className="px-6 py-3 rounded-xl font-semibold text-brand-text bg-white/5 hover:bg-white/10 transition-colors"
               >
-                Crop Another
+                {t("crop.another")}
               </button>
             </div>
           </div>

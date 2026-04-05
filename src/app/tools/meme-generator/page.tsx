@@ -10,8 +10,10 @@ import {
   getFileNameWithoutExtension,
   downloadBlob,
 } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 
 export default function MemeGeneratorPage() {
+  const { t } = useI18n();
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [topText, setTopText] = useState("");
@@ -130,7 +132,7 @@ export default function MemeGeneratorPage() {
         imgRef.current = img;
         drawMeme(img, topText, bottomText, fontSize, textColor, strokeColor, strokeWidth);
       };
-      img.onerror = () => toast.error("Failed to load image.");
+      img.onerror = () => toast.error(t("meme.loadFail"));
       img.src = URL.createObjectURL(f);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -146,9 +148,9 @@ export default function MemeGeneratorPage() {
         setResultBlob(blob);
         const baseName = getFileNameWithoutExtension(file.name);
         downloadBlob(blob, `${baseName}-meme.png`);
-        toast.success("Meme downloaded!");
+        toast.success(t("meme.success"));
       } else {
-        toast.error("Failed to export meme.");
+        toast.error(t("meme.fail"));
       }
     }, "image/png");
   };
@@ -231,7 +233,7 @@ export default function MemeGeneratorPage() {
                     type="text"
                     value={topText}
                     onChange={(e) => setTopText(e.target.value)}
-                    placeholder="Enter top text"
+                    placeholder={t("meme.enterTop")}
                     className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-[13px] text-brand-text placeholder:text-brand-muted/50 focus:outline-none focus:border-brand-indigo/50 transition-colors"
                   />
                 </div>
@@ -245,7 +247,7 @@ export default function MemeGeneratorPage() {
                     type="text"
                     value={bottomText}
                     onChange={(e) => setBottomText(e.target.value)}
-                    placeholder="Enter bottom text"
+                    placeholder={t("meme.enterBottom")}
                     className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-[13px] text-brand-text placeholder:text-brand-muted/50 focus:outline-none focus:border-brand-indigo/50 transition-colors"
                   />
                 </div>
@@ -344,7 +346,7 @@ export default function MemeGeneratorPage() {
                       : "bg-gradient-to-r from-indigo-500 to-purple-500 hover:shadow-lg hover:shadow-indigo-500/25 hover:scale-[1.02] active:scale-[0.98]"
                   }`}
                 >
-                  Download Meme
+                  {t("meme.download")}
                 </button>
 
                 {/* Reset */}
@@ -367,7 +369,7 @@ export default function MemeGeneratorPage() {
                   <DownloadButton
                     blob={resultBlob}
                     filename={`${getFileNameWithoutExtension(file.name)}-meme.png`}
-                    label="Download Again"
+                    label={t("meme.download")}
                   />
                   <button
                     onClick={reset}

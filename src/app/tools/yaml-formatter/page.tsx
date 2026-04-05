@@ -3,6 +3,7 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
 import ToolLayout from "@/components/ToolLayout";
+import { useI18n } from "@/lib/i18n";
 
 type IndentSize = "2" | "4";
 type InputMode = "yaml" | "json";
@@ -269,6 +270,7 @@ function stringifyYaml(value: unknown, indentSize: number, level: number = 0): s
 }
 
 export default function YAMLFormatterPage() {
+  const { t } = useI18n();
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
   const [error, setError] = useState("");
@@ -277,7 +279,7 @@ export default function YAMLFormatterPage() {
 
   const handleFormat = () => {
     if (!input.trim()) {
-      setError("Please enter some YAML to format.");
+      setError(t("yaml.enterYaml"));
       setOutput("");
       return;
     }
@@ -286,17 +288,17 @@ export default function YAMLFormatterPage() {
       const formatted = stringifyYaml(parsed, parseInt(indentSize));
       setOutput(formatted);
       setError("");
-      toast.success("YAML formatted successfully!");
+      toast.success(t("yaml.formatSuccess"));
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Invalid YAML input.");
+      setError(e instanceof Error ? e.message : t("yaml.invalidYaml"));
       setOutput("");
-      toast.error("Invalid YAML");
+      toast.error(t("yaml.invalidYaml"));
     }
   };
 
   const handleToJSON = () => {
     if (!input.trim()) {
-      setError("Please enter some YAML to convert.");
+      setError(t("yaml.enterYaml"));
       setOutput("");
       return;
     }
@@ -306,17 +308,17 @@ export default function YAMLFormatterPage() {
       setOutput(json);
       setError("");
       setInputMode("yaml");
-      toast.success("Converted to JSON!");
+      toast.success(t("yaml.convertedJson"));
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Invalid YAML input.");
+      setError(e instanceof Error ? e.message : t("yaml.invalidYaml"));
       setOutput("");
-      toast.error("Invalid YAML");
+      toast.error(t("yaml.invalidYaml"));
     }
   };
 
   const handleJSONToYAML = () => {
     if (!input.trim()) {
-      setError("Please enter some JSON to convert.");
+      setError(t("yaml.enterJson"));
       setOutput("");
       return;
     }
@@ -326,11 +328,11 @@ export default function YAMLFormatterPage() {
       setOutput(yaml);
       setError("");
       setInputMode("json");
-      toast.success("Converted to YAML!");
+      toast.success(t("yaml.convertedYaml"));
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Invalid JSON input.");
+      setError(e instanceof Error ? e.message : t("yaml.invalidJson"));
       setOutput("");
-      toast.error("Invalid JSON");
+      toast.error(t("yaml.invalidJson"));
     }
   };
 
@@ -338,9 +340,9 @@ export default function YAMLFormatterPage() {
     if (!output) return;
     try {
       await navigator.clipboard.writeText(output);
-      toast.success("Copied to clipboard!");
+      toast.success(t("ui.copied"));
     } catch {
-      toast.error("Failed to copy.");
+      toast.error(t("ui.copyFailed"));
     }
   };
 
@@ -361,7 +363,7 @@ export default function YAMLFormatterPage() {
         <div className="glass rounded-xl p-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <span className="text-sm text-t-secondary">Indent:</span>
+              <span className="text-sm text-t-secondary">{t("ui.indent")}</span>
               <div className="flex gap-1.5">
                 {(["2", "4"] as IndentSize[]).map((size) => (
                   <button
@@ -373,7 +375,7 @@ export default function YAMLFormatterPage() {
                         : "text-t-secondary hover:text-t-primary bg-bg-secondary border border-border"
                     }`}
                   >
-                    {size} Spaces
+                    {size} {t("ui.spaces")}
                   </button>
                 ))}
               </div>
@@ -384,13 +386,13 @@ export default function YAMLFormatterPage() {
                 onClick={() => setInputMode(inputMode === "yaml" ? "json" : "yaml")}
                 className="px-4 py-2 rounded-lg text-t-secondary bg-bg-secondary border border-border hover:text-t-primary transition-colors text-sm"
               >
-                Mode: {inputMode.toUpperCase()}
+                {t("yaml.mode")} {inputMode.toUpperCase()}
               </button>
               <button
                 onClick={clearAll}
                 className="px-4 py-2 rounded-lg text-t-secondary bg-bg-secondary border border-border hover:text-t-primary transition-colors text-sm"
               >
-                Clear
+                {t("ui.clear")}
               </button>
             </div>
           </div>
@@ -399,7 +401,7 @@ export default function YAMLFormatterPage() {
         {/* Input */}
         <div className="glass rounded-xl p-6">
           <label className="block text-sm text-t-secondary mb-2">
-            {inputMode === "yaml" ? "YAML Input" : "JSON Input"}
+            {inputMode === "yaml" ? t("yaml.yamlInput") : t("yaml.jsonInput")}
           </label>
           <textarea
             value={input}
@@ -424,19 +426,19 @@ export default function YAMLFormatterPage() {
             onClick={handleFormat}
             className="px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:shadow-lg transition-all"
           >
-            Format
+            {t("ui.format")}
           </button>
           <button
             onClick={handleToJSON}
             className="px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:shadow-lg transition-all"
           >
-            To JSON
+            {t("yaml.toJson")}
           </button>
           <button
             onClick={handleJSONToYAML}
             className="px-4 py-2 rounded-lg text-t-secondary bg-bg-secondary border border-border hover:text-t-primary transition-colors"
           >
-            JSON to YAML
+            {t("yaml.jsonToYaml")}
           </button>
         </div>
 
@@ -459,12 +461,12 @@ export default function YAMLFormatterPage() {
         {output && (
           <div className="glass rounded-xl p-6">
             <div className="flex items-center justify-between mb-2">
-              <label className="text-sm text-t-secondary">Output</label>
+              <label className="text-sm text-t-secondary">{t("ui.output")}</label>
               <button
                 onClick={copyToClipboard}
                 className="px-4 py-2 rounded-lg text-t-secondary bg-bg-secondary border border-border hover:text-t-primary transition-colors text-sm"
               >
-                Copy
+                {t("ui.copy")}
               </button>
             </div>
             <textarea
@@ -474,7 +476,7 @@ export default function YAMLFormatterPage() {
               className="w-full bg-bg-secondary border border-border rounded-lg px-4 py-3 text-t-primary font-mono text-sm resize-y"
             />
             <p className="text-xs text-t-tertiary mt-2">
-              {output.length.toLocaleString()} characters
+              {output.length.toLocaleString()} {t("ui.characters")}
             </p>
           </div>
         )}

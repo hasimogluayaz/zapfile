@@ -8,6 +8,7 @@ import ProcessButton from "@/components/ProcessButton";
 import DownloadButton from "@/components/DownloadButton";
 import ProgressBar from "@/components/ProgressBar";
 import { formatFileSize, getFileNameWithoutExtension } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 
 function parseTime(str: string): number {
   const parts = str.trim().split(":").map(Number);
@@ -29,6 +30,7 @@ function formatTime(seconds: number): string {
 }
 
 export default function TrimVideoPage() {
+  const { t } = useI18n();
   const [file, setFile] = useState<File | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [duration, setDuration] = useState(0);
@@ -87,15 +89,15 @@ export default function TrimVideoPage() {
     const end = parseTime(endTime);
 
     if (start < 0 || end < 0) {
-      toast.error("Invalid time format. Use MM:SS or HH:MM:SS.");
+      toast.error(t("trimvid.invalidTime"));
       return;
     }
     if (start >= end) {
-      toast.error("Start time must be before end time.");
+      toast.error(t("trimvid.startBefore"));
       return;
     }
     if (end > Math.ceil(duration)) {
-      toast.error("End time exceeds video duration.");
+      toast.error(t("trimvid.exceedsDuration"));
       return;
     }
 
@@ -103,7 +105,7 @@ export default function TrimVideoPage() {
     setProgress(0);
 
     try {
-      toast.loading("Loading video processor...", { id: "ffmpeg-load" });
+      toast.loading(t("trimvid.loading"), { id: "ffmpeg-load" });
       const { ffmpeg, fetchFile } = await loadFFmpeg();
       toast.dismiss("ffmpeg-load");
 
@@ -141,12 +143,12 @@ export default function TrimVideoPage() {
       const url = URL.createObjectURL(blob);
       setResultUrl(url);
 
-      toast.success("Video trimmed successfully!");
+      toast.success(t("trimvid.success"));
 
       await ffmpeg.deleteFile(inputName);
       await ffmpeg.deleteFile(outputName);
     } catch (error) {
-      toast.error("Failed to trim video. Please try a different file.");
+      toast.error(t("trimvid.fail"));
       console.error(error);
     } finally {
       setProcessing(false);
@@ -187,7 +189,7 @@ export default function TrimVideoPage() {
                 <p className="text-sm text-t-secondary">
                   {formatFileSize(file.size)}
                   {duration > 0 && (
-                    <> &middot; Duration: {formatTime(duration)}</>
+                    <> &middot; {t("trimvid.duration")} {formatTime(duration)}</>
                   )}
                 </p>
               </div>
@@ -218,11 +220,11 @@ export default function TrimVideoPage() {
 
           {/* Time Inputs */}
           <div className="glass rounded-xl p-6">
-            <h3 className="font-medium text-t-primary mb-4">Trim Range</h3>
+            <h3 className="font-medium text-t-primary mb-4">{t("trimvid.trimRange")}</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm text-t-secondary mb-1.5">
-                  Start Time
+                  {t("trimvid.startTime")}
                 </label>
                 <div className="flex gap-2">
                   <input
@@ -240,13 +242,13 @@ export default function TrimVideoPage() {
                     }}
                     className="px-3 py-2 rounded-lg text-xs font-medium bg-white/5 border border-white/10 text-t-secondary hover:border-white/20 transition-colors whitespace-nowrap"
                   >
-                    Use Current Time
+                    {t("trimvid.useCurrent")}
                   </button>
                 </div>
               </div>
               <div>
                 <label className="block text-sm text-t-secondary mb-1.5">
-                  End Time
+                  {t("trimvid.endTime")}
                 </label>
                 <div className="flex gap-2">
                   <input
@@ -264,7 +266,7 @@ export default function TrimVideoPage() {
                     }}
                     className="px-3 py-2 rounded-lg text-xs font-medium bg-white/5 border border-white/10 text-t-secondary hover:border-white/20 transition-colors whitespace-nowrap"
                   >
-                    Use Current Time
+                    {t("trimvid.useCurrent")}
                   </button>
                 </div>
               </div>
@@ -272,7 +274,7 @@ export default function TrimVideoPage() {
           </div>
 
           {processing && (
-            <ProgressBar progress={progress} label="Trimming video..." />
+            <ProgressBar progress={progress} label={t("trimvid.trimming")} />
           )}
 
           <ProcessButton

@@ -5,17 +5,19 @@ import toast from "react-hot-toast";
 import ToolLayout from "@/components/ToolLayout";
 import FileDropzone from "@/components/FileDropzone";
 import { formatFileSize } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 
 type OutputFormat = "raw" | "datauri" | "html" | "css";
 
-const formatLabels: Record<OutputFormat, string> = {
-  raw: "Raw Base64",
-  datauri: "Data URI",
-  html: "HTML <img>",
-  css: "CSS Background",
+const FORMAT_LABEL_KEYS: Record<OutputFormat, string> = {
+  raw: "imgb64.rawBase64",
+  datauri: "imgb64.dataUri",
+  html: "imgb64.htmlImg",
+  css: "imgb64.cssBg",
 };
 
 export default function ImageToBase64Page() {
+  const { t } = useI18n();
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [base64Raw, setBase64Raw] = useState<string>("");
@@ -48,7 +50,7 @@ export default function ImageToBase64Page() {
         setBase64Raw(result.substring(commaIdx + 1));
       }
     };
-    reader.onerror = () => toast.error("Failed to read file.");
+    reader.onerror = () => toast.error(t("imgb64.readFail"));
     reader.readAsDataURL(f);
   }, []);
 
@@ -70,8 +72,8 @@ export default function ImageToBase64Page() {
   const handleCopy = () => {
     const text = getOutput();
     navigator.clipboard.writeText(text).then(
-      () => toast.success(`${formatLabels[activeFormat]} copied to clipboard!`),
-      () => toast.error("Failed to copy to clipboard.")
+      () => toast.success(t("ui.copied")),
+      () => toast.error(t("ui.copyFailed"))
     );
   };
 
@@ -111,7 +113,7 @@ export default function ImageToBase64Page() {
                 : "bg-white/5 border border-white/10 text-brand-muted hover:border-white/20"
             }`}
           >
-            Image to Base64
+            {t("imgb64.imageToBase64")}
           </button>
           <button
             onClick={() => setShowReverse(true)}
@@ -121,7 +123,7 @@ export default function ImageToBase64Page() {
                 : "bg-white/5 border border-white/10 text-brand-muted hover:border-white/20"
             }`}
           >
-            Base64 to Image
+            {t("imgb64.base64ToImage")}
           </button>
         </div>
 
@@ -151,7 +153,7 @@ export default function ImageToBase64Page() {
                         onClick={reset}
                         className="text-[11px] text-brand-muted hover:text-red-400 transition-colors"
                       >
-                        Remove
+                        {t("ui.remove")}
                       </button>
                     </div>
                     {preview && (
@@ -170,25 +172,25 @@ export default function ImageToBase64Page() {
                   {/* Stats */}
                   <div className="glass rounded-xl p-4 space-y-3">
                     <h3 className="text-[13px] font-semibold text-brand-text">
-                      Conversion Stats
+                      {t("imgb64.stats")}
                     </h3>
                     <div className="space-y-2 text-[12px]">
                       <div className="flex justify-between">
-                        <span className="text-brand-muted">Original Size</span>
+                        <span className="text-brand-muted">{t("imgb64.originalSize")}</span>
                         <span className="text-brand-text">{formatFileSize(file.size)}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-brand-muted">Base64 Length</span>
+                        <span className="text-brand-muted">{t("imgb64.base64Length")}</span>
                         <span className="text-brand-text">
-                          {base64Raw.length.toLocaleString()} chars
+                          {base64Raw.length.toLocaleString()} {t("imgb64.chars")}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-brand-muted">Base64 Size</span>
+                        <span className="text-brand-muted">{t("imgb64.base64Size")}</span>
                         <span className="text-brand-text">{formatFileSize(base64Size)}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-brand-muted">Size Increase</span>
+                        <span className="text-brand-muted">{t("imgb64.sizeIncrease")}</span>
                         <span className="text-brand-text">
                           {file.size > 0
                             ? `~${Math.round(((base64Size - file.size) / file.size) * 100)}%`
@@ -202,7 +204,7 @@ export default function ImageToBase64Page() {
                 {/* Format tabs */}
                 <div className="glass rounded-xl p-4 space-y-3">
                   <div className="flex flex-wrap gap-2">
-                    {(Object.keys(formatLabels) as OutputFormat[]).map((fmt) => (
+                    {(Object.keys(FORMAT_LABEL_KEYS) as OutputFormat[]).map((fmt) => (
                       <button
                         key={fmt}
                         onClick={() => setActiveFormat(fmt)}
@@ -212,7 +214,7 @@ export default function ImageToBase64Page() {
                             : "bg-white/5 border border-white/10 text-brand-muted hover:border-white/20"
                         }`}
                       >
-                        {formatLabels[fmt]}
+                        {t(FORMAT_LABEL_KEYS[fmt] as Parameters<typeof t>[0])}
                       </button>
                     ))}
                   </div>
@@ -229,7 +231,7 @@ export default function ImageToBase64Page() {
                     onClick={handleCopy}
                     className="px-6 py-3 rounded-xl font-semibold text-[14px] text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:shadow-lg hover:shadow-indigo-500/25 hover:scale-[1.02] active:scale-[0.98] transition-all"
                   >
-                    Copy {formatLabels[activeFormat]}
+                    {t("ui.copy")} {t(FORMAT_LABEL_KEYS[activeFormat] as Parameters<typeof t>[0])}
                   </button>
                 </div>
               </>
@@ -240,12 +242,12 @@ export default function ImageToBase64Page() {
             {/* Base64 to Image (reverse) */}
             <div className="glass rounded-xl p-4 space-y-3">
               <h3 className="text-[13px] font-semibold text-brand-text">
-                Paste Base64 String
+                {t("imgb64.pasteBase64")}
               </h3>
               <textarea
                 value={pastedBase64}
                 onChange={(e) => setPastedBase64(e.target.value)}
-                placeholder="Paste a Base64 string or Data URI here..."
+                placeholder={t("imgb64.pasteHere")}
                 className="w-full h-32 px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-[11px] font-mono text-brand-text placeholder:text-brand-muted/50 resize-none focus:outline-none focus:border-brand-indigo/50 transition-colors"
               />
               <button
@@ -257,14 +259,14 @@ export default function ImageToBase64Page() {
                     : "bg-gradient-to-r from-indigo-500 to-purple-500 hover:shadow-lg hover:shadow-indigo-500/25 hover:scale-[1.02] active:scale-[0.98]"
                 }`}
               >
-                Decode Image
+                {t("imgb64.decodeImage")}
               </button>
             </div>
 
             {decodedPreview && (
               <div className="glass rounded-xl p-4 space-y-3">
                 <h3 className="text-[13px] font-semibold text-brand-text">
-                  Decoded Image
+                  {t("imgb64.decodedImage")}
                 </h3>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -272,7 +274,7 @@ export default function ImageToBase64Page() {
                   alt="Decoded from Base64"
                   className="max-h-64 rounded-lg border border-white/10 mx-auto block"
                   onError={() => {
-                    toast.error("Invalid Base64 string. Could not decode as image.");
+                    toast.error(t("imgb64.invalidBase64"));
                     setDecodedPreview(null);
                   }}
                 />

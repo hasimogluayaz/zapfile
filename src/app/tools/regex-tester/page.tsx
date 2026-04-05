@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import toast from "react-hot-toast";
 import ToolLayout from "@/components/ToolLayout";
+import { useI18n } from "@/lib/i18n";
 
 interface MatchResult {
   index: number;
@@ -10,15 +11,16 @@ interface MatchResult {
   groups: string[];
 }
 
-const COMMON_PATTERNS = [
-  { label: "Email", pattern: "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}" },
-  { label: "URL", pattern: "https?:\\/\\/[^\\s]+" },
-  { label: "Phone", pattern: "\\+?[\\d\\s-()]{7,15}" },
-  { label: "IP Address", pattern: "\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}" },
-  { label: "Date", pattern: "\\d{4}-\\d{2}-\\d{2}" },
+const COMMON_PATTERN_DEFS = [
+  { labelKey: "regex.email", pattern: "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}" },
+  { labelKey: "regex.url", pattern: "https?:\\/\\/[^\\s]+" },
+  { labelKey: "regex.phone", pattern: "\\+?[\\d\\s-()]{7,15}" },
+  { labelKey: "regex.ipAddress", pattern: "\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}" },
+  { labelKey: "regex.date", pattern: "\\d{4}-\\d{2}-\\d{2}" },
 ];
 
 export default function RegexTesterPage() {
+  const { t } = useI18n();
   const [pattern, setPattern] = useState("");
   const [testString, setTestString] = useState("");
   const [flags, setFlags] = useState({ g: true, i: false, m: false, s: false });
@@ -94,7 +96,7 @@ export default function RegexTesterPage() {
 
   const insertPattern = (p: string) => {
     setPattern(p);
-    toast.success("Pattern inserted!");
+    toast.success(t("regex.inserted"));
   };
 
   return (
@@ -105,19 +107,19 @@ export default function RegexTesterPage() {
       <div className="space-y-6">
         {/* Pattern Input */}
         <div className="glass rounded-xl p-6">
-          <label className="block text-sm text-t-secondary mb-2">Pattern</label>
+          <label className="block text-sm text-t-secondary mb-2">{t("regex.pattern")}</label>
           <input
             type="text"
             value={pattern}
             onChange={(e) => setPattern(e.target.value)}
-            placeholder="Enter regex pattern..."
+            placeholder={t("regex.enterPattern")}
             spellCheck={false}
             className="w-full bg-bg-secondary border border-border rounded-lg px-4 py-3 text-t-primary placeholder-t-tertiary focus:outline-none focus:ring-2 focus:ring-accent/50 font-mono"
           />
 
           {/* Flags */}
           <div className="flex items-center gap-4 mt-4">
-            <span className="text-sm text-t-secondary">Flags:</span>
+            <span className="text-sm text-t-secondary">{t("regex.flags")}</span>
             {(["g", "i", "m", "s"] as const).map((flag) => (
               <label key={flag} className="flex items-center gap-1.5 cursor-pointer">
                 <input
@@ -136,10 +138,10 @@ export default function RegexTesterPage() {
                   {flag}
                 </span>
                 <span className="text-xs text-t-tertiary">
-                  {flag === "g" && "global"}
-                  {flag === "i" && "case-insensitive"}
-                  {flag === "m" && "multiline"}
-                  {flag === "s" && "dotall"}
+                  {flag === "g" && t("regex.global")}
+                  {flag === "i" && t("regex.caseInsensitive")}
+                  {flag === "m" && t("regex.multiline")}
+                  {flag === "s" && t("regex.dotall")}
                 </span>
               </label>
             ))}
@@ -148,15 +150,15 @@ export default function RegexTesterPage() {
 
         {/* Common Patterns */}
         <div className="glass rounded-xl p-6">
-          <label className="block text-sm text-t-secondary mb-3">Common Patterns</label>
+          <label className="block text-sm text-t-secondary mb-3">{t("regex.commonPatterns")}</label>
           <div className="flex flex-wrap gap-2">
-            {COMMON_PATTERNS.map((cp) => (
+            {COMMON_PATTERN_DEFS.map((cp) => (
               <button
-                key={cp.label}
+                key={cp.labelKey}
                 onClick={() => insertPattern(cp.pattern)}
                 className="px-4 py-2 rounded-lg text-t-secondary bg-bg-secondary border border-border hover:text-t-primary transition-colors text-sm"
               >
-                {cp.label}
+                {t(cp.labelKey)}
               </button>
             ))}
           </div>
@@ -164,11 +166,11 @@ export default function RegexTesterPage() {
 
         {/* Test String */}
         <div className="glass rounded-xl p-6">
-          <label className="block text-sm text-t-secondary mb-2">Test String</label>
+          <label className="block text-sm text-t-secondary mb-2">{t("regex.testString")}</label>
           <textarea
             value={testString}
             onChange={(e) => setTestString(e.target.value)}
-            placeholder="Enter test string..."
+            placeholder={t("regex.enterTest")}
             rows={8}
             spellCheck={false}
             className="w-full bg-bg-secondary border border-border rounded-lg px-4 py-3 text-t-primary placeholder-t-tertiary focus:outline-none focus:ring-2 focus:ring-accent/50 font-mono"
@@ -181,7 +183,7 @@ export default function RegexTesterPage() {
             onClick={clearAll}
             className="px-4 py-2 rounded-lg text-t-secondary bg-bg-secondary border border-border hover:text-t-primary transition-colors"
           >
-            Clear
+            {t("ui.clear")}
           </button>
         </div>
 
@@ -193,7 +195,7 @@ export default function RegexTesterPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
               </svg>
               <div>
-                <p className="text-sm font-medium text-red-400">Invalid Regular Expression</p>
+                <p className="text-sm font-medium text-red-400">{t("regex.invalid")}</p>
                 <p className="text-xs text-red-400/70 mt-1 font-mono">{error}</p>
               </div>
             </div>
@@ -206,7 +208,7 @@ export default function RegexTesterPage() {
             {/* Match Count */}
             <div className="glass rounded-xl p-4">
               <p className="text-sm text-t-secondary">
-                Matches found:{" "}
+                {t("regex.matchesFound")}{" "}
                 <span className="text-t-primary font-semibold">{matches.length}</span>
               </p>
             </div>
@@ -214,7 +216,7 @@ export default function RegexTesterPage() {
             {/* Highlighted Text */}
             {highlightedText && (
               <div className="glass rounded-xl p-6">
-                <label className="block text-sm text-t-secondary mb-2">Highlighted Matches</label>
+                <label className="block text-sm text-t-secondary mb-2">{t("regex.highlighted")}</label>
                 <div className="bg-bg-secondary border border-border rounded-lg px-4 py-3 font-mono text-sm whitespace-pre-wrap break-all">
                   {highlightedText.map((part, i) =>
                     part.isMatch ? (
@@ -235,7 +237,7 @@ export default function RegexTesterPage() {
             {/* Match List */}
             {matches.length > 0 && (
               <div className="glass rounded-xl p-6">
-                <label className="block text-sm text-t-secondary mb-3">Match Details</label>
+                <label className="block text-sm text-t-secondary mb-3">{t("regex.matchDetails")}</label>
                 <div className="space-y-2 max-h-64 overflow-y-auto">
                   {matches.map((m, i) => (
                     <div
@@ -249,7 +251,7 @@ export default function RegexTesterPage() {
                       </div>
                       {m.groups.length > 0 && (
                         <div className="mt-1 ml-8 text-xs text-t-tertiary">
-                          Groups:{" "}
+                          {t("regex.groups")}{" "}
                           {m.groups.map((g, gi) => (
                             <span key={gi} className="text-t-secondary font-mono mr-2">
                               ${gi + 1}=&quot;{g}&quot;

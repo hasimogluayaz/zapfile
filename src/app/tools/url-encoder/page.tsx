@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
 import ToolLayout from "@/components/ToolLayout";
+import { useI18n } from "@/lib/i18n";
 
 type EncodingMode = "encodeURIComponent" | "encodeURI";
 type ActiveField = "decoded" | "encoded" | null;
@@ -28,6 +29,7 @@ function decode(text: string, mode: EncodingMode): string {
 }
 
 export default function UrlEncoderPage() {
+  const { t } = useI18n();
   const [decoded, setDecoded] = useState("");
   const [encoded, setEncoded] = useState("");
   const [mode, setMode] = useState<EncodingMode>("encodeURIComponent");
@@ -57,13 +59,14 @@ export default function UrlEncoderPage() {
     }
   }, [mode, decoded]);
 
-  const copyToClipboard = async (text: string, label: string) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const copyToClipboard = async (text: string, _label?: string) => {
     if (!text) return;
     try {
       await navigator.clipboard.writeText(text);
-      toast.success(`${label} copied to clipboard`);
+      toast.success(t("ui.copied"));
     } catch {
-      toast.error("Failed to copy to clipboard");
+      toast.error(t("ui.copyFailed"));
     }
   };
 
@@ -94,7 +97,7 @@ export default function UrlEncoderPage() {
         {/* Mode Selector */}
         <div className="glass rounded-2xl p-6">
           <label className="text-sm font-medium text-t-secondary mb-3 block">
-            Encoding Mode
+            {t("urlenc.encodingMode")}
           </label>
           <div className="flex gap-2">
             {modes.map(({ value, label }) => (
@@ -117,7 +120,7 @@ export default function UrlEncoderPage() {
         <div className="glass rounded-2xl p-6">
           <div className="flex items-center justify-between mb-3">
             <label className="text-sm font-medium text-t-secondary">
-              Decoded (Plain Text)
+              {t("urlenc.decoded")}
             </label>
             <button
               onClick={() => copyToClipboard(decoded, "Decoded text")}
@@ -137,7 +140,7 @@ export default function UrlEncoderPage() {
                   d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
                 />
               </svg>
-              Copy
+              {t("ui.copy")}
             </button>
           </div>
           <textarea
@@ -145,7 +148,7 @@ export default function UrlEncoderPage() {
             onChange={(e) => handleDecodedChange(e.target.value)}
             onFocus={() => setActiveField("decoded")}
             onBlur={() => setActiveField(null)}
-            placeholder="Enter plain text to encode..."
+            placeholder={t("urlenc.enterPlain")}
             rows={5}
             className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border text-t-primary placeholder:text-t-tertiary focus:outline-none focus:border-accent text-sm leading-relaxed resize-none font-mono transition-colors"
           />
@@ -171,14 +174,14 @@ export default function UrlEncoderPage() {
                 d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
               />
             </svg>
-            Swap
+            {t("ui.swap")}
           </button>
           <button
             onClick={clearAll}
             disabled={!decoded && !encoded}
             className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium text-t-secondary bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] hover:text-t-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Clear
+            {t("ui.clear")}
           </button>
         </div>
 
@@ -186,7 +189,7 @@ export default function UrlEncoderPage() {
         <div className="glass rounded-2xl p-6">
           <div className="flex items-center justify-between mb-3">
             <label className="text-sm font-medium text-t-secondary">
-              Encoded (URL)
+              {t("urlenc.encoded")}
             </label>
             <button
               onClick={() => copyToClipboard(encoded, "Encoded text")}
@@ -206,7 +209,7 @@ export default function UrlEncoderPage() {
                   d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
                 />
               </svg>
-              Copy
+              {t("ui.copy")}
             </button>
           </div>
           <textarea
@@ -214,7 +217,7 @@ export default function UrlEncoderPage() {
             onChange={(e) => handleEncodedChange(e.target.value)}
             onFocus={() => setActiveField("encoded")}
             onBlur={() => setActiveField(null)}
-            placeholder="Enter URL-encoded text to decode..."
+            placeholder={t("urlenc.enterEncoded")}
             rows={5}
             className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border text-t-primary placeholder:text-t-tertiary focus:outline-none focus:border-accent text-sm leading-relaxed resize-none font-mono transition-colors"
           />

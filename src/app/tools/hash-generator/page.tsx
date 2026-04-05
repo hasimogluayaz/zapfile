@@ -3,6 +3,7 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
 import ToolLayout from "@/components/ToolLayout";
+import { useI18n } from "@/lib/i18n";
 
 type InputMode = "text" | "file";
 
@@ -23,6 +24,7 @@ async function computeHash(
 }
 
 export default function HashGeneratorPage() {
+  const { t } = useI18n();
   const [inputMode, setInputMode] = useState<InputMode>("text");
   const [textInput, setTextInput] = useState("");
   const [fileName, setFileName] = useState<string | null>(null);
@@ -55,13 +57,13 @@ export default function HashGeneratorPage() {
 
     if (inputMode === "text") {
       if (!textInput.trim()) {
-        toast.error("Please enter some text");
+        toast.error(t("hash.enterSome"));
         return;
       }
       data = new TextEncoder().encode(textInput).buffer as ArrayBuffer;
     } else {
       if (!fileBuffer) {
-        toast.error("Please select a file");
+        toast.error(t("hash.selectSome"));
         return;
       }
       data = fileBuffer;
@@ -76,9 +78,9 @@ export default function HashGeneratorPage() {
         }))
       );
       setResults(hashResults);
-      toast.success("Hashes generated successfully");
+      toast.success(t("hash.success"));
     } catch {
-      toast.error("Failed to generate hashes");
+      toast.error(t("hash.fail"));
       setResults([]);
     } finally {
       setIsGenerating(false);
@@ -137,7 +139,7 @@ export default function HashGeneratorPage() {
                     : "bg-white/[0.04] border border-white/[0.08] text-brand-muted hover:border-white/20"
                 }`}
               >
-                {mode}
+                {mode === "text" ? t("hash.textInput") : t("hash.fileInput")}
               </button>
             ))}
           </div>
@@ -147,7 +149,7 @@ export default function HashGeneratorPage() {
             <textarea
               value={textInput}
               onChange={(e) => setTextInput(e.target.value)}
-              placeholder="Enter text to hash..."
+              placeholder={t("hash.enterText")}
               rows={6}
               className="w-full px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-brand-text placeholder:text-brand-muted/50 focus:outline-none focus:border-brand-indigo/40 resize-none font-mono text-sm"
             />
@@ -172,7 +174,7 @@ export default function HashGeneratorPage() {
                     />
                   </svg>
                   <span className="text-brand-muted text-sm">
-                    {fileName ? fileName : "Click to select a file"}
+                    {fileName ? fileName : t("hash.selectFile")}
                   </span>
                 </div>
                 <input
@@ -212,17 +214,17 @@ export default function HashGeneratorPage() {
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
                     />
                   </svg>
-                  Generating...
+                  {t("hash.generating")}
                 </span>
               ) : (
-                "Generate Hashes"
+                t("hash.generate")
               )}
             </button>
             <button
               onClick={clearAll}
               className="px-6 py-3 rounded-xl font-semibold text-brand-text bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] transition-all"
             >
-              Clear
+              {t("ui.clear")}
             </button>
           </div>
         </div>
@@ -232,13 +234,13 @@ export default function HashGeneratorPage() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-brand-text">
-                Hash Results
+                {t("hash.results")}
               </h3>
               <button
                 onClick={copyAll}
                 className="px-4 py-2 rounded-lg text-sm font-medium text-brand-muted bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] hover:text-brand-text transition-all"
               >
-                Copy All
+                {t("hash.copyAll")}
               </button>
             </div>
 

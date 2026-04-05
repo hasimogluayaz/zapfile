@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
 import ToolLayout from "@/components/ToolLayout";
+import { useI18n } from "@/lib/i18n";
 
 type GenerateType = "paragraphs" | "sentences" | "words";
 
@@ -125,6 +126,7 @@ function countWords(text: string): number {
 }
 
 export default function LoremIpsumPage() {
+  const { t } = useI18n();
   const [type, setType] = useState<GenerateType>("paragraphs");
   const [count, setCount] = useState(3);
   const [startWithLorem, setStartWithLorem] = useState(true);
@@ -153,9 +155,9 @@ export default function LoremIpsumPage() {
     if (!text) return;
     try {
       await navigator.clipboard.writeText(text);
-      toast.success("Text copied to clipboard");
+      toast.success(t("lorem.textCopied"));
     } catch {
-      toast.error("Failed to copy to clipboard");
+      toast.error(t("ui.copyFailed"));
     }
   };
 
@@ -163,9 +165,9 @@ export default function LoremIpsumPage() {
   const charCount = text.length;
 
   const types: { value: GenerateType; label: string }[] = [
-    { value: "paragraphs", label: "Paragraphs" },
-    { value: "sentences", label: "Sentences" },
-    { value: "words", label: "Words" },
+    { value: "paragraphs", label: t("lorem.paragraphs") },
+    { value: "sentences", label: t("lorem.sentences") },
+    { value: "words", label: t("lorem.words") },
   ];
 
   return (
@@ -177,12 +179,12 @@ export default function LoremIpsumPage() {
         {/* Settings */}
         <div className="glass rounded-2xl p-6">
           <h3 className="text-sm font-medium text-t-secondary mb-4">
-            Settings
+            {t("lorem.settings")}
           </h3>
 
           {/* Type Selector */}
           <div className="mb-5">
-            <label className="text-sm text-t-primary mb-2 block">Type</label>
+            <label className="text-sm text-t-primary mb-2 block">{t("ui.type")}</label>
             <div className="flex gap-2">
               {types.map(({ value, label }) => (
                 <button
@@ -203,7 +205,7 @@ export default function LoremIpsumPage() {
           {/* Count Slider */}
           <div className="mb-5">
             <div className="flex items-center justify-between mb-2">
-              <label className="text-sm text-t-primary">Count</label>
+              <label className="text-sm text-t-primary">{t("lorem.count")}</label>
               <span className="text-sm font-semibold text-t-primary tabular-nums">
                 {count}
               </span>
@@ -258,7 +260,7 @@ export default function LoremIpsumPage() {
               className="hidden"
             />
             <span className="text-sm text-t-primary">
-              Start with &ldquo;Lorem ipsum dolor sit amet...&rdquo;
+              {t("lorem.startWith")}
             </span>
           </label>
         </div>
@@ -267,21 +269,21 @@ export default function LoremIpsumPage() {
         <div className="glass rounded-2xl p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-medium text-t-secondary">
-              Generated Text
+              {t("lorem.generatedText")}
             </h3>
             <div className="flex gap-2">
               <button
                 onClick={generate}
                 className="px-4 py-2 rounded-xl text-sm font-medium text-t-secondary bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] hover:text-t-primary transition-all"
               >
-                Regenerate
+                {t("ui.regenerate")}
               </button>
               <button
                 onClick={copyToClipboard}
                 disabled={!text}
                 className="px-6 py-2 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:opacity-90 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 text-sm"
               >
-                Copy
+                {t("ui.copy")}
               </button>
             </div>
           </div>
@@ -293,10 +295,10 @@ export default function LoremIpsumPage() {
           {/* Stats */}
           <div className="flex gap-4 mt-3">
             <span className="text-xs text-t-tertiary">
-              {wordCount.toLocaleString()} words
+              {wordCount.toLocaleString()} {t("ui.words")}
             </span>
             <span className="text-xs text-t-tertiary">
-              {charCount.toLocaleString()} characters
+              {charCount.toLocaleString()} {t("ui.characters")}
             </span>
           </div>
         </div>

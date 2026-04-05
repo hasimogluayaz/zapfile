@@ -7,8 +7,10 @@ import FileDropzone from "@/components/FileDropzone";
 import ProcessButton from "@/components/ProcessButton";
 import DownloadButton from "@/components/DownloadButton";
 import { getFileNameWithoutExtension } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 
 export default function SvgToPngPage() {
+  const { t } = useI18n();
   const [file, setFile] = useState<File | null>(null);
   const [svgContent, setSvgContent] = useState<string | null>(null);
   const [width, setWidth] = useState(1024);
@@ -114,9 +116,9 @@ export default function SvgToPngPage() {
 
       setResult(blob);
       setPreview(URL.createObjectURL(blob));
-      toast.success("SVG converted to PNG!");
+      toast.success(t("svg2png.success"));
     } catch (error) {
-      toast.error("Failed to convert SVG");
+      toast.error(t("svg2png.fail"));
       console.error(error);
     } finally {
       setProcessing(false);
@@ -153,7 +155,7 @@ export default function SvgToPngPage() {
                 onClick={reset}
                 className="text-sm text-brand-muted hover:text-red-400 transition-colors"
               >
-                Remove
+                {t("ui.remove")}
               </button>
             </div>
             {svgContent && (
@@ -175,11 +177,11 @@ export default function SvgToPngPage() {
 
           {/* Size */}
           <div className="glass rounded-xl p-6">
-            <h3 className="font-medium text-brand-text mb-4">Output Size</h3>
+            <h3 className="font-medium text-brand-text mb-4">{t("svg2png.outputSize")}</h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm text-brand-muted mb-2">
-                  Width (px)
+                  {t("ui.width")} (px)
                 </label>
                 <input
                   type="number"
@@ -192,7 +194,7 @@ export default function SvgToPngPage() {
               </div>
               <div>
                 <label className="block text-sm text-brand-muted mb-2">
-                  Height (px)
+                  {t("ui.height")} (px)
                 </label>
                 <input
                   type="number"
@@ -212,7 +214,7 @@ export default function SvgToPngPage() {
                 className="accent-brand-indigo"
               />
               <span className="text-sm text-brand-muted">
-                Lock aspect ratio
+                {t("ui.lockAspect")}
               </span>
             </label>
           </div>
@@ -221,8 +223,8 @@ export default function SvgToPngPage() {
             onClick={handleProcess}
             loading={processing}
             disabled={!svgContent}
-            label="Convert to PNG"
-            loadingLabel="Converting..."
+            label={t("svg2png.convert")}
+            loadingLabel={t("ui.converting")}
           />
         </div>
       ) : (
@@ -248,13 +250,13 @@ export default function SvgToPngPage() {
             <DownloadButton
               blob={result}
               filename={`${getFileNameWithoutExtension(file.name)}.png`}
-              label="Download PNG"
+              label={t("svg2png.download")}
             />
             <button
               onClick={reset}
               className="px-6 py-3 rounded-xl font-semibold text-brand-text bg-white/5 hover:bg-white/10 transition-colors"
             >
-              Convert Another SVG
+              {t("svg2png.another")}
             </button>
           </div>
         </div>

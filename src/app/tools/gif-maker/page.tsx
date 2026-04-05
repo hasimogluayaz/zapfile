@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback } from "react";
 import toast from "react-hot-toast";
 import ToolLayout from "@/components/ToolLayout";
+import { useI18n } from "@/lib/i18n";
 import FileDropzone from "@/components/FileDropzone";
 import DownloadButton from "@/components/DownloadButton";
 import ProgressBar from "@/components/ProgressBar";
@@ -14,6 +15,7 @@ interface LoadedFrame {
 }
 
 export default function GifMakerPage() {
+  const { t } = useI18n();
   const [frames, setFrames] = useState<LoadedFrame[]>([]);
   const [frameDelay, setFrameDelay] = useState(500);
   const [outputWidth, setOutputWidth] = useState(400);
@@ -86,7 +88,7 @@ export default function GifMakerPage() {
 
   const handleCreateGif = async () => {
     if (frames.length < 2) {
-      toast.error("Please add at least 2 images.");
+      toast.error(t("gifmaker.min2"));
       return;
     }
 
@@ -94,7 +96,7 @@ export default function GifMakerPage() {
     setProgress(0);
 
     try {
-      toast.loading("Loading GIF processor...", { id: "ffmpeg-load" });
+      toast.loading(t("gifmaker.loadingProc"), { id: "ffmpeg-load" });
       const { ffmpeg, fetchFile } = await loadFFmpeg();
       toast.dismiss("ffmpeg-load");
 
@@ -161,7 +163,7 @@ export default function GifMakerPage() {
 
       setResultBlob(gifBlob);
       setResultPreview(URL.createObjectURL(gifBlob));
-      toast.success("GIF created successfully!");
+      toast.success(t("gifmaker.success"));
 
       // Clean up FFmpeg FS
       for (let i = 0; i < frames.length; i++) {
@@ -172,7 +174,7 @@ export default function GifMakerPage() {
 
       setProgress(100);
     } catch (error) {
-      toast.error("Failed to create GIF. Please try again.");
+      toast.error(t("gifmaker.fail"));
       console.error(error);
     } finally {
       setProcessing(false);
@@ -201,13 +203,13 @@ export default function GifMakerPage() {
             <div className="glass rounded-xl p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="text-[13px] font-semibold text-brand-text">
-                  Frames ({frames.length})
+                  {t("gifmaker.frames")} ({frames.length})
                 </h3>
                 <button
                   onClick={clearAll}
                   className="text-[11px] text-brand-muted hover:text-red-400 transition-colors"
                 >
-                  Clear All
+                  {t("ui.clearAll")}
                 </button>
               </div>
 
@@ -286,20 +288,20 @@ export default function GifMakerPage() {
                 }}
                 multiple
                 formats={["JPG", "PNG", "WEBP"]}
-                label="Add more frames"
+                label={t("gifmaker.addFrames")}
               />
             </div>
 
             {/* Settings */}
             <div className="glass rounded-xl p-4 space-y-4">
               <h3 className="text-[13px] font-semibold text-brand-text">
-                GIF Settings
+                {t("gifmaker.gifSettings")}
               </h3>
 
               {/* Frame delay */}
               <div>
                 <div className="flex justify-between mb-1.5">
-                  <label className="text-[12px] text-brand-muted">Frame Delay</label>
+                  <label className="text-[12px] text-brand-muted">{t("gifmaker.frameDelay")}</label>
                   <span className="text-[12px] font-mono text-brand-muted">
                     {frameDelay}ms
                   </span>
@@ -314,15 +316,15 @@ export default function GifMakerPage() {
                   className="w-full accent-brand-indigo"
                 />
                 <div className="flex justify-between mt-0.5">
-                  <span className="text-[10px] text-brand-muted">100ms (fast)</span>
-                  <span className="text-[10px] text-brand-muted">2000ms (slow)</span>
+                  <span className="text-[10px] text-brand-muted">{t("gifmaker.fast")}</span>
+                  <span className="text-[10px] text-brand-muted">{t("gifmaker.slow")}</span>
                 </div>
               </div>
 
               {/* Output width */}
               <div>
                 <div className="flex justify-between mb-1.5">
-                  <label className="text-[12px] text-brand-muted">Output Width</label>
+                  <label className="text-[12px] text-brand-muted">{t("gifmaker.outputWidth")}</label>
                   <span className="text-[12px] font-mono text-brand-muted">
                     {outputWidth}px
                   </span>
@@ -352,7 +354,7 @@ export default function GifMakerPage() {
                     className="w-4 h-4 rounded accent-brand-indigo"
                   />
                   <span className="text-[12px] text-brand-muted">
-                    Infinite loop
+                    {t("gifmaker.infiniteLoop")}
                   </span>
                 </label>
               </div>
@@ -360,7 +362,7 @@ export default function GifMakerPage() {
 
             {/* Progress bar */}
             {processing && (
-              <ProgressBar progress={progress} label="Creating GIF..." />
+              <ProgressBar progress={progress} label={t("gifmaker.creating")} />
             )}
 
             {/* Create GIF button */}
@@ -373,18 +375,18 @@ export default function GifMakerPage() {
                   : "bg-gradient-to-r from-indigo-500 to-purple-500 hover:shadow-lg hover:shadow-indigo-500/25 hover:scale-[1.02] active:scale-[0.98]"
               }`}
             >
-              {processing ? "Creating GIF..." : "Create GIF"}
+              {processing ? t("gifmaker.creating") : t("gifmaker.create")}
             </button>
 
             <p className="text-xs text-brand-muted text-center">
-              Note: First use may take a moment to load the processor (~30MB).
+              {t("ui.ffmpegNote")}
             </p>
 
             {/* Result */}
             {resultBlob && resultPreview && (
               <div className="glass rounded-xl p-4 space-y-3">
                 <p className="text-[13px] font-medium text-brand-text">
-                  GIF Preview
+                  {t("gifmaker.gifPreview")}
                 </p>
                 <div className="flex justify-center">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -395,19 +397,19 @@ export default function GifMakerPage() {
                   />
                 </div>
                 <p className="text-[11px] text-brand-muted text-center">
-                  {formatFileSize(resultBlob.size)} &middot; {frames.length} frames &middot; {Math.round(1000 / frameDelay)} FPS
+                  {formatFileSize(resultBlob.size)} &middot; {frames.length} {t("gifmaker.frames2")} &middot; {Math.round(1000 / frameDelay)} FPS
                 </p>
                 <div className="flex flex-wrap gap-3 justify-center">
                   <DownloadButton
                     blob={resultBlob}
                     filename="animation.gif"
-                    label="Download GIF"
+                    label={t("gifmaker.download")}
                   />
                   <button
                     onClick={clearAll}
                     className="px-6 py-2.5 rounded-xl text-[13px] font-semibold text-brand-muted bg-white/5 hover:bg-white/10 transition-colors"
                   >
-                    Start Over
+                    {t("ui.startOver")}
                   </button>
                 </div>
               </div>

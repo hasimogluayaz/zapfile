@@ -6,6 +6,7 @@ import ToolLayout from "@/components/ToolLayout";
 import FileDropzone from "@/components/FileDropzone";
 import DownloadButton from "@/components/DownloadButton";
 import { formatFileSize } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 
 type LayoutOption = "grid-2x2" | "grid-3x3" | "horizontal" | "vertical";
 
@@ -23,6 +24,7 @@ interface LoadedImage {
 }
 
 export default function ImageCollagePage() {
+  const { t } = useI18n();
   const [images, setImages] = useState<LoadedImage[]>([]);
   const [layout, setLayout] = useState<LayoutOption>("grid-2x2");
   const [gap, setGap] = useState(4);
@@ -52,7 +54,7 @@ export default function ImageCollagePage() {
         setResultBlob(null);
         setResultPreview(null);
       } catch {
-        toast.error("Failed to load one or more images.");
+        toast.error(t("collage.loadFail"));
       }
     },
     []
@@ -66,7 +68,7 @@ export default function ImageCollagePage() {
         setResultBlob(null);
         setResultPreview(null);
       } catch {
-        toast.error("Failed to load one or more images.");
+        toast.error(t("collage.loadFail"));
       }
     },
     []
@@ -174,9 +176,9 @@ export default function ImageCollagePage() {
       if (blob) {
         setResultBlob(blob);
         setResultPreview(URL.createObjectURL(blob));
-        toast.success("Collage created!");
+        toast.success(t("collage.success"));
       } else {
-        toast.error("Failed to create collage.");
+        toast.error(t("collage.fail"));
       }
     }, "image/png");
   };
@@ -205,13 +207,13 @@ export default function ImageCollagePage() {
             <div className="glass rounded-xl p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="text-[13px] font-semibold text-brand-text">
-                  Images ({images.length})
+                  {t("collage.images")} ({images.length})
                 </h3>
                 <button
                   onClick={clearAll}
                   className="text-[11px] text-brand-muted hover:text-red-400 transition-colors"
                 >
-                  Clear All
+                  {t("ui.clearAll")}
                 </button>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -244,43 +246,51 @@ export default function ImageCollagePage() {
                 }}
                 multiple
                 formats={["JPG", "PNG", "WEBP"]}
-                label="Add more images"
+                label={t("collage.addMore")}
               />
             </div>
 
             {/* Settings */}
             <div className="glass rounded-xl p-4 space-y-4">
               <h3 className="text-[13px] font-semibold text-brand-text">
-                Collage Settings
+                {t("collage.settings")}
               </h3>
 
               {/* Layout */}
               <div>
                 <label className="block text-[12px] text-brand-muted mb-1.5">
-                  Layout
+                  {t("collage.layout")}
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {layoutOptions.map((opt) => (
-                    <button
-                      key={opt.value}
-                      onClick={() => setLayout(opt.value)}
-                      className={`p-3 rounded-lg text-center transition-all ${
-                        layout === opt.value
-                          ? "bg-brand-indigo/20 border border-brand-indigo text-brand-text"
-                          : "bg-white/5 border border-white/10 text-brand-muted hover:border-white/20"
-                      }`}
-                    >
-                      <p className="font-medium text-[12px]">{opt.label}</p>
-                      <p className="text-[10px] mt-0.5 opacity-70">{opt.desc}</p>
-                    </button>
-                  ))}
+                  {layoutOptions.map((opt) => {
+                    const layoutLabelKey: Record<LayoutOption, string> = {
+                      "grid-2x2": t("collage.grid2x2"),
+                      "grid-3x3": t("collage.grid3x3"),
+                      "horizontal": t("collage.horizontal"),
+                      "vertical": t("collage.vertical"),
+                    };
+                    return (
+                      <button
+                        key={opt.value}
+                        onClick={() => setLayout(opt.value)}
+                        className={`p-3 rounded-lg text-center transition-all ${
+                          layout === opt.value
+                            ? "bg-brand-indigo/20 border border-brand-indigo text-brand-text"
+                            : "bg-white/5 border border-white/10 text-brand-muted hover:border-white/20"
+                        }`}
+                      >
+                        <p className="font-medium text-[12px]">{layoutLabelKey[opt.value]}</p>
+                        <p className="text-[10px] mt-0.5 opacity-70">{opt.desc}</p>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
               {/* Gap */}
               <div>
                 <div className="flex justify-between mb-1.5">
-                  <label className="text-[12px] text-brand-muted">Gap / Spacing</label>
+                  <label className="text-[12px] text-brand-muted">{t("collage.gap")}</label>
                   <span className="text-[12px] font-mono text-brand-muted">{gap}px</span>
                 </div>
                 <input
@@ -301,7 +311,7 @@ export default function ImageCollagePage() {
               {/* Background color */}
               <div>
                 <label className="block text-[12px] text-brand-muted mb-1.5">
-                  Background Color
+                  {t("collage.bgColor")}
                 </label>
                 <div className="flex items-center gap-3">
                   <input
@@ -335,7 +345,7 @@ export default function ImageCollagePage() {
                   : "bg-gradient-to-r from-indigo-500 to-purple-500 hover:shadow-lg hover:shadow-indigo-500/25 hover:scale-[1.02] active:scale-[0.98]"
               }`}
             >
-              Create Collage
+              {t("collage.create")}
             </button>
 
             {resultBlob && resultPreview && (
@@ -351,13 +361,13 @@ export default function ImageCollagePage() {
                   <DownloadButton
                     blob={resultBlob}
                     filename="collage.png"
-                    label="Download Collage"
+                    label={t("collage.download")}
                   />
                   <button
                     onClick={clearAll}
                     className="px-6 py-2.5 rounded-xl text-[13px] font-semibold text-brand-muted bg-white/5 hover:bg-white/10 transition-colors"
                   >
-                    Start Over
+                    {t("ui.startOver")}
                   </button>
                 </div>
               </div>

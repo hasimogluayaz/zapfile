@@ -8,6 +8,7 @@ import ProcessButton from "@/components/ProcessButton";
 import DownloadButton from "@/components/DownloadButton";
 import FileSizeCompare from "@/components/FileSizeCompare";
 import { formatFileSize, getFileNameWithoutExtension } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 
 type OutputFormat = "png" | "jpeg" | "webp";
 
@@ -18,6 +19,7 @@ const formatOptions: { value: OutputFormat; label: string; mime: string; ext: st
 ];
 
 export default function ConvertImagePage() {
+  const { t } = useI18n();
   const [files, setFiles] = useState<File[]>([]);
   const [outputFormat, setOutputFormat] = useState<OutputFormat>("png");
   const [quality, setQuality] = useState(0.92);
@@ -30,7 +32,7 @@ export default function ConvertImagePage() {
       f.type.startsWith("image/")
     );
     if (imageFiles.length === 0) {
-      toast.error("Please select valid image files.");
+      toast.error(t("convimg.invalid"));
       return;
     }
     setFiles(imageFiles);
@@ -100,10 +102,10 @@ export default function ConvertImagePage() {
         setZipBlob(zipContent);
       }
 
-      toast.success(`Converted ${converted.length} image(s) to ${format.label}!`);
+      toast.success(t("convimg.success", { count: converted.length, format: format.label }));
     } catch (error) {
       console.error(error);
-      toast.error("Failed to convert one or more images.");
+      toast.error(t("convimg.fail"));
     } finally {
       setProcessing(false);
     }
@@ -143,10 +145,10 @@ export default function ConvertImagePage() {
             <div className="glass rounded-xl p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-brand-text font-medium">
-                  {files.length} image{files.length > 1 ? "s" : ""} selected
+                  {t("convimg.selected", { count: files.length })}
                 </h3>
                 <button onClick={reset} className="text-sm text-brand-muted hover:text-red-400 transition-colors">
-                  Clear All
+                  {t("ui.clearAll")}
                 </button>
               </div>
               <div className="space-y-2 max-h-48 overflow-y-auto">
@@ -161,7 +163,7 @@ export default function ConvertImagePage() {
 
             {/* Format selection */}
             <div className="glass rounded-xl p-6 space-y-4">
-              <h3 className="font-semibold text-brand-text">Convert to</h3>
+              <h3 className="font-semibold text-brand-text">{t("convimg.convertTo")}</h3>
               <div className="grid grid-cols-3 gap-3">
                 {formatOptions.map((opt) => (
                   <button
@@ -233,20 +235,20 @@ export default function ConvertImagePage() {
                 <DownloadButton
                   blob={results[0].converted}
                   filename={`${getFileNameWithoutExtension(results[0].original.name)}${results[0].ext}`}
-                  label="Download Converted Image"
+                  label={t("convimg.download")}
                 />
               ) : zipBlob ? (
                 <DownloadButton
                   blob={zipBlob}
                   filename={`converted-images.zip`}
-                  label="Download All as ZIP"
+                  label={t("ui.downloadZip")}
                 />
               ) : null}
               <button
                 onClick={reset}
                 className="px-6 py-3 rounded-xl font-semibold text-brand-text bg-white/5 hover:bg-white/10 transition-colors"
               >
-                Convert More
+                {t("ui.convertMore")}
               </button>
             </div>
           </div>

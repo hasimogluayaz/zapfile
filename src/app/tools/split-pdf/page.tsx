@@ -8,6 +8,7 @@ import ProcessButton from "@/components/ProcessButton";
 import DownloadButton from "@/components/DownloadButton";
 import ProgressBar from "@/components/ProgressBar";
 import { formatFileSize, getFileNameWithoutExtension } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 
 interface PageRange {
   start: number;
@@ -48,6 +49,7 @@ function formatRange(range: PageRange): string {
 }
 
 export default function SplitPdfPage() {
+  const { t } = useI18n();
   const [file, setFile] = useState<File | null>(null);
   const [totalPages, setTotalPages] = useState(0);
   const [rangeInput, setRangeInput] = useState("");
@@ -61,7 +63,7 @@ export default function SplitPdfPage() {
     if (!selected) return;
 
     if (selected.type !== "application/pdf" && !selected.name.toLowerCase().endsWith(".pdf")) {
-      toast.error("Please select a valid PDF file.");
+      toast.error(t("split.invalidFile"));
       return;
     }
 
@@ -79,10 +81,10 @@ export default function SplitPdfPage() {
       setResultBlob(null);
       setProgress(0);
 
-      toast.success(`PDF loaded with ${pageCount} page${pageCount !== 1 ? "s" : ""}.`);
+      toast.success(t("split.loaded", { count: pageCount }));
     } catch (error) {
       console.error("Error loading PDF:", error);
-      toast.error("Failed to load PDF. The file may be corrupted or encrypted.");
+      toast.error(t("split.loadFail"));
     }
   }, []);
 
@@ -91,15 +93,13 @@ export default function SplitPdfPage() {
 
     const trimmed = rangeInput.trim();
     if (!trimmed) {
-      toast.error("Please enter page ranges to split.");
+      toast.error(t("split.enterRanges"));
       return;
     }
 
     const ranges = parsePageRanges(trimmed, totalPages);
     if (!ranges) {
-      toast.error(
-        `Invalid page ranges. Use format like "1-3, 5, 7-9". Pages must be between 1 and ${totalPages}.`
-      );
+      toast.error(t("split.invalidRanges"));
       return;
     }
 
@@ -155,12 +155,10 @@ export default function SplitPdfPage() {
       setResultFilename(`${baseName}-split.zip`);
       setProgress(100);
 
-      toast.success(
-        `Split into ${ranges.length} PDF${ranges.length !== 1 ? "s" : ""}. Ready to download as ZIP.`
-      );
+      toast.success(t("split.success", { count: ranges.length }));
     } catch (error) {
       console.error("Split error:", error);
-      toast.error("Failed to split PDF. Please try again.");
+      toast.error(t("split.fail"));
     } finally {
       setProcessing(false);
     }
@@ -250,7 +248,7 @@ export default function SplitPdfPage() {
                 htmlFor="pageRanges"
                 className="block text-sm font-medium text-brand-text mb-2"
               >
-                Page Ranges
+                {t("split.pageRanges")}
               </label>
               <input
                 id="pageRanges"
@@ -261,8 +259,7 @@ export default function SplitPdfPage() {
                 className="w-full px-4 py-3 rounded-xl bg-brand-card border border-white/10 text-brand-text placeholder:text-brand-muted focus:outline-none focus:border-brand-indigo/50 transition-colors"
               />
               <p className="text-xs text-brand-muted mt-2">
-                Enter page numbers and ranges separated by commas. Each range becomes a separate PDF file.
-                Valid pages: 1 to {totalPages}.
+                {t("split.rangesHelp")}
               </p>
             </div>
 
@@ -272,7 +269,7 @@ export default function SplitPdfPage() {
                 onClick={() => setRangeInput(`1-${totalPages}`)}
                 className="px-3 py-1.5 text-xs rounded-lg bg-white/5 text-brand-muted hover:text-brand-text hover:bg-white/10 transition-colors"
               >
-                All pages
+                {t("split.allPages")}
               </button>
               {totalPages > 1 && (
                 <button
@@ -283,7 +280,7 @@ export default function SplitPdfPage() {
                   }
                   className="px-3 py-1.5 text-xs rounded-lg bg-white/5 text-brand-muted hover:text-brand-text hover:bg-white/10 transition-colors"
                 >
-                  Each page separately
+                  {t("split.eachPage")}
                 </button>
               )}
               {totalPages >= 2 && (
@@ -294,7 +291,7 @@ export default function SplitPdfPage() {
                   }}
                   className="px-3 py-1.5 text-xs rounded-lg bg-white/5 text-brand-muted hover:text-brand-text hover:bg-white/10 transition-colors"
                 >
-                  Split in half
+                  {t("split.half")}
                 </button>
               )}
             </div>
@@ -303,7 +300,7 @@ export default function SplitPdfPage() {
 
         {/* Progress Bar */}
         {processing && (
-          <ProgressBar progress={progress} label="Splitting PDF..." />
+          <ProgressBar progress={progress} label={t("split.splittingPdf")} />
         )}
 
         {/* Action Buttons */}
@@ -313,8 +310,8 @@ export default function SplitPdfPage() {
               onClick={handleSplit}
               disabled={!file || !rangeInput.trim()}
               loading={processing}
-              label="Split PDF"
-              loadingLabel="Splitting..."
+              label={t("split.button")}
+              loadingLabel={t("split.splitting")}
             />
           )}
           {resultBlob && (
@@ -322,13 +319,13 @@ export default function SplitPdfPage() {
               <DownloadButton
                 blob={resultBlob}
                 filename={resultFilename}
-                label="Download ZIP"
+                label={t("split.download")}
               />
               <button
                 onClick={handleReset}
                 className="px-6 py-3 rounded-xl font-semibold text-brand-muted border border-white/10 hover:text-brand-text hover:border-white/20 transition-all duration-300"
               >
-                Split Another PDF
+                {t("split.another")}
               </button>
             </>
           )}

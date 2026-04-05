@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import ToolLayout from "@/components/ToolLayout";
+import { useI18n } from "@/lib/i18n";
 
 interface Stat {
   label: string;
   value: string;
 }
 
-function analyzeText(text: string): Stat[] {
+function analyzeText(text: string) {
   const characters = text.length;
   const charactersNoSpaces = text.replace(/\s/g, "").length;
 
@@ -40,25 +41,25 @@ function analyzeText(text: string): Stat[] {
       ? `${Math.ceil(speakingTimeMinutes * 60)}s`
       : `${Math.ceil(speakingTimeMinutes)} min`;
 
-  return [
-    { label: "Characters", value: characters.toLocaleString() },
-    {
-      label: "Characters (no spaces)",
-      value: charactersNoSpaces.toLocaleString(),
-    },
-    { label: "Words", value: words.toLocaleString() },
-    { label: "Sentences", value: sentences.toLocaleString() },
-    { label: "Paragraphs", value: paragraphs.toLocaleString() },
-    { label: "Avg Word Length", value: avgWordLength },
-    { label: "Reading Time", value: words === 0 ? "0s" : readingTime },
-    { label: "Speaking Time", value: words === 0 ? "0s" : speakingTime },
-  ];
+  return { characters, charactersNoSpaces, words, sentences, paragraphs, avgWordLength, readingTime, speakingTime };
 }
 
 export default function WordCounterPage() {
+  const { t } = useI18n();
   const [text, setText] = useState("");
 
-  const stats = analyzeText(text);
+  const raw = analyzeText(text);
+
+  const stats: Stat[] = [
+    { label: t("wc.chars"), value: raw.characters.toLocaleString() },
+    { label: t("wc.charsNoSpace"), value: raw.charactersNoSpaces.toLocaleString() },
+    { label: t("wc.words"), value: raw.words.toLocaleString() },
+    { label: t("wc.sentences"), value: raw.sentences.toLocaleString() },
+    { label: t("wc.paragraphs"), value: raw.paragraphs.toLocaleString() },
+    { label: t("wc.avgWordLen"), value: raw.avgWordLength },
+    { label: t("wc.readingTime"), value: raw.words === 0 ? "0s" : raw.readingTime },
+    { label: t("wc.speakingTime"), value: raw.words === 0 ? "0s" : raw.speakingTime },
+  ];
 
   const handleClear = () => {
     setText("");
@@ -74,21 +75,21 @@ export default function WordCounterPage() {
         <div className="glass rounded-2xl p-6">
           <div className="flex items-center justify-between mb-3">
             <label className="text-sm font-medium text-t-secondary">
-              Enter or paste your text
+              {t("wc.enterText")}
             </label>
             {text.length > 0 && (
               <button
                 onClick={handleClear}
                 className="px-3 py-1.5 text-xs rounded-lg bg-bg-secondary text-t-secondary hover:bg-bg-tertiary hover:text-t-primary transition-colors"
               >
-                Clear
+                {t("ui.clear")}
               </button>
             )}
           </div>
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="Start typing or paste your text here..."
+            placeholder={t("wc.placeholder")}
             rows={10}
             className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border text-t-primary placeholder:text-t-tertiary focus:outline-none focus:border-accent text-sm leading-relaxed resize-none transition-colors"
           />

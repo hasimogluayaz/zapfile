@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from "react";
 import toast from "react-hot-toast";
 import ToolLayout from "@/components/ToolLayout";
+import { useI18n } from "@/lib/i18n";
 
 type Mode = "csv-to-json" | "json-to-csv";
 type Delimiter = "," | "\t" | ";";
@@ -92,6 +93,7 @@ function jsonToCSV(data: unknown): string {
 }
 
 export default function CSVJSONPage() {
+  const { t } = useI18n();
   const [mode, setMode] = useState<Mode>("csv-to-json");
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
@@ -130,9 +132,9 @@ export default function CSVJSONPage() {
     if (!output) return;
     try {
       await navigator.clipboard.writeText(output);
-      toast.success("Copied to clipboard!");
+      toast.success(t("ui.copied"));
     } catch {
-      toast.error("Failed to copy.");
+      toast.error(t("ui.copyFailed"));
     }
   };
 
@@ -168,7 +170,7 @@ export default function CSVJSONPage() {
                     : "text-t-secondary hover:text-t-primary bg-bg-secondary border border-border"
                 }`}
               >
-                CSV → JSON
+                {t("csvjson.csvToJson")}
               </button>
               <button
                 onClick={() => { setMode("json-to-csv"); setOutput(""); setError(""); }}
@@ -178,7 +180,7 @@ export default function CSVJSONPage() {
                     : "text-t-secondary hover:text-t-primary bg-bg-secondary border border-border"
                 }`}
               >
-                JSON → CSV
+                {t("csvjson.jsonToCsv")}
               </button>
             </div>
 
@@ -187,13 +189,13 @@ export default function CSVJSONPage() {
                 onClick={swapMode}
                 className="px-4 py-2 rounded-lg text-t-secondary bg-bg-secondary border border-border hover:text-t-primary transition-colors text-sm"
               >
-                Swap
+                {t("ui.swap")}
               </button>
               <button
                 onClick={clearAll}
                 className="px-4 py-2 rounded-lg text-t-secondary bg-bg-secondary border border-border hover:text-t-primary transition-colors text-sm"
               >
-                Clear
+                {t("ui.clear")}
               </button>
             </div>
           </div>
@@ -202,15 +204,15 @@ export default function CSVJSONPage() {
           {mode === "csv-to-json" && (
             <div className="flex flex-wrap items-center gap-4 mt-4 pt-4 border-t border-border">
               <div className="flex items-center gap-2">
-                <span className="text-sm text-t-secondary">Delimiter:</span>
+                <span className="text-sm text-t-secondary">{t("csvjson.delimiter")}</span>
                 <div className="flex gap-1">
                   {([
-                    { value: ",", label: "Comma" },
-                    { value: "\t", label: "Tab" },
-                    { value: ";", label: "Semicolon" },
-                  ] as { value: Delimiter; label: string }[]).map((d) => (
+                    { value: ",", labelKey: "csvjson.comma" },
+                    { value: "\t", labelKey: "csvjson.tab" },
+                    { value: ";", labelKey: "csvjson.semicolon" },
+                  ] as { value: Delimiter; labelKey: string }[]).map((d) => (
                     <button
-                      key={d.label}
+                      key={d.labelKey}
                       onClick={() => setDelimiter(d.value)}
                       className={`px-3 py-1 text-xs rounded-lg font-medium transition-all ${
                         delimiter === d.value
@@ -218,7 +220,7 @@ export default function CSVJSONPage() {
                           : "text-t-secondary hover:text-t-primary bg-bg-secondary border border-border"
                       }`}
                     >
-                      {d.label}
+                      {t(d.labelKey)}
                     </button>
                   ))}
                 </div>
@@ -231,7 +233,7 @@ export default function CSVJSONPage() {
                   onChange={(e) => setHasHeaders(e.target.checked)}
                   className="rounded border-border text-accent focus:ring-accent/50"
                 />
-                <span className="text-sm text-t-secondary">First row as headers</span>
+                <span className="text-sm text-t-secondary">{t("csvjson.firstRowHeaders")}</span>
               </label>
             </div>
           )}
@@ -240,7 +242,7 @@ export default function CSVJSONPage() {
         {/* Input */}
         <div className="glass rounded-xl p-6">
           <label className="block text-sm text-t-secondary mb-2">
-            {mode === "csv-to-json" ? "CSV Input" : "JSON Input"}
+            {mode === "csv-to-json" ? t("csvjson.csvInput") : t("csvjson.jsonInput")}
           </label>
           <textarea
             value={input}
@@ -264,7 +266,7 @@ export default function CSVJSONPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
               </svg>
               <div>
-                <p className="text-sm font-medium text-red-400">Conversion Error</p>
+                <p className="text-sm font-medium text-red-400">{t("csvjson.error")}</p>
                 <p className="text-xs text-red-400/70 mt-1 font-mono">{error}</p>
               </div>
             </div>
@@ -276,13 +278,13 @@ export default function CSVJSONPage() {
           <div className="glass rounded-xl p-6">
             <div className="flex items-center justify-between mb-2">
               <label className="text-sm text-t-secondary">
-                {mode === "csv-to-json" ? "JSON Output" : "CSV Output"}
+                {mode === "csv-to-json" ? t("csvjson.jsonOutput") : t("csvjson.csvOutput")}
               </label>
               <button
                 onClick={copyToClipboard}
                 className="px-4 py-2 rounded-lg text-t-secondary bg-bg-secondary border border-border hover:text-t-primary transition-colors text-sm"
               >
-                Copy
+                {t("ui.copy")}
               </button>
             </div>
             <textarea
@@ -292,7 +294,7 @@ export default function CSVJSONPage() {
               className="w-full bg-bg-secondary border border-border rounded-lg px-4 py-3 text-t-primary font-mono text-sm resize-y"
             />
             <p className="text-xs text-t-tertiary mt-2">
-              {output.length.toLocaleString()} characters
+              {output.length.toLocaleString()} {t("ui.characters")}
             </p>
           </div>
         )}

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
 import ToolLayout from "@/components/ToolLayout";
+import { useI18n } from "@/lib/i18n";
 
 interface DiffLine {
   type: "added" | "removed" | "unchanged";
@@ -79,25 +80,26 @@ function computeDiff(oldText: string, newText: string): DiffLine[] {
 }
 
 export default function DiffCheckerPage() {
+  const { t } = useI18n();
   const [originalText, setOriginalText] = useState("");
   const [modifiedText, setModifiedText] = useState("");
   const [diffResult, setDiffResult] = useState<DiffLine[] | null>(null);
 
   const handleCompare = () => {
     if (!originalText && !modifiedText) {
-      toast.error("Please enter text in at least one field");
+      toast.error(t("diff.enterText"));
       return;
     }
     const result = computeDiff(originalText, modifiedText);
     setDiffResult(result);
-    toast.success("Comparison complete!");
+    toast.success(t("diff.complete"));
   };
 
   const handleSwap = () => {
     setOriginalText(modifiedText);
     setModifiedText(originalText);
     setDiffResult(null);
-    toast.success("Texts swapped");
+    toast.success(t("diff.swapped"));
   };
 
   const handleClear = () => {
@@ -121,7 +123,7 @@ export default function DiffCheckerPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="glass rounded-xl p-6">
             <label className="block text-sm font-medium text-t-secondary mb-2">
-              Original Text
+              {t("diff.original")}
             </label>
             <textarea
               value={originalText}
@@ -129,7 +131,7 @@ export default function DiffCheckerPage() {
                 setOriginalText(e.target.value);
                 setDiffResult(null);
               }}
-              placeholder="Paste your original text here..."
+              placeholder={t("diff.pasteOriginal")}
               rows={12}
               spellCheck={false}
               className="w-full bg-bg-secondary border border-border rounded-lg px-4 py-3 text-t-primary placeholder-t-tertiary focus:outline-none focus:ring-2 focus:ring-accent/50 font-mono text-sm resize-y"
@@ -138,7 +140,7 @@ export default function DiffCheckerPage() {
 
           <div className="glass rounded-xl p-6">
             <label className="block text-sm font-medium text-t-secondary mb-2">
-              Modified Text
+              {t("diff.modified")}
             </label>
             <textarea
               value={modifiedText}
@@ -146,7 +148,7 @@ export default function DiffCheckerPage() {
                 setModifiedText(e.target.value);
                 setDiffResult(null);
               }}
-              placeholder="Paste your modified text here..."
+              placeholder={t("diff.pasteModified")}
               rows={12}
               spellCheck={false}
               className="w-full bg-bg-secondary border border-border rounded-lg px-4 py-3 text-t-primary placeholder-t-tertiary focus:outline-none focus:ring-2 focus:ring-accent/50 font-mono text-sm resize-y"
@@ -160,19 +162,19 @@ export default function DiffCheckerPage() {
             onClick={handleCompare}
             className="px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:shadow-lg transition-all"
           >
-            Compare
+            {t("ui.compare")}
           </button>
           <button
             onClick={handleSwap}
             className="px-4 py-2 rounded-lg text-t-secondary bg-bg-secondary border border-border hover:text-t-primary transition-colors"
           >
-            Swap
+            {t("ui.swap")}
           </button>
           <button
             onClick={handleClear}
             className="px-4 py-2 rounded-lg text-t-secondary bg-bg-secondary border border-border hover:text-t-primary transition-colors"
           >
-            Clear
+            {t("ui.clear")}
           </button>
         </div>
 
@@ -183,13 +185,13 @@ export default function DiffCheckerPage() {
             <div className="glass rounded-xl p-6">
               <div className="flex flex-wrap gap-6 text-sm">
                 <span className="text-green-400 font-medium">
-                  +{additions} addition{additions !== 1 ? "s" : ""}
+                  +{additions} {additions !== 1 ? t("diff.additions") : t("diff.addition")}
                 </span>
                 <span className="text-red-400 font-medium">
-                  -{deletions} deletion{deletions !== 1 ? "s" : ""}
+                  -{deletions} {deletions !== 1 ? t("diff.deletions") : t("diff.deletion")}
                 </span>
                 <span className="text-t-secondary">
-                  {unchanged} unchanged
+                  {unchanged} {t("diff.unchanged")}
                 </span>
               </div>
             </div>
@@ -197,16 +199,16 @@ export default function DiffCheckerPage() {
             {/* Diff output */}
             <div className="glass rounded-xl p-6">
               <h3 className="text-sm font-medium text-t-secondary mb-4">
-                Diff Output
+                {t("diff.output")}
               </h3>
               <div className="rounded-lg overflow-hidden border border-border">
                 {diffResult.length === 0 ? (
                   <div className="px-4 py-8 text-center text-t-secondary text-sm">
-                    Both texts are empty.
+                    {t("diff.empty")}
                   </div>
                 ) : additions === 0 && deletions === 0 ? (
                   <div className="px-4 py-8 text-center text-t-secondary text-sm">
-                    No differences found. The texts are identical.
+                    {t("diff.identical")}
                   </div>
                 ) : (
                   <div className="divide-y divide-border text-sm font-mono overflow-x-auto">

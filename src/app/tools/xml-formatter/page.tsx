@@ -3,6 +3,7 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
 import ToolLayout from "@/components/ToolLayout";
+import { useI18n } from "@/lib/i18n";
 
 type IndentSize = "2" | "4";
 
@@ -106,6 +107,7 @@ function validateXML(xml: string): string | null {
 }
 
 export default function XMLFormatterPage() {
+  const { t } = useI18n();
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
   const [error, setError] = useState("");
@@ -114,7 +116,7 @@ export default function XMLFormatterPage() {
 
   const handleFormat = () => {
     if (!input.trim()) {
-      setError("Please enter some XML to format.");
+      setError(t("xml.enterXml"));
       setOutput("");
       setValidationMessage("");
       return;
@@ -124,19 +126,19 @@ export default function XMLFormatterPage() {
       setOutput(formatted);
       setError("");
       setValidationMessage("");
-      toast.success("XML formatted successfully!");
+      toast.success(t("xml.formatSuccess"));
     } catch (e) {
-      const message = e instanceof Error ? e.message : "Invalid XML input.";
+      const message = e instanceof Error ? e.message : t("xml.invalidXml");
       setError(message);
       setOutput("");
       setValidationMessage("");
-      toast.error("Invalid XML");
+      toast.error(t("xml.invalidXml"));
     }
   };
 
   const handleMinify = () => {
     if (!input.trim()) {
-      setError("Please enter some XML to minify.");
+      setError(t("xml.enterXml"));
       setOutput("");
       setValidationMessage("");
       return;
@@ -146,19 +148,19 @@ export default function XMLFormatterPage() {
       setOutput(minified);
       setError("");
       setValidationMessage("");
-      toast.success("XML minified successfully!");
+      toast.success(t("xml.minifySuccess"));
     } catch (e) {
-      const message = e instanceof Error ? e.message : "Invalid XML input.";
+      const message = e instanceof Error ? e.message : t("xml.invalidXml");
       setError(message);
       setOutput("");
       setValidationMessage("");
-      toast.error("Invalid XML");
+      toast.error(t("xml.invalidXml"));
     }
   };
 
   const handleValidate = () => {
     if (!input.trim()) {
-      setError("Please enter some XML to validate.");
+      setError(t("xml.enterXml"));
       setOutput("");
       setValidationMessage("");
       return;
@@ -168,12 +170,12 @@ export default function XMLFormatterPage() {
       setError(validationError);
       setValidationMessage("");
       setOutput("");
-      toast.error("Invalid XML");
+      toast.error(t("xml.invalidXml"));
     } else {
       setError("");
       setOutput("");
-      setValidationMessage("Valid XML!");
-      toast.success("Valid XML!");
+      setValidationMessage(t("xml.validXml"));
+      toast.success(t("xml.validXml"));
     }
   };
 
@@ -181,9 +183,9 @@ export default function XMLFormatterPage() {
     if (!output) return;
     try {
       await navigator.clipboard.writeText(output);
-      toast.success("Copied to clipboard!");
+      toast.success(t("ui.copied"));
     } catch {
-      toast.error("Failed to copy.");
+      toast.error(t("ui.copyFailed"));
     }
   };
 
@@ -204,7 +206,7 @@ export default function XMLFormatterPage() {
         <div className="glass rounded-xl p-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <span className="text-sm text-t-secondary">Indent:</span>
+              <span className="text-sm text-t-secondary">{t("ui.indent")}</span>
               <div className="flex gap-1.5">
                 {(["2", "4"] as IndentSize[]).map((size) => (
                   <button
@@ -216,7 +218,7 @@ export default function XMLFormatterPage() {
                         : "text-t-secondary hover:text-t-primary bg-bg-secondary border border-border"
                     }`}
                   >
-                    {size} Spaces
+                    {size} {t("ui.spaces")}
                   </button>
                 ))}
               </div>
@@ -226,14 +228,14 @@ export default function XMLFormatterPage() {
               onClick={clearAll}
               className="px-4 py-2 rounded-lg text-t-secondary bg-bg-secondary border border-border hover:text-t-primary transition-colors text-sm"
             >
-              Clear
+              {t("ui.clear")}
             </button>
           </div>
         </div>
 
         {/* Input */}
         <div className="glass rounded-xl p-6">
-          <label className="block text-sm text-t-secondary mb-2">XML Input</label>
+          <label className="block text-sm text-t-secondary mb-2">{t("xml.xmlInput")}</label>
           <textarea
             value={input}
             onChange={(e) => {
@@ -254,19 +256,19 @@ export default function XMLFormatterPage() {
             onClick={handleFormat}
             className="px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:shadow-lg transition-all"
           >
-            Format
+            {t("ui.format")}
           </button>
           <button
             onClick={handleMinify}
             className="px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:shadow-lg transition-all"
           >
-            Minify
+            {t("ui.minify")}
           </button>
           <button
             onClick={handleValidate}
             className="px-4 py-2 rounded-lg text-t-secondary bg-bg-secondary border border-border hover:text-t-primary transition-colors"
           >
-            Validate
+            {t("ui.validate")}
           </button>
         </div>
 
@@ -290,7 +292,7 @@ export default function XMLFormatterPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
               </svg>
               <div>
-                <p className="text-sm font-medium text-red-400">Invalid XML</p>
+                <p className="text-sm font-medium text-red-400">{t("xml.invalidXml")}</p>
                 <p className="text-xs text-red-400/70 mt-1 font-mono">{error}</p>
               </div>
             </div>
@@ -301,12 +303,12 @@ export default function XMLFormatterPage() {
         {output && (
           <div className="glass rounded-xl p-6">
             <div className="flex items-center justify-between mb-2">
-              <label className="text-sm text-t-secondary">Output</label>
+              <label className="text-sm text-t-secondary">{t("ui.output")}</label>
               <button
                 onClick={copyToClipboard}
                 className="px-4 py-2 rounded-lg text-t-secondary bg-bg-secondary border border-border hover:text-t-primary transition-colors text-sm"
               >
-                Copy
+                {t("ui.copy")}
               </button>
             </div>
             <textarea
@@ -316,7 +318,7 @@ export default function XMLFormatterPage() {
               className="w-full bg-bg-secondary border border-border rounded-lg px-4 py-3 text-t-primary font-mono text-sm resize-y"
             />
             <p className="text-xs text-t-tertiary mt-2">
-              {output.length.toLocaleString()} characters
+              {output.length.toLocaleString()} {t("ui.characters")}
             </p>
           </div>
         )}

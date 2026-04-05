@@ -9,6 +9,7 @@ import DownloadButton from "@/components/DownloadButton";
 import ProgressBar from "@/components/ProgressBar";
 import FileSizeCompare from "@/components/FileSizeCompare";
 import { formatFileSize, getFileNameWithoutExtension } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 
 type AudioFormat = "mp3" | "wav" | "ogg" | "aac";
 
@@ -63,6 +64,7 @@ function detectFormat(filename: string): string {
 }
 
 export default function AudioConverterPage() {
+  const { t } = useI18n();
   const [file, setFile] = useState<File | null>(null);
   const [format, setFormat] = useState<AudioFormat>("mp3");
   const [bitrate, setBitrate] = useState("192k");
@@ -105,7 +107,7 @@ export default function AudioConverterPage() {
     setProgress(0);
 
     try {
-      toast.loading("Loading audio processor...", { id: "ffmpeg-load" });
+      toast.loading(t("audconv.loading"), { id: "ffmpeg-load" });
       const { ffmpeg, fetchFile } = await loadFFmpeg();
       toast.dismiss("ffmpeg-load");
 
@@ -179,12 +181,12 @@ export default function AudioConverterPage() {
       const url = URL.createObjectURL(blob);
       setAudioUrl(url);
 
-      toast.success("Audio converted successfully!");
+      toast.success(t("audconv.success"));
 
       await ffmpeg.deleteFile(inputName);
       await ffmpeg.deleteFile(outputName);
     } catch (error) {
-      toast.error("Failed to convert audio. Please try a different file.");
+      toast.error(t("audconv.fail"));
       console.error(error);
     } finally {
       setProcessing(false);

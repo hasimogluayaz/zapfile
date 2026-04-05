@@ -8,8 +8,10 @@ import ProcessButton from "@/components/ProcessButton";
 import DownloadButton from "@/components/DownloadButton";
 import FileSizeCompare from "@/components/FileSizeCompare";
 import { formatFileSize, getFileNameWithoutExtension, getFileExtension } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 
 export default function ResizeImagePage() {
+  const { t } = useI18n();
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [originalWidth, setOriginalWidth] = useState(0);
@@ -101,10 +103,10 @@ export default function ResizeImagePage() {
 
       setResult(blob);
       setResultPreview(URL.createObjectURL(blob));
-      toast.success(`Image resized to ${width} x ${height}!`);
+      toast.success(t("resimg.success", { w: width, h: height }));
     } catch (error) {
       console.error(error);
-      toast.error("Failed to resize image.");
+      toast.error(t("resimg.fail"));
     } finally {
       setProcessing(false);
     }
@@ -146,7 +148,7 @@ export default function ResizeImagePage() {
                   </p>
                 </div>
                 <button onClick={reset} className="text-sm text-brand-muted hover:text-red-400 transition-colors">
-                  Remove
+                  {t("ui.remove")}
                 </button>
               </div>
               {preview && (
@@ -159,11 +161,11 @@ export default function ResizeImagePage() {
 
             {/* Size controls */}
             <div className="glass rounded-xl p-6 space-y-4">
-              <h3 className="font-semibold text-brand-text">Output Size</h3>
+              <h3 className="font-semibold text-brand-text">{t("resimg.outputSize")}</h3>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-brand-muted mb-2">Width (px)</label>
+                  <label className="block text-sm text-brand-muted mb-2">{t("resimg.widthPx")}</label>
                   <input
                     type="number"
                     min="1"
@@ -174,7 +176,7 @@ export default function ResizeImagePage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-brand-muted mb-2">Height (px)</label>
+                  <label className="block text-sm text-brand-muted mb-2">{t("resimg.heightPx")}</label>
                   <input
                     type="number"
                     min="1"
@@ -193,12 +195,12 @@ export default function ResizeImagePage() {
                   onChange={(e) => setLockRatio(e.target.checked)}
                   className="accent-brand-indigo"
                 />
-                <span className="text-sm text-brand-muted">Lock aspect ratio</span>
+                <span className="text-sm text-brand-muted">{t("ui.lockAspect")}</span>
               </label>
 
               {/* Presets */}
               <div>
-                <p className="text-sm text-brand-muted mb-2">Quick presets</p>
+                <p className="text-sm text-brand-muted mb-2">{t("resimg.presets")}</p>
                 <div className="flex flex-wrap gap-2">
                   {presetSizes.map((preset) => (
                     <button
@@ -220,8 +222,8 @@ export default function ResizeImagePage() {
               onClick={handleProcess}
               loading={processing}
               disabled={width <= 0 || height <= 0}
-              label={`Resize to ${width} x ${height}`}
-              loadingLabel="Resizing..."
+              label={t("resimg.button", { w: width, h: height })}
+              loadingLabel={t("resimg.resizing")}
             />
           </>
         ) : (
@@ -245,13 +247,13 @@ export default function ResizeImagePage() {
               <DownloadButton
                 blob={result}
                 filename={`${getFileNameWithoutExtension(file.name)}-${width}x${height}${getFileExtension(file.name)}`}
-                label="Download Resized Image"
+                label={t("resimg.download")}
               />
               <button
                 onClick={reset}
                 className="px-6 py-3 rounded-xl font-semibold text-brand-text bg-white/5 hover:bg-white/10 transition-colors"
               >
-                Resize Another
+                {t("resimg.another")}
               </button>
             </div>
           </div>

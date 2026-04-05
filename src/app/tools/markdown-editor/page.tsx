@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback, useMemo } from "react";
 import toast from "react-hot-toast";
 import ToolLayout from "@/components/ToolLayout";
+import { useI18n } from "@/lib/i18n";
 
 /* ------------------------------------------------------------------ */
 /*  Markdown parser - regex-based, no external dependencies           */
@@ -139,22 +140,25 @@ interface ToolbarAction {
   block?: boolean;
 }
 
-const toolbarActions: ToolbarAction[] = [
-  { label: "Bold", icon: "B", prefix: "**", suffix: "**", placeholder: "bold text" },
-  { label: "Italic", icon: "I", prefix: "*", suffix: "*", placeholder: "italic text" },
-  { label: "Heading", icon: "H", prefix: "# ", suffix: "", placeholder: "Heading", block: true },
-  { label: "Link", icon: "🔗", prefix: "[", suffix: "](url)", placeholder: "link text" },
-  { label: "Code", icon: "<>", prefix: "`", suffix: "`", placeholder: "code" },
-  { label: "List", icon: "- ", prefix: "- ", suffix: "", placeholder: "list item", block: true },
-  { label: "Quote", icon: ">", prefix: "> ", suffix: "", placeholder: "quote", block: true },
-];
+// toolbarActions are defined inside the component to access t()
 
 /* ------------------------------------------------------------------ */
 /*  Component                                                         */
 /* ------------------------------------------------------------------ */
 
 export default function MarkdownEditorPage() {
+  const { t } = useI18n();
   const [markdown, setMarkdown] = useState("");
+
+  const toolbarActions: ToolbarAction[] = [
+    { label: t("md.bold"), icon: "B", prefix: "**", suffix: "**", placeholder: "bold text" },
+    { label: t("md.italic"), icon: "I", prefix: "*", suffix: "*", placeholder: "italic text" },
+    { label: t("md.heading"), icon: "H", prefix: "# ", suffix: "", placeholder: "Heading", block: true },
+    { label: t("md.link"), icon: "🔗", prefix: "[", suffix: "](url)", placeholder: "link text" },
+    { label: t("md.code"), icon: "<>", prefix: "`", suffix: "`", placeholder: "code" },
+    { label: t("md.list"), icon: "- ", prefix: "- ", suffix: "", placeholder: "list item", block: true },
+    { label: t("md.quote"), icon: ">", prefix: "> ", suffix: "", placeholder: "quote", block: true },
+  ];
   const [mobileTab, setMobileTab] = useState<"edit" | "preview">("edit");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -203,33 +207,33 @@ export default function MarkdownEditorPage() {
 
   const copyHtml = async () => {
     if (!renderedHtml.trim()) {
-      toast.error("Nothing to copy");
+      toast.error(t("md.nothingCopy"));
       return;
     }
     try {
       await navigator.clipboard.writeText(renderedHtml);
-      toast.success("HTML copied to clipboard!");
+      toast.success(t("md.htmlCopied"));
     } catch {
-      toast.error("Failed to copy HTML");
+      toast.error(t("ui.copyFailed"));
     }
   };
 
   const copyMarkdown = async () => {
     if (!markdown.trim()) {
-      toast.error("Nothing to copy");
+      toast.error(t("md.nothingCopy"));
       return;
     }
     try {
       await navigator.clipboard.writeText(markdown);
-      toast.success("Markdown copied to clipboard!");
+      toast.success(t("md.mdCopied"));
     } catch {
-      toast.error("Failed to copy Markdown");
+      toast.error(t("ui.copyFailed"));
     }
   };
 
   const handleClear = () => {
     setMarkdown("");
-    toast.success("Editor cleared");
+    toast.success(t("md.cleared"));
   };
 
   /* ---------------------------------------------------------------- */
@@ -277,19 +281,19 @@ export default function MarkdownEditorPage() {
               onClick={copyHtml}
               className="px-4 py-2 rounded-lg text-t-secondary bg-bg-secondary border border-border hover:text-t-primary transition-colors text-sm"
             >
-              Copy HTML
+              {t("md.copyHtml")}
             </button>
             <button
               onClick={copyMarkdown}
               className="px-4 py-2 rounded-lg text-t-secondary bg-bg-secondary border border-border hover:text-t-primary transition-colors text-sm"
             >
-              Copy Markdown
+              {t("md.copyMd")}
             </button>
             <button
               onClick={handleClear}
               className="px-4 py-2 rounded-lg text-t-secondary bg-bg-secondary border border-border hover:text-t-primary transition-colors text-sm"
             >
-              Clear
+              {t("ui.clear")}
             </button>
           </div>
         </div>
@@ -306,7 +310,7 @@ export default function MarkdownEditorPage() {
                   : "bg-bg-secondary border border-border text-t-secondary hover:text-t-primary"
               }`}
             >
-              {tab}
+              {tab === "edit" ? t("md.edit") : t("md.preview")}
             </button>
           ))}
         </div>
@@ -320,13 +324,13 @@ export default function MarkdownEditorPage() {
             }`}
           >
             <label className="block text-sm font-medium text-t-secondary mb-2">
-              Markdown
+              {t("md.markdown")}
             </label>
             <textarea
               ref={textareaRef}
               value={markdown}
               onChange={(e) => setMarkdown(e.target.value)}
-              placeholder="Write your Markdown here..."
+              placeholder={t("md.placeholder")}
               rows={20}
               spellCheck={false}
               className="w-full bg-bg-secondary border border-border rounded-lg px-4 py-3 text-t-primary placeholder-t-tertiary focus:outline-none focus:ring-2 focus:ring-accent/50 font-mono text-sm resize-y leading-relaxed"
@@ -340,7 +344,7 @@ export default function MarkdownEditorPage() {
             }`}
           >
             <label className="block text-sm font-medium text-t-secondary mb-2">
-              Preview
+              {t("ui.preview")}
             </label>
             <div
               className={`min-h-[480px] bg-bg-secondary border border-border rounded-lg px-4 py-3 overflow-auto text-sm ${previewWrapperClass}`}
@@ -352,10 +356,10 @@ export default function MarkdownEditorPage() {
         {/* Word count */}
         <div className="glass rounded-xl p-4 flex items-center justify-between text-sm">
           <span className="text-t-secondary">
-            {wordCount.toLocaleString()} word{wordCount !== 1 ? "s" : ""}
+            {wordCount.toLocaleString()} {t("ui.words")}
           </span>
           <span className="text-t-tertiary">
-            {markdown.length.toLocaleString()} characters
+            {markdown.length.toLocaleString()} {t("ui.characters")}
           </span>
         </div>
       </div>

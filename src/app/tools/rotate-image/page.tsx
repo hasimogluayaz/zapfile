@@ -10,8 +10,10 @@ import {
   getFileNameWithoutExtension,
   downloadBlob,
 } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 
 export default function RotateImagePage() {
+  const { t } = useI18n();
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
@@ -67,7 +69,7 @@ export default function RotateImagePage() {
         imgRef.current = img;
         redrawTransform(img, 0, false, false);
       };
-      img.onerror = () => toast.error("Failed to load image.");
+      img.onerror = () => toast.error(t("ui.failedLoad"));
       img.src = URL.createObjectURL(f);
     },
     [redrawTransform],
@@ -93,9 +95,9 @@ export default function RotateImagePage() {
       if (blob) {
         const baseName = getFileNameWithoutExtension(file.name);
         downloadBlob(blob, `${baseName}-rotated.png`);
-        toast.success("Image downloaded!");
+        toast.success(t("ui.downloadPNG"));
       } else {
-        toast.error("Failed to export image.");
+        toast.error(t("ui.failedExport"));
       }
     }, "image/png");
   };
@@ -178,7 +180,7 @@ export default function RotateImagePage() {
                   onClick={reset}
                   className="text-[12px] text-brand-muted hover:text-red-400 transition-colors flex-shrink-0"
                 >
-                  Remove
+                  {t("ui.remove")}
                 </button>
               </div>
 
@@ -199,7 +201,7 @@ export default function RotateImagePage() {
               {/* Rotation indicator */}
               <div className="flex items-center justify-between">
                 <span className="text-[13px] text-brand-muted font-medium">
-                  Transform
+                  {t("rotimg.transform")}
                 </span>
                 <span className="text-[12px] font-mono px-2.5 py-1 rounded-lg bg-white/5 text-brand-muted border border-white/10">
                   {rotation}&deg;
@@ -216,7 +218,7 @@ export default function RotateImagePage() {
                   className="flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-brand-muted hover:text-brand-text transition-all text-[12px] font-medium"
                 >
                   <span className="text-lg leading-none">↺</span>
-                  <span>Rotate Left</span>
+                  <span>{t("rotimg.rotateLeft")}</span>
                 </button>
                 <button
                   onClick={rotateRight}
@@ -224,7 +226,7 @@ export default function RotateImagePage() {
                   className="flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-t-secondary hover:text-t-primary transition-all text-[12px] font-medium"
                 >
                   <span className="text-lg leading-none">↻</span>
-                  <span>Rotate Right</span>
+                  <span>{t("rotimg.rotateRight")}</span>
                 </button>
                 <button
                   onClick={toggleFlipH}
@@ -236,7 +238,7 @@ export default function RotateImagePage() {
                   }`}
                 >
                   <span className="text-lg leading-none">↔</span>
-                  <span>Flip H</span>
+                  <span>{t("rotimg.flipH")}</span>
                 </button>
                 <button
                   onClick={toggleFlipV}
@@ -248,7 +250,7 @@ export default function RotateImagePage() {
                   }`}
                 >
                   <span className="text-lg leading-none">↕</span>
-                  <span>Flip V</span>
+                  <span>{t("rotimg.flipV")}</span>
                 </button>
               </div>
 
@@ -258,7 +260,7 @@ export default function RotateImagePage() {
                   onClick={handleReset}
                   className="w-full py-2 rounded-xl text-[12px] text-brand-muted hover:text-brand-text bg-white/5 hover:bg-white/10 transition-colors"
                 >
-                  Reset to Original
+                  {t("rotimg.resetOriginal")}
                 </button>
               )}
             </div>
@@ -273,7 +275,7 @@ export default function RotateImagePage() {
                   : "bg-gradient-brand hover:shadow-lg hover:shadow-brand-indigo/25 hover:scale-[1.02] active:scale-[0.98]"
               }`}
             >
-              {processing ? "Preparing…" : "Download PNG"}
+              {processing ? t("rotimg.preparing") : t("ui.downloadPNG")}
             </button>
 
             {resultBlob && (
@@ -281,7 +283,7 @@ export default function RotateImagePage() {
                 <DownloadButton
                   blob={resultBlob}
                   filename={`${getFileNameWithoutExtension(file.name)}-rotated.png`}
-                  label="Download PNG"
+                  label={t("ui.downloadPNG")}
                 />
               </div>
             )}

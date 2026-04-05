@@ -9,6 +9,7 @@ import {
   getFileNameWithoutExtension,
   downloadBlob,
 } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 
 interface FaviconSize {
   size: number;
@@ -29,6 +30,7 @@ const DEFAULT_SIZES: Omit<FaviconSize, "checked">[] = [
 ];
 
 export default function FaviconGeneratorPage() {
+  const { t } = useI18n();
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [sizes, setSizes] = useState<FaviconSize[]>(
@@ -104,7 +106,7 @@ export default function FaviconGeneratorPage() {
         setPreview(URL.createObjectURL(f));
         generateFavicons(img, resetSizes);
       };
-      img.onerror = () => toast.error("Failed to load image.");
+      img.onerror = () => toast.error(t("ui.failedLoad"));
       img.src = URL.createObjectURL(f);
     },
     [generateFavicons],
@@ -146,7 +148,7 @@ export default function FaviconGeneratorPage() {
   const handleDownloadAll = async () => {
     const checkedSizes = sizes.filter((s) => s.checked);
     if (checkedSizes.length === 0) {
-      toast.error("No sizes selected.");
+      toast.error(t("fav.noSizes"));
       return;
     }
 
@@ -167,9 +169,9 @@ export default function FaviconGeneratorPage() {
         ? getFileNameWithoutExtension(file.name)
         : "favicons";
       downloadBlob(zipBlob, `${baseName}-favicons.zip`);
-      toast.success("ZIP downloaded!");
+      toast.success(t("fav.zipSuccess"));
     } catch {
-      toast.error("Failed to create ZIP file.");
+      toast.error(t("fav.zipFail"));
     } finally {
       setProcessing(false);
     }
@@ -229,7 +231,7 @@ export default function FaviconGeneratorPage() {
                   onClick={reset}
                   className="text-[12px] text-t-secondary hover:text-red-400 transition-colors flex-shrink-0"
                 >
-                  Remove
+                  {t("ui.remove")}
                 </button>
               </div>
 
@@ -249,21 +251,21 @@ export default function FaviconGeneratorPage() {
             <div className="glass rounded-xl p-6 space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-[13px] text-t-secondary font-medium">
-                  Sizes to Generate
+                  {t("fav.sizesToGenerate")}
                 </span>
                 <div className="flex gap-2">
                   <button
                     onClick={selectAll}
                     className="text-[11px] text-indigo-400 hover:text-indigo-300 transition-colors"
                   >
-                    Select All
+                    {t("ui.selectAll")}
                   </button>
                   <span className="text-t-secondary text-[11px]">|</span>
                   <button
                     onClick={selectNone}
                     className="text-[11px] text-indigo-400 hover:text-indigo-300 transition-colors"
                   >
-                    None
+                    {t("ui.none")}
                   </button>
                 </div>
               </div>
@@ -373,12 +375,8 @@ export default function FaviconGeneratorPage() {
             {/* ICO hint */}
             <div className="glass rounded-xl p-4 border border-border">
               <p className="text-[12px] text-t-secondary">
-                <span className="font-medium text-t-primary">Tip:</span> For{" "}
-                <code className="px-1.5 py-0.5 rounded bg-white/5 text-[11px]">
-                  .ico
-                </code>{" "}
-                files, use the 16x16 and 32x32 PNGs with an online ICO
-                converter.
+                <span className="font-medium text-t-primary">{t("fav.tip")}</span>{" "}
+                {t("fav.icoTip")}
               </p>
             </div>
 
@@ -393,8 +391,8 @@ export default function FaviconGeneratorPage() {
               }`}
             >
               {processing
-                ? "Creating ZIP..."
-                : `Download All as ZIP (${checkedCount} file${checkedCount !== 1 ? "s" : ""})`}
+                ? t("fav.creatingZip")
+                : `${t("fav.downloadZip")} (${checkedCount} file${checkedCount !== 1 ? "s" : ""})`}
             </button>
           </>
         )}

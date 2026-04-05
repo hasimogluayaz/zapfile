@@ -8,6 +8,7 @@ import ProcessButton from "@/components/ProcessButton";
 import DownloadButton from "@/components/DownloadButton";
 import ProgressBar from "@/components/ProgressBar";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import { useI18n } from "@/lib/i18n";
 
 type Position =
   | "bottom-center"
@@ -18,6 +19,7 @@ type Position =
   | "top-left";
 
 export default function PdfPageNumbersPage() {
+  const { t } = useI18n();
   const [file, setFile] = useState<File | null>(null);
   const [position, setPosition] = useState<Position>("bottom-center");
   const [startFrom, setStartFrom] = useState(1);
@@ -26,12 +28,12 @@ export default function PdfPageNumbersPage() {
   const [resultBlob, setResultBlob] = useState<Blob | null>(null);
 
   const positions: { value: Position; label: string }[] = [
-    { value: "bottom-center", label: "Bottom Center" },
-    { value: "bottom-left", label: "Bottom Left" },
-    { value: "bottom-right", label: "Bottom Right" },
-    { value: "top-center", label: "Top Center" },
-    { value: "top-left", label: "Top Left" },
-    { value: "top-right", label: "Top Right" },
+    { value: "bottom-center", label: t("pdfnum.bottomCenter") },
+    { value: "bottom-left", label: t("pdfnum.bottomLeft") },
+    { value: "bottom-right", label: t("pdfnum.bottomRight") },
+    { value: "top-center", label: t("pdfnum.topCenter") },
+    { value: "top-left", label: t("pdfnum.topLeft") },
+    { value: "top-right", label: t("pdfnum.topRight") },
   ];
 
   const handleFilesSelected = useCallback((files: File[]) => {
@@ -105,10 +107,10 @@ export default function PdfPageNumbersPage() {
       const blob = new Blob([uint8Array], { type: "application/pdf" });
       setResultBlob(blob);
       setProgress(100);
-      toast.success("Page numbers added!");
+      toast.success(t("pdfnum.success"));
     } catch (err) {
       console.error(err);
-      toast.error("Failed to add page numbers.");
+      toast.error(t("pdfnum.fail"));
     } finally {
       setProcessing(false);
     }
@@ -151,7 +153,7 @@ export default function PdfPageNumbersPage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium text-t-secondary block mb-2">
-                  Position
+                  {t("pdfnum.position")}
                 </label>
                 <select
                   value={position}
@@ -168,7 +170,7 @@ export default function PdfPageNumbersPage() {
 
               <div>
                 <label className="text-sm font-medium text-t-secondary block mb-2">
-                  Start From
+                  {t("pdfnum.startFrom")}
                 </label>
                 <input
                   type="number"
@@ -186,7 +188,7 @@ export default function PdfPageNumbersPage() {
               <ProcessButton
                 onClick={handleAddPageNumbers}
                 loading={processing}
-                label="Add Page Numbers"
+                label={t("pdfnum.add")}
               />
             ) : (
               <DownloadButton

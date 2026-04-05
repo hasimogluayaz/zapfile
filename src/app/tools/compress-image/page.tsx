@@ -13,6 +13,7 @@ import {
   getFileNameWithoutExtension,
   downloadBlob,
 } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 
 interface CompressedFile {
   original: File;
@@ -22,6 +23,7 @@ interface CompressedFile {
 }
 
 export default function CompressImagePage() {
+  const { t } = useI18n();
   const [files, setFiles] = useState<File[]>([]);
   const [quality, setQuality] = useState(0.7);
   const [maxDimension, setMaxDimension] = useState(1920);
@@ -35,12 +37,12 @@ export default function CompressImagePage() {
       ["image/jpeg", "image/png", "image/webp"].includes(f.type)
     );
     if (imageFiles.length === 0) {
-      toast.error("Please select valid image files (JPG, PNG, or WebP).");
+      toast.error(t("compimg.invalid"));
       return;
     }
     if (imageFiles.length < selected.length) {
       toast.error(
-        `${selected.length - imageFiles.length} file(s) skipped (unsupported format).`
+        t("compimg.skipped", { count: selected.length - imageFiles.length })
       );
     }
     setFiles(imageFiles);
@@ -120,16 +122,16 @@ export default function CompressImagePage() {
 
       if (saved > 0) {
         toast.success(
-          `Compressed ${compressed.length} image(s). Saved ${formatFileSize(saved)} total.`
+          t("compimg.success", { count: compressed.length, size: formatFileSize(saved) })
         );
       } else {
         toast.success(
-          "Processing complete. Images were already well-optimized."
+          t("compimg.optimized")
         );
       }
     } catch (error) {
       console.error("Compression error:", error);
-      toast.error("Failed to compress one or more images.");
+      toast.error(t("compimg.fail"));
     } finally {
       setProcessing(false);
     }
@@ -174,12 +176,12 @@ export default function CompressImagePage() {
           <div className="glass rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-brand-text font-medium">
-                {files.length} image{files.length > 1 ? "s" : ""} selected
+                {t("compimg.selected", { count: files.length })}
               </h3>
               <button
                 onClick={handleReset}
                 className="text-brand-muted hover:text-brand-text transition-colors p-2 rounded-lg hover:bg-white/5"
-                title="Remove all files"
+                title={t("compimg.removeAll")}
               >
                 <svg
                   className="w-5 h-5"
@@ -217,7 +219,7 @@ export default function CompressImagePage() {
         {/* Settings */}
         {files.length > 0 && results.length === 0 && (
           <div className="glass rounded-xl p-6 space-y-6">
-            <h3 className="text-brand-text font-medium">Settings</h3>
+            <h3 className="text-brand-text font-medium">{t("compimg.settings")}</h3>
 
             {/* Quality Slider */}
             <div>
@@ -237,8 +239,8 @@ export default function CompressImagePage() {
                 className="w-full h-2 rounded-full appearance-none cursor-pointer bg-white/10 accent-brand-indigo"
               />
               <div className="flex justify-between text-xs text-brand-muted mt-1">
-                <span>Smaller file</span>
-                <span>Higher quality</span>
+                <span>{t("compimg.smaller")}</span>
+                <span>{t("compimg.higher")}</span>
               </div>
             </div>
 
@@ -246,7 +248,7 @@ export default function CompressImagePage() {
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="text-sm text-brand-muted">
-                  Max width/height (px)
+                  {t("compimg.maxDim")}
                 </label>
                 <span className="text-sm font-medium text-brand-text">
                   {maxDimension}px
@@ -271,7 +273,7 @@ export default function CompressImagePage() {
 
         {/* Progress */}
         {processing && (
-          <ProgressBar progress={progress} label="Compressing images..." />
+          <ProgressBar progress={progress} label={t("compimg.compressing")} />
         )}
 
         {/* Results */}
@@ -327,7 +329,7 @@ export default function CompressImagePage() {
                           }}
                           className="text-sm text-brand-indigo hover:text-brand-purple transition-colors whitespace-nowrap"
                         >
-                          Download
+                          {t("compimg.download")}
                         </button>
                       )}
                     </div>
@@ -345,8 +347,8 @@ export default function CompressImagePage() {
               onClick={handleCompress}
               disabled={files.length === 0}
               loading={processing}
-              label={`Compress ${files.length > 1 ? `${files.length} Images` : "Image"}`}
-              loadingLabel="Compressing..."
+              label={files.length > 1 ? t("compimg.buttonMulti", { count: files.length }) : t("compimg.button")}
+              loadingLabel={t("compimg.compressing")}
             />
           )}
 
@@ -355,13 +357,13 @@ export default function CompressImagePage() {
               <DownloadButton
                 blob={results[0].compressed}
                 filename={`${getFileNameWithoutExtension(results[0].original.name)}-compressed.${results[0].original.name.split(".").pop() || "jpg"}`}
-                label="Download Compressed Image"
+                label={t("compimg.download")}
               />
               <button
                 onClick={handleReset}
                 className="px-6 py-3 rounded-xl font-semibold text-brand-muted border border-white/10 hover:text-brand-text hover:border-white/20 transition-all duration-300"
               >
-                Compress More
+                {t("compimg.more")}
               </button>
             </>
           )}
@@ -371,13 +373,13 @@ export default function CompressImagePage() {
               <DownloadButton
                 blob={zipBlob}
                 filename="compressed-images.zip"
-                label="Download All as ZIP"
+                label={t("ui.downloadZip")}
               />
               <button
                 onClick={handleReset}
                 className="px-6 py-3 rounded-xl font-semibold text-brand-muted border border-white/10 hover:text-brand-text hover:border-white/20 transition-all duration-300"
               >
-                Compress More
+                {t("compimg.more")}
               </button>
             </>
           )}

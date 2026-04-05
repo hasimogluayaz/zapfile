@@ -3,6 +3,7 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
 import ToolLayout from "@/components/ToolLayout";
+import { useI18n } from "@/lib/i18n";
 
 function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
   const match = hex.replace("#", "").match(/^([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
@@ -55,6 +56,7 @@ function hslToRgb(h: number, s: number, l: number): { r: number; g: number; b: n
 }
 
 export default function ColorPickerPage() {
+  const { t } = useI18n();
   const [hex, setHex] = useState("#6366f1");
   const [rgb, setRgb] = useState({ r: 99, g: 102, b: 241 });
   const [hsl, setHsl] = useState({ h: 239, s: 84, l: 67 });
@@ -155,7 +157,7 @@ export default function ColorPickerPage() {
 
           {/* Preset colors */}
           <div className="glass rounded-xl p-6">
-            <h3 className="text-brand-text font-medium mb-3">Presets</h3>
+            <h3 className="text-brand-text font-medium mb-3">{t("clr.presets")}</h3>
             <div className="flex flex-wrap gap-2">
               {presetColors.map((c) => (
                 <button

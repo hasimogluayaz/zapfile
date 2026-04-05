@@ -2,65 +2,61 @@
 
 import { useState, useMemo } from "react";
 import ToolLayout from "@/components/ToolLayout";
+import { useI18n } from "@/lib/i18n";
 
 type Category = "css" | "length" | "weight" | "temperature" | "data";
 
-interface UnitDef {
-  name: string;
-  abbr: string;
-}
-
-const CATEGORIES: { key: Category; label: string; units: UnitDef[] }[] = [
+const CATEGORIES_RAW = [
   {
-    key: "css",
-    label: "CSS Units",
+    key: "css" as Category,
+    labelKey: "unit.cssUnits",
     units: [
-      { name: "Pixels", abbr: "px" },
-      { name: "Rem", abbr: "rem" },
-      { name: "Em", abbr: "em" },
-      { name: "Points", abbr: "pt" },
+      { nameKey: "unit.pixels", abbr: "px" },
+      { nameKey: "Rem", abbr: "rem" },
+      { nameKey: "Em", abbr: "em" },
+      { nameKey: "unit.points", abbr: "pt" },
     ],
   },
   {
-    key: "length",
-    label: "Length",
+    key: "length" as Category,
+    labelKey: "unit.length",
     units: [
-      { name: "Centimeters", abbr: "cm" },
-      { name: "Millimeters", abbr: "mm" },
-      { name: "Meters", abbr: "m" },
-      { name: "Inches", abbr: "in" },
-      { name: "Feet", abbr: "ft" },
-      { name: "Yards", abbr: "yd" },
+      { nameKey: "unit.centimeters", abbr: "cm" },
+      { nameKey: "unit.millimeters", abbr: "mm" },
+      { nameKey: "unit.meters", abbr: "m" },
+      { nameKey: "unit.inches", abbr: "in" },
+      { nameKey: "unit.feet", abbr: "ft" },
+      { nameKey: "unit.yards", abbr: "yd" },
     ],
   },
   {
-    key: "weight",
-    label: "Weight",
+    key: "weight" as Category,
+    labelKey: "unit.weight",
     units: [
-      { name: "Grams", abbr: "g" },
-      { name: "Kilograms", abbr: "kg" },
-      { name: "Pounds", abbr: "lb" },
-      { name: "Ounces", abbr: "oz" },
+      { nameKey: "unit.grams", abbr: "g" },
+      { nameKey: "unit.kilograms", abbr: "kg" },
+      { nameKey: "unit.pounds", abbr: "lb" },
+      { nameKey: "unit.ounces", abbr: "oz" },
     ],
   },
   {
-    key: "temperature",
-    label: "Temperature",
+    key: "temperature" as Category,
+    labelKey: "unit.temperature",
     units: [
-      { name: "Celsius", abbr: "\u00B0C" },
-      { name: "Fahrenheit", abbr: "\u00B0F" },
-      { name: "Kelvin", abbr: "K" },
+      { nameKey: "unit.celsius", abbr: "\u00B0C" },
+      { nameKey: "unit.fahrenheit", abbr: "\u00B0F" },
+      { nameKey: "unit.kelvin", abbr: "K" },
     ],
   },
   {
-    key: "data",
-    label: "Data",
+    key: "data" as Category,
+    labelKey: "unit.data",
     units: [
-      { name: "Bytes", abbr: "B" },
-      { name: "Kilobytes", abbr: "KB" },
-      { name: "Megabytes", abbr: "MB" },
-      { name: "Gigabytes", abbr: "GB" },
-      { name: "Terabytes", abbr: "TB" },
+      { nameKey: "unit.bytes", abbr: "B" },
+      { nameKey: "unit.kilobytes", abbr: "KB" },
+      { nameKey: "unit.megabytes", abbr: "MB" },
+      { nameKey: "unit.gigabytes", abbr: "GB" },
+      { nameKey: "unit.terabytes", abbr: "TB" },
     ],
   },
 ];
@@ -139,10 +135,20 @@ function formatNumber(n: number): string {
 }
 
 export default function UnitConverterPage() {
+  const { t } = useI18n();
   const [category, setCategory] = useState<Category>("css");
   const [inputValue, setInputValue] = useState("16");
   const [fromUnit, setFromUnit] = useState("px");
   const [baseFontSize, setBaseFontSize] = useState("16");
+
+  const CATEGORIES = CATEGORIES_RAW.map((cat) => ({
+    ...cat,
+    label: t(cat.labelKey as Parameters<typeof t>[0]),
+    units: cat.units.map((u) => ({
+      abbr: u.abbr,
+      name: u.nameKey.includes(".") ? t(u.nameKey as Parameters<typeof t>[0]) : u.nameKey,
+    })),
+  }));
 
   const currentCategory = CATEGORIES.find((c) => c.key === category)!;
 
@@ -161,7 +167,8 @@ export default function UnitConverterPage() {
     const results: Record<string, string> = {};
     const base = parseFloat(baseFontSize) || 16;
 
-    for (const unit of currentCategory.units) {
+    const rawCategory = CATEGORIES_RAW.find((c) => c.key === category)!;
+    for (const unit of rawCategory.units) {
       if (unit.abbr === fromUnit) {
         results[unit.abbr] = formatNumber(val);
         continue;
@@ -202,7 +209,8 @@ export default function UnitConverterPage() {
     }
 
     return results;
-  }, [inputValue, fromUnit, category, baseFontSize, currentCategory.units]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inputValue, fromUnit, category, baseFontSize]);
 
   return (
     <ToolLayout
@@ -233,7 +241,7 @@ export default function UnitConverterPage() {
         {category === "css" && (
           <div className="glass rounded-xl p-6">
             <label className="block text-sm text-t-secondary mb-2">
-              Base Font Size (px)
+              {t("unit.baseFontSize")}
             </label>
             <input
               type="number"
@@ -244,20 +252,20 @@ export default function UnitConverterPage() {
               className="w-full bg-bg-secondary border border-border rounded-lg px-4 py-3 text-t-primary placeholder-t-tertiary focus:outline-none focus:ring-2 focus:ring-accent/50 font-mono"
             />
             <p className="text-xs text-t-tertiary mt-2">
-              Used for rem and em calculations
+              {t("unit.remCalc")}
             </p>
           </div>
         )}
 
         {/* Input */}
         <div className="glass rounded-xl p-6">
-          <label className="block text-sm text-t-secondary mb-2">Value</label>
+          <label className="block text-sm text-t-secondary mb-2">{t("unit.enterValue")}</label>
           <div className="flex gap-3">
             <input
               type="number"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              placeholder="Enter value..."
+              placeholder={t("unit.enterValue")}
               className="flex-1 bg-bg-secondary border border-border rounded-lg px-4 py-3 text-t-primary placeholder-t-tertiary focus:outline-none focus:ring-2 focus:ring-accent/50 font-mono"
             />
             <select
@@ -277,7 +285,7 @@ export default function UnitConverterPage() {
         {/* Results */}
         {inputValue && !isNaN(parseFloat(inputValue)) && (
           <div className="glass rounded-xl p-6">
-            <label className="block text-sm text-t-secondary mb-4">Conversions</label>
+            <label className="block text-sm text-t-secondary mb-4">{t("unit.conversions")}</label>
             <div className="grid gap-3">
               {currentCategory.units.map((unit) => (
                 <div

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import toast from "react-hot-toast";
 import ToolLayout from "@/components/ToolLayout";
+import { useI18n } from "@/lib/i18n";
 
 type TimerState = "work" | "short-break" | "long-break";
 type PlayState = "idle" | "running" | "paused";
@@ -33,6 +34,7 @@ function playBeep() {
 }
 
 export default function PomodoroTimerPage() {
+  const { t } = useI18n();
   const [workDuration, setWorkDuration] = useState(25);
   const [shortBreakDuration, setShortBreakDuration] = useState(5);
   const [longBreakDuration, setLongBreakDuration] = useState(15);
@@ -73,10 +75,10 @@ export default function PomodoroTimerPage() {
     if (playState === "running" || playState === "paused") {
       const label =
         timerState === "work"
-          ? "Work"
+          ? t("pomo.work")
           : timerState === "short-break"
-          ? "Break"
-          : "Long Break";
+          ? t("pomo.break")
+          : t("pomo.longBreak");
       document.title = `${formatTime(timeLeft)} - ${label} | Pomodoro`;
     } else {
       document.title = originalTitle.current;
@@ -122,11 +124,11 @@ export default function PomodoroTimerPage() {
       if (currentSession >= sessionsBeforeLong) {
         setTimerState("long-break");
         setTimeLeft(longBreakDuration * 60);
-        toast.success("Great work! Time for a long break.");
+        toast.success(t("pomo.longBreakMsg"));
       } else {
         setTimerState("short-break");
         setTimeLeft(shortBreakDuration * 60);
-        toast.success("Work session done! Take a short break.");
+        toast.success(t("pomo.shortBreakMsg"));
       }
     } else {
       // Break finished
@@ -137,7 +139,7 @@ export default function PomodoroTimerPage() {
       }
       setTimerState("work");
       setTimeLeft(workDuration * 60);
-      toast.success("Break over! Time to focus.");
+      toast.success(t("pomo.focusMsg"));
     }
   };
 
@@ -198,10 +200,10 @@ export default function PomodoroTimerPage() {
   const ringColor = isWork ? "stroke-indigo-500" : "stroke-emerald-500";
   const stateLabel =
     timerState === "work"
-      ? "Focus"
+      ? t("pomo.focus")
       : timerState === "short-break"
-      ? "Short Break"
-      : "Long Break";
+      ? t("pomo.shortBreak")
+      : t("pomo.longBreak");
 
   return (
     <ToolLayout
@@ -223,7 +225,7 @@ export default function PomodoroTimerPage() {
               {stateLabel}
             </span>
             <span className="text-sm text-t-tertiary ml-3">
-              Session {currentSession}/{sessionsBeforeLong}
+              {t("pomo.session")} {currentSession}/{sessionsBeforeLong}
             </span>
           </div>
 
@@ -264,10 +266,10 @@ export default function PomodoroTimerPage() {
               </span>
               <span className="text-sm text-t-tertiary mt-2">
                 {playState === "running"
-                  ? "Running"
+                  ? t("pomo.running")
                   : playState === "paused"
-                  ? "Paused"
-                  : "Ready"}
+                  ? t("pomo.paused")
+                  : t("pomo.ready")}
               </span>
             </div>
           </div>
@@ -279,39 +281,39 @@ export default function PomodoroTimerPage() {
                 onClick={handlePause}
                 className="px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:shadow-lg transition-all"
               >
-                Pause
+                {t("pomo.pause")}
               </button>
             ) : (
               <button
                 onClick={handleStart}
                 className="px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:shadow-lg transition-all"
               >
-                {playState === "paused" ? "Resume" : "Start"}
+                {playState === "paused" ? t("pomo.resume") : t("pomo.start")}
               </button>
             )}
             <button
               onClick={handleSkip}
               className="px-4 py-2 rounded-lg text-t-secondary bg-bg-secondary border border-border hover:text-t-primary transition-colors"
             >
-              Skip
+              {t("pomo.skip")}
             </button>
             <button
               onClick={handleReset}
               className="px-4 py-2 rounded-lg text-t-secondary bg-bg-secondary border border-border hover:text-t-primary transition-colors"
             >
-              Reset
+              {t("ui.reset")}
             </button>
           </div>
         </div>
 
         {/* Settings */}
         <div className="glass rounded-xl p-6">
-          <h3 className="text-sm font-semibold text-t-primary mb-4">Settings</h3>
+          <h3 className="text-sm font-semibold text-t-primary mb-4">{t("ui.settings")}</h3>
           <div className="space-y-5">
             {/* Work Duration */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="text-sm text-t-secondary">Work Duration</label>
+                <label className="text-sm text-t-secondary">{t("pomo.workDuration")}</label>
                 <span className="text-sm text-t-primary font-mono">{workDuration} min</span>
               </div>
               <input
@@ -327,7 +329,7 @@ export default function PomodoroTimerPage() {
             {/* Short Break */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="text-sm text-t-secondary">Short Break</label>
+                <label className="text-sm text-t-secondary">{t("pomo.shortBreakDur")}</label>
                 <span className="text-sm text-t-primary font-mono">{shortBreakDuration} min</span>
               </div>
               <input
@@ -343,7 +345,7 @@ export default function PomodoroTimerPage() {
             {/* Long Break */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="text-sm text-t-secondary">Long Break</label>
+                <label className="text-sm text-t-secondary">{t("pomo.longBreakDur")}</label>
                 <span className="text-sm text-t-primary font-mono">{longBreakDuration} min</span>
               </div>
               <input
@@ -359,7 +361,7 @@ export default function PomodoroTimerPage() {
             {/* Sessions before long break */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="text-sm text-t-secondary">Sessions before long break</label>
+                <label className="text-sm text-t-secondary">{t("pomo.sessions")}</label>
                 <span className="text-sm text-t-primary font-mono">{sessionsBeforeLong}</span>
               </div>
               <input

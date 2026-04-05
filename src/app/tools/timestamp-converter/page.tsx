@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
 import ToolLayout from "@/components/ToolLayout";
+import { useI18n } from "@/lib/i18n";
 
 function getRelativeTime(date: Date): string {
   const now = Date.now();
@@ -34,6 +35,7 @@ function toDatetimeLocalString(date: Date): string {
 }
 
 export default function TimestampConverterPage() {
+  const { t } = useI18n();
   const [currentTimestamp, setCurrentTimestamp] = useState(
     Math.floor(Date.now() / 1000)
   );
@@ -114,31 +116,32 @@ export default function TimestampConverterPage() {
     setDateInput(toDatetimeLocalString(now));
   }, []);
 
-  const copyToClipboard = async (text: string, label: string) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const copyToClipboard = async (text: string, _label?: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      toast.success(`${label} copied to clipboard`);
+      toast.success(t("ui.copied"));
     } catch {
-      toast.error("Failed to copy to clipboard");
+      toast.error(t("ui.copyFailed"));
     }
   };
 
   const dateFormats = convertedDate
     ? [
         {
-          label: "ISO 8601",
+          label: t("ts.iso"),
           value: convertedDate.toISOString(),
         },
         {
-          label: "Local Date/Time",
+          label: t("ts.localDate"),
           value: convertedDate.toLocaleString(),
         },
         {
-          label: "UTC Date/Time",
+          label: t("ts.utcDate"),
           value: convertedDate.toUTCString(),
         },
         {
-          label: "Relative Time",
+          label: t("ts.relative"),
           value: getRelativeTime(convertedDate),
         },
       ]
@@ -153,7 +156,7 @@ export default function TimestampConverterPage() {
         {/* Current Timestamp */}
         <div className="glass rounded-2xl p-6 text-center">
           <p className="text-sm text-t-secondary mb-2">
-            Current Unix Timestamp
+            {t("ts.currentTimestamp")}
           </p>
           <button
             onClick={() =>
@@ -163,20 +166,20 @@ export default function TimestampConverterPage() {
           >
             {currentTimestamp}
           </button>
-          <p className="text-xs text-t-tertiary mt-2">Click to copy</p>
+          <p className="text-xs text-t-tertiary mt-2">{t("ts.clickCopy")}</p>
         </div>
 
         {/* Unix -> Date */}
         <div className="glass rounded-2xl p-6">
           <h3 className="text-sm font-semibold text-t-primary mb-4">
-            Unix Timestamp &rarr; Date
+            {t("ts.toDate")}
           </h3>
           <div className="flex gap-3">
             <input
               type="text"
               value={unixInput}
               onChange={(e) => setUnixInput(e.target.value)}
-              placeholder="Enter Unix timestamp (seconds)..."
+              placeholder={t("ts.enterTimestamp")}
               className="flex-1 px-4 py-3 rounded-xl bg-bg-secondary border border-border text-t-primary placeholder:text-t-tertiary focus:outline-none focus:border-accent text-sm font-mono transition-colors"
             />
             <button
@@ -185,12 +188,12 @@ export default function TimestampConverterPage() {
               }
               className="px-4 py-3 rounded-xl text-sm font-medium text-t-secondary bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] hover:text-t-primary transition-all whitespace-nowrap"
             >
-              Now
+              {t("ts.now")}
             </button>
           </div>
 
           {unixError && (
-            <p className="text-xs text-red-400 mt-2">{unixError}</p>
+            <p className="text-xs text-red-400 mt-2">{unixError === "Please enter a valid number" ? t("ts.invalidNumber") : t("ts.invalidTimestamp")}</p>
           )}
 
           {dateFormats.length > 0 && (
@@ -223,7 +226,7 @@ export default function TimestampConverterPage() {
                         d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
                       />
                     </svg>
-                    Copy
+                    {t("ui.copy")}
                   </button>
                 </div>
               ))}
@@ -234,7 +237,7 @@ export default function TimestampConverterPage() {
         {/* Date -> Unix */}
         <div className="glass rounded-2xl p-6">
           <h3 className="text-sm font-semibold text-t-primary mb-4">
-            Date &rarr; Unix Timestamp
+            {t("ts.toTimestamp")}
           </h3>
           <input
             type="datetime-local"
@@ -248,7 +251,7 @@ export default function TimestampConverterPage() {
               <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-bg-secondary border border-border">
                 <div className="min-w-0 flex-1">
                   <p className="text-xs text-t-tertiary mb-0.5">
-                    Seconds
+                    {t("ts.seconds")}
                   </p>
                   <p className="text-sm text-t-primary font-mono">
                     {Math.floor(convertedUnix / 1000)}
@@ -276,13 +279,13 @@ export default function TimestampConverterPage() {
                       d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
                     />
                   </svg>
-                  Copy
+                  {t("ui.copy")}
                 </button>
               </div>
               <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-bg-secondary border border-border">
                 <div className="min-w-0 flex-1">
                   <p className="text-xs text-t-tertiary mb-0.5">
-                    Milliseconds
+                    {t("ts.milliseconds")}
                   </p>
                   <p className="text-sm text-t-primary font-mono">
                     {convertedUnix}
@@ -310,7 +313,7 @@ export default function TimestampConverterPage() {
                       d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
                     />
                   </svg>
-                  Copy
+                  {t("ui.copy")}
                 </button>
               </div>
             </div>

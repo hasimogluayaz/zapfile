@@ -8,6 +8,7 @@ import ProcessButton from "@/components/ProcessButton";
 import DownloadButton from "@/components/DownloadButton";
 import ProgressBar from "@/components/ProgressBar";
 import { formatFileSize } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 
 interface PdfFileEntry {
   id: string;
@@ -15,6 +16,7 @@ interface PdfFileEntry {
 }
 
 export default function MergePdfPage() {
+  const { t } = useI18n();
   const [files, setFiles] = useState<PdfFileEntry[]>([]);
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -26,11 +28,11 @@ export default function MergePdfPage() {
     );
 
     if (pdfFiles.length !== selectedFiles.length) {
-      toast.error("Some files were skipped because they are not PDFs.");
+      toast.error(t("merge.skipped"));
     }
 
     if (pdfFiles.length === 0) {
-      toast.error("Please select valid PDF files.");
+      toast.error(t("merge.invalid"));
       return;
     }
 
@@ -71,7 +73,7 @@ export default function MergePdfPage() {
 
   const handleMerge = useCallback(async () => {
     if (files.length < 2) {
-      toast.error("Please add at least 2 PDF files to merge.");
+      toast.error(t("merge.addPdf"));
       return;
     }
 
@@ -119,12 +121,12 @@ export default function MergePdfPage() {
       setProgress(100);
 
       toast.success(
-        `Successfully merged ${totalFiles} PDFs into one document.`
+        t("merge.success", { count: totalFiles })
       );
     } catch (error) {
       console.error("Merge error:", error);
       toast.error(
-        "Failed to merge PDFs. One or more files may be corrupted or encrypted."
+        t("merge.fail")
       );
     } finally {
       setProcessing(false);
@@ -157,7 +159,7 @@ export default function MergePdfPage() {
           <div className="glass rounded-xl p-6 space-y-3">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-brand-text font-semibold">
-                Files to Merge ({files.length})
+                {t("merge.filesToMerge", { count: files.length })}
               </h3>
               <button
                 onClick={handleReset}
@@ -261,7 +263,8 @@ export default function MergePdfPage() {
                   <button
                     onClick={() => handleRemoveFile(entry.id)}
                     className="p-1.5 rounded-md text-brand-muted hover:text-red-400 hover:bg-red-500/10 transition-colors shrink-0"
-                    title="Remove file"
+                    aria-label={t("merge.removeFile")}
+                    title={t("merge.removeFile")}
                   >
                     <svg
                       className="w-4 h-4"
@@ -285,7 +288,7 @@ export default function MergePdfPage() {
 
         {/* Progress Bar */}
         {processing && (
-          <ProgressBar progress={progress} label="Merging PDFs..." />
+          <ProgressBar progress={progress} label={t("merge.mergingPdfs")} />
         )}
 
         {/* Action Buttons */}
@@ -295,8 +298,8 @@ export default function MergePdfPage() {
               onClick={handleMerge}
               disabled={files.length < 2}
               loading={processing}
-              label={`Merge ${files.length} PDFs`}
-              loadingLabel="Merging..."
+              label={t("merge.button", { count: files.length })}
+              loadingLabel={t("merge.merging")}
             />
           )}
           {resultBlob && (

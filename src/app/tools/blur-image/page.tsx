@@ -10,6 +10,7 @@ import {
   getFileNameWithoutExtension,
   downloadBlob,
 } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 
 interface BlurArea {
   x: number;
@@ -31,6 +32,7 @@ export default function BlurImagePage() {
   const [_currentRect, setCurrentRect] = useState<BlurArea | null>(null);
   const [processing, setProcessing] = useState(false);
   const [resultBlob, setResultBlob] = useState<Blob | null>(null);
+  const { t } = useI18n();
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
@@ -192,7 +194,7 @@ export default function BlurImagePage() {
         originalDataRef.current = ctx.getImageData(0, 0, canvas.width, canvas.height);
         blurredDataRef.current = null;
       };
-      img.onerror = () => toast.error("Failed to load image.");
+      img.onerror = () => toast.error(t("ui.failedLoad"));
       img.src = URL.createObjectURL(f);
     },
     [],
@@ -270,7 +272,7 @@ export default function BlurImagePage() {
         const newAreas = [...blurAreas, area];
         setBlurAreas(newAreas);
         redraw(newAreas);
-        toast.success("Blur area applied!");
+        toast.success(t("blur.applied"));
       }
 
       setIsDrawing(false);
@@ -294,7 +296,7 @@ export default function BlurImagePage() {
         redraw(newAreas);
       }
     }
-    toast("Undo: removed last blur area.");
+    toast(t("blur.undone"));
   };
 
   const handleBlurEntire = () => {
@@ -304,7 +306,7 @@ export default function BlurImagePage() {
     const newAreas = [...blurAreas, area];
     setBlurAreas(newAreas);
     redraw(newAreas);
-    toast.success("Entire image blurred!");
+    toast.success(t("blur.entireDone"));
   };
 
   const handleReset = () => {
@@ -316,7 +318,7 @@ export default function BlurImagePage() {
       const ctx = canvas.getContext("2d")!;
       ctx.putImageData(originalDataRef.current, 0, 0);
     }
-    toast("Image reset to original.");
+    toast(t("blur.resetDone"));
   };
 
   const handleDownload = () => {
@@ -329,9 +331,9 @@ export default function BlurImagePage() {
         if (blob) {
           const baseName = getFileNameWithoutExtension(file.name);
           downloadBlob(blob, `${baseName}-blurred.png`);
-          toast.success("Image downloaded!");
+          toast.success(t("blur.downloaded"));
         } else {
-          toast.error("Failed to export image.");
+          toast.error(t("ui.failedExport"));
         }
       },
       "image/png",
@@ -392,7 +394,7 @@ export default function BlurImagePage() {
                   onClick={reset}
                   className="text-[12px] text-t-secondary hover:text-red-400 transition-colors flex-shrink-0"
                 >
-                  Remove
+                  {t("ui.remove")}
                 </button>
               </div>
 
@@ -415,7 +417,7 @@ export default function BlurImagePage() {
               </div>
 
               <p className="text-[11px] text-t-secondary text-center mt-2">
-                Click and drag on the image to select areas to blur
+                {t("blur.clickDrag")}
               </p>
             </div>
 
@@ -424,7 +426,7 @@ export default function BlurImagePage() {
               {/* Mode toggle */}
               <div>
                 <span className="text-[13px] text-t-secondary font-medium block mb-2">
-                  Blur Mode
+                  {t("blur.mode")}
                 </span>
                 <div className="flex gap-2">
                   <button
@@ -438,7 +440,7 @@ export default function BlurImagePage() {
                         : "bg-white/5 hover:bg-white/10 text-t-secondary hover:text-t-primary"
                     }`}
                   >
-                    Gaussian Blur
+                    {t("blur.gaussian")}
                   </button>
                   <button
                     onClick={() => {
@@ -451,7 +453,7 @@ export default function BlurImagePage() {
                         : "bg-white/5 hover:bg-white/10 text-t-secondary hover:text-t-primary"
                     }`}
                   >
-                    Pixelate
+                    {t("blur.pixelate")}
                   </button>
                 </div>
               </div>
@@ -460,7 +462,7 @@ export default function BlurImagePage() {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[13px] text-t-secondary font-medium">
-                    {blurMode === "gaussian" ? "Blur Radius" : "Block Size"}
+                    {blurMode === "gaussian" ? t("blur.radius") : t("blur.blockSize")}
                   </span>
                   <span className="text-[12px] font-mono px-2.5 py-1 rounded-lg bg-white/5 text-t-secondary border border-border">
                     {intensity}{blurMode === "gaussian" ? "px" : "px"}
@@ -488,14 +490,14 @@ export default function BlurImagePage() {
                   }`}
                 >
                   <span className="text-lg leading-none">&#x21A9;</span>
-                  <span>Undo</span>
+                  <span>{t("blur.undo")}</span>
                 </button>
                 <button
                   onClick={handleBlurEntire}
                   className="flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-t-secondary hover:text-t-primary transition-all text-[12px] font-medium"
                 >
                   <span className="text-lg leading-none">&#x25A3;</span>
-                  <span>Blur Entire</span>
+                  <span>{t("blur.blurEntire")}</span>
                 </button>
                 <button
                   onClick={handleReset}
@@ -507,7 +509,7 @@ export default function BlurImagePage() {
                   }`}
                 >
                   <span className="text-lg leading-none">&#x21BA;</span>
-                  <span>Reset</span>
+                  <span>{t("ui.reset")}</span>
                 </button>
               </div>
 
@@ -528,7 +530,7 @@ export default function BlurImagePage() {
                   : "bg-gradient-to-r from-indigo-500 to-purple-500 hover:shadow-lg hover:shadow-indigo-500/25 hover:scale-[1.02] active:scale-[0.98]"
               }`}
             >
-              {processing ? "Preparing..." : "Download PNG"}
+              {processing ? t("ui.processing") : t("ui.downloadPNG")}
             </button>
 
             {resultBlob && (
@@ -536,7 +538,7 @@ export default function BlurImagePage() {
                 <DownloadButton
                   blob={resultBlob}
                   filename={`${getFileNameWithoutExtension(file.name)}-blurred.png`}
-                  label="Download PNG"
+                  label={t("ui.downloadPNG")}
                 />
               </div>
             )}

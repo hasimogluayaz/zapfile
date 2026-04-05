@@ -4,10 +4,12 @@ import { useState, useEffect, useRef } from "react";
 import toast from "react-hot-toast";
 import ToolLayout from "@/components/ToolLayout";
 import { downloadBlob } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 
 type QRType = "url" | "text" | "tel" | "email";
 
 export default function QRGeneratorPage() {
+  const { t } = useI18n();
   const [qrType, setQrType] = useState<QRType>("url");
   const [input, setInput] = useState("");
   const [fgColor, setFgColor] = useState("#ffffff");
@@ -123,7 +125,7 @@ export default function QRGeneratorPage() {
 
           {/* Input */}
           <div className="glass rounded-xl p-6">
-            <h3 className="font-medium text-brand-text mb-4">Content</h3>
+            <h3 className="font-medium text-brand-text mb-4">{t("qr.content")}</h3>
             {qrType === "text" ? (
               <textarea
                 value={input}
@@ -145,10 +147,10 @@ export default function QRGeneratorPage() {
 
           {/* Colors */}
           <div className="glass rounded-xl p-6">
-            <h3 className="font-medium text-brand-text mb-4">Colors</h3>
+            <h3 className="font-medium text-brand-text mb-4">{t("qr.colors")}</h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm text-brand-muted mb-2">Foreground</label>
+                <label className="block text-sm text-brand-muted mb-2">{t("qr.foreground")}</label>
                 <div className="flex items-center gap-3">
                   <input
                     type="color"
@@ -165,7 +167,7 @@ export default function QRGeneratorPage() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm text-brand-muted mb-2">Background</label>
+                <label className="block text-sm text-brand-muted mb-2">{t("qr.background")}</label>
                 <div className="flex items-center gap-3">
                   <input
                     type="color"
@@ -218,7 +220,7 @@ export default function QRGeneratorPage() {
               />
             ) : (
               <p className="text-brand-muted text-center">
-                Enter content to generate a QR code
+                {t("qr.enterContent")}
               </p>
             )}
           </div>
@@ -229,13 +231,13 @@ export default function QRGeneratorPage() {
                 onClick={downloadPNG}
                 className="flex-1 px-6 py-3 rounded-xl font-semibold text-white bg-emerald-600 hover:bg-emerald-500 transition-all hover:scale-[1.02] active:scale-[0.98]"
               >
-                Download PNG
+                {t("qr.downloadPNG")}
               </button>
               <button
                 onClick={downloadSVG}
                 className="flex-1 px-6 py-3 rounded-xl font-semibold text-brand-text bg-white/5 hover:bg-white/10 transition-all border border-white/10"
               >
-                Download SVG
+                {t("qr.downloadSVG")}
               </button>
             </div>
           )}
