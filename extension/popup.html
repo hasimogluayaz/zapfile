@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZapFile</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 320px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f0f13;
+      color: #e2e2e9;
+    }
+    .header {
+      padding: 16px;
+      text-align: center;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .header h1 {
+      font-size: 18px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #818cf8, #6366f1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .header p {
+      font-size: 11px;
+      color: #8b8b9e;
+      margin-top: 4px;
+    }
+    .search {
+      padding: 12px 16px;
+    }
+    .search input {
+      width: 100%;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.04);
+      color: #e2e2e9;
+      font-size: 13px;
+      outline: none;
+    }
+    .search input:focus {
+      border-color: #6366f1;
+    }
+    .search input::placeholder {
+      color: #5a5a6e;
+    }
+    .category {
+      padding: 0 16px 8px;
+    }
+    .category-title {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #6366f1;
+      padding: 8px 0 6px;
+    }
+    .tools-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+    .tool-link {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      text-decoration: none;
+      color: #e2e2e9;
+      font-size: 12px;
+      transition: background 0.15s;
+      cursor: pointer;
+    }
+    .tool-link:hover {
+      background: rgba(99,102,241,0.12);
+    }
+    .tool-emoji {
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+    .tool-name {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .footer {
+      padding: 12px 16px;
+      text-align: center;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    .footer a {
+      display: inline-block;
+      padding: 8px 20px;
+      background: #6366f1;
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .footer a:hover {
+      background: #5558e6;
+    }
+    .hidden { display: none !important; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      color: #10b981;
+      padding: 4px 0;
+    }
+    .badge svg { width: 10px; height: 10px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>ZapFile</h1>
+    <p>Free, private, browser-based file tools</p>
+    <div class="badge">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+      </svg>
+      Files never leave your browser
+    </div>
+  </div>
+
+  <div class="search">
+    <input type="text" id="search" placeholder="Search tools..." autofocus>
+  </div>
+
+  <div id="tools-container" style="max-height: 340px; overflow-y: auto;">
+    <!-- PDF Tools -->
+    <div class="category" data-category="pdf">
+      <div class="category-title">PDF Tools</div>
+      <div class="tools-grid">
+        <a class="tool-link" data-name="merge pdf" href="https://zapfile.xyz/tools/merge-pdf" target="_blank"><span class="tool-emoji">📂</span><span class="tool-name">Merge PDF</span></a>
+        <a class="tool-link" data-name="split pdf" href="https://zapfile.xyz/tools/split-pdf" target="_blank"><span class="tool-emoji">✂️</span><span class="tool-name">Split PDF</span></a>
+        <a class="tool-link" data-name="pdf to images" href="https://zapfile.xyz/tools/pdf-to-images" target="_blank"><span class="tool-emoji">🖼️</span><span class="tool-name">PDF to Images</span></a>
+        <a class="tool-link" data-name="rotate pdf" href="https://zapfile.xyz/tools/rotate-pdf" target="_blank"><span class="tool-emoji">🔄</span><span class="tool-name">Rotate PDF</span></a>
+        <a class="tool-link" data-name="pdf page numbers" href="https://zapfile.xyz/tools/pdf-page-numbers" target="_blank"><span class="tool-emoji">🔢</span><span class="tool-name">Page Numbers</span></a>
+      </div>
+    </div>
+
+    <!-- Image Tools -->
+    <div class="category" data-category="image">
+      <div class="category-title">Image Tools</div>
+      <div class="tools-grid">
+        <a class="tool-link" data-name="compress image" href="https://zapfile.xyz/tools/compress-image" target="_blank"><span class="tool-emoji">🗜️</span><span class="tool-name">Compress</span></a>
+        <a class="tool-link" data-name="resize image" href="https://zapfile.xyz/tools/resize-image" target="_blank"><span class="tool-emoji">📐</span><span class="tool-name">Resize</span></a>
+        <a class="tool-link" data-name="convert image" href="https://zapfile.xyz/tools/convert-image" target="_blank"><span class="tool-emoji">🔄</span><span class="tool-name">Convert</span></a>
+        <a class="tool-link" data-name="crop image" href="https://zapfile.xyz/tools/crop-image" target="_blank"><span class="tool-emoji">✂️</span><span class="tool-name">Crop</span></a>
+        <a class="tool-link" data-name="rotate image" href="https://zapfile.xyz/tools/rotate-image" target="_blank"><span class="tool-emoji">🔄</span><span class="tool-name">Rotate</span></a>
+        <a class="tool-link" data-name="watermark image" href="https://zapfile.xyz/tools/watermark-image" target="_blank"><span class="tool-emoji">📝</span><span class="tool-name">Watermark</span></a>
+        <a class="tool-link" data-name="image to pdf" href="https://zapfile.xyz/tools/image-to-pdf" target="_blank"><span class="tool-emoji">📄</span><span class="tool-name">Image to PDF</span></a>
+        <a class="tool-link" data-name="blur image pixelate" href="https://zapfile.xyz/tools/blur-image" target="_blank"><span class="tool-emoji">🌫️</span><span class="tool-name">Blur</span></a>
+        <a class="tool-link" data-name="favicon generator" href="https://zapfile.xyz/tools/favicon-generator" target="_blank"><span class="tool-emoji">⭐</span><span class="tool-name">Favicon</span></a>
+        <a class="tool-link" data-name="exif viewer metadata" href="https://zapfile.xyz/tools/exif-viewer" target="_blank"><span class="tool-emoji">📷</span><span class="tool-name">EXIF Viewer</span></a>
+        <a class="tool-link" data-name="image collage" href="https://zapfile.xyz/tools/image-collage" target="_blank"><span class="tool-emoji">🖼️</span><span class="tool-name">Collage</span></a>
+        <a class="tool-link" data-name="meme generator" href="https://zapfile.xyz/tools/meme-generator" target="_blank"><span class="tool-emoji">😂</span><span class="tool-name">Meme</span></a>
+        <a class="tool-link" data-name="image to base64" href="https://zapfile.xyz/tools/image-to-base64" target="_blank"><span class="tool-emoji">🔤</span><span class="tool-name">To Base64</span></a>
+        <a class="tool-link" data-name="gif maker animated" href="https://zapfile.xyz/tools/gif-maker" target="_blank"><span class="tool-emoji">🎬</span><span class="tool-name">GIF Maker</span></a>
+      </div>
+    </div>
+
+    <!-- Video & Audio -->
+    <div class="category" data-category="video">
+      <div class="category-title">Video & Audio</div>
+      <div class="tools-grid">
+        <a class="tool-link" data-name="compress video" href="https://zapfile.xyz/tools/compress-video" target="_blank"><span class="tool-emoji">📹</span><span class="tool-name">Compress Video</span></a>
+        <a class="tool-link" data-name="extract audio" href="https://zapfile.xyz/tools/extract-audio" target="_blank"><span class="tool-emoji">🎧</span><span class="tool-name">Extract Audio</span></a>
+        <a class="tool-link" data-name="video to gif" href="https://zapfile.xyz/tools/video-to-gif" target="_blank"><span class="tool-emoji">🎬</span><span class="tool-name">Video to GIF</span></a>
+        <a class="tool-link" data-name="trim video cut" href="https://zapfile.xyz/tools/trim-video" target="_blank"><span class="tool-emoji">✂️</span><span class="tool-name">Trim Video</span></a>
+        <a class="tool-link" data-name="trim audio cut" href="https://zapfile.xyz/tools/trim-audio" target="_blank"><span class="tool-emoji">✂️</span><span class="tool-name">Trim Audio</span></a>
+        <a class="tool-link" data-name="audio converter mp3 wav" href="https://zapfile.xyz/tools/audio-converter" target="_blank"><span class="tool-emoji">🔄</span><span class="tool-name">Audio Convert</span></a>
+      </div>
+    </div>
+
+    <!-- Utility Tools -->
+    <div class="category" data-category="utility">
+      <div class="category-title">Utility Tools</div>
+      <div class="tools-grid">
+        <a class="tool-link" data-name="qr code generator" href="https://zapfile.xyz/tools/qr-generator" target="_blank"><span class="tool-emoji">📱</span><span class="tool-name">QR Code</span></a>
+        <a class="tool-link" data-name="svg to png" href="https://zapfile.xyz/tools/svg-to-png" target="_blank"><span class="tool-emoji">🎨</span><span class="tool-name">SVG to PNG</span></a>
+        <a class="tool-link" data-name="base64 encode decode" href="https://zapfile.xyz/tools/base64-encode" target="_blank"><span class="tool-emoji">🔐</span><span class="tool-name">Base64</span></a>
+        <a class="tool-link" data-name="color picker hex rgb" href="https://zapfile.xyz/tools/color-picker" target="_blank"><span class="tool-emoji">🎨</span><span class="tool-name">Color Picker</span></a>
+        <a class="tool-link" data-name="json formatter validator" href="https://zapfile.xyz/tools/json-formatter" target="_blank"><span class="tool-emoji">📋</span><span class="tool-name">JSON</span></a>
+        <a class="tool-link" data-name="hash generator sha256" href="https://zapfile.xyz/tools/hash-generator" target="_blank"><span class="tool-emoji">🔐</span><span class="tool-name">Hash</span></a>
+        <a class="tool-link" data-name="word counter" href="https://zapfile.xyz/tools/word-counter" target="_blank"><span class="tool-emoji">📝</span><span class="tool-name">Word Count</span></a>
+        <a class="tool-link" data-name="password generator" href="https://zapfile.xyz/tools/password-generator" target="_blank"><span class="tool-emoji">🔐</span><span class="tool-name">Password</span></a>
+        <a class="tool-link" data-name="diff checker compare" href="https://zapfile.xyz/tools/diff-checker" target="_blank"><span class="tool-emoji">📊</span><span class="tool-name">Diff</span></a>
+        <a class="tool-link" data-name="markdown editor preview" href="https://zapfile.xyz/tools/markdown-editor" target="_blank"><span class="tool-emoji">✍️</span><span class="tool-name">Markdown</span></a>
+        <a class="tool-link" data-name="url encoder decoder" href="https://zapfile.xyz/tools/url-encoder" target="_blank"><span class="tool-emoji">🔗</span><span class="tool-name">URL Encode</span></a>
+        <a class="tool-link" data-name="timestamp converter unix" href="https://zapfile.xyz/tools/timestamp-converter" target="_blank"><span class="tool-emoji">🕐</span><span class="tool-name">Timestamp</span></a>
+        <a class="tool-link" data-name="lorem ipsum placeholder" href="https://zapfile.xyz/tools/lorem-ipsum" target="_blank"><span class="tool-emoji">📝</span><span class="tool-name">Lorem Ipsum</span></a>
+        <a class="tool-link" data-name="regex tester regular expression" href="https://zapfile.xyz/tools/regex-tester" target="_blank"><span class="tool-emoji">🔍</span><span class="tool-name">Regex</span></a>
+        <a class="tool-link" data-name="csv json converter" href="https://zapfile.xyz/tools/csv-json" target="_blank"><span class="tool-emoji">📊</span><span class="tool-name">CSV/JSON</span></a>
+        <a class="tool-link" data-name="xml formatter" href="https://zapfile.xyz/tools/xml-formatter" target="_blank"><span class="tool-emoji">📋</span><span class="tool-name">XML</span></a>
+        <a class="tool-link" data-name="yaml formatter" href="https://zapfile.xyz/tools/yaml-formatter" target="_blank"><span class="tool-emoji">📋</span><span class="tool-name">YAML</span></a>
+        <a class="tool-link" data-name="unit converter px rem cm" href="https://zapfile.xyz/tools/unit-converter" target="_blank"><span class="tool-emoji">📏</span><span class="tool-name">Units</span></a>
+        <a class="tool-link" data-name="pomodoro timer focus" href="https://zapfile.xyz/tools/pomodoro-timer" target="_blank"><span class="tool-emoji">🍅</span><span class="tool-name">Pomodoro</span></a>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <a href="https://zapfile.xyz" target="_blank">Open ZapFile</a>
+  </div>
+
+  <script>
+    const search = document.getElementById('search');
+    const links = document.querySelectorAll('.tool-link');
+    const categories = document.querySelectorAll('.category');
+
+    search.addEventListener('input', () => {
+      const q = search.value.toLowerCase().trim();
+      categories.forEach(cat => {
+        const grid = cat.querySelector('.tools-grid');
+        let visible = 0;
+        grid.querySelectorAll('.tool-link').forEach(link => {
+          const match = !q || link.dataset.name.includes(q);
+          link.classList.toggle('hidden', !match);
+          if (match) visible++;
+        });
+        cat.classList.toggle('hidden', visible === 0);
+      });
+    });
+  </script>
+</body>
+</html>

@@ -56,6 +56,26 @@ const translations: Record<Locale, Record<string, string>> = {
     "tool.result": "Result",
     "tool.saved": "Saved",
 
+    // Privacy section
+    "home.privacy.heading": "Your Files Never Leave Your Browser",
+    "home.privacy.zeroUploads.title": "Zero Uploads",
+    "home.privacy.zeroUploads.desc":
+      "Files are processed locally using browser APIs",
+    "home.privacy.noServer.title": "No Server Storage",
+    "home.privacy.noServer.desc":
+      "Nothing is ever sent to or stored on our servers",
+    "home.privacy.noAccount.title": "No Account Required",
+    "home.privacy.noAccount.desc":
+      "Use all tools without signing up or logging in",
+    "home.privacy.howTitle": "How It Works",
+    "home.privacy.step1": "Select Files",
+    "home.privacy.step2": "Process Locally",
+    "home.privacy.step3": "Download Results",
+    "home.privacy.howDesc":
+      "WebAssembly and Canvas API handle all processing directly in your browser — nothing is uploaded.",
+    "home.privacy.comparison":
+      "Unlike other tools, ZapFile processes everything in your browser. Your files stay on your device.",
+
     // CTA
     "cta.title": "Ready to get started?",
     "cta.subtitle":
@@ -977,6 +997,26 @@ const translations: Record<Locale, Record<string, string>> = {
     "tool.original": "Orijinal",
     "tool.result": "Sonuç",
     "tool.saved": "Tasarruf",
+
+    // Privacy section
+    "home.privacy.heading": "Dosyalarınız Asla Tarayıcınızdan Çıkmaz",
+    "home.privacy.zeroUploads.title": "Sıfır Yükleme",
+    "home.privacy.zeroUploads.desc":
+      "Dosyalar tarayıcı API'leri kullanılarak yerel olarak işlenir",
+    "home.privacy.noServer.title": "Sunucu Depolaması Yok",
+    "home.privacy.noServer.desc":
+      "Hiçbir şey sunucularımıza gönderilmez veya depolanmaz",
+    "home.privacy.noAccount.title": "Hesap Gerekmez",
+    "home.privacy.noAccount.desc":
+      "Tüm araçları kayıt olmadan veya giriş yapmadan kullanın",
+    "home.privacy.howTitle": "Nasıl Çalışır",
+    "home.privacy.step1": "Dosyaları Seçin",
+    "home.privacy.step2": "Yerel Olarak İşleyin",
+    "home.privacy.step3": "Sonuçları İndirin",
+    "home.privacy.howDesc":
+      "WebAssembly ve Canvas API tüm işlemleri doğrudan tarayıcınızda gerçekleştirir — hiçbir şey yüklenmez.",
+    "home.privacy.comparison":
+      "Diğer araçların aksine, ZapFile her şeyi tarayıcınızda işler. Dosyalarınız cihazınızda kalır.",
 
     // CTA
     "cta.title": "Başlamaya hazır mısınız?",

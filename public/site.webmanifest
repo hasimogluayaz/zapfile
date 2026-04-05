@@ -1,14 +1,90 @@
 {
+  "id": "/",
   "name": "ZapFile - Free Online File Tools",
   "short_name": "ZapFile",
   "description": "Free, private, browser-based file tools. No uploads needed.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#0f0f13",
   "theme_color": "#6366f1",
   "orientation": "any",
+  "categories": ["utilities", "productivity"],
   "icons": [
-    { "src": "/android-chrome-192x192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/android-chrome-512x512.png", "sizes": "512x512", "type": "image/png" }
+    {
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/og-image.png",
+      "sizes": "1200x630",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "ZapFile - Free Online File Tools"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Merge PDF",
+      "short_name": "Merge PDF",
+      "description": "Combine multiple PDF files into one",
+      "url": "/tools/merge-pdf",
+      "icons": [
+        {
+          "src": "/android-chrome-192x192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Compress Image",
+      "short_name": "Compress",
+      "description": "Reduce image file size without losing quality",
+      "url": "/tools/compress-image",
+      "icons": [
+        {
+          "src": "/android-chrome-192x192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Convert Image",
+      "short_name": "Convert",
+      "description": "Convert images between formats like PNG, JPG, WebP",
+      "url": "/tools/convert-image",
+      "icons": [
+        {
+          "src": "/android-chrome-192x192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "QR Code Generator",
+      "short_name": "QR Code",
+      "description": "Generate QR codes from text or URLs",
+      "url": "/tools/qr-generator",
+      "icons": [
+        {
+          "src": "/android-chrome-192x192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
   ]
 }

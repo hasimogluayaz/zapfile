@@ -1,5 +1,7 @@
 import { MetadataRoute } from "next";
 import { tools } from "@/lib/tools";
+import { getImageConversions, getAudioConversions } from "@/lib/conversions";
+import { getAllPosts } from "@/lib/blog";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = "https://zapfile.xyz";
@@ -9,6 +11,27 @@ export default function sitemap(): MetadataRoute.Sitemap {
     lastModified: new Date(),
     changeFrequency: "monthly" as const,
     priority: 0.8,
+  }));
+
+  const imageConversionPages = getImageConversions().map((c) => ({
+    url: `${baseUrl}/tools/convert-image/${c.slug}`,
+    lastModified: new Date(),
+    changeFrequency: "monthly" as const,
+    priority: 0.7,
+  }));
+
+  const audioConversionPages = getAudioConversions().map((c) => ({
+    url: `${baseUrl}/tools/audio-converter/${c.slug}`,
+    lastModified: new Date(),
+    changeFrequency: "monthly" as const,
+    priority: 0.7,
+  }));
+
+  const blogPostPages = getAllPosts().map((post) => ({
+    url: `${baseUrl}/blog/${post.slug}`,
+    lastModified: new Date(post.date),
+    changeFrequency: "weekly" as const,
+    priority: 0.6,
   }));
 
   return [
@@ -25,6 +48,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.9,
     },
     ...toolPages,
+    ...imageConversionPages,
+    ...audioConversionPages,
+    {
+      url: `${baseUrl}/blog`,
+      lastModified: new Date(),
+      changeFrequency: "weekly" as const,
+      priority: 0.7,
+    },
+    ...blogPostPages,
     {
       url: `${baseUrl}/privacy`,
       lastModified: new Date(),

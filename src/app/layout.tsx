@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Toaster } from "react-hot-toast";
 import ClientProviders from "@/components/ClientProviders";
+import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
@@ -199,6 +200,7 @@ export default function RootLayout({
           <SpeedInsights />
           <Analytics />
         </ClientProviders>
+        <ServiceWorkerRegister />
       </body>
     </html>
   );
