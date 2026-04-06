@@ -164,7 +164,7 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
       <div className="flex-1 overflow-y-auto px-5 py-4 space-y-2">
         {/* Language switcher */}
         <div className="flex items-center gap-1 bg-bg-secondary rounded-lg border border-border p-1 mb-4 w-fit">
-          {(["en", "tr"] as Locale[]).map((lang) => (
+          {(["en", "tr", "de", "fr"] as Locale[]).map((lang) => (
             <button
               key={lang}
               onClick={() => setLocale(lang)}
@@ -322,7 +322,7 @@ export default function Header() {
             <div className="hidden md:flex items-center gap-1">
               {/* Language switcher */}
               <div className="flex items-center bg-bg-secondary rounded-lg border border-border mr-2">
-                {(["en", "tr"] as Locale[]).map((lang) => (
+                {(["en", "tr", "de", "fr"] as Locale[]).map((lang) => (
                   <button
                     key={lang}
                     onClick={() => setLocale(lang)}
