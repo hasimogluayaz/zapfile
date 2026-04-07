@@ -23,6 +23,9 @@ export const SUPPORTED_LOCALES: Locale[] = [
   "he",
 ];
 
+/** Locales with a full string table in i18n.tsx; others use i18n-overrides + English fallback. */
+export const LOCALES_FULL_DICTIONARY: Locale[] = ["en", "tr", "de", "fr"];
+
 export const LOCALE_LABELS: Record<Locale, string> = {
   en: "English",
   tr: "Türkçe",

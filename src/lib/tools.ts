@@ -173,17 +173,6 @@ export const tools: Tool[] = [
       "Blur or pixelate areas of images to hide sensitive information. Free, private, browser-based.",
   },
   {
-    slug: "remove-background",
-    name: "Remove Background",
-    description: "Remove image backgrounds instantly using AI",
-    emoji: "\u2702\ufe0f",
-    category: "image",
-    acceptedFormats: [".jpg", ".jpeg", ".png", ".webp"],
-    metaTitle: "Remove Background - Free AI Tool | ZapFile",
-    metaDescription:
-      "Remove image backgrounds instantly with AI. No uploads, 100% private, runs in your browser.",
-  },
-  {
     slug: "favicon-generator",
     name: "Favicon Generator",
     description: "Generate all favicon sizes from a single image",
@@ -237,84 +226,6 @@ export const tools: Tool[] = [
     metaTitle: "Image to Base64 Converter - Free Online Tool | ZapFile",
     metaDescription:
       "Convert images to Base64 strings for embedding in HTML/CSS. Free, private, browser-based.",
-  },
-  {
-    slug: "gif-maker",
-    name: "GIF Maker",
-    description: "Create animated GIFs from multiple images",
-    emoji: "\ud83c\udfac",
-    category: "image",
-    acceptedFormats: [".jpg", ".jpeg", ".png", ".webp"],
-    metaTitle: "GIF Maker - Free Online Tool | ZapFile",
-    metaDescription:
-      "Create animated GIFs from multiple images. Set frame delay and size. Free and private.",
-  },
-  // Video & Audio Tools
-  {
-    slug: "compress-video",
-    name: "Compress Video",
-    description: "Reduce video file size with quality options",
-    emoji: "\ud83d\udcf9",
-    category: "video",
-    acceptedFormats: [".mp4", ".webm", ".mov", ".avi"],
-    metaTitle: "Compress Video - Free Online Tool | ZapFile",
-    metaDescription:
-      "Compress video files in your browser. Choose quality level. No uploads, no limits.",
-  },
-  {
-    slug: "extract-audio",
-    name: "Extract Audio",
-    description: "Extract audio track from video as MP3 or WAV",
-    emoji: "\ud83c\udfa7",
-    category: "video",
-    acceptedFormats: [".mp4", ".webm", ".mov", ".avi"],
-    metaTitle: "Extract Audio from Video - Free Online Tool | ZapFile",
-    metaDescription:
-      "Extract audio from video files as MP3 or WAV. Fast, free, and 100% private.",
-  },
-  {
-    slug: "video-to-gif",
-    name: "Video to GIF",
-    description: "Convert video clips to animated GIF images",
-    emoji: "\ud83c\udfac",
-    category: "video",
-    acceptedFormats: [".mp4", ".webm", ".mov"],
-    metaTitle: "Video to GIF - Free Online Tool | ZapFile",
-    metaDescription:
-      "Convert video clips to GIF. Set start/end time and quality. Browser-based, no uploads.",
-  },
-  {
-    slug: "trim-video",
-    name: "Trim Video",
-    description: "Cut video clips by setting start and end time",
-    emoji: "\u2702\ufe0f",
-    category: "video",
-    acceptedFormats: [".mp4", ".webm", ".mov"],
-    metaTitle: "Trim Video - Free Online Tool | ZapFile",
-    metaDescription:
-      "Trim and cut video clips by setting start and end time. Free, private, browser-based tool.",
-  },
-  {
-    slug: "trim-audio",
-    name: "Trim Audio",
-    description: "Cut audio files by setting start and end time",
-    emoji: "\u2702\ufe0f",
-    category: "video",
-    acceptedFormats: [".mp3", ".wav", ".ogg", ".aac", ".m4a"],
-    metaTitle: "Trim Audio - Free Online Tool | ZapFile",
-    metaDescription:
-      "Trim and cut audio files by setting start and end time. Supports MP3, WAV, OGG. Free and private.",
-  },
-  {
-    slug: "audio-converter",
-    name: "Audio Converter",
-    description: "Convert between MP3, WAV, OGG, and AAC formats",
-    emoji: "\ud83d\udd04",
-    category: "video",
-    acceptedFormats: [".mp3", ".wav", ".ogg", ".aac", ".m4a", ".flac"],
-    metaTitle: "Audio Converter - Free Online Tool | ZapFile",
-    metaDescription:
-      "Convert audio files between MP3, WAV, OGG, and AAC formats. Free, private, browser-based.",
   },
   // Utility Tools
   {
@@ -541,13 +452,13 @@ export const tools: Tool[] = [
   {
     slug: "html-to-pdf",
     name: "HTML to PDF",
-    description: "Convert HTML code or a URL into a PDF document",
+    description: "Convert pasted HTML markup into a PDF document in your browser",
     emoji: "🌐",
     category: "utility",
     acceptedFormats: [],
     metaTitle: "HTML to PDF - Free Online Tool | ZapFile",
     metaDescription:
-      "Convert HTML markup to PDF instantly in your browser. Paste code or enter a URL. Free and private.",
+      "Convert HTML markup to PDF in your browser. Paste your HTML; rendering uses canvas (see on-page tips for images/fonts).",
   },
   {
     slug: "jwt-decoder",
@@ -658,17 +569,6 @@ export const tools: Tool[] = [
     metaTitle: "WCAG Color Contrast Checker — Free Online | ZapFile",
     metaDescription:
       "Test foreground and background colors for WCAG AA and AAA compliance. Instant results in your browser.",
-  },
-  {
-    slug: "api-fetch",
-    name: "HTTP Fetch & JSON",
-    description: "Call APIs from the browser and inspect responses",
-    emoji: "🌐",
-    category: "utility",
-    acceptedFormats: [],
-    metaTitle: "HTTP Fetch & JSON Inspector — Free Online | ZapFile",
-    metaDescription:
-      "Send GET or POST requests and view status, headers, and JSON. CORS applies; no server proxy.",
   },
   {
     slug: "csv-viewer",

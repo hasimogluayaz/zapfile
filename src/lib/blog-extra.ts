@@ -232,32 +232,6 @@ Sharing files publicly can expose more than you intend.
 Metadata is invisible but real. Inspect before you share.`,
   },
   {
-    slug: "video-to-gif-for-social-media",
-    title: "Video to GIF: Best Practices for Social and Memes",
-    description:
-      "Trim length, reduce file size, and export GIFs that load fast on mobile networks.",
-    date: "2026-03-22",
-    readTime: "5 min read",
-    tags: ["gif", "video", "social"],
-    content: `# Video to GIF for Social
-
-GIFs are heavier than video. Short clips and fewer colors keep files small.
-
-## Tips
-
-- Crop to the important area.
-- Limit duration to a few seconds.
-- Lower resolution for feeds.
-
-## Tool
-
-[Video to GIF](/tools/video-to-gif) runs in the browser.
-
-## Summary
-
-Great GIFs balance humor and file size.`,
-  },
-  {
     slug: "jwt-tokens-explained-developers",
     title: "JWT Tokens Explained (For Developers)",
     description:
@@ -597,25 +571,5 @@ Use [Regex Tester](/tools/regex-tester) so sensitive logs never leave your machi
 ## Summary
 
 Iterate locally, then paste the final pattern into your code.`,
-  },
-  {
-    slug: "remove-background-for-marketplace-photos",
-    title: "Remove Background for Product and Marketplace Photos",
-    description:
-      "AI background removal for e-commerce: clean PNG cutouts without Photoshop.",
-    date: "2026-04-01",
-    readTime: "5 min read",
-    tags: ["images", "ai", "ecommerce"],
-    content: `# Background Removal for Products
-
-Marketplaces look better with **consistent white or transparent** backgrounds.
-
-## AI in the browser
-
-[Remove Background](/tools/remove-background) uses on-device models for privacy.
-
-## Summary
-
-Export PNGs and pair with your brand templates.`,
   },
 ];

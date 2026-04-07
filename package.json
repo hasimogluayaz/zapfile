@@ -7,12 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "verify:i18n": "node scripts/verify-i18n-tool-keys.mjs",
     "analyze": "cross-env ANALYZE=true next build"
   },
   "dependencies": {
-    "@ffmpeg/ffmpeg": "^0.12.15",
-    "@ffmpeg/util": "^0.12.2",
-    "@imgly/background-removal": "^1.7.0",
     "@types/figlet": "^1.7.0",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",

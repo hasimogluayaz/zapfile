@@ -276,13 +276,9 @@ Beyond basic compression, useful image tools include:
 
 ZapFile offers all of these at [zapfile.xyz/tools](/tools).
 
-## Video and Audio Tools
+## Audio visualization
 
-Video files are large and awkward to work with online. The most practical free tools include:
-
-- **Video Compressor** - Reduce video file size for sharing via email or messaging apps. [ZapFile's video compressor](/tools/compress-video) uses FFmpeg WebAssembly to process videos locally.
-- **Video Trimmer** - Cut videos to specific start and end times without re-encoding the entire file.
-- **Audio Extractor** - Pull the audio track from a video file and save it as MP3, WAV, or other formats.
+For quick previews without heavy codecs, [Audio Waveform](/tools/audio-waveform) draws a waveform PNG from an audio file entirely in the browser.
 
 ## Utility Tools
 

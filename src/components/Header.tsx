@@ -5,8 +5,9 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { tools, categoryEmojis, type ToolCategory } from "@/lib/tools";
-import { useI18n, type Locale } from "@/lib/i18n";
-import { SUPPORTED_LOCALES, LOCALE_LABELS } from "@/lib/locales";
+import { useI18n } from "@/lib/i18n";
+import { toolField } from "@/lib/tool-i18n";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useTheme } from "@/components/ClientProviders";
 
 const categories: ToolCategory[] = ["pdf", "image", "video", "utility"];
@@ -27,13 +28,18 @@ function SearchModal({ onClose }: { onClose: () => void }) {
   const results = useMemo(() => {
     if (!query.trim()) return [];
     const q = query.toLowerCase();
-    return tools.filter(
-      (tool) =>
+    return tools.filter((tool) => {
+      const tn = toolField(t, tool.slug, tool, "name").toLowerCase();
+      const td = toolField(t, tool.slug, tool, "desc").toLowerCase();
+      return (
+        tn.includes(q) ||
+        td.includes(q) ||
+        tool.slug.toLowerCase().includes(q) ||
         tool.name.toLowerCase().includes(q) ||
-        tool.description.toLowerCase().includes(q) ||
-        tool.slug.toLowerCase().includes(q),
-    );
-  }, [query]);
+        tool.description.toLowerCase().includes(q)
+      );
+    });
+  }, [query, t]);
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -98,14 +104,10 @@ function SearchModal({ onClose }: { onClose: () => void }) {
                   <span className="text-lg shrink-0">{tool.emoji}</span>
                   <div className="min-w-0">
                     <p className="text-[14px] font-medium text-t-primary truncate">
-                      {t(`tool.${tool.slug}.name`) !== `tool.${tool.slug}.name`
-                        ? t(`tool.${tool.slug}.name`)
-                        : tool.name}
+                      {toolField(t, tool.slug, tool, "name")}
                     </p>
                     <p className="text-[12px] text-t-tertiary truncate">
-                      {t(`tool.${tool.slug}.desc`) !== `tool.${tool.slug}.desc`
-                        ? t(`tool.${tool.slug}.desc`)
-                        : tool.description}
+                      {toolField(t, tool.slug, tool, "desc")}
                     </p>
                   </div>
                 </Link>
@@ -125,7 +127,7 @@ function SearchModal({ onClose }: { onClose: () => void }) {
 // ─── Mobile Menu ───────────────────────────────────────────────
 function MobileMenu({ onClose }: { onClose: () => void }) {
   const [expandedCat, setExpandedCat] = useState<ToolCategory | null>(null);
-  const { locale, setLocale, t } = useI18n();
+  const { t } = useI18n();
 
   // Prevent body scroll while menu is open
   useEffect(() => {
@@ -163,23 +165,9 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
 
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto px-5 py-4 space-y-2">
-        {/* Language switcher */}
-        <label className="sr-only" htmlFor="zapfile-lang-mobile">
-          {t("nav.language")}
-        </label>
-        <select
-          id="zapfile-lang-mobile"
-          value={locale}
-          onChange={(e) => setLocale(e.target.value as Locale)}
-          aria-label={t("nav.language")}
-          className="mb-4 w-full max-w-xs text-[13px] font-medium rounded-lg border border-border bg-bg-secondary text-t-primary py-2 px-3 cursor-pointer"
-        >
-          {SUPPORTED_LOCALES.map((loc) => (
-            <option key={loc} value={loc}>
-              {LOCALE_LABELS[loc]}
-            </option>
-          ))}
-        </select>
+        <div className="mb-4">
+          <LanguageSwitcher fullWidth />
+        </div>
 
         {/* All Tools expandable sections */}
         <p className="text-[11px] font-semibold uppercase tracking-wider text-t-tertiary px-1 pt-2">
@@ -222,9 +210,7 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
                       className="block px-3 py-2 rounded-lg text-[13px] text-t-secondary hover:text-accent hover:bg-accent-light transition-colors"
                     >
                       <span className="mr-1.5">{tool.emoji}</span>
-                      {t(`tool.${tool.slug}.name`) !== `tool.${tool.slug}.name`
-                        ? t(`tool.${tool.slug}.name`)
-                        : tool.name}
+                      {toolField(t, tool.slug, tool, "name")}
                     </Link>
                   ))}
                 </div>
@@ -284,7 +270,7 @@ export default function Header() {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const { locale, setLocale, t } = useI18n();
+  const { t } = useI18n();
   const { theme, toggleTheme } = useTheme();
 
   // Ctrl+K / Cmd+K to open search
@@ -323,23 +309,9 @@ export default function Header() {
 
             {/* Desktop Nav */}
             <div className="hidden md:flex items-center gap-1">
-              {/* Language */}
-              <label className="sr-only" htmlFor="zapfile-lang-desktop">
-                {t("nav.language")}
-              </label>
-              <select
-                id="zapfile-lang-desktop"
-                value={locale}
-                onChange={(e) => setLocale(e.target.value as Locale)}
-                aria-label={t("nav.language")}
-                className="mr-2 max-w-[min(200px,28vw)] text-[12px] font-medium rounded-lg border border-border bg-bg-secondary text-t-primary py-1.5 pl-2 pr-7 cursor-pointer hover:bg-bg-tertiary/50 focus:outline-none focus:ring-2 focus:ring-accent/40"
-              >
-                {SUPPORTED_LOCALES.map((loc) => (
-                  <option key={loc} value={loc}>
-                    {LOCALE_LABELS[loc]}
-                  </option>
-                ))}
-              </select>
+              <div className="mr-2">
+                <LanguageSwitcher />
+              </div>
 
               {/* Search button */}
               <button
@@ -423,10 +395,7 @@ export default function Header() {
                                     <span className="mr-1.5">
                                       {tool.emoji}
                                     </span>
-                                    {t(`tool.${tool.slug}.name`) !==
-                                    `tool.${tool.slug}.name`
-                                      ? t(`tool.${tool.slug}.name`)
-                                      : tool.name}
+                                    {toolField(t, tool.slug, tool, "name")}
                                   </Link>
                                 ))}
                               </div>

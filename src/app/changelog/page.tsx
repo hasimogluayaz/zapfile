@@ -21,6 +21,7 @@ const releases = [
       { type: "improved", text: "Compress Image: before/after slider, URL quality/maxDim params, share link, Ctrl+V paste on dropzones" },
       { type: "improved", text: "Pin favorite tools (localStorage), skip-to-content link, high-contrast mode, language radiogroup ARIA" },
       { type: "improved", text: "npm run analyze — bundle analyzer (ANALYZE=true)" },
+      { type: "improved", text: "Catalog trim: removed FFmpeg video/audio tools, AI background removal, GIF maker (FFmpeg), and browser HTTP fetch demo — smaller bundles, fewer edge-case failures" },
     ],
   },
   {

@@ -1,6 +1,6 @@
 import { MetadataRoute } from "next";
 import { tools } from "@/lib/tools";
-import { getImageConversions, getAudioConversions } from "@/lib/conversions";
+import { getImageConversions } from "@/lib/conversions";
 import { getAllPosts } from "@/lib/blog";
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -15,13 +15,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const imageConversionPages = getImageConversions().map((c) => ({
     url: `${baseUrl}/tools/convert-image/${c.slug}`,
-    lastModified: new Date(),
-    changeFrequency: "monthly" as const,
-    priority: 0.7,
-  }));
-
-  const audioConversionPages = getAudioConversions().map((c) => ({
-    url: `${baseUrl}/tools/audio-converter/${c.slug}`,
     lastModified: new Date(),
     changeFrequency: "monthly" as const,
     priority: 0.7,
@@ -49,7 +42,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
     ...toolPages,
     ...imageConversionPages,
-    ...audioConversionPages,
     {
       url: `${baseUrl}/blog`,
       lastModified: new Date(),

@@ -23,6 +23,13 @@ export const localeOverrides: Partial<
       "Rápidas, privadas y gratuitas. Todo se ejecuta en tu navegador: sin subidas, sin cuentas, sin límites.",
     "hero.cta": "Ver todas las herramientas",
     "hero.toolCount": "{count} herramientas disponibles",
+    "hero.trust1": "Tus archivos permanecen en tu dispositivo",
+    "hero.trust2": "Procesamiento instantáneo",
+    "hero.trust3": "Sin límites, gratis para siempre",
+    "recently.title": "Usados recientemente",
+    "cta.title": "¿Listo para empezar?",
+    "cta.subtitle":
+      "{count} herramientas gratis al alcance. Sin registro, sin subidas, sin complicaciones.",
     "footer.brand":
       "Herramientas de archivos gratuitas y privadas. Tus archivos no salen de tu dispositivo.",
     "footer.popular": "Popular",
@@ -61,6 +68,13 @@ export const localeOverrides: Partial<
       "Rápidas, privadas e gratuitas. Tudo roda no seu navegador — sem uploads, sem contas, sem limites.",
     "hero.cta": "Ver todas as ferramentas",
     "hero.toolCount": "{count} ferramentas disponíveis",
+    "hero.trust1": "Seus arquivos ficam no seu dispositivo",
+    "hero.trust2": "Processamento instantâneo",
+    "hero.trust3": "Sem limites, grátis para sempre",
+    "recently.title": "Usados recentemente",
+    "cta.title": "Pronto para começar?",
+    "cta.subtitle":
+      "{count} ferramentas grátis à mão. Sem cadastro, sem upload, sem complicação.",
     "footer.brand":
       "Ferramentas de arquivo gratuitas e privadas. Seus arquivos não saem do seu dispositivo.",
     "footer.popular": "Popular",
@@ -99,6 +113,13 @@ export const localeOverrides: Partial<
       "Veloci, private e gratuite. Tutto nel browser — nessun caricamento, nessun account, nessun limite.",
     "hero.cta": "Vedi tutti gli strumenti",
     "hero.toolCount": "{count} strumenti disponibili",
+    "hero.trust1": "I file restano sul tuo dispositivo",
+    "hero.trust2": "Elaborazione istantanea",
+    "hero.trust3": "Senza limiti, gratis per sempre",
+    "recently.title": "Usati di recente",
+    "cta.title": "Pronto a iniziare?",
+    "cta.subtitle":
+      "{count} strumenti gratuiti a portata di mano. Nessuna registrazione, nessun caricamento, nessuna complicazione.",
     "footer.brand":
       "Strumenti file gratuiti e riservati. I tuoi file non lasciano il dispositivo.",
     "footer.popular": "Popolari",
@@ -137,6 +158,13 @@ export const localeOverrides: Partial<
       "高速・プライバシー重視・無料。すべてブラウザ内で処理 — アップロードなし、アカウント不要、制限なし。",
     "hero.cta": "すべてのツールを見る",
     "hero.toolCount": "{count} 件のツール",
+    "hero.trust1": "ファイルはあなたの端末のまま",
+    "hero.trust2": "すぐに処理",
+    "hero.trust3": "制限なし、ずっと無料",
+    "recently.title": "最近使ったもの",
+    "cta.title": "始めますか？",
+    "cta.subtitle":
+      "{count} 個の無料ツールをすぐに。登録不要、アップロード不要、手間なし。",
     "footer.brand":
       "無料でプライベートなファイルツール。ファイルはデバイスから出ません。",
     "footer.popular": "人気",
@@ -175,6 +203,13 @@ export const localeOverrides: Partial<
       "سريعة وخاصة ومجانية. يعمل كل شيء في متصفحك — بدون رفع، بدون حسابات، بدون حدود.",
     "hero.cta": "تصفح جميع الأدوات",
     "hero.toolCount": "{count} أداة متاحة",
+    "hero.trust1": "ملفاتك تبقى على جهازك",
+    "hero.trust2": "معالجة فورية",
+    "hero.trust3": "بلا حدود، مجاني للأبد",
+    "recently.title": "المستخدمة مؤخرًا",
+    "cta.title": "هل أنت مستعد للبدء؟",
+    "cta.subtitle":
+      "{count} أداة مجانية في متناول يدك. بلا تسجيل، بلا رفع، بلا تعقيد.",
     "footer.brand":
       "أدوات ملفات مجانية وخاصة. ملفاتك لا تغادر جهازك.",
     "footer.popular": "Popular",
@@ -213,6 +248,13 @@ export const localeOverrides: Partial<
       "מהירים, פרטיים וחינמיים. הכל רץ בדפדפן — ללא העלאה, ללא חשבונות, ללא הגבלות.",
     "hero.cta": "כל הכלים",
     "hero.toolCount": "{count} כלים זמינים",
+    "hero.trust1": "הקבצים נשארים במכשיר שלך",
+    "hero.trust2": "עיבוד מיידי",
+    "hero.trust3": "ללא הגבלות, חינם לתמיד",
+    "recently.title": "שימוש אחרון",
+    "cta.title": "מוכנים להתחיל?",
+    "cta.subtitle":
+      "{count} כלים חינמיים בקצות האצבעות. בלי הרשמה, בלי העלאה, בלי התעסקות.",
     "footer.brand":
       "כלי קבצים חינמיים ופרטיים. הקבצים לא עוזבים את המכשיר.",
     "footer.popular": "פופולרי",

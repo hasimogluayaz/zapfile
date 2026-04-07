@@ -4,6 +4,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ToolCard from "@/components/ToolCard";
 import { tools, categoryEmojis, getToolBySlug, type ToolCategory } from "@/lib/tools";
+import { toolField } from "@/lib/tool-i18n";
 import { useI18n } from "@/lib/i18n";
 import { useRecentTools } from "@/hooks/useRecentTools";
 import Link from "next/link";
@@ -160,14 +161,10 @@ export default function Home() {
                   <span className="text-xl">{tool.emoji}</span>
                   <div className="min-w-0">
                     <p className="text-[13px] font-semibold text-t-primary truncate">
-                      {t(`tool.${tool.slug}.name`) !== `tool.${tool.slug}.name`
-                        ? t(`tool.${tool.slug}.name`)
-                        : tool.name}
+                      {toolField(t, tool.slug, tool, "name")}
                     </p>
                     <p className="text-[11px] text-t-tertiary truncate">
-                      {t(`tool.${tool.slug}.desc`) !== `tool.${tool.slug}.desc`
-                        ? t(`tool.${tool.slug}.desc`)
-                        : tool.description}
+                      {toolField(t, tool.slug, tool, "desc")}
                     </p>
                   </div>
                 </Link>

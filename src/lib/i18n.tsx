@@ -8,7 +8,11 @@ import {
   useContext,
 } from "react";
 import type { Locale } from "./locales";
-import { SUPPORTED_LOCALES, isRtlLocale } from "./locales";
+import {
+  SUPPORTED_LOCALES,
+  isRtlLocale,
+  LOCALES_FULL_DICTIONARY,
+} from "./locales";
 import { localeOverrides } from "./i18n-overrides";
 
 export type { Locale } from "./locales";
@@ -145,18 +149,8 @@ const translations: Record<Locale, Record<string, string>> = {
       "Rotate images 90, 180, 270 degrees or flip horizontally/vertically",
     "tool.watermark-image.name": "Add Watermark",
     "tool.watermark-image.desc": "Add text or image watermark to photos",
-    "tool.remove-background.name": "Remove Background",
-    "tool.remove-background.desc":
-      "Remove image backgrounds instantly using AI",
     "tool.image-to-pdf.name": "Image to PDF",
     "tool.image-to-pdf.desc": "Convert JPG, PNG or WEBP images to PDF document",
-
-    "tool.compress-video.name": "Compress Video",
-    "tool.compress-video.desc": "Reduce video file size with quality options",
-    "tool.extract-audio.name": "Extract Audio",
-    "tool.extract-audio.desc": "Extract audio track from video as MP3 or WAV",
-    "tool.video-to-gif.name": "Video to GIF",
-    "tool.video-to-gif.desc": "Convert video clips to animated GIF images",
 
     "tool.qr-generator.name": "QR Code Generator",
     "tool.qr-generator.desc": "Generate QR codes with custom colors and logo",
@@ -204,14 +198,6 @@ const translations: Record<Locale, Record<string, string>> = {
     "tool.meme-generator.desc": "Add text to images to create memes",
     "tool.image-to-base64.name": "Image to Base64",
     "tool.image-to-base64.desc": "Convert images to Base64 encoded strings",
-    "tool.gif-maker.name": "GIF Maker",
-    "tool.gif-maker.desc": "Create animated GIFs from multiple images",
-    "tool.trim-video.name": "Trim Video",
-    "tool.trim-video.desc": "Cut video clips by setting start and end time",
-    "tool.trim-audio.name": "Trim Audio",
-    "tool.trim-audio.desc": "Cut audio files by setting start and end time",
-    "tool.audio-converter.name": "Audio Converter",
-    "tool.audio-converter.desc": "Convert between MP3, WAV, OGG, and AAC formats",
     "tool.password-generator.name": "Password Generator",
     "tool.password-generator.desc": "Generate strong, secure random passwords",
     "tool.diff-checker.name": "Diff Checker",
@@ -1006,8 +992,6 @@ const translations: Record<Locale, Record<string, string>> = {
     "tool.image-pipeline.desc": "Compress, resize, and download in one guided flow",
     "tool.color-contrast.name": "Color Contrast Checker",
     "tool.color-contrast.desc": "Check WCAG contrast ratios for text and UI colors",
-    "tool.api-fetch.name": "HTTP Fetch & JSON",
-    "tool.api-fetch.desc": "Call APIs from the browser and inspect responses",
     "tool.csv-viewer.name": "CSV Table Viewer",
     "tool.csv-viewer.desc": "Paste CSV and browse it as a sortable table",
     "nav.rssFeed": "RSS",
@@ -1284,22 +1268,9 @@ const translations: Record<Locale, Record<string, string>> = {
       "Resimleri 90, 180, 270 derece döndürün veya aynalayın",
     "tool.watermark-image.name": "Filigran Ekleme",
     "tool.watermark-image.desc": "Resimlere yazı veya logo filigranı ekleyin",
-    "tool.remove-background.name": "Arka Plan Silici",
-    "tool.remove-background.desc":
-      "Yapay zeka ile saniyeler içinde resim arka planını temizleyin",
     "tool.image-to-pdf.name": "Resmi PDF Yapma",
     "tool.image-to-pdf.desc":
       "JPG, PNG veya WEBP resimlerini PDF belgesine çevirin",
-
-    "tool.compress-video.name": "Video Küçültme",
-    "tool.compress-video.desc":
-      "Kalite seçenekleriyle video dosya boyutunu küçültün",
-    "tool.extract-audio.name": "Müzik Çıkartma",
-    "tool.extract-audio.desc":
-      "Videodaki sesi MP3 veya WAV olarak dışa aktarın",
-    "tool.video-to-gif.name": "Videodan GIF Yapma",
-    "tool.video-to-gif.desc":
-      "Video kliplerini hareketli GIF resimlerine dönüştürün",
 
     "tool.qr-generator.name": "QR Kod Oluşturucu",
     "tool.qr-generator.desc": "Özel renk ve logolu QR kodlar oluşturun",
@@ -1350,14 +1321,6 @@ const translations: Record<Locale, Record<string, string>> = {
     "tool.meme-generator.desc": "Resimlerinize yazı ekleyerek meme oluşturun",
     "tool.image-to-base64.name": "Resimden Base64",
     "tool.image-to-base64.desc": "Resimleri Base64 kodlu metin dizelerine dönüştürün",
-    "tool.gif-maker.name": "GIF Oluşturucu",
-    "tool.gif-maker.desc": "Birden fazla resimden animasyonlu GIF oluşturun",
-    "tool.trim-video.name": "Video Kırpma",
-    "tool.trim-video.desc": "Başlangıç ve bitiş zamanı ayarlayarak video kesin",
-    "tool.trim-audio.name": "Ses Kırpma",
-    "tool.trim-audio.desc": "Başlangıç ve bitiş zamanı ayarlayarak ses dosyası kesin",
-    "tool.audio-converter.name": "Ses Dönüştürücü",
-    "tool.audio-converter.desc": "MP3, WAV, OGG ve AAC formatları arasında dönüştürün",
     "tool.password-generator.name": "Şifre Oluşturucu",
     "tool.password-generator.desc": "Güçlü ve güvenli rastgele şifreler oluşturun",
     "tool.diff-checker.name": "Fark Bulucu",
@@ -2152,8 +2115,6 @@ const translations: Record<Locale, Record<string, string>> = {
     "tool.image-pipeline.desc": "Sıkıştır, yeniden boyutlandır ve tek akışta indir",
     "tool.color-contrast.name": "Renk Kontrastı",
     "tool.color-contrast.desc": "Metin ve arayüz renkleri için WCAG kontrastını kontrol et",
-    "tool.api-fetch.name": "HTTP İstek & JSON",
-    "tool.api-fetch.desc": "API çağrısı yap ve yanıtları incele",
     "tool.csv-viewer.name": "CSV Tablo",
     "tool.csv-viewer.desc": "CSV yapıştır ve tabloda gezin",
     "nav.rssFeed": "RSS",
@@ -2398,16 +2359,8 @@ const translations: Record<Locale, Record<string, string>> = {
     "tool.rotate-image.desc": "Bilder um 90, 180, 270 Grad drehen oder horizontal/vertikal spiegeln",
     "tool.watermark-image.name": "Wasserzeichen hinzufügen",
     "tool.watermark-image.desc": "Text- oder Bild-Wasserzeichen zu Fotos hinzufügen",
-    "tool.remove-background.name": "Hintergrund entfernen",
-    "tool.remove-background.desc": "Bildhintergründe sofort mit KI entfernen",
     "tool.image-to-pdf.name": "Bild zu PDF",
     "tool.image-to-pdf.desc": "JPG, PNG oder WEBP-Bilder in PDF-Dokument konvertieren",
-    "tool.compress-video.name": "Video komprimieren",
-    "tool.compress-video.desc": "Videodateigröße mit Qualitätsoptionen reduzieren",
-    "tool.extract-audio.name": "Audio extrahieren",
-    "tool.extract-audio.desc": "Audiospur aus Video als MP3 oder WAV extrahieren",
-    "tool.video-to-gif.name": "Video zu GIF",
-    "tool.video-to-gif.desc": "Videoclips in animierte GIF-Bilder konvertieren",
     "tool.qr-generator.name": "QR-Code-Generator",
     "tool.qr-generator.desc": "QR-Codes mit benutzerdefinierten Farben und Logo generieren",
     "tool.svg-to-png.name": "SVG zu PNG",
@@ -2446,14 +2399,6 @@ const translations: Record<Locale, Record<string, string>> = {
     "tool.meme-generator.desc": "Text zu Bildern hinzufügen, um Memes zu erstellen",
     "tool.image-to-base64.name": "Bild zu Base64",
     "tool.image-to-base64.desc": "Bilder in Base64-kodierte Zeichenfolgen konvertieren",
-    "tool.gif-maker.name": "GIF-Ersteller",
-    "tool.gif-maker.desc": "Animierte GIFs aus mehreren Bildern erstellen",
-    "tool.trim-video.name": "Video schneiden",
-    "tool.trim-video.desc": "Videoclips durch Festlegen von Start- und Endzeit schneiden",
-    "tool.trim-audio.name": "Audio schneiden",
-    "tool.trim-audio.desc": "Audiodateien durch Festlegen von Start- und Endzeit schneiden",
-    "tool.audio-converter.name": "Audio-Konverter",
-    "tool.audio-converter.desc": "Zwischen MP3, WAV, OGG und AAC-Formaten konvertieren",
     "tool.password-generator.name": "Passwort-Generator",
     "tool.password-generator.desc": "Starke, sichere Zufallspasswörter generieren",
     "tool.diff-checker.name": "Unterschied-Prüfer",
@@ -3154,8 +3099,6 @@ const translations: Record<Locale, Record<string, string>> = {
     "tool.image-pipeline.desc": "Komprimieren, skalieren und in einem Ablauf herunterladen",
     "tool.color-contrast.name": "Farbkontrast",
     "tool.color-contrast.desc": "WCAG-Kontrast für Text- und UI-Farben prüfen",
-    "tool.api-fetch.name": "HTTP & JSON",
-    "tool.api-fetch.desc": "APIs im Browser aufrufen und Antworten prüfen",
     "tool.csv-viewer.name": "CSV-Tabellenansicht",
     "tool.csv-viewer.desc": "CSV einfügen und als Tabelle durchsuchen",
     "nav.rssFeed": "RSS",
@@ -3399,16 +3342,8 @@ const translations: Record<Locale, Record<string, string>> = {
     "tool.rotate-image.desc": "Faire pivoter les images de 90, 180, 270 degrés ou les retourner",
     "tool.watermark-image.name": "Ajouter un filigrane",
     "tool.watermark-image.desc": "Ajouter un filigrane texte ou image aux photos",
-    "tool.remove-background.name": "Supprimer l'arrière-plan",
-    "tool.remove-background.desc": "Supprimer les arrière-plans d'images instantanément avec l'IA",
     "tool.image-to-pdf.name": "Image en PDF",
     "tool.image-to-pdf.desc": "Convertir des images JPG, PNG ou WEBP en document PDF",
-    "tool.compress-video.name": "Compresser la vidéo",
-    "tool.compress-video.desc": "Réduire la taille du fichier vidéo avec des options de qualité",
-    "tool.extract-audio.name": "Extraire l'audio",
-    "tool.extract-audio.desc": "Extraire la piste audio d'une vidéo en MP3 ou WAV",
-    "tool.video-to-gif.name": "Vidéo en GIF",
-    "tool.video-to-gif.desc": "Convertir des clips vidéo en images GIF animées",
     "tool.qr-generator.name": "Générateur de QR code",
     "tool.qr-generator.desc": "Générer des QR codes avec des couleurs et logo personnalisés",
     "tool.svg-to-png.name": "SVG en PNG",
@@ -3447,14 +3382,6 @@ const translations: Record<Locale, Record<string, string>> = {
     "tool.meme-generator.desc": "Ajouter du texte aux images pour créer des mèmes",
     "tool.image-to-base64.name": "Image en Base64",
     "tool.image-to-base64.desc": "Convertir des images en chaînes encodées en Base64",
-    "tool.gif-maker.name": "Créateur de GIF",
-    "tool.gif-maker.desc": "Créer des GIF animés à partir de plusieurs images",
-    "tool.trim-video.name": "Couper la vidéo",
-    "tool.trim-video.desc": "Couper des clips vidéo en définissant l'heure de début et de fin",
-    "tool.trim-audio.name": "Couper l'audio",
-    "tool.trim-audio.desc": "Couper des fichiers audio en définissant l'heure de début et de fin",
-    "tool.audio-converter.name": "Convertisseur audio",
-    "tool.audio-converter.desc": "Convertir entre les formats MP3, WAV, OGG et AAC",
     "tool.password-generator.name": "Générateur de mot de passe",
     "tool.password-generator.desc": "Générer des mots de passe aléatoires forts et sécurisés",
     "tool.diff-checker.name": "Vérificateur de différences",
@@ -4155,8 +4082,6 @@ const translations: Record<Locale, Record<string, string>> = {
     "tool.image-pipeline.desc": "Compresser, redimensionner et télécharger en un flux",
     "tool.color-contrast.name": "Contraste des couleurs",
     "tool.color-contrast.desc": "Vérifier les ratios WCAG pour texte et UI",
-    "tool.api-fetch.name": "HTTP & JSON",
-    "tool.api-fetch.desc": "Appeler des API et inspecter les réponses",
     "tool.csv-viewer.name": "Tableur CSV",
     "tool.csv-viewer.desc": "Coller du CSV et parcourir le tableau",
     "nav.rssFeed": "RSS",
@@ -4308,6 +4233,20 @@ const translations: Record<Locale, Record<string, string>> = {
   he: {},
 };
 
+/** One language per string: full locales use i18n blocks; partial locales use overrides then English (never mix). */
+function resolveTranslation(locale: Locale, key: string): string {
+  let out: string | undefined;
+  if (LOCALES_FULL_DICTIONARY.includes(locale)) {
+    out = translations[locale][key] ?? translations.en[key];
+  } else {
+    out = localeOverrides[locale]?.[key] ?? translations.en[key];
+  }
+  if (out === undefined || out === "") {
+    out = translations.en[key] ?? key;
+  }
+  return out;
+}
+
 // ─── Context ────────────────────────────────────────────────────
 interface I18nContextType {
   locale: Locale;
@@ -4390,6 +4329,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   }, [locale, mounted]);
 
   const setLocale = useCallback((newLocale: Locale) => {
+    if (!SUPPORTED_LOCALES.includes(newLocale)) return;
     setLocaleState(newLocale);
     localStorage.setItem("zapfile-locale", newLocale);
     if (typeof window !== "undefined") {
@@ -4401,11 +4341,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
 
   const t = useCallback(
     (key: string, params?: Record<string, string | number>) => {
-      let text =
-        translations[locale]?.[key] ??
-        localeOverrides[locale]?.[key] ??
-        translations.en[key] ??
-        key;
+      let text = resolveTranslation(locale, key);
       if (params) {
         Object.entries(params).forEach(([k, v]) => {
           text = text.replace(`{${k}}`, String(v));
@@ -4422,7 +4358,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
       key: string,
       params?: Record<string, string | number>,
     ) => {
-      let text = translations.en[key] || key;
+      let text = resolveTranslation("en", key);
       if (params) {
         Object.entries(params).forEach(([k, v]) => {
           text = text.replace(`{${k}}`, String(v));

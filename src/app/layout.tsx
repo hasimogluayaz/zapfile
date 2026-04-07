@@ -154,8 +154,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning translate="no">
       <head>
+        <meta name="google" content="notranslate" />
         {process.env.NEXT_PUBLIC_GA_ID && (
           <>
             <script async src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`} />

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Tool } from "@/lib/tools";
 import { useI18n } from "@/lib/i18n";
+import { toolField } from "@/lib/tool-i18n";
 
 // Color map for each tool category + specific tools for variety
 const toolColors: Record<string, { bg: string; text: string }> = {
@@ -17,12 +18,8 @@ const toolColors: Record<string, { bg: string; text: string }> = {
   "crop-image": { bg: "bg-pink-50", text: "text-pink-500" },
   "rotate-image": { bg: "bg-cyan-50", text: "text-cyan-500" },
   "watermark-image": { bg: "bg-indigo-50", text: "text-indigo-500" },
-  "remove-background": { bg: "bg-emerald-50", text: "text-emerald-500" },
   "image-to-pdf": { bg: "bg-purple-50", text: "text-purple-500" },
   // Video & Audio — teals/greens
-  "compress-video": { bg: "bg-teal-50", text: "text-teal-500" },
-  "extract-audio": { bg: "bg-green-50", text: "text-green-500" },
-  "video-to-gif": { bg: "bg-lime-50", text: "text-lime-600" },
   // Utilities — mixed
   "qr-generator": { bg: "bg-fuchsia-50", text: "text-fuchsia-500" },
   "svg-to-png": { bg: "bg-orange-50", text: "text-orange-500" },
@@ -61,14 +58,10 @@ export default function ToolCard({ tool }: { tool: Tool }) {
       </div>
       <div className="min-w-0 pt-0.5">
         <p className="text-[14px] font-semibold text-t-primary group-hover:text-accent transition-colors">
-          {t(`tool.${tool.slug}.name`) !== `tool.${tool.slug}.name`
-            ? t(`tool.${tool.slug}.name`)
-            : tool.name}
+          {toolField(t, tool.slug, tool, "name")}
         </p>
         <p className="text-[12px] text-t-tertiary mt-1 line-clamp-2 leading-relaxed">
-          {t(`tool.${tool.slug}.desc`) !== `tool.${tool.slug}.desc`
-            ? t(`tool.${tool.slug}.desc`)
-            : tool.description}
+          {toolField(t, tool.slug, tool, "desc")}
         </p>
       </div>
     </Link>

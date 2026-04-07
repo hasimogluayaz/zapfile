@@ -3,14 +3,16 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useI18n } from "@/lib/i18n";
+import { getToolBySlug } from "@/lib/tools";
+import { toolField } from "@/lib/tool-i18n";
 
 const toolSlugs = [
   "merge-pdf",
   "compress-image",
-  "video-to-gif",
   "qr-generator",
   "json-formatter",
   "password-generator",
+  "pdf-to-images",
 ];
 
 const resourceLinks = [
@@ -55,16 +57,20 @@ export default function Footer() {
               {t("footer.popular")}
             </h3>
             <ul className="space-y-2">
-              {toolSlugs.map((slug) => (
-                <li key={slug}>
-                  <Link
-                    href={`/tools/${slug}`}
-                    className="text-t-secondary hover:text-t-primary transition-colors text-[13px]"
-                  >
-                    {t(`tool.${slug}.name`)}
-                  </Link>
-                </li>
-              ))}
+              {toolSlugs.map((slug) => {
+                const tool = getToolBySlug(slug);
+                if (!tool) return null;
+                return (
+                  <li key={slug}>
+                    <Link
+                      href={`/tools/${slug}`}
+                      className="text-t-secondary hover:text-t-primary transition-colors text-[13px]"
+                    >
+                      {toolField(t, slug, tool, "name")}
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
           </div>
 

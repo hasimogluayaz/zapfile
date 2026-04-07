@@ -9,6 +9,7 @@ import ToolShareBar from "./ToolShareBar";
 import { useI18n } from "@/lib/i18n";
 import { usePathname } from "next/navigation";
 import { tools, getToolBySlug } from "@/lib/tools";
+import { toolField } from "@/lib/tool-i18n";
 import { useRecentTools } from "@/hooks/useRecentTools";
 import { useFavoriteTools } from "@/hooks/useFavoriteTools";
 
@@ -36,16 +37,14 @@ export default function ToolLayout({
     if (slug) trackTool(slug);
   }, [slug, trackTool]);
 
-  const finalName =
-    slug && t(`tool.${slug}.name`) !== `tool.${slug}.name`
-      ? t(`tool.${slug}.name`)
-      : toolName;
-  const finalDesc =
-    slug && t(`tool.${slug}.desc`) !== `tool.${slug}.desc`
-      ? t(`tool.${slug}.desc`)
-      : toolDescription;
-
   const currentTool = getToolBySlug(slug);
+
+  const finalName = currentTool
+    ? toolField(t, slug, currentTool, "name")
+    : toolName;
+  const finalDesc = currentTool
+    ? toolField(t, slug, currentTool, "desc")
+    : toolDescription;
 
   const relatedTools = useMemo(() => {
     if (!currentTool) return [];
@@ -191,10 +190,10 @@ export default function ToolLayout({
                   >
                     <span className="text-2xl">{tool.emoji}</span>
                     <h3 className="font-medium text-t-primary mt-2 group-hover:text-accent transition-colors">
-                      {t(`tool.${tool.slug}.name`)}
+                      {toolField(t, tool.slug, tool, "name")}
                     </h3>
                     <p className="text-xs text-t-tertiary mt-1 line-clamp-2">
-                      {t(`tool.${tool.slug}.desc`)}
+                      {toolField(t, tool.slug, tool, "desc")}
                     </p>
                   </Link>
                 ))}

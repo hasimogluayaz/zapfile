@@ -47,12 +47,9 @@ src/
 - Tool names/descriptions keyed as `tool.[slug].name` / `tool.[slug].desc`
 - Auto-detects browser language, persists in localStorage
 
-## Tools (29 total)
+## Tools
 
-**PDF (10)**: compress-pdf, merge-pdf, split-pdf, pdf-to-images, rotate-pdf, pdf-to-word, pdf-to-excel, pdf-to-pptx, word-to-pdf, pdf-page-numbers  
-**Image (9)**: compress-image, resize-image, convert-image, crop-image, rotate-image, watermark-image, remove-background, image-to-pdf, ocr  
-**Video (3)**: compress-video, extract-audio, video-to-gif  
-**Utility (7)**: qr-generator, svg-to-png, base64-encode, color-picker, json-formatter, hash-generator, word-counter
+Canonical list: `src/lib/tools.ts` (FFmpeg / AI background removal / browser-only HTTP fetch tools removed; lightweight audio waveform kept).
 
 ## Design Tokens (globals.css :root)
 
