@@ -7,8 +7,7 @@ export type Locale =
   | "pt"
   | "it"
   | "ja"
-  | "ar"
-  | "he";
+  | "ar";
 
 export const SUPPORTED_LOCALES: Locale[] = [
   "en",
@@ -20,7 +19,6 @@ export const SUPPORTED_LOCALES: Locale[] = [
   "it",
   "ja",
   "ar",
-  "he",
 ];
 
 /** Locales with a full string table in i18n.tsx; others use i18n-overrides + English fallback. */
@@ -36,9 +34,8 @@ export const LOCALE_LABELS: Record<Locale, string> = {
   it: "Italiano",
   ja: "日本語",
   ar: "العربية",
-  he: "עברית",
 };
 
 export function isRtlLocale(locale: Locale): boolean {
-  return locale === "ar" || locale === "he";
+  return locale === "ar";
 }

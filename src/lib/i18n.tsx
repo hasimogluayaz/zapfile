@@ -4234,7 +4234,6 @@ const translations: Record<Locale, Record<string, string>> = {
   it: {},
   ja: {},
   ar: {},
-  he: {},
 };
 
 /** One language per string: full locales use i18n blocks; partial locales use overrides then English (never mix). */
@@ -4283,7 +4282,6 @@ function localeFromBrowserLang(): Locale | null {
     ["it", "it"],
     ["ja", "ja"],
     ["ar", "ar"],
-    ["he", "he"],
   ];
   for (const [prefix, loc] of map) {
     if (browserLang.startsWith(prefix)) return loc;

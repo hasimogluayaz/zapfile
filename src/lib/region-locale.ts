@@ -58,7 +58,7 @@ const COUNTRY_TO_LOCALE: Record<string, Locale> = {
   SD: "ar",
   SY: "ar",
   PS: "ar",
-  IL: "he",
+  IL: "en",
 };
 
 export function localeFromCountryCode(country: string | undefined | null): Locale {
