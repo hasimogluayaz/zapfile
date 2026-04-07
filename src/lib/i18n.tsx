@@ -4296,16 +4296,21 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const urlLang = params.get("lang");
-    if (urlLang && SUPPORTED_LOCALES.includes(urlLang as Locale)) {
-      setLocaleState(urlLang as Locale);
-      localStorage.setItem("zapfile-locale", urlLang);
+
+    // Only respect localStorage if the user EXPLICITLY chose a language via the
+    // language switcher (flagged with "zapfile-locale-explicit"). A locale that
+    // was auto-saved from a ?lang= URL param does NOT count as explicit.
+    const saved = localStorage.getItem("zapfile-locale") as Locale | null;
+    const savedExplicit = localStorage.getItem("zapfile-locale-explicit") === "true";
+    if (saved && savedExplicit && SUPPORTED_LOCALES.includes(saved)) {
+      setLocaleState(saved);
       setMounted(true);
       return;
     }
 
-    const saved = localStorage.getItem("zapfile-locale") as Locale | null;
-    if (saved && SUPPORTED_LOCALES.includes(saved)) {
-      setLocaleState(saved);
+    // No explicit saved preference — use URL param if present (one-time, no persist).
+    if (urlLang && SUPPORTED_LOCALES.includes(urlLang as Locale)) {
+      setLocaleState(urlLang as Locale);
       setMounted(true);
       return;
     }
@@ -4333,7 +4338,9 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   const setLocale = useCallback((newLocale: Locale) => {
     if (!SUPPORTED_LOCALES.includes(newLocale)) return;
     setLocaleState(newLocale);
+    // Mark as an explicit user choice so geo/browser detection won't override it.
     localStorage.setItem("zapfile-locale", newLocale);
+    localStorage.setItem("zapfile-locale-explicit", "true");
     if (typeof window !== "undefined") {
       const url = new URL(window.location.href);
       url.searchParams.set("lang", newLocale);
