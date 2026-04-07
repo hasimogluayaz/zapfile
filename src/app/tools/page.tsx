@@ -110,7 +110,7 @@ export default function ToolsPage() {
                 <h2 className="text-[12px] font-semibold text-t-tertiary uppercase tracking-wider mb-2.5">
                   {categoryEmojis[g.category]} {categoryLabels[g.category]}
                 </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
                   {g.tools.map((tool) => (
                     <ToolCard key={tool.slug} tool={tool} />
                   ))}
@@ -118,7 +118,7 @@ export default function ToolsPage() {
               </div>
             ))
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
               {filteredTools.map((tool) => (
                 <ToolCard key={tool.slug} tool={tool} />
               ))}

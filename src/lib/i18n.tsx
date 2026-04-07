@@ -73,6 +73,7 @@ const translations: Record<Locale, Record<string, string>> = {
     "tool.saved": "Saved",
 
     // Privacy section
+    "home.privacy.badge": "Privacy First",
     "home.privacy.heading": "Your Files Never Leave Your Browser",
     "home.privacy.zeroUploads.title": "Zero Uploads",
     "home.privacy.zeroUploads.desc":
@@ -1191,6 +1192,7 @@ const translations: Record<Locale, Record<string, string>> = {
     "tool.saved": "Tasarruf",
 
     // Privacy section
+    "home.privacy.badge": "Önce Gizlilik",
     "home.privacy.heading": "Dosyalarınız Asla Tarayıcınızdan Çıkmaz",
     "home.privacy.zeroUploads.title": "Sıfır Yükleme",
     "home.privacy.zeroUploads.desc":
@@ -2303,6 +2305,7 @@ const translations: Record<Locale, Record<string, string>> = {
     "tool.original": "Original",
     "tool.result": "Ergebnis",
     "tool.saved": "Gespeichert",
+    "home.privacy.badge": "Privatsphäre zuerst",
     "home.privacy.heading": "Deine Dateien verlassen niemals deinen Browser",
     "home.privacy.zeroUploads.title": "Keine Uploads",
     "home.privacy.zeroUploads.desc": "Dateien werden lokal mit Browser-APIs verarbeitet",
@@ -3286,6 +3289,7 @@ const translations: Record<Locale, Record<string, string>> = {
     "tool.original": "Original",
     "tool.result": "Résultat",
     "tool.saved": "Enregistré",
+    "home.privacy.badge": "La confidentialité avant tout",
     "home.privacy.heading": "Vos fichiers ne quittent jamais votre navigateur",
     "home.privacy.zeroUploads.title": "Zéro téléchargement",
     "home.privacy.zeroUploads.desc": "Les fichiers sont traités localement à l'aide des API du navigateur",

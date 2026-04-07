@@ -173,6 +173,22 @@ export default function Home() {
           </section>
         )}
 
+        {/* Category Nav Tabs */}
+        <section className="max-w-6xl mx-auto px-5 pb-6">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
+            {categories.map((category) => (
+              <a
+                key={category}
+                href={`#${category}`}
+                className="flex-shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-bg-secondary border border-border text-[13px] font-medium text-t-secondary hover:bg-accent hover:text-white hover:border-accent transition-all duration-150"
+              >
+                <span>{categoryEmojis[category]}</span>
+                <span>{t(catKeys[category])}</span>
+              </a>
+            ))}
+          </div>
+        </section>
+
         {/* Tools */}
         <section className="max-w-6xl mx-auto px-5 pb-20">
           {categories.map((category) => {
@@ -183,14 +199,14 @@ export default function Home() {
               <div key={category} className="mb-12" id={category}>
                 <div className="flex items-center gap-3 mb-5">
                   <span className="text-xl">{categoryEmojis[category]}</span>
-                  <h2 className="text-[18px] font-bold text-t-primary">
+                  <h2 className="text-[20px] font-bold text-t-primary">
                     {t(catKeys[category])}
                   </h2>
-                  <span className="text-[12px] text-t-tertiary bg-bg-secondary px-2 py-0.5 rounded-full">
+                  <span className="text-[12px] text-t-tertiary bg-bg-secondary px-2 py-0.5 rounded-full font-medium">
                     {categoryTools.length}
                   </span>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
                   {categoryTools.map((tool) => (
                     <ToolCard key={tool.slug} tool={tool} />
                   ))}
@@ -208,7 +224,7 @@ export default function Home() {
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
-              Privacy First
+              {t("home.privacy.badge")}
             </div>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-t-primary mb-10">
               {t("home.privacy.heading")}
