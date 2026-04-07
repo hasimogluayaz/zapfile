@@ -260,6 +260,7 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
         {[
           { href: "/about", key: "nav.about" },
           { href: "/blog", key: "nav.blog" },
+          { href: "/changelog", key: "nav.changelog" },
         ].map((link) => (
           <Link
             key={link.href}
@@ -468,6 +469,24 @@ export default function Header() {
               >
                 {t("nav.browseAll")}
               </Link>
+
+              {/* Blog & Changelog */}
+              {[
+                { href: "/blog", key: "nav.blog" },
+                { href: "/changelog", key: "nav.changelog" },
+              ].map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`text-[13px] font-medium px-3.5 py-2 rounded-lg transition-colors ${
+                    pathname === link.href
+                      ? "bg-accent-light text-accent"
+                      : "text-t-secondary hover:text-t-primary hover:bg-bg-secondary"
+                  }`}
+                >
+                  {t(link.key)}
+                </Link>
+              ))}
 
               {/* Theme toggle */}
               <button

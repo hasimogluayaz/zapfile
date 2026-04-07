@@ -173,6 +173,17 @@ export const tools: Tool[] = [
       "Blur or pixelate areas of images to hide sensitive information. Free, private, browser-based.",
   },
   {
+    slug: "remove-background",
+    name: "Remove Background",
+    description: "Remove image backgrounds instantly using AI",
+    emoji: "\u2702\ufe0f",
+    category: "image",
+    acceptedFormats: [".jpg", ".jpeg", ".png", ".webp"],
+    metaTitle: "Remove Background - Free AI Tool | ZapFile",
+    metaDescription:
+      "Remove image backgrounds instantly with AI. No uploads, 100% private, runs in your browser.",
+  },
+  {
     slug: "favicon-generator",
     name: "Favicon Generator",
     description: "Generate all favicon sizes from a single image",

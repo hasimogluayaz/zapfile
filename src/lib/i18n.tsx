@@ -540,6 +540,14 @@ const translations: Record<Locale, Record<string, string>> = {
     "meme.fail": "Failed to export meme.",
     "meme.loadFail": "Failed to load image.",
 
+    // Remove Background
+    "rmbg.button": "Remove Background",
+    "rmbg.download": "Download PNG",
+    "rmbg.success": "Background removed successfully!",
+    "rmbg.fail": "Failed to remove background. Please try another image.",
+    "rmbg.hint": "Result will appear here after processing.",
+    "rmbg.note": "Note: First use downloads the AI model (~50 MB). Subsequent uses are faster.",
+
     // Image to Base64
     "imgb64.imageToBase64": "Image to Base64",
     "imgb64.base64ToImage": "Base64 to Image",
@@ -1490,6 +1498,14 @@ const translations: Record<Locale, Record<string, string>> = {
     "meme.fail": "Meme dışa aktarılamadı.",
     "meme.loadFail": "Görsel yüklenemedi.",
 
+    // Remove Background
+    "rmbg.button": "Arka Planı Kaldır",
+    "rmbg.download": "PNG İndir",
+    "rmbg.success": "Arka plan başarıyla kaldırıldı!",
+    "rmbg.fail": "Arka plan kaldırılamadı. Lütfen başka bir görsel deneyin.",
+    "rmbg.hint": "Sonuç işlemden sonra burada görünecek.",
+    "rmbg.note": "Not: İlk kullanımda yapay zeka modeli (~50 MB) indirilir. Sonraki kullanımlar daha hızlıdır.",
+
     // Image to Base64
     "imgb64.imageToBase64": "Resimden Base64",
     "imgb64.base64ToImage": "Base64'ten Resim",
@@ -2351,6 +2367,12 @@ const translations: Record<Locale, Record<string, string>> = {
     "meme.success": "Meme heruntergeladen!",
     "meme.fail": "Meme konnte nicht exportiert werden.",
     "meme.loadFail": "Bild konnte nicht geladen werden.",
+    "rmbg.button": "Hintergrund entfernen",
+    "rmbg.download": "PNG herunterladen",
+    "rmbg.success": "Hintergrund erfolgreich entfernt!",
+    "rmbg.fail": "Hintergrund konnte nicht entfernt werden. Bitte versuche ein anderes Bild.",
+    "rmbg.hint": "Das Ergebnis erscheint hier nach der Verarbeitung.",
+    "rmbg.note": "Hinweis: Bei der ersten Verwendung wird das KI-Modell (~50 MB) heruntergeladen.",
     "imgb64.imageToBase64": "Bild zu Base64",
     "imgb64.base64ToImage": "Base64 zu Bild",
     "imgb64.stats": "Konvertierungsstatistiken",
@@ -3157,6 +3179,12 @@ const translations: Record<Locale, Record<string, string>> = {
     "meme.success": "Mème téléchargé !",
     "meme.fail": "Échec de l'exportation du mème.",
     "meme.loadFail": "Échec du chargement de l'image.",
+    "rmbg.button": "Supprimer l'arrière-plan",
+    "rmbg.download": "Télécharger PNG",
+    "rmbg.success": "Arrière-plan supprimé avec succès !",
+    "rmbg.fail": "Échec de la suppression de l'arrière-plan. Veuillez essayer une autre image.",
+    "rmbg.hint": "Le résultat apparaîtra ici après le traitement.",
+    "rmbg.note": "Remarque : La première utilisation télécharge le modèle IA (~50 Mo).",
     "imgb64.imageToBase64": "Image en Base64",
     "imgb64.base64ToImage": "Base64 en image",
     "imgb64.stats": "Statistiques de conversion",
