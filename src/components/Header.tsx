@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { tools, categoryEmojis, type ToolCategory } from "@/lib/tools";
 import { useI18n, type Locale } from "@/lib/i18n";
+import { SUPPORTED_LOCALES, LOCALE_LABELS } from "@/lib/locales";
 import { useTheme } from "@/components/ClientProviders";
 
 const categories: ToolCategory[] = ["pdf", "image", "video", "utility"];
@@ -163,21 +164,22 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto px-5 py-4 space-y-2">
         {/* Language switcher */}
-        <div className="flex items-center gap-1 bg-bg-secondary rounded-lg border border-border p-1 mb-4 w-fit">
-          {(["en", "tr", "de", "fr"] as Locale[]).map((lang) => (
-            <button
-              key={lang}
-              onClick={() => setLocale(lang)}
-              className={`px-3 py-1.5 text-[13px] font-medium rounded-md transition-colors ${
-                locale === lang
-                  ? "bg-accent text-white"
-                  : "text-t-secondary hover:text-t-primary"
-              }`}
-            >
-              {lang.toUpperCase()}
-            </button>
+        <label className="sr-only" htmlFor="zapfile-lang-mobile">
+          {t("nav.language")}
+        </label>
+        <select
+          id="zapfile-lang-mobile"
+          value={locale}
+          onChange={(e) => setLocale(e.target.value as Locale)}
+          aria-label={t("nav.language")}
+          className="mb-4 w-full max-w-xs text-[13px] font-medium rounded-lg border border-border bg-bg-secondary text-t-primary py-2 px-3 cursor-pointer"
+        >
+          {SUPPORTED_LOCALES.map((loc) => (
+            <option key={loc} value={loc}>
+              {LOCALE_LABELS[loc]}
+            </option>
           ))}
-        </div>
+        </select>
 
         {/* All Tools expandable sections */}
         <p className="text-[11px] font-semibold uppercase tracking-wider text-t-tertiary px-1 pt-2">
@@ -290,7 +292,7 @@ export default function Header() {
     function handleKey(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
-        setShowSearch((prev) => !prev);
+        setShowSearch(true);
       }
     }
     document.addEventListener("keydown", handleKey);
@@ -321,22 +323,23 @@ export default function Header() {
 
             {/* Desktop Nav */}
             <div className="hidden md:flex items-center gap-1">
-              {/* Language switcher */}
-              <div className="flex items-center bg-bg-secondary rounded-lg border border-border mr-2">
-                {(["en", "tr", "de", "fr"] as Locale[]).map((lang) => (
-                  <button
-                    key={lang}
-                    onClick={() => setLocale(lang)}
-                    className={`px-2.5 py-1.5 text-[12px] font-medium rounded-md transition-colors ${
-                      locale === lang
-                        ? "bg-accent text-white"
-                        : "text-t-secondary hover:text-t-primary"
-                    }`}
-                  >
-                    {lang.toUpperCase()}
-                  </button>
+              {/* Language */}
+              <label className="sr-only" htmlFor="zapfile-lang-desktop">
+                {t("nav.language")}
+              </label>
+              <select
+                id="zapfile-lang-desktop"
+                value={locale}
+                onChange={(e) => setLocale(e.target.value as Locale)}
+                aria-label={t("nav.language")}
+                className="mr-2 max-w-[min(200px,28vw)] text-[12px] font-medium rounded-lg border border-border bg-bg-secondary text-t-primary py-1.5 pl-2 pr-7 cursor-pointer hover:bg-bg-tertiary/50 focus:outline-none focus:ring-2 focus:ring-accent/40"
+              >
+                {SUPPORTED_LOCALES.map((loc) => (
+                  <option key={loc} value={loc}>
+                    {LOCALE_LABELS[loc]}
+                  </option>
                 ))}
-              </div>
+              </select>
 
               {/* Search button */}
               <button

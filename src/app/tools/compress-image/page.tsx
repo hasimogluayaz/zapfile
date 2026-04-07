@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import toast from "react-hot-toast";
 import ToolLayout from "@/components/ToolLayout";
 import FileDropzone from "@/components/FileDropzone";
@@ -8,6 +8,7 @@ import ProcessButton from "@/components/ProcessButton";
 import DownloadButton from "@/components/DownloadButton";
 import ProgressBar from "@/components/ProgressBar";
 import FileSizeCompare from "@/components/FileSizeCompare";
+import ImageCompareSlider from "@/components/ImageCompareSlider";
 import {
   formatFileSize,
   getFileNameWithoutExtension,
@@ -27,6 +28,31 @@ export default function CompressImagePage() {
   const [files, setFiles] = useState<File[]>([]);
   const [quality, setQuality] = useState(0.7);
   const [maxDimension, setMaxDimension] = useState(1920);
+  const [urlReady, setUrlReady] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const q = params.get("quality");
+    const m = params.get("maxDim");
+    if (q) {
+      const n = parseFloat(q);
+      if (!Number.isNaN(n) && n >= 0.1 && n <= 1) setQuality(n);
+    }
+    if (m) {
+      const d = parseInt(m, 10);
+      if (!Number.isNaN(d) && d >= 320 && d <= 4096) setMaxDimension(d);
+    }
+    setUrlReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!urlReady || typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    url.searchParams.set("quality", String(quality));
+    url.searchParams.set("maxDim", String(maxDimension));
+    window.history.replaceState({}, "", url);
+  }, [quality, maxDimension, urlReady]);
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState<CompressedFile[]>([]);
@@ -49,7 +75,7 @@ export default function CompressImagePage() {
     setResults([]);
     setZipBlob(null);
     setProgress(0);
-  }, []);
+  }, [t]);
 
   const handleCompress = useCallback(async () => {
     if (files.length === 0) return;
@@ -135,7 +161,7 @@ export default function CompressImagePage() {
     } finally {
       setProcessing(false);
     }
-  }, [files, quality, maxDimension]);
+  }, [files, quality, maxDimension, t]);
 
   const handleReset = useCallback(() => {
     setFiles([]);
@@ -149,6 +175,35 @@ export default function CompressImagePage() {
     (s, r) => s + r.compressedSize,
     0
   );
+
+  const [comparePair, setComparePair] = useState<{
+    before: string;
+    after: string;
+  } | null>(null);
+
+  useEffect(() => {
+    if (results.length !== 1) {
+      setComparePair(null);
+      return;
+    }
+    const r = results[0];
+    const before = URL.createObjectURL(r.original);
+    const after = URL.createObjectURL(r.compressed);
+    setComparePair({ before, after });
+    return () => {
+      URL.revokeObjectURL(before);
+      URL.revokeObjectURL(after);
+    };
+  }, [results]);
+
+  const copyShareLink = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      toast.success(t("compimg.shareCopied"));
+    } catch {
+      toast.error(t("rmbg.fail"));
+    }
+  }, [t]);
 
   return (
     <ToolLayout
@@ -279,6 +334,20 @@ export default function CompressImagePage() {
         {/* Results */}
         {results.length > 0 && (
           <div className="space-y-4">
+            {results.length === 1 && comparePair && (
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-t-primary">
+                  {t("compimg.compare")}
+                </p>
+                <ImageCompareSlider
+                  beforeSrc={comparePair.before}
+                  afterSrc={comparePair.after}
+                  beforeLabel={t("ui.original")}
+                  afterLabel={t("ui.result")}
+                />
+              </div>
+            )}
+
             {/* Total summary */}
             {results.length > 1 && (
               <FileSizeCompare
@@ -359,6 +428,13 @@ export default function CompressImagePage() {
                 filename={`${getFileNameWithoutExtension(results[0].original.name)}-compressed.${results[0].original.name.split(".").pop() || "jpg"}`}
                 label={t("compimg.download")}
               />
+              <button
+                type="button"
+                onClick={copyShareLink}
+                className="px-6 py-3 rounded-xl font-semibold text-t-secondary border border-border hover:bg-bg-secondary transition-colors"
+              >
+                {t("compimg.shareLink")}
+              </button>
               <button
                 onClick={handleReset}
                 className="px-6 py-3 rounded-xl font-semibold text-brand-muted border border-white/10 hover:text-brand-text hover:border-white/20 transition-all duration-300"

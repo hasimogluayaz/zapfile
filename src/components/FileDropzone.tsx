@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
+import type { ClipboardEvent } from "react";
 import { useDropzone, type Accept, type FileRejection } from "react-dropzone";
 import toast from "react-hot-toast";
 import { useI18n } from "@/lib/i18n";
@@ -80,9 +81,22 @@ export default function FileDropzone({
     maxSize,
   });
 
+  const handlePaste = useCallback(
+    (e: ClipboardEvent<HTMLDivElement>) => {
+      const files = Array.from(e.clipboardData?.files || []);
+      if (files.length === 0) return;
+      e.preventDefault();
+      onDrop(files);
+    },
+    [onDrop],
+  );
+
   return (
     <div
-      {...getRootProps()}
+      {...getRootProps({
+        onPaste: handlePaste,
+        tabIndex: 0,
+      })}
       className={`dropzone rounded-xl p-8 text-center cursor-pointer ${
         isDragActive ? "dropzone-active" : ""
       }`}
@@ -110,7 +124,7 @@ export default function FileDropzone({
           </p>
           {!isDragActive && (
             <p className="text-[12px] text-t-tertiary mt-0.5">
-              {t("tool.dropSub")}
+              {t("tool.dropSub")} · {t("tool.pasteHint")}
             </p>
           )}
         </div>

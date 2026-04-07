@@ -12,6 +12,19 @@ export const metadata: Metadata = {
   },
   alternates: {
     canonical: "https://zapfile.xyz/tools",
+    languages: {
+      en: "https://zapfile.xyz/tools?lang=en",
+      tr: "https://zapfile.xyz/tools?lang=tr",
+      de: "https://zapfile.xyz/tools?lang=de",
+      fr: "https://zapfile.xyz/tools?lang=fr",
+      es: "https://zapfile.xyz/tools?lang=es",
+      pt: "https://zapfile.xyz/tools?lang=pt",
+      it: "https://zapfile.xyz/tools?lang=it",
+      ja: "https://zapfile.xyz/tools?lang=ja",
+      ar: "https://zapfile.xyz/tools?lang=ar",
+      he: "https://zapfile.xyz/tools?lang=he",
+      "x-default": "https://zapfile.xyz/tools",
+    },
   },
 };
 

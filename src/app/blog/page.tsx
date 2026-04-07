@@ -34,15 +34,26 @@ export default function BlogPage() {
   return (
     <>
       <Header />
-      <main className="flex-1">
+      <main id="main-content" className="flex-1" tabIndex={-1}>
         <div className="max-w-4xl mx-auto px-5 py-16">
           {/* Page header */}
           <h1 className="text-3xl font-bold text-t-primary mb-3">Blog</h1>
-          <p className="text-t-secondary leading-relaxed mb-10 max-w-2xl">
-            Guides, comparisons, and tips about working with files online.
-            Everything from image compression to PDF merging to staying private
-            on the web.
-          </p>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-10 max-w-2xl">
+            <p className="text-t-secondary leading-relaxed">
+              Guides, comparisons, and tips about working with files online.
+              Everything from image compression to PDF merging to staying private
+              on the web.
+            </p>
+            <a
+              href="/feed.xml"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-accent hover:underline"
+            >
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
+                <path d="M6.503 20.752c0 1.794-1.456 3.248-3.251 3.248-1.796 0-3.252-1.454-3.252-3.248 0-1.794 1.456-3.248 3.252-3.248 1.794 0 3.251 1.454 3.251 3.248zm-3.251-12.438c6.351 0 11.511 5.158 11.511 11.509h-3.251c0-4.55-3.69-8.258-8.26-8.258v-3.251zm0-5.772c9.537 0 17.283 7.745 17.283 17.281h-3.251c0-7.74-6.29-14.03-14.032-14.03v-3.251z" />
+              </svg>
+              RSS feed
+            </a>
+          </div>
 
           {/* Post grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

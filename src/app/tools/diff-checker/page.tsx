@@ -1,98 +1,74 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import ToolLayout from "@/components/ToolLayout";
 import { useI18n } from "@/lib/i18n";
-
-interface DiffLine {
-  type: "added" | "removed" | "unchanged";
-  text: string;
-  oldLineNum?: number;
-  newLineNum?: number;
-}
-
-function computeDiff(oldText: string, newText: string): DiffLine[] {
-  const oldLines = oldText.split("\n");
-  const newLines = newText.split("\n");
-
-  const n = oldLines.length;
-  const m = newLines.length;
-
-  // Cap at 1000 lines for performance
-  if (n > 1000 || m > 1000) {
-    return [
-      {
-        type: "removed",
-        text: `[Input too large: ${n} / ${m} lines. Max 1000 lines per side.]`,
-      },
-    ];
-  }
-
-  // Build LCS table using O(n*m) DP
-  const dp: number[][] = Array.from({ length: n + 1 }, () =>
-    Array(m + 1).fill(0)
-  );
-
-  for (let i = 1; i <= n; i++) {
-    for (let j = 1; j <= m; j++) {
-      if (oldLines[i - 1] === newLines[j - 1]) {
-        dp[i][j] = dp[i - 1][j - 1] + 1;
-      } else {
-        dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
-      }
-    }
-  }
-
-  // Backtrack to produce diff
-  const result: DiffLine[] = [];
-  let i = n;
-  let j = m;
-
-  while (i > 0 || j > 0) {
-    if (i > 0 && j > 0 && oldLines[i - 1] === newLines[j - 1]) {
-      result.push({
-        type: "unchanged",
-        text: oldLines[i - 1],
-        oldLineNum: i,
-        newLineNum: j,
-      });
-      i--;
-      j--;
-    } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
-      result.push({
-        type: "added",
-        text: newLines[j - 1],
-        newLineNum: j,
-      });
-      j--;
-    } else {
-      result.push({
-        type: "removed",
-        text: oldLines[i - 1],
-        oldLineNum: i,
-      });
-      i--;
-    }
-  }
-
-  return result.reverse();
-}
+import { computeDiff, type DiffLine } from "@/lib/diff-core";
 
 export default function DiffCheckerPage() {
   const { t } = useI18n();
+  const workerRef = useRef<Worker | null>(null);
   const [originalText, setOriginalText] = useState("");
   const [modifiedText, setModifiedText] = useState("");
   const [diffResult, setDiffResult] = useState<DiffLine[] | null>(null);
+  const [isComparing, setIsComparing] = useState(false);
+
+  useEffect(() => {
+    workerRef.current = new Worker(
+      new URL("../../../workers/diff.worker.ts", import.meta.url),
+    );
+    return () => {
+      workerRef.current?.terminate();
+      workerRef.current = null;
+    };
+  }, []);
+
+  const applyDiffResult = (result: DiffLine[]) => {
+    setDiffResult(result);
+    toast.success(t("diff.complete"));
+  };
 
   const handleCompare = () => {
     if (!originalText && !modifiedText) {
       toast.error(t("diff.enterText"));
       return;
     }
-    const result = computeDiff(originalText, modifiedText);
-    setDiffResult(result);
-    toast.success(t("diff.complete"));
+
+    const runMain = () => applyDiffResult(computeDiff(originalText, modifiedText));
+
+    const w = workerRef.current;
+    if (!w) {
+      runMain();
+      return;
+    }
+
+    setIsComparing(true);
+
+    const onMessage = (ev: MessageEvent) => {
+      w.removeEventListener("message", onMessage);
+      w.removeEventListener("error", onError);
+      const payload = ev.data as
+        | { ok: true; diffResult: DiffLine[] }
+        | { ok: false; error?: string };
+      setIsComparing(false);
+      if (payload.ok) {
+        applyDiffResult(payload.diffResult);
+      } else {
+        runMain();
+      }
+    };
+
+    const onError = () => {
+      w.removeEventListener("message", onMessage);
+      w.removeEventListener("error", onError);
+      setIsComparing(false);
+      runMain();
+    };
+
+    w.addEventListener("message", onMessage);
+    w.addEventListener("error", onError);
+    w.postMessage({ original: originalText, modified: modifiedText });
   };
 
   const handleSwap = () => {
@@ -159,20 +135,26 @@ export default function DiffCheckerPage() {
         {/* Action buttons */}
         <div className="flex flex-wrap gap-3">
           <button
+            type="button"
             onClick={handleCompare}
-            className="px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:shadow-lg transition-all"
+            disabled={isComparing}
+            className="px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {t("ui.compare")}
+            {isComparing ? t("diff.comparing") : t("ui.compare")}
           </button>
           <button
+            type="button"
             onClick={handleSwap}
-            className="px-4 py-2 rounded-lg text-t-secondary bg-bg-secondary border border-border hover:text-t-primary transition-colors"
+            disabled={isComparing}
+            className="px-4 py-2 rounded-lg text-t-secondary bg-bg-secondary border border-border hover:text-t-primary transition-colors disabled:opacity-50"
           >
             {t("ui.swap")}
           </button>
           <button
+            type="button"
             onClick={handleClear}
-            className="px-4 py-2 rounded-lg text-t-secondary bg-bg-secondary border border-border hover:text-t-primary transition-colors"
+            disabled={isComparing}
+            className="px-4 py-2 rounded-lg text-t-secondary bg-bg-secondary border border-border hover:text-t-primary transition-colors disabled:opacity-50"
           >
             {t("ui.clear")}
           </button>
@@ -185,10 +167,12 @@ export default function DiffCheckerPage() {
             <div className="glass rounded-xl p-6">
               <div className="flex flex-wrap gap-6 text-sm">
                 <span className="text-green-400 font-medium">
-                  +{additions} {additions !== 1 ? t("diff.additions") : t("diff.addition")}
+                  +{additions}{" "}
+                  {additions !== 1 ? t("diff.additions") : t("diff.addition")}
                 </span>
                 <span className="text-red-400 font-medium">
-                  -{deletions} {deletions !== 1 ? t("diff.deletions") : t("diff.deletion")}
+                  -{deletions}{" "}
+                  {deletions !== 1 ? t("diff.deletions") : t("diff.deletion")}
                 </span>
                 <span className="text-t-secondary">
                   {unchanged} {t("diff.unchanged")}
@@ -219,8 +203,8 @@ export default function DiffCheckerPage() {
                           line.type === "added"
                             ? "bg-green-500/10 border-l-2 border-green-500"
                             : line.type === "removed"
-                            ? "bg-red-500/10 border-l-2 border-red-500"
-                            : "bg-bg-secondary/50 border-l-2 border-transparent"
+                              ? "bg-red-500/10 border-l-2 border-red-500"
+                              : "bg-bg-secondary/50 border-l-2 border-transparent"
                         }`}
                       >
                         {/* Line numbers */}
@@ -237,15 +221,15 @@ export default function DiffCheckerPage() {
                             line.type === "added"
                               ? "text-green-400"
                               : line.type === "removed"
-                              ? "text-red-400"
-                              : "text-t-tertiary"
+                                ? "text-red-400"
+                                : "text-t-tertiary"
                           }`}
                         >
                           {line.type === "added"
                             ? "+"
                             : line.type === "removed"
-                            ? "-"
-                            : " "}
+                              ? "-"
+                              : " "}
                         </div>
 
                         {/* Content */}

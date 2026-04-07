@@ -12,7 +12,7 @@ export default function AboutPage() {
   return (
     <>
       <Header />
-      <main className="flex-1">
+      <main id="main-content" className="flex-1" tabIndex={-1}>
         <div className="max-w-3xl mx-auto px-5 py-16">
           <h1 className="text-3xl font-bold text-t-primary mb-4">
             About ZapFile

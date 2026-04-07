@@ -118,7 +118,7 @@ export default function BlogPostPage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <main className="flex-1">
+      <main id="main-content" className="flex-1" tabIndex={-1}>
         <div className="max-w-3xl mx-auto px-5 py-12">
           {/* Breadcrumb */}
           <nav

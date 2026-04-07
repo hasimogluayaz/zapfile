@@ -47,7 +47,7 @@ export default function ToolsPage() {
   return (
     <>
       <Header />
-      <main className="flex-1">
+      <main id="main-content" className="flex-1" tabIndex={-1}>
         <div className="max-w-6xl mx-auto px-5 py-10">
           <h1 className="text-xl font-semibold text-t-primary">
             {t("tools.title")}

@@ -17,6 +17,8 @@ const resourceLinks = [
   { key: "footer.allTools", href: "/tools" },
   { key: "nav.about", href: "/about" },
   { key: "nav.blog", href: "/blog" },
+  { key: "nav.rssFeed", href: "/feed.xml" },
+  { key: "footer.compare", href: "/compare/zapfile-vs-smallpdf" },
   { key: "footer.privacy", href: "/privacy" },
   { key: "footer.terms", href: "/terms" },
 ];
@@ -71,6 +73,14 @@ export default function Footer() {
             <h3 className="text-[13px] font-semibold text-t-primary mb-3">
               {t("footer.product")}
             </h3>
+            <p className="text-[12px] text-t-tertiary mb-3">
+              <a
+                href={t("footer.newsletterHint")}
+                className="text-accent hover:underline"
+              >
+                {t("footer.newsletter")}
+              </a>
+            </p>
             <ul className="space-y-2">
               {resourceLinks.map((link) => (
                 <li key={link.href}>

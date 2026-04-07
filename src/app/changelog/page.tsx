@@ -9,10 +9,25 @@ export const metadata: Metadata = {
 
 const releases = [
   {
-    version: "v1.3.0",
-    date: "April 2025",
+    version: "v1.4.0",
+    date: "April 2026",
     badge: "Latest",
     badgeColor: "bg-accent text-white",
+    items: [
+      { type: "new", text: "ASCII Art Generator & Audio Waveform tools — full pages and OG metadata" },
+      { type: "new", text: "30+ SEO blog articles (guides for PDF, images, dev tools, comparisons)" },
+      { type: "new", text: "ZapFile vs Smallpdf comparison page for branded search" },
+      { type: "new", text: "Per-tool Open Graph images via /api/og and hreflang in metadata" },
+      { type: "improved", text: "Compress Image: before/after slider, URL quality/maxDim params, share link, Ctrl+V paste on dropzones" },
+      { type: "improved", text: "Pin favorite tools (localStorage), skip-to-content link, high-contrast mode, language radiogroup ARIA" },
+      { type: "improved", text: "npm run analyze — bundle analyzer (ANALYZE=true)" },
+    ],
+  },
+  {
+    version: "v1.3.0",
+    date: "April 2025",
+    badge: null,
+    badgeColor: "",
     items: [
       { type: "new", text: "Remove Background — AI-powered background removal, runs fully in-browser" },
       { type: "new", text: "German (DE) and French (FR) language support added — 783 keys each" },
@@ -77,7 +92,7 @@ export default function ChangelogPage() {
   return (
     <>
       <Header />
-      <main className="flex-1">
+      <main id="main-content" className="flex-1" tabIndex={-1}>
         <div className="max-w-2xl mx-auto px-5 py-16">
           {/* Header */}
           <div className="mb-12">

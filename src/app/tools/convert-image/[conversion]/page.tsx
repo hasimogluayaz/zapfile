@@ -110,7 +110,7 @@ export default async function ConversionPage({
   return (
     <>
       <Header />
-      <main className="flex-1">
+      <main id="main-content" className="flex-1" tabIndex={-1}>
         <div className="max-w-2xl mx-auto px-5 py-8">
           {/* Breadcrumb */}
           <nav className="flex items-center gap-1.5 text-[12px] text-t-tertiary mb-6">

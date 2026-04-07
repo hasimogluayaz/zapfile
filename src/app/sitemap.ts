@@ -56,6 +56,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "weekly" as const,
       priority: 0.7,
     },
+    {
+      url: `${baseUrl}/feed.xml`,
+      lastModified: new Date(),
+      changeFrequency: "daily" as const,
+      priority: 0.4,
+    },
     ...blogPostPages,
     {
       url: `${baseUrl}/privacy`,
@@ -68,6 +74,24 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: new Date(),
       changeFrequency: "yearly" as const,
       priority: 0.3,
+    },
+    {
+      url: `${baseUrl}/changelog`,
+      lastModified: new Date(),
+      changeFrequency: "monthly" as const,
+      priority: 0.5,
+    },
+    {
+      url: `${baseUrl}/about`,
+      lastModified: new Date(),
+      changeFrequency: "monthly" as const,
+      priority: 0.5,
+    },
+    {
+      url: `${baseUrl}/compare/zapfile-vs-smallpdf`,
+      lastModified: new Date(),
+      changeFrequency: "monthly" as const,
+      priority: 0.65,
     },
   ];
 }

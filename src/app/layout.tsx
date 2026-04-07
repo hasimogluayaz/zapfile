@@ -1,8 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Toaster } from "react-hot-toast";
 import ClientProviders from "@/components/ClientProviders";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
-
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
@@ -72,10 +71,35 @@ export const metadata: Metadata = {
   },
   alternates: {
     canonical: "https://zapfile.xyz",
+    languages: {
+      en: "https://zapfile.xyz/?lang=en",
+      tr: "https://zapfile.xyz/?lang=tr",
+      de: "https://zapfile.xyz/?lang=de",
+      fr: "https://zapfile.xyz/?lang=fr",
+      es: "https://zapfile.xyz/?lang=es",
+      pt: "https://zapfile.xyz/?lang=pt",
+      it: "https://zapfile.xyz/?lang=it",
+      ja: "https://zapfile.xyz/?lang=ja",
+      ar: "https://zapfile.xyz/?lang=ar",
+      he: "https://zapfile.xyz/?lang=he",
+      "x-default": "https://zapfile.xyz",
+    },
   },
   verification: {
     google: "4k5LW57dXwNJkEYKplc4-IM_6uM5vskgXOZKLZRtGto",
   },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#6366f1" },
+    { media: "(prefers-color-scheme: dark)", color: "#1a1c25" },
+  ],
+  colorScheme: "light dark",
 };
 
 const jsonLd = {
@@ -139,7 +163,12 @@ export default function RootLayout({
           </>
         )}
         <link rel="manifest" href="/site.webmanifest" />
-        <meta name="theme-color" content="#6366f1" />
+        <link
+          rel="alternate"
+          type="application/rss+xml"
+          title="ZapFile Blog"
+          href="https://zapfile.xyz/feed.xml"
+        />
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link
           rel="icon"
@@ -170,6 +199,12 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased min-h-screen flex flex-col">
+        <a
+          href="#main-content"
+          className="skip-link"
+        >
+          Skip to content
+        </a>
         <ClientProviders>
           <Toaster
             position="bottom-right"

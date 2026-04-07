@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import ToolLayout from "@/components/ToolLayout";
 import { useI18n } from "@/lib/i18n";
@@ -16,7 +16,7 @@ const ALGORITHMS = ["SHA-1", "SHA-256", "SHA-384", "SHA-512"] as const;
 
 async function computeHash(
   algorithm: string,
-  data: ArrayBuffer
+  data: ArrayBuffer,
 ): Promise<string> {
   const hashBuffer = await crypto.subtle.digest(algorithm, data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
@@ -25,12 +25,23 @@ async function computeHash(
 
 export default function HashGeneratorPage() {
   const { t } = useI18n();
+  const workerRef = useRef<Worker | null>(null);
   const [inputMode, setInputMode] = useState<InputMode>("text");
   const [textInput, setTextInput] = useState("");
   const [fileName, setFileName] = useState<string | null>(null);
   const [fileBuffer, setFileBuffer] = useState<ArrayBuffer | null>(null);
   const [results, setResults] = useState<HashResult[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
+
+  useEffect(() => {
+    workerRef.current = new Worker(
+      new URL("../../../workers/hash.worker.ts", import.meta.url),
+    );
+    return () => {
+      workerRef.current?.terminate();
+      workerRef.current = null;
+    };
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -69,22 +80,73 @@ export default function HashGeneratorPage() {
       data = fileBuffer;
     }
 
-    setIsGenerating(true);
-    try {
+    const runMainThread = async () => {
       const hashResults: HashResult[] = await Promise.all(
         ALGORITHMS.map(async (algo) => ({
           algorithm: algo,
           hash: await computeHash(algo, data),
-        }))
+        })),
       );
       setResults(hashResults);
       toast.success(t("hash.success"));
-    } catch {
-      toast.error(t("hash.fail"));
-      setResults([]);
-    } finally {
-      setIsGenerating(false);
+    };
+
+    const w = workerRef.current;
+    if (!w) {
+      setIsGenerating(true);
+      try {
+        await runMainThread();
+      } catch {
+        toast.error(t("hash.fail"));
+        setResults([]);
+      } finally {
+        setIsGenerating(false);
+      }
+      return;
     }
+
+    setIsGenerating(true);
+    const copy = data.slice(0);
+
+    const onMessage = (ev: MessageEvent) => {
+      w.removeEventListener("message", onMessage);
+      w.removeEventListener("error", onError);
+      setIsGenerating(false);
+      const payload = ev.data as
+        | { ok: true; results: HashResult[] }
+        | { ok: false; error?: string };
+      if (payload.ok && payload.results) {
+        setResults(payload.results);
+        toast.success(t("hash.success"));
+      } else {
+        void (async () => {
+          try {
+            await runMainThread();
+          } catch {
+            toast.error(t("hash.fail"));
+            setResults([]);
+          }
+        })();
+      }
+    };
+
+    const onError = () => {
+      w.removeEventListener("message", onMessage);
+      w.removeEventListener("error", onError);
+      setIsGenerating(false);
+      void (async () => {
+        try {
+          await runMainThread();
+        } catch {
+          toast.error(t("hash.fail"));
+          setResults([]);
+        }
+      })();
+    };
+
+    w.addEventListener("message", onMessage);
+    w.addEventListener("error", onError);
+    w.postMessage({ buffer: copy }, [copy]);
   };
 
   const copyToClipboard = async (hash: string, algorithm: string) => {
@@ -98,9 +160,7 @@ export default function HashGeneratorPage() {
 
   const copyAll = async () => {
     if (results.length === 0) return;
-    const text = results
-      .map((r) => `${r.algorithm}: ${r.hash}`)
-      .join("\n");
+    const text = results.map((r) => `${r.algorithm}: ${r.hash}`).join("\n");
     try {
       await navigator.clipboard.writeText(text);
       toast.success("All hashes copied");
@@ -129,6 +189,7 @@ export default function HashGeneratorPage() {
             {(["text", "file"] as InputMode[]).map((mode) => (
               <button
                 key={mode}
+                type="button"
                 onClick={() => {
                   setInputMode(mode);
                   setResults([]);
@@ -189,6 +250,7 @@ export default function HashGeneratorPage() {
           {/* Action Buttons */}
           <div className="flex gap-3 mt-6">
             <button
+              type="button"
               onClick={generateHashes}
               disabled={isGenerating}
               className="px-6 py-3 rounded-xl font-semibold text-white bg-gradient-brand hover:opacity-90 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
@@ -221,6 +283,7 @@ export default function HashGeneratorPage() {
               )}
             </button>
             <button
+              type="button"
               onClick={clearAll}
               className="px-6 py-3 rounded-xl font-semibold text-brand-text bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] transition-all"
             >
@@ -237,6 +300,7 @@ export default function HashGeneratorPage() {
                 {t("hash.results")}
               </h3>
               <button
+                type="button"
                 onClick={copyAll}
                 className="px-4 py-2 rounded-lg text-sm font-medium text-brand-muted bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] hover:text-brand-text transition-all"
               >
@@ -255,6 +319,7 @@ export default function HashGeneratorPage() {
                       {result.algorithm}
                     </span>
                     <button
+                      type="button"
                       onClick={() =>
                         copyToClipboard(result.hash, result.algorithm)
                       }

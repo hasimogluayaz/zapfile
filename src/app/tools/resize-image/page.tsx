@@ -7,12 +7,53 @@ import FileDropzone from "@/components/FileDropzone";
 import ProcessButton from "@/components/ProcessButton";
 import DownloadButton from "@/components/DownloadButton";
 import FileSizeCompare from "@/components/FileSizeCompare";
-import { formatFileSize, getFileNameWithoutExtension, getFileExtension } from "@/lib/utils";
+import {
+  formatFileSize,
+  getFileNameWithoutExtension,
+  getFileExtension,
+} from "@/lib/utils";
 import { useI18n } from "@/lib/i18n";
+
+const MAX_BATCH = 40;
+
+async function resizeFileToBlob(
+  file: File,
+  width: number,
+  height: number,
+): Promise<Blob> {
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Canvas not supported");
+
+  const img = new Image();
+  const url = URL.createObjectURL(file);
+  await new Promise<void>((resolve, reject) => {
+    img.onload = () => resolve();
+    img.onerror = reject;
+    img.src = url;
+  });
+  ctx.drawImage(img, 0, 0, width, height);
+  URL.revokeObjectURL(url);
+
+  const ext = getFileExtension(file.name);
+  const mimeType =
+    ext === ".png" ? "image/png" : ext === ".webp" ? "image/webp" : "image/jpeg";
+  const quality = mimeType === "image/png" ? undefined : 0.92;
+
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (b) => (b ? resolve(b) : reject(new Error("Failed to create image"))),
+      mimeType,
+      quality,
+    );
+  });
+}
 
 export default function ResizeImagePage() {
   const { t } = useI18n();
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const [preview, setPreview] = useState<string | null>(null);
   const [originalWidth, setOriginalWidth] = useState(0);
   const [originalHeight, setOriginalHeight] = useState(0);
@@ -20,31 +61,35 @@ export default function ResizeImagePage() {
   const [height, setHeight] = useState(0);
   const [lockRatio, setLockRatio] = useState(true);
   const [processing, setProcessing] = useState(false);
-  const [result, setResult] = useState<Blob | null>(null);
-  const [resultPreview, setResultPreview] = useState<string | null>(null);
-
-  const handleFilesSelected = useCallback((files: File[]) => {
-    const f = files[0];
-    setFile(f);
-    setResult(null);
-    setResultPreview(null);
-
-    const img = new Image();
-    img.onload = () => {
-      setOriginalWidth(img.naturalWidth);
-      setOriginalHeight(img.naturalHeight);
-      setWidth(img.naturalWidth);
-      setHeight(img.naturalHeight);
-      URL.revokeObjectURL(img.src);
-    };
-    img.src = URL.createObjectURL(f);
-
-    const reader = new FileReader();
-    reader.onload = () => setPreview(reader.result as string);
-    reader.readAsDataURL(f);
-  }, []);
+  const [results, setResults] = useState<{ file: File; blob: Blob }[]>([]);
+  const [zipBlob, setZipBlob] = useState<Blob | null>(null);
 
   const ratio = originalWidth / originalHeight || 1;
+
+  const handleFilesSelected = useCallback(
+    (selected: File[]) => {
+      const list = selected.slice(0, MAX_BATCH);
+      setFiles(list);
+      setResults([]);
+      setZipBlob(null);
+
+      const f = list[0];
+      const img = new Image();
+      img.onload = () => {
+        setOriginalWidth(img.naturalWidth);
+        setOriginalHeight(img.naturalHeight);
+        setWidth(img.naturalWidth);
+        setHeight(img.naturalHeight);
+        URL.revokeObjectURL(img.src);
+      };
+      img.src = URL.createObjectURL(f);
+
+      const reader = new FileReader();
+      reader.onload = () => setPreview(reader.result as string);
+      reader.readAsDataURL(f);
+    },
+    [],
+  );
 
   const handleWidthChange = (val: number) => {
     setWidth(val);
@@ -56,54 +101,58 @@ export default function ResizeImagePage() {
     if (lockRatio) setWidth(Math.round(val * ratio));
   };
 
-  const presetSizes = [
-    { label: "25%", w: Math.round(originalWidth * 0.25), h: Math.round(originalHeight * 0.25) },
-    { label: "50%", w: Math.round(originalWidth * 0.5), h: Math.round(originalHeight * 0.5) },
-    { label: "75%", w: Math.round(originalWidth * 0.75), h: Math.round(originalHeight * 0.75) },
-    { label: "HD (1280)", w: 1280, h: Math.round(1280 / ratio) },
-    { label: "FHD (1920)", w: 1920, h: Math.round(1920 / ratio) },
-    { label: "4K (3840)", w: 3840, h: Math.round(3840 / ratio) },
-  ];
+  const presetSizes =
+    originalWidth > 0
+      ? [
+          {
+            label: "25%",
+            w: Math.round(originalWidth * 0.25),
+            h: Math.round(originalHeight * 0.25),
+          },
+          {
+            label: "50%",
+            w: Math.round(originalWidth * 0.5),
+            h: Math.round(originalHeight * 0.5),
+          },
+          {
+            label: "75%",
+            w: Math.round(originalWidth * 0.75),
+            h: Math.round(originalHeight * 0.75),
+          },
+          { label: "HD (1280)", w: 1280, h: Math.round(1280 / ratio) },
+          { label: "FHD (1920)", w: 1920, h: Math.round(1920 / ratio) },
+          { label: "4K (3840)", w: 3840, h: Math.round(3840 / ratio) },
+        ]
+      : [];
 
   const handleProcess = async () => {
-    if (!file || width <= 0 || height <= 0) return;
+    if (files.length === 0 || width <= 0 || height <= 0) return;
     setProcessing(true);
+    setResults([]);
+    setZipBlob(null);
 
     try {
-      const canvas = document.createElement("canvas");
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) throw new Error("Canvas not supported");
+      const out: { file: File; blob: Blob }[] = [];
+      for (const file of files) {
+        const blob = await resizeFileToBlob(file, width, height);
+        out.push({ file, blob });
+      }
+      setResults(out);
 
-      const img = new Image();
-      const url = URL.createObjectURL(file);
+      if (out.length > 1) {
+        const JSZip = (await import("jszip")).default;
+        const zip = new JSZip();
+        for (const { file, blob } of out) {
+          const ext = getFileExtension(file.name);
+          const base = getFileNameWithoutExtension(file.name);
+          zip.file(`${base}-${width}x${height}${ext}`, blob);
+        }
+        setZipBlob(await zip.generateAsync({ type: "blob" }));
+      }
 
-      await new Promise<void>((resolve, reject) => {
-        img.onload = () => {
-          ctx.drawImage(img, 0, 0, width, height);
-          URL.revokeObjectURL(url);
-          resolve();
-        };
-        img.onerror = reject;
-        img.src = url;
-      });
-
-      const ext = getFileExtension(file.name);
-      const mimeType = ext === ".png" ? "image/png" : ext === ".webp" ? "image/webp" : "image/jpeg";
-      const quality = mimeType === "image/png" ? undefined : 0.92;
-
-      const blob = await new Promise<Blob>((resolve, reject) => {
-        canvas.toBlob(
-          (b) => (b ? resolve(b) : reject(new Error("Failed to create image"))),
-          mimeType,
-          quality
-        );
-      });
-
-      setResult(blob);
-      setResultPreview(URL.createObjectURL(blob));
-      toast.success(t("resimg.success", { w: width, h: height }));
+      toast.success(
+        t("resimg.successBatch", { count: out.length, w: width, h: height }),
+      );
     } catch (error) {
       console.error(error);
       toast.error(t("resimg.fail"));
@@ -113,19 +162,24 @@ export default function ResizeImagePage() {
   };
 
   const reset = () => {
-    setFile(null);
+    setFiles([]);
     setPreview(null);
-    setResult(null);
-    setResultPreview(null);
+    setResults([]);
+    setZipBlob(null);
+    setOriginalWidth(0);
+    setOriginalHeight(0);
   };
+
+  const totalIn = results.reduce((s, r) => s + r.file.size, 0);
+  const totalOut = results.reduce((s, r) => s + r.blob.size, 0);
 
   return (
     <ToolLayout
       toolName="Resize Image"
-      toolDescription="Change image dimensions with aspect ratio control. Supports JPG, PNG, and WebP."
+      toolDescription="Change image dimensions with aspect ratio control. Supports JPG, PNG, and WebP — batch processing supported."
     >
       <div className="space-y-6">
-        {!file ? (
+        {files.length === 0 ? (
           <FileDropzone
             onFilesSelected={handleFilesSelected}
             accept={{
@@ -133,54 +187,78 @@ export default function ResizeImagePage() {
               "image/png": [".png"],
               "image/webp": [".webp"],
             }}
+            multiple
             formats={["JPG", "PNG", "WEBP"]}
-            label="Drop your image here or click to browse"
+            label="Drop images here or click to browse (batch supported)"
           />
-        ) : !result ? (
+        ) : results.length === 0 ? (
           <>
-            {/* File info + preview */}
             <div className="glass rounded-xl p-6">
               <div className="flex items-center justify-between mb-4">
-                <div>
-                  <p className="text-brand-text font-medium">{file.name}</p>
-                  <p className="text-sm text-brand-muted">
-                    {formatFileSize(file.size)} &middot; {originalWidth} &times; {originalHeight}px
-                  </p>
-                </div>
-                <button onClick={reset} className="text-sm text-brand-muted hover:text-red-400 transition-colors">
-                  {t("ui.remove")}
+                <h3 className="text-brand-text font-medium">
+                  {t("resimg.selected", { count: files.length })}
+                </h3>
+                <button
+                  onClick={reset}
+                  className="text-sm text-brand-muted hover:text-red-400 transition-colors"
+                >
+                  {t("ui.clearAll")}
                 </button>
               </div>
-              {preview && (
-                <div className="flex justify-center">
+              <div className="space-y-2 max-h-40 overflow-y-auto">
+                {files.map((file, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center justify-between py-2 border-b border-white/5 last:border-0"
+                  >
+                    <span className="text-sm text-brand-text truncate max-w-[70%]">
+                      {file.name}
+                    </span>
+                    <span className="text-sm text-brand-muted">
+                      {formatFileSize(file.size)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              {preview && files[0] && (
+                <div className="flex justify-center mt-4">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={preview} alt="Preview" className="max-h-48 rounded-lg border border-white/10" />
+                  <img
+                    src={preview}
+                    alt=""
+                    className="max-h-40 rounded-lg border border-white/10"
+                  />
                 </div>
               )}
             </div>
 
-            {/* Size controls */}
             <div className="glass rounded-xl p-6 space-y-4">
-              <h3 className="font-semibold text-brand-text">{t("resimg.outputSize")}</h3>
+              <h3 className="font-semibold text-brand-text">
+                {t("resimg.outputSize")}
+              </h3>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-brand-muted mb-2">{t("resimg.widthPx")}</label>
+                  <label className="block text-sm text-brand-muted mb-2">
+                    {t("resimg.widthPx")}
+                  </label>
                   <input
                     type="number"
-                    min="1"
-                    max="8192"
+                    min={1}
+                    max={8192}
                     value={width}
                     onChange={(e) => handleWidthChange(Number(e.target.value))}
                     className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-brand-text focus:outline-none focus:border-brand-indigo/50"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-brand-muted mb-2">{t("resimg.heightPx")}</label>
+                  <label className="block text-sm text-brand-muted mb-2">
+                    {t("resimg.heightPx")}
+                  </label>
                   <input
                     type="number"
-                    min="1"
-                    max="8192"
+                    min={1}
+                    max={8192}
                     value={height}
                     onChange={(e) => handleHeightChange(Number(e.target.value))}
                     className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-brand-text focus:outline-none focus:border-brand-indigo/50"
@@ -195,27 +273,33 @@ export default function ResizeImagePage() {
                   onChange={(e) => setLockRatio(e.target.checked)}
                   className="accent-brand-indigo"
                 />
-                <span className="text-sm text-brand-muted">{t("ui.lockAspect")}</span>
+                <span className="text-sm text-brand-muted">
+                  {t("ui.lockAspect")}
+                </span>
               </label>
 
-              {/* Presets */}
-              <div>
-                <p className="text-sm text-brand-muted mb-2">{t("resimg.presets")}</p>
-                <div className="flex flex-wrap gap-2">
-                  {presetSizes.map((preset) => (
-                    <button
-                      key={preset.label}
-                      onClick={() => {
-                        setWidth(preset.w);
-                        setHeight(preset.h);
-                      }}
-                      className="px-3 py-1.5 text-xs rounded-lg bg-white/5 text-brand-muted hover:text-brand-text hover:bg-white/10 transition-colors"
-                    >
-                      {preset.label}
-                    </button>
-                  ))}
+              {presetSizes.length > 0 && (
+                <div>
+                  <p className="text-sm text-brand-muted mb-2">
+                    {t("resimg.presets")}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {presetSizes.map((preset) => (
+                      <button
+                        key={preset.label}
+                        type="button"
+                        onClick={() => {
+                          setWidth(preset.w);
+                          setHeight(preset.h);
+                        }}
+                        className="px-3 py-1.5 text-xs rounded-lg bg-white/5 text-brand-muted hover:text-brand-text hover:bg-white/10 transition-colors"
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             <ProcessButton
@@ -228,28 +312,47 @@ export default function ResizeImagePage() {
           </>
         ) : (
           <div className="space-y-6">
-            <FileSizeCompare originalSize={file.size} newSize={result.size} />
-
-            <div className="glass rounded-xl p-4 text-center">
-              <p className="text-sm text-brand-muted">
-                {originalWidth} &times; {originalHeight} &rarr; {width} &times; {height}
-              </p>
-            </div>
-
-            {resultPreview && (
-              <div className="flex justify-center">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={resultPreview} alt="Resized" className="max-h-72 rounded-lg border border-white/10" />
-              </div>
+            {results.length > 1 && (
+              <FileSizeCompare originalSize={totalIn} newSize={totalOut} />
             )}
 
+            <div className="glass rounded-xl p-6">
+              <h3 className="text-brand-text font-medium mb-4">
+                {t("compimg.results")}
+              </h3>
+              <div className="space-y-3">
+                {results.map((r, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center justify-between py-2 border-b border-white/5 last:border-0"
+                  >
+                    <span className="text-sm text-brand-text truncate flex-1 min-w-0">
+                      {r.file.name}
+                    </span>
+                    <span className="text-sm text-brand-muted whitespace-nowrap ml-4">
+                      {formatFileSize(r.file.size)} → {formatFileSize(r.blob.size)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <div className="flex flex-wrap gap-4 justify-center">
-              <DownloadButton
-                blob={result}
-                filename={`${getFileNameWithoutExtension(file.name)}-${width}x${height}${getFileExtension(file.name)}`}
-                label={t("resimg.download")}
-              />
+              {results.length === 1 ? (
+                <DownloadButton
+                  blob={results[0].blob}
+                  filename={`${getFileNameWithoutExtension(results[0].file.name)}-${width}x${height}${getFileExtension(results[0].file.name)}`}
+                  label={t("resimg.download")}
+                />
+              ) : zipBlob ? (
+                <DownloadButton
+                  blob={zipBlob}
+                  filename="resized-images.zip"
+                  label={t("ui.downloadZip")}
+                />
+              ) : null}
               <button
+                type="button"
                 onClick={reset}
                 className="px-6 py-3 rounded-xl font-semibold text-brand-text bg-white/5 hover:bg-white/10 transition-colors"
               >

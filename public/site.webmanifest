@@ -85,6 +85,19 @@
           "type": "image/png"
         }
       ]
+    },
+    {
+      "name": "Image Pipeline",
+      "short_name": "Pipeline",
+      "description": "Compress and resize images in one flow",
+      "url": "/tools/image-pipeline",
+      "icons": [
+        {
+          "src": "/android-chrome-192x192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     }
   ]
 }

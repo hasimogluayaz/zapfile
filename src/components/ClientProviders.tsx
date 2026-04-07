@@ -28,13 +28,6 @@ export default function ClientProviders({
   const [theme, setTheme] = useState<Theme>("light");
   const [mounted, setMounted] = useState(false);
 
-  // Register service worker
-  useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(() => {});
-    }
-  }, []);
-
   // Read persisted theme after mount to avoid hydration mismatch
   useEffect(() => {
     const saved = localStorage.getItem("zapfile-theme") as Theme | null;

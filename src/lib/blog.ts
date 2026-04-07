@@ -1,3 +1,5 @@
+import { extraBlogPosts } from "./blog-extra";
+
 export interface BlogPost {
   slug: string;
   title: string;
@@ -394,6 +396,7 @@ For the vast majority of common file tasks, however, browser-based tools are fas
 
 Choosing browser-based tools over cloud alternatives is one of the simplest steps you can take to protect your file privacy. Tools like [ZapFile](/) demonstrate that you do not have to sacrifice convenience for privacy. The next time you need to compress an image, merge a PDF, or convert a video, check whether the tool processes files locally. Your data is worth protecting.`,
   },
+  ...(extraBlogPosts as BlogPost[]),
 ];
 
 /**

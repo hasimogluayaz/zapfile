@@ -1,7 +1,7 @@
 // ZapFile Service Worker
 // Cache-first for static assets, network-first for HTML pages
 
-const CACHE_VERSION = 'zapfile-v1';
+const CACHE_VERSION = 'zapfile-v2';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const PAGES_CACHE = `${CACHE_VERSION}-pages`;
 
@@ -9,6 +9,7 @@ const PAGES_CACHE = `${CACHE_VERSION}-pages`;
 const APP_SHELL = [
   '/',
   '/tools',
+  '/tools/image-pipeline',
 ];
 
 // File extensions that should use cache-first strategy

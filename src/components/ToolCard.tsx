@@ -38,6 +38,8 @@ const toolColors: Record<string, { bg: string; text: string }> = {
   "word-to-pdf": { bg: "bg-red-50", text: "text-red-500" },
   "pdf-page-numbers": { bg: "bg-violet-50", text: "text-violet-500" },
   ocr: { bg: "bg-cyan-50", text: "text-cyan-600" },
+  "ascii-art": { bg: "bg-stone-100", text: "text-stone-600" },
+  "audio-waveform": { bg: "bg-indigo-50", text: "text-indigo-500" },
 };
 
 const defaultColor = { bg: "bg-indigo-50", text: "text-indigo-500" };

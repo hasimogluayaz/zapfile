@@ -18,7 +18,7 @@ const catKeys: Record<ToolCategory, string> = {
 
 export default function Home() {
   const { t } = useI18n();
-  const { recentSlugs } = useRecentTools();
+  const { recentSlugs, ready: recentReady } = useRecentTools();
   const recentTools = recentSlugs
     .map((slug) => getToolBySlug(slug))
     .filter(Boolean) as NonNullable<ReturnType<typeof getToolBySlug>>[];
@@ -26,7 +26,7 @@ export default function Home() {
   return (
     <>
       <Header />
-      <main className="flex-1">
+      <main id="main-content" className="flex-1" tabIndex={-1}>
         {/* Hero */}
         <section className="relative overflow-hidden">
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -130,7 +130,7 @@ export default function Home() {
         </section>
 
         {/* Recent Tools */}
-        {recentTools.length > 0 && (
+        {recentReady && recentTools.length > 0 && (
           <section className="max-w-6xl mx-auto px-5 pb-8">
             <div className="flex items-center gap-3 mb-4">
               <svg

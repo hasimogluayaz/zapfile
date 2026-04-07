@@ -526,6 +526,161 @@ export const tools: Tool[] = [
     metaDescription:
       "Stay focused with the Pomodoro technique. Customizable work and break intervals. Free online timer.",
   },
+  // High-traffic new tools
+  {
+    slug: "qr-scanner",
+    name: "QR Code Scanner",
+    description: "Scan QR codes from images or your camera",
+    emoji: "📷",
+    category: "utility",
+    acceptedFormats: [".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp"],
+    metaTitle: "QR Code Scanner - Free Online Tool | ZapFile",
+    metaDescription:
+      "Scan and decode QR codes from any image file or your camera. Free, instant, no upload required.",
+  },
+  {
+    slug: "html-to-pdf",
+    name: "HTML to PDF",
+    description: "Convert HTML code or a URL into a PDF document",
+    emoji: "🌐",
+    category: "utility",
+    acceptedFormats: [],
+    metaTitle: "HTML to PDF - Free Online Tool | ZapFile",
+    metaDescription:
+      "Convert HTML markup to PDF instantly in your browser. Paste code or enter a URL. Free and private.",
+  },
+  {
+    slug: "jwt-decoder",
+    name: "JWT Decoder",
+    description: "Decode and inspect JSON Web Tokens instantly",
+    emoji: "🔑",
+    category: "utility",
+    acceptedFormats: [],
+    metaTitle: "JWT Decoder - Free Online Tool | ZapFile",
+    metaDescription:
+      "Decode JWT tokens to inspect header, payload, and signature. Instant, private, no server needed.",
+  },
+  {
+    slug: "uuid-generator",
+    name: "UUID Generator",
+    description: "Generate UUIDs v4 and Nano IDs in bulk",
+    emoji: "🎲",
+    category: "utility",
+    acceptedFormats: [],
+    metaTitle: "UUID Generator - Free Online Tool | ZapFile",
+    metaDescription:
+      "Generate UUID v4 and Nano ID strings in bulk. Copy single or all at once. 100% browser-based.",
+  },
+  {
+    slug: "css-minifier",
+    name: "CSS Minifier",
+    description: "Minify or beautify CSS code instantly",
+    emoji: "🎨",
+    category: "utility",
+    acceptedFormats: [".css"],
+    metaTitle: "CSS Minifier & Formatter - Free Online Tool | ZapFile",
+    metaDescription:
+      "Minify CSS to reduce file size or beautify/format CSS code. Free, instant, browser-based.",
+  },
+  {
+    slug: "base-converter",
+    name: "Number Base Converter",
+    description: "Convert numbers between decimal, hex, binary and octal",
+    emoji: "🔢",
+    category: "utility",
+    acceptedFormats: [],
+    metaTitle: "Number Base Converter - Free Online Tool | ZapFile",
+    metaDescription:
+      "Convert numbers between decimal, hexadecimal, binary, and octal. Instant results, no server needed.",
+  },
+  {
+    slug: "typing-speed-test",
+    name: "Typing Speed Test",
+    description: "Test your typing speed and accuracy in WPM",
+    emoji: "⌨️",
+    category: "utility",
+    acceptedFormats: [],
+    metaTitle: "Typing Speed Test - Free Online Tool | ZapFile",
+    metaDescription:
+      "Test your typing speed in WPM and accuracy. Multiple difficulty levels. Free online typing test.",
+  },
+  {
+    slug: "color-palette",
+    name: "Color Palette Generator",
+    description: "Extract color palettes from images or create your own",
+    emoji: "🎨",
+    category: "image",
+    acceptedFormats: [".jpg", ".jpeg", ".png", ".webp", ".gif"],
+    metaTitle: "Color Palette Generator - Free Online Tool | ZapFile",
+    metaDescription:
+      "Extract dominant colors from any image or generate harmonious color palettes. Free, instant, browser-based.",
+  },
+  {
+    slug: "ascii-art",
+    name: "ASCII Art Generator",
+    description: "Convert images to ASCII character art",
+    emoji: "🖼️",
+    category: "image",
+    acceptedFormats: [".jpg", ".jpeg", ".png", ".webp", ".gif"],
+    metaTitle: "ASCII Art Generator - Free Online Tool | ZapFile",
+    metaDescription:
+      "Convert any image into ASCII art. Adjust resolution and character sets. Copy or download as text.",
+  },
+  {
+    slug: "audio-waveform",
+    name: "Audio Waveform",
+    description: "Visualize audio files as waveform images",
+    emoji: "🎵",
+    category: "video",
+    acceptedFormats: [".mp3", ".wav", ".ogg", ".flac", ".aac", ".m4a"],
+    metaTitle: "Audio Waveform Visualizer - Free Online Tool | ZapFile",
+    metaDescription:
+      "Generate waveform visualizations from audio files. Download as PNG. Free, browser-based, no upload.",
+  },
+  {
+    slug: "image-pipeline",
+    name: "Image Pipeline",
+    description: "Compress, resize, and download in one guided flow",
+    emoji: "⚡",
+    category: "image",
+    acceptedFormats: [".jpg", ".jpeg", ".png", ".webp"],
+    metaTitle: "Image Pipeline — Compress & Resize in One Flow | ZapFile",
+    metaDescription:
+      "Upload once: adjust compression, set dimensions, export. All steps in your browser with no uploads.",
+  },
+  {
+    slug: "color-contrast",
+    name: "Color Contrast Checker",
+    description: "Check WCAG contrast ratios for text and UI colors",
+    emoji: "♿",
+    category: "utility",
+    acceptedFormats: [],
+    metaTitle: "WCAG Color Contrast Checker — Free Online | ZapFile",
+    metaDescription:
+      "Test foreground and background colors for WCAG AA and AAA compliance. Instant results in your browser.",
+  },
+  {
+    slug: "api-fetch",
+    name: "HTTP Fetch & JSON",
+    description: "Call APIs from the browser and inspect responses",
+    emoji: "🌐",
+    category: "utility",
+    acceptedFormats: [],
+    metaTitle: "HTTP Fetch & JSON Inspector — Free Online | ZapFile",
+    metaDescription:
+      "Send GET or POST requests and view status, headers, and JSON. CORS applies; no server proxy.",
+  },
+  {
+    slug: "csv-viewer",
+    name: "CSV Table Viewer",
+    description: "Paste CSV and browse it as a sortable table",
+    emoji: "📋",
+    category: "utility",
+    acceptedFormats: [],
+    metaTitle: "CSV Table Viewer — Free Online | ZapFile",
+    metaDescription:
+      "Paste CSV text and preview rows in a table. Search, sort columns, and copy cells. Private, in-browser.",
+  },
 ];
 
 export function getToolBySlug(slug: string): Tool | undefined {

@@ -5,10 +5,12 @@ import Link from "next/link";
 import Header from "./Header";
 import Footer from "./Footer";
 import AdPlaceholder from "./AdPlaceholder";
+import ToolShareBar from "./ToolShareBar";
 import { useI18n } from "@/lib/i18n";
 import { usePathname } from "next/navigation";
 import { tools, getToolBySlug } from "@/lib/tools";
 import { useRecentTools } from "@/hooks/useRecentTools";
+import { useFavoriteTools } from "@/hooks/useFavoriteTools";
 
 interface ToolLayoutProps {
   children: React.ReactNode;
@@ -27,6 +29,7 @@ export default function ToolLayout({
   const pathname = usePathname();
   const slug = pathname?.split("/").pop() || "";
   const { trackTool } = useRecentTools();
+  const { isFavorite, toggleFavorite, ready: favReady } = useFavoriteTools();
   const [openFaqIndices, setOpenFaqIndices] = useState<Set<number>>(new Set());
 
   useEffect(() => {
@@ -106,7 +109,7 @@ export default function ToolLayout({
   return (
     <>
       <Header />
-      <main className="flex-1">
+      <main id="main-content" className="flex-1" tabIndex={-1}>
         <div className="max-w-2xl mx-auto px-5 py-8">
           {/* Breadcrumb */}
           <nav className="flex items-center gap-1.5 text-[12px] text-t-tertiary mb-6">
@@ -147,12 +150,27 @@ export default function ToolLayout({
 
           <AdPlaceholder position="top" />
 
+          <ToolShareBar />
+
           {/* Tool header */}
-          <div className="mb-8">
-            <h1 className="text-2xl font-bold text-t-primary">{finalName}</h1>
-            <p className="text-[14px] text-t-secondary mt-2 leading-relaxed">
-              {finalDesc}
-            </p>
+          <div className="mb-8 flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <h1 className="text-2xl font-bold text-t-primary">{finalName}</h1>
+              <p className="text-[14px] text-t-secondary mt-2 leading-relaxed">
+                {finalDesc}
+              </p>
+            </div>
+            {currentTool && favReady && (
+              <button
+                type="button"
+                onClick={() => toggleFavorite(currentTool.slug)}
+                aria-pressed={isFavorite(currentTool.slug)}
+                aria-label={t("nav.favoriteToggle")}
+                className="shrink-0 mt-0.5 p-2 rounded-xl border border-border text-xl leading-none hover:bg-bg-secondary transition-colors text-amber-500"
+              >
+                {isFavorite(currentTool.slug) ? "★" : "☆"}
+              </button>
+            )}
           </div>
 
           {/* Tool content */}
@@ -194,7 +212,9 @@ export default function ToolLayout({
                 {faqItems.map((item, index) => (
                   <div key={index} className="glass rounded-xl overflow-hidden">
                     <button
+                      type="button"
                       onClick={() => toggleFaq(index)}
+                      aria-expanded={openFaqIndices.has(index)}
                       className="w-full px-6 py-4 flex items-center justify-between text-left"
                     >
                       <span className="font-medium text-t-primary">
