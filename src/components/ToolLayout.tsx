@@ -116,7 +116,7 @@ export default function ToolLayout({
               {t("tool.home")}
             </Link>
             <svg
-              className="w-3 h-3 text-t-tertiary/40"
+              className="w-3 h-3 text-t-tertiary/40 rtl:rotate-180"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -132,7 +132,7 @@ export default function ToolLayout({
               {t("tool.tools")}
             </Link>
             <svg
-              className="w-3 h-3 text-t-tertiary/40"
+              className="w-3 h-3 text-t-tertiary/40 rtl:rotate-180"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"

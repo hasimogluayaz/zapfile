@@ -81,7 +81,6 @@ export const metadata: Metadata = {
       it: "https://zapfile.xyz/?lang=it",
       ja: "https://zapfile.xyz/?lang=ja",
       ar: "https://zapfile.xyz/?lang=ar",
-      he: "https://zapfile.xyz/?lang=he",
       "x-default": "https://zapfile.xyz",
     },
   },

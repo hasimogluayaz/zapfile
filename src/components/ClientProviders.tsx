@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { I18nProvider } from "@/lib/i18n";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 // ─── Theme Context ─────────────────────────────────────────────
 type Theme = "light" | "dark";
@@ -60,8 +61,10 @@ export default function ClientProviders({
   }, []);
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
-      <I18nProvider>{children}</I18nProvider>
-    </ThemeContext.Provider>
+    <ErrorBoundary>
+      <ThemeContext.Provider value={{ theme, toggleTheme }}>
+        <I18nProvider>{children}</I18nProvider>
+      </ThemeContext.Provider>
+    </ErrorBoundary>
   );
 }

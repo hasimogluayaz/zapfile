@@ -370,7 +370,7 @@ export default function Header() {
                   <div
                     onMouseEnter={() => setShowDropdown(true)}
                     onMouseLeave={() => setShowDropdown(false)}
-                    className="absolute right-0 top-full pt-2 animate-fade-in"
+                    className="absolute ltr:right-0 rtl:left-0 top-full pt-2 animate-fade-in"
                   >
                     <div className="bg-surface border border-border rounded-2xl shadow-lg p-5 min-w-[560px] max-h-[70vh] overflow-y-auto">
                       <div className="grid grid-cols-2 gap-6">
