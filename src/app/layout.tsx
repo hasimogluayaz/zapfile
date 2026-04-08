@@ -13,14 +13,13 @@ export const metadata: Metadata = {
     template: "%s | ZapFile",
   },
   description:
-    "Fast, free, and private file tools. Compress PDFs, convert images, extract audio and more. All processing happens in your browser — no uploads, no limits.",
+    "Fast, free, and private file tools. Compress PDFs, convert images, generate QR codes and more. All processing happens in your browser — no uploads, no limits.",
   keywords: [
     "file tools",
     "compress pdf",
     "merge pdf",
     "image converter",
     "image compressor",
-    "video compressor",
     "online tools",
     "free",
     "private",
@@ -29,7 +28,8 @@ export const metadata: Metadata = {
     "pdf tools",
     "resize image",
     "qr code generator",
-    "remove background",
+    "crop image",
+    "json formatter",
   ],
   authors: [{ name: "ZapFile", url: "https://zapfile.xyz" }],
   creator: "ZapFile",
@@ -107,7 +107,7 @@ const jsonLd = {
   name: "ZapFile",
   url: "https://zapfile.xyz",
   description:
-    "Fast, free, and private file tools. Compress PDFs, convert images, extract audio and more. All processing happens in your browser.",
+    "Fast, free, and private file tools. Compress PDFs, convert images, generate QR codes and more. All processing happens in your browser.",
   applicationCategory: "UtilityApplication",
   operatingSystem: "Any",
   offers: {
@@ -127,12 +127,9 @@ const jsonLd = {
     "EXIF Viewer",
     "Image Collage Maker",
     "Meme Generator",
-    "GIF Maker",
-    "Video Compression",
-    "Video Trimming",
-    "Audio Extraction",
-    "Audio Conversion",
+    "Audio Waveform Visualizer",
     "QR Code Generator",
+    "QR Code Scanner",
     "Password Generator",
     "Regex Tester",
     "Diff Checker",
@@ -144,6 +141,8 @@ const jsonLd = {
     "Word Counter",
     "Unit Converter",
     "Pomodoro Timer",
+    "Typing Speed Test",
+    "Color Palette Generator",
   ],
 };
 

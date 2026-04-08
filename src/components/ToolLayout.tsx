@@ -214,13 +214,13 @@ export default function ToolLayout({
                       type="button"
                       onClick={() => toggleFaq(index)}
                       aria-expanded={openFaqIndices.has(index)}
-                      className="w-full px-6 py-4 flex items-center justify-between text-left"
+                      className="w-full px-6 py-4 flex items-center justify-between text-start"
                     >
                       <span className="font-medium text-t-primary">
                         {item.q}
                       </span>
                       <svg
-                        className={`w-4 h-4 text-t-tertiary shrink-0 ml-4 transition-transform duration-200 ${
+                        className={`w-4 h-4 text-t-tertiary shrink-0 ms-4 transition-transform duration-200 ${
                           openFaqIndices.has(index) ? "rotate-180" : ""
                         }`}
                         fill="none"

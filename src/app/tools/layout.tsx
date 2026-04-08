@@ -22,7 +22,6 @@ export const metadata: Metadata = {
       it: "https://zapfile.xyz/tools?lang=it",
       ja: "https://zapfile.xyz/tools?lang=ja",
       ar: "https://zapfile.xyz/tools?lang=ar",
-      he: "https://zapfile.xyz/tools?lang=he",
       "x-default": "https://zapfile.xyz/tools",
     },
   },

@@ -62,7 +62,7 @@ export default function LanguageSwitcher({ fullWidth }: LanguageSwitcherProps) {
         aria-expanded={open}
         aria-haspopup="listbox"
         aria-label={t("nav.language")}
-        className={`flex items-center gap-2 rounded-xl border border-border bg-bg-secondary/90 px-3 py-2 text-left text-[13px] font-medium text-t-primary shadow-sm transition-all hover:border-accent/40 hover:bg-bg-tertiary/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 ${
+        className={`flex items-center gap-2 rounded-xl border border-border bg-bg-secondary/90 px-3 py-2 text-start text-[13px] font-medium text-t-primary shadow-sm transition-all hover:border-accent/40 hover:bg-bg-tertiary/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 ${
           fullWidth ? "w-full justify-between" : "min-w-[10rem] max-w-[min(220px,32vw)]"
         }`}
       >
@@ -108,7 +108,7 @@ export default function LanguageSwitcher({ fullWidth }: LanguageSwitcherProps) {
                   setLocale(loc);
                   setOpen(false);
                 }}
-                className={`flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-[13px] transition-colors ${
+                className={`flex w-full items-center gap-2.5 px-3 py-2.5 text-start text-[13px] transition-colors ${
                   loc === locale
                     ? "bg-accent-light text-accent font-semibold"
                     : "text-t-secondary hover:bg-bg-secondary hover:text-t-primary"

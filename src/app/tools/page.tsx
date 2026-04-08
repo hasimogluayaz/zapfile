@@ -60,7 +60,7 @@ export default function ToolsPage() {
           <div className="flex flex-col sm:flex-row gap-3 mb-8">
             <div className="relative flex-1 max-w-xs">
               <svg
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-t-tertiary"
+                className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-t-tertiary"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -77,7 +77,7 @@ export default function ToolsPage() {
                 placeholder={t("tools.search")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 rounded-lg text-[13px] bg-bg-secondary border border-border text-t-primary placeholder:text-t-tertiary focus:outline-none focus:border-accent transition-colors"
+                className="w-full ps-9 pe-3 py-2 rounded-lg text-[13px] bg-bg-secondary border border-border text-t-primary placeholder:text-t-tertiary focus:outline-none focus:border-accent transition-colors"
               />
             </div>
             <div className="flex flex-wrap gap-1.5">

@@ -264,7 +264,7 @@ Image optimization is essential for web performance and saving storage space. Lo
 - **Image Compressor** - Reduce JPEG, PNG, and WebP file sizes with adjustable quality.
 - **Image Converter** - Switch between formats (JPG, PNG, WebP, BMP, TIFF) instantly.
 - **Image Resizer** - Set exact dimensions or scale by percentage.
-- **Background Remover** - Remove backgrounds from photos using AI, entirely in the browser.
+- **EXIF Viewer** - View, analyze, and strip metadata from your photos directly in the browser.
 
 ### Create and Edit
 
@@ -345,7 +345,7 @@ Modern browsers are remarkably powerful. Technologies that enable local file pro
 
 - **Canvas API** for image manipulation, resizing, and format conversion.
 - **Web Audio API** for audio processing and conversion.
-- **WebAssembly (WASM)** for running compiled code at near-native speed. This is how tools like [ZapFile](/) can run FFmpeg in the browser for video compression and audio extraction.
+- **WebAssembly (WASM)** for running compiled code at near-native speed. This is how tools like [ZapFile](/) can perform complex PDF manipulation and image processing entirely in the browser.
 - **File API and Blob handling** for reading and writing files without server involvement.
 
 These APIs have matured significantly in recent years, closing the performance gap between browser-based and server-based processing.

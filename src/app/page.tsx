@@ -58,7 +58,7 @@ export default function Home() {
               >
                 {t("hero.cta")}
                 <svg
-                  className="w-4 h-4"
+                  className="w-4 h-4 rtl:rotate-180"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -293,7 +293,7 @@ export default function Home() {
                 <span className="text-[14px] font-semibold text-accent">{t("home.privacy.step1")}</span>
               </div>
               {/* Arrow */}
-              <svg className="w-5 h-5 text-t-tertiary hidden sm:block" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className="w-5 h-5 text-t-tertiary hidden sm:block rtl:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
               <svg className="w-5 h-5 text-t-tertiary sm:hidden rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -305,7 +305,7 @@ export default function Home() {
                 <span className="text-[14px] font-semibold text-accent">{t("home.privacy.step2")}</span>
               </div>
               {/* Arrow */}
-              <svg className="w-5 h-5 text-t-tertiary hidden sm:block" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className="w-5 h-5 text-t-tertiary hidden sm:block rtl:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
               <svg className="w-5 h-5 text-t-tertiary sm:hidden rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -350,7 +350,7 @@ export default function Home() {
             >
               {t("hero.cta")}
               <svg
-                className="w-4 h-4"
+                className="w-4 h-4 rtl:rotate-180"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"

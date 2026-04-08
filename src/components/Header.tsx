@@ -201,7 +201,7 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
                 </svg>
               </button>
               {isExpanded && (
-                <div className="ml-4 space-y-0.5 mt-1 animate-fade-in">
+                <div className="ms-4 space-y-0.5 mt-1 animate-fade-in">
                   {catTools.map((tool) => (
                     <Link
                       key={tool.slug}
@@ -209,7 +209,7 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
                       onClick={onClose}
                       className="block px-3 py-2 rounded-lg text-[13px] text-t-secondary hover:text-accent hover:bg-accent-light transition-colors"
                     >
-                      <span className="mr-1.5">{tool.emoji}</span>
+                      <span className="me-1.5">{tool.emoji}</span>
                       {toolField(t, tool.slug, tool, "name")}
                     </Link>
                   ))}
@@ -227,7 +227,7 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
         >
           {t("nav.browseAll")}
           <svg
-            className="w-4 h-4"
+            className="w-4 h-4 rtl:rotate-180"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -309,7 +309,7 @@ export default function Header() {
 
             {/* Desktop Nav */}
             <div className="hidden md:flex items-center gap-1">
-              <div className="mr-2">
+              <div className="me-2">
                 <LanguageSwitcher />
               </div>
 
@@ -392,7 +392,7 @@ export default function Header() {
                                     onClick={() => setShowDropdown(false)}
                                     className="block px-2.5 py-1.5 rounded-lg text-[13px] text-t-secondary hover:text-accent hover:bg-accent-light transition-colors"
                                   >
-                                    <span className="mr-1.5">
+                                    <span className="me-1.5">
                                       {tool.emoji}
                                     </span>
                                     {toolField(t, tool.slug, tool, "name")}
@@ -411,7 +411,7 @@ export default function Header() {
                         >
                           {t("nav.viewAll", { count: tools.length })}
                           <svg
-                            className="w-3.5 h-3.5"
+                            className="w-3.5 h-3.5 rtl:rotate-180"
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"

@@ -8,7 +8,7 @@ export interface ConversionDef {
   toExt: string;
   fromMime: string;
   toMime: string;
-  category: "image" | "audio";
+  category: "image";
   outputFormat?: string;
   acceptMap?: Record<string, string[]>;
   metaTitle: string;

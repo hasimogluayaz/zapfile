@@ -29,7 +29,7 @@ export default function AboutPage() {
           <p className="text-t-secondary leading-relaxed mb-4">
             We believe everyone should have access to powerful file tools without
             sacrificing their privacy or paying for subscriptions. ZapFile provides
-            a comprehensive suite of tools for working with PDFs, images, videos,
+            a comprehensive suite of tools for working with PDFs, images, audio,
             and more &mdash; completely free and accessible to everyone.
           </p>
 
@@ -60,10 +60,9 @@ export default function AboutPage() {
           </h2>
           <p className="text-t-secondary leading-relaxed mb-4">
             ZapFile is built with Next.js and leverages powerful browser APIs
-            including Canvas, Web Audio, and WebAssembly-powered libraries like
-            FFmpeg WASM. These technologies enable us to perform complex file
-            operations &mdash; from video conversion to PDF manipulation &mdash;
-            entirely client-side.
+            including Canvas, Web Audio, and WebAssembly. These technologies
+            enable us to perform complex file operations &mdash; from image
+            processing to PDF manipulation &mdash; entirely client-side.
           </p>
 
           <h2 className="text-xl font-semibold text-t-primary mt-12 mb-4">
