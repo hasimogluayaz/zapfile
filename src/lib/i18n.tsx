@@ -4610,21 +4610,51 @@ function readCookieLocale(): Locale | null {
   return SUPPORTED_LOCALES.includes(v as Locale) ? (v as Locale) : null;
 }
 
-function localeFromBrowserLang(): Locale | null {
-  const browserLang = navigator.language.toLowerCase();
-  const map: [string, Locale][] = [
-    ["tr", "tr"],
-    ["de", "de"],
-    ["fr", "fr"],
-    ["es", "es"],
-    ["pt", "pt"],
-    ["it", "it"],
-    ["ja", "ja"],
-  ];
-  for (const [prefix, loc] of map) {
-    if (browserLang.startsWith(prefix)) return loc;
+/** When Vercel/geo omits country, infer locale from system timezone (e.g. Turkey → tr). */
+function localeFromTimeZone(): Locale | null {
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (!tz) return null;
+    if (tz === "Europe/Istanbul") return "tr";
+    if (tz === "Asia/Tokyo") return "ja";
+  } catch {
+    return null;
   }
   return null;
+}
+
+const BROWSER_LANG_PREFIXES: [string, Locale][] = [
+  ["tr", "tr"],
+  ["de", "de"],
+  ["fr", "fr"],
+  ["es", "es"],
+  ["pt", "pt"],
+  ["it", "it"],
+  ["ja", "ja"],
+];
+
+function localeFromBrowserLang(): Locale | null {
+  if (typeof navigator === "undefined") return null;
+  const list = navigator.languages?.length
+    ? navigator.languages
+    : [navigator.language];
+  for (const raw of list) {
+    const browserLang = raw.toLowerCase();
+    for (const [prefix, loc] of BROWSER_LANG_PREFIXES) {
+      if (browserLang.startsWith(prefix)) return loc;
+    }
+  }
+  return null;
+}
+
+function stripLangSearchParamIfStale(chosen: Locale): void {
+  const params = new URLSearchParams(window.location.search);
+  const urlLang = params.get("lang");
+  if (urlLang && urlLang !== chosen) {
+    const url = new URL(window.location.href);
+    url.searchParams.delete("lang");
+    window.history.replaceState({}, "", url);
+  }
 }
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
@@ -4646,23 +4676,45 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // No explicit saved preference — use URL param if present (one-time, no persist).
+    const geo = readCookieLocale();
+
+    // Country from edge (middleware cookie) beats stale ?lang= and browser order.
+    // If cookie is "en" (unmapped country), keep resolving — do not lock UI to English.
+    if (geo && geo !== "en") {
+      setLocaleState(geo);
+      stripLangSearchParamIfStale(geo);
+      setMounted(true);
+      return;
+    }
+
+    const fromTz = localeFromTimeZone();
+    if (fromTz) {
+      setLocaleState(fromTz);
+      stripLangSearchParamIfStale(fromTz);
+      setMounted(true);
+      return;
+    }
+
+    const fromBrowser = localeFromBrowserLang();
+    if (fromBrowser) {
+      setLocaleState(fromBrowser);
+      stripLangSearchParamIfStale(fromBrowser);
+      setMounted(true);
+      return;
+    }
+
+    // Shared links: ?lang=de — only after geo/tz/browser could not decide.
     if (urlLang && SUPPORTED_LOCALES.includes(urlLang as Locale)) {
       setLocaleState(urlLang as Locale);
       setMounted(true);
       return;
     }
 
-    // IP / VPN country (set by middleware → cookie). Updates when you change region and reload.
-    const geo = readCookieLocale();
     if (geo) {
       setLocaleState(geo);
       setMounted(true);
       return;
     }
-
-    const fromBrowser = localeFromBrowserLang();
-    if (fromBrowser) setLocaleState(fromBrowser);
 
     setMounted(true);
   }, []);
