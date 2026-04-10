@@ -10,6 +10,8 @@ import {
 import type { Locale } from "./locales";
 import { SUPPORTED_LOCALES, isRtlLocale } from "./locales";
 import { localeOverrides } from "./i18n-overrides";
+import { partialStaticPageLocales } from "./i18n-partial-static-pages";
+import { partialBlogChromeLocales } from "./i18n-partial-blog-chrome";
 
 export type { Locale } from "./locales";
 
@@ -1167,6 +1169,11 @@ const en: Record<string, string> = {
     "blog.subtitle":
       "Guides, comparisons, and tips about working with files online. Everything from image compression to PDF merging to staying private on the web.",
     "blog.backHome": "Back to Home",
+    "blog.breadcrumbHome": "Home",
+    "blog.breadcrumbBlog": "Blog",
+    "blog.relatedPosts": "Related articles",
+    "blog.backToBlog": "Back to blog",
+    "blog.readMinutes": "{count} min read",
 
     // Terms
     "terms.title": "Terms of Service",
@@ -2379,6 +2386,11 @@ const translations: Record<Locale, Record<string, string>> = {
     "blog.subtitle":
       "Çevrimiçi dosyalarla çalışma hakkında rehberler, karşılaştırmalar ve ipuçları. Görüntü sıkıştırmadan PDF birleştirmeye ve web'de gizli kalmaya kadar.",
     "blog.backHome": "Ana sayfaya dön",
+    "blog.breadcrumbHome": "Ana sayfa",
+    "blog.breadcrumbBlog": "Blog",
+    "blog.relatedPosts": "İlgili yazılar",
+    "blog.backToBlog": "Bloga dön",
+    "blog.readMinutes": "{count} dk okuma",
 
     "terms.title": "Kullanım Şartları",
     "terms.updated": "Son güncelleme: Ocak 2025",
@@ -3435,6 +3447,11 @@ const translations: Record<Locale, Record<string, string>> = {
     "blog.subtitle":
       "Anleitungen, Vergleiche und Tipps zum Arbeiten mit Dateien online — von Bildkompression über PDF-Zusammenführung bis zu mehr Privatsphäre im Web.",
     "blog.backHome": "Zurück zur Startseite",
+    "blog.breadcrumbHome": "Startseite",
+    "blog.breadcrumbBlog": "Blog",
+    "blog.relatedPosts": "Verwandte Artikel",
+    "blog.backToBlog": "Zurück zum Blog",
+    "blog.readMinutes": "{count} Min. Lesezeit",
 
     "terms.title": "Nutzungsbedingungen",
     "terms.updated": "Zuletzt aktualisiert: Januar 2025",
@@ -4492,6 +4509,11 @@ const translations: Record<Locale, Record<string, string>> = {
     "blog.subtitle":
       "Guides, comparaisons et astuces pour travailler avec des fichiers en ligne — de la compression d'images à la fusion de PDF et à la confidentialité sur le web.",
     "blog.backHome": "Retour à l'accueil",
+    "blog.breadcrumbHome": "Accueil",
+    "blog.breadcrumbBlog": "Blog",
+    "blog.relatedPosts": "Articles connexes",
+    "blog.backToBlog": "Retour au blog",
+    "blog.readMinutes": "{count} min de lecture",
 
     "terms.title": "Conditions d'utilisation",
     "terms.updated": "Dernière mise à jour : janvier 2025",
@@ -4532,10 +4554,26 @@ const translations: Record<Locale, Record<string, string>> = {
     "privacy.contactBody":
       "Pour toute question sur cette politique : privacy@zapfile.xyz.",
   },
-  es: mergeLocale(en, localeOverrides.es),
-  pt: mergeLocale(en, localeOverrides.pt),
-  it: mergeLocale(en, localeOverrides.it),
-  ja: mergeLocale(en, localeOverrides.ja),
+  es: mergeLocale(en, {
+    ...localeOverrides.es,
+    ...partialStaticPageLocales.es,
+    ...partialBlogChromeLocales.es,
+  }),
+  pt: mergeLocale(en, {
+    ...localeOverrides.pt,
+    ...partialStaticPageLocales.pt,
+    ...partialBlogChromeLocales.pt,
+  }),
+  it: mergeLocale(en, {
+    ...localeOverrides.it,
+    ...partialStaticPageLocales.it,
+    ...partialBlogChromeLocales.it,
+  }),
+  ja: mergeLocale(en, {
+    ...localeOverrides.ja,
+    ...partialStaticPageLocales.ja,
+    ...partialBlogChromeLocales.ja,
+  }),
 };
 
 /** Every locale has a full key set; merged locales (es/pt/it/ja) inherit English for keys not in i18n-overrides. */
