@@ -1142,6 +1142,73 @@ const en: Record<string, string> = {
     "404.subtitle":
       "The page you're looking for doesn't exist or has been moved.",
     "404.cta": "Back to Home",
+
+    // Static pages — About
+    "about.title": "About ZapFile",
+    "about.intro":
+      "ZapFile is a collection of free, fast, and private file tools that run entirely in your browser. No uploads, no servers, no accounts needed. Just open a tool and start working.",
+    "about.missionTitle": "Our Mission",
+    "about.missionBody":
+      "We believe everyone should have access to powerful file tools without sacrificing their privacy or paying for subscriptions. ZapFile provides a comprehensive suite of tools for working with PDFs, images, audio, and more — completely free and accessible to everyone.",
+    "about.howTitle": "How It Works",
+    "about.howBody":
+      "Everything processes directly in your browser using modern web technologies. When you compress an image or merge PDFs, your files never leave your device. There are no uploads to remote servers and no waiting for server-side processing. This means your files stay private, and tools work even without an internet connection after the page loads.",
+    "about.privacyTitle": "Privacy First",
+    "about.privacyBody":
+      "Privacy is not just a feature — it's the foundation of ZapFile. We don't collect your data, we don't process your files on our servers, and we don't require you to create an account. Your files are yours and they stay on your device.",
+    "about.builtTitle": "Built With",
+    "about.builtBody":
+      "ZapFile is built with Next.js and leverages powerful browser APIs including Canvas, Web Audio, and WebAssembly. These technologies enable us to perform complex file operations — from image processing to PDF manipulation — entirely client-side.",
+    "about.opensourceTitle": "Open Source",
+    "about.opensourceBody":
+      "ZapFile is an open-source project. We believe in transparency and community-driven development. You can review the code, suggest improvements, or contribute new tools. Building in the open ensures that our privacy promises are verifiable by anyone.",
+
+    // Blog index
+    "blog.subtitle":
+      "Guides, comparisons, and tips about working with files online. Everything from image compression to PDF merging to staying private on the web.",
+    "blog.backHome": "Back to Home",
+
+    // Terms
+    "terms.title": "Terms of Service",
+    "terms.updated": "Last updated: January 2025",
+    "terms.acceptanceTitle": "Acceptance of Terms",
+    "terms.acceptanceBody":
+      "By accessing and using ZapFile (zapfile.xyz), you accept and agree to these terms of service.",
+    "terms.serviceTitle": "Service Description",
+    "terms.serviceBody":
+      "ZapFile provides free, browser-based file processing tools. All file processing occurs locally in your web browser. No files are uploaded to our servers.",
+    "terms.disclaimerTitle": "Disclaimer",
+    "terms.disclaimerBody":
+      'The service is provided "as is" without warranties of any kind. We do not guarantee the accuracy or reliability of any file processing results. Always keep backups of your original files.',
+    "terms.liabilityTitle": "Limitation of Liability",
+    "terms.liabilityBody":
+      "ZapFile shall not be liable for any damages arising from the use of this service, including but not limited to data loss or corruption.",
+    "terms.changesTitle": "Changes",
+    "terms.changesBody":
+      "We reserve the right to modify these terms at any time. Continued use of the service constitutes acceptance of the updated terms.",
+
+    // Privacy
+    "privacy.title": "Privacy Policy",
+    "privacy.updated": "Last updated: January 2025",
+    "privacy.mattersTitle": "Your Privacy Matters",
+    "privacy.mattersBody":
+      "ZapFile is designed with privacy as a core principle. All file processing happens entirely in your web browser. Your files are never uploaded to any server.",
+    "privacy.noCollectTitle": "Data We Don't Collect",
+    "privacy.noCollect1": "We do not upload, store, or access your files",
+    "privacy.noCollect2": "We do not track the content of files you process",
+    "privacy.noCollect3":
+      "We do not require account creation or personal information",
+    "privacy.mayCollectTitle": "Data We May Collect",
+    "privacy.mayCollect1":
+      "Anonymous usage analytics (page views, tool usage counts) to improve our service",
+    "privacy.mayCollect2":
+      "Standard web server logs (IP address, browser type) for security purposes",
+    "privacy.thirdPartyTitle": "Third-Party Services",
+    "privacy.thirdPartyBody":
+      "We may use Google AdSense for advertising, which uses cookies to serve relevant ads. You can manage your ad preferences through Google's ad settings.",
+    "privacy.contactTitle": "Contact",
+    "privacy.contactBody":
+      "If you have questions about this privacy policy, please contact us at privacy@zapfile.xyz.",
 };
 
 function mergeLocale(
@@ -2289,6 +2356,68 @@ const translations: Record<Locale, Record<string, string>> = {
     "404.title": "Sayfa bulunamadı",
     "404.subtitle": "Aradığınız sayfa mevcut değil veya taşınmış olabilir.",
     "404.cta": "Ana Sayfaya Dön",
+
+    "about.title": "ZapFile Hakkında",
+    "about.intro":
+      "ZapFile; tamamen tarayıcınızda çalışan ücretsiz, hızlı ve gizli dosya araçları koleksiyonudur. Yükleme yok, sunucu yok, hesap gerekmez. Bir aracı açıp hemen kullanmaya başlayın.",
+    "about.missionTitle": "Misyonumuz",
+    "about.missionBody":
+      "Herkesin güçlü dosya araçlarına gizlilikten ödün vermeden ve abonelik ödemeden erişebilmesi gerektiğine inanıyoruz. ZapFile; PDF, görüntü, ses ve daha fazlası için kapsamlı bir araç seti sunar — tamamen ücretsiz ve herkes için erişilebilir.",
+    "about.howTitle": "Nasıl Çalışır",
+    "about.howBody":
+      "Her şey modern web teknolojileriyle doğrudan tarayıcınızda işlenir. Bir görüntü sıkıştırdığınızda veya PDF birleştirdiğinizde dosyalarınız cihazınızdan çıkmaz. Uzak sunucuya yükleme yok, sunucu tarafı işlem beklemesi yok. Dosyalarınız gizli kalır; sayfa yüklendikten sonra internet olmadan da araçlar çalışabilir.",
+    "about.privacyTitle": "Önce Gizlilik",
+    "about.privacyBody":
+      "Gizlilik yalnızca bir özellik değil — ZapFile'ın temelidir. Verilerinizi toplamıyoruz, dosyalarınızı sunucularımızda işlemiyoruz ve hesap oluşturmanızı istemiyoruz. Dosyalarınız size aittir ve cihazınızda kalır.",
+    "about.builtTitle": "Neyle Yapıldı",
+    "about.builtBody":
+      "ZapFile Next.js ile geliştirilir; Canvas, Web Audio ve WebAssembly gibi tarayıcı API'lerinden yararlanır. Bu teknolojiler; görüntü işlemeden PDF düzenlemeye kadar karmaşık işlemleri tamamen istemci tarafında yapmamızı sağlar.",
+    "about.opensourceTitle": "Açık Kaynak",
+    "about.opensourceBody":
+      "ZapFile açık kaynaklı bir projedir. Şeffaflığa ve topluluk odaklı geliştirmeye inanıyoruz. Kodu inceleyebilir, iyileştirme önerebilir veya yeni araçlarla katkıda bulunabilirsiniz. Açık geliştirme, gizlilik vaatlerimizin herkes tarafından doğrulanabilmesini sağlar.",
+
+    "blog.subtitle":
+      "Çevrimiçi dosyalarla çalışma hakkında rehberler, karşılaştırmalar ve ipuçları. Görüntü sıkıştırmadan PDF birleştirmeye ve web'de gizli kalmaya kadar.",
+    "blog.backHome": "Ana sayfaya dön",
+
+    "terms.title": "Kullanım Şartları",
+    "terms.updated": "Son güncelleme: Ocak 2025",
+    "terms.acceptanceTitle": "Şartların Kabulü",
+    "terms.acceptanceBody":
+      "ZapFile'ı (zapfile.xyz) kullanarak bu kullanım şartlarını kabul etmiş olursunuz.",
+    "terms.serviceTitle": "Hizmetin Tanımı",
+    "terms.serviceBody":
+      "ZapFile; ücretsiz, tarayıcı tabanlı dosya işleme araçları sunar. Tüm işlem web tarayıcınızda yerel olarak gerçekleşir. Dosyalar sunucularımıza yüklenmez.",
+    "terms.disclaimerTitle": "Sorumluluk Reddi",
+    "terms.disclaimerBody":
+      "Hizmet \"olduğu gibi\" sunulur; herhangi bir garanti verilmez. Dosya işleme sonuçlarının doğruluğu veya güvenilirliği garanti edilmez. Orijinal dosyalarınızın yedeğini her zaman tutun.",
+    "terms.liabilityTitle": "Sorumluluğun Sınırlandırılması",
+    "terms.liabilityBody":
+      "ZapFile; bu hizmetin kullanımından kaynaklanan veri kaybı veya bozulması dahil hiçbir zarardan sorumlu tutulamaz.",
+    "terms.changesTitle": "Değişiklikler",
+    "terms.changesBody":
+      "Bu şartları istediğimiz zaman değiştirme hakkını saklı tutarız. Hizmetin kullanılmaya devam edilmesi güncellenmiş şartların kabulü sayılır.",
+
+    "privacy.title": "Gizlilik Politikası",
+    "privacy.updated": "Son güncelleme: Ocak 2025",
+    "privacy.mattersTitle": "Gizliliğiniz Önemli",
+    "privacy.mattersBody":
+      "ZapFile gizliliği temel ilke olarak kurgulanmıştır. Tüm dosya işlemi tamamen web tarayıcınızda gerçekleşir. Dosyalarınız hiçbir sunucuya yüklenmez.",
+    "privacy.noCollectTitle": "Toplamadığımız Veriler",
+    "privacy.noCollect1": "Dosyalarınızı yüklemez, saklamaz veya erişemeyiz",
+    "privacy.noCollect2": "İşlediğiniz dosyaların içeriğini izlemeyiz",
+    "privacy.noCollect3": "Hesap oluşturmanızı veya kişisel bilgi vermenizi istemeyiz",
+    "privacy.mayCollectTitle": "Toplayabileceğimiz Veriler",
+    "privacy.mayCollect1":
+      "Hizmeti geliştirmek için anonim kullanım istatistikleri (sayfa görüntülemeleri, araç kullanım sayıları)",
+    "privacy.mayCollect2":
+      "Güvenlik amaçlı standart web sunucu günlükleri (IP adresi, tarayıcı türü)",
+    "privacy.thirdPartyTitle": "Üçüncü Taraf Hizmetleri",
+    "privacy.thirdPartyBody":
+      "Reklam için Google AdSense kullanabiliriz; çerezlerle ilgili reklamlar sunulabilir. Reklam tercihlerinizi Google reklam ayarlarından yönetebilirsiniz.",
+    "privacy.contactTitle": "İletişim",
+    "privacy.contactBody":
+      "Bu gizlilik politikası hakkında sorularınız için privacy@zapfile.xyz adresinden bize ulaşın.",
   },
   de: {
     "nav.allTools": "Alle Werkzeuge",
@@ -3283,6 +3412,68 @@ const translations: Record<Locale, Record<string, string>> = {
     "404.title": "Seite nicht gefunden",
     "404.subtitle": "Die gesuchte Seite existiert nicht oder wurde verschoben.",
     "404.cta": "Zurück zur Startseite",
+
+    "about.title": "Über ZapFile",
+    "about.intro":
+      "ZapFile ist eine Sammlung kostenloser, schneller und privater Datei-Tools, die vollständig in Ihrem Browser laufen. Keine Uploads, keine Server, keine Konten nötig. Einfach ein Tool öffnen und loslegen.",
+    "about.missionTitle": "Unsere Mission",
+    "about.missionBody":
+      "Wir glauben, dass jeder Zugang zu leistungsstarken Datei-Tools haben sollte, ohne Privatsphäre zu opfern oder Abos zu zahlen. ZapFile bietet eine umfassende Palette für PDFs, Bilder, Audio und mehr — völlig kostenlos und für alle zugänglich.",
+    "about.howTitle": "So funktioniert es",
+    "about.howBody":
+      "Alles wird direkt in Ihrem Browser mit modernen Webtechnologien verarbeitet. Wenn Sie ein Bild komprimieren oder PDFs zusammenführen, verlassen Ihre Dateien Ihr Gerät nicht. Keine Uploads auf Remote-Server und kein Warten auf serverseitige Verarbeitung. Ihre Dateien bleiben privat; nach dem Laden der Seite funktionieren die Tools oft auch offline.",
+    "about.privacyTitle": "Privatsphäre zuerst",
+    "about.privacyBody":
+      "Privatsphäre ist nicht nur ein Feature — sie ist die Grundlage von ZapFile. Wir sammeln Ihre Daten nicht, verarbeiten Ihre Dateien nicht auf unseren Servern und verlangen kein Konto. Ihre Dateien gehören Ihnen und bleiben auf Ihrem Gerät.",
+    "about.builtTitle": "Technik",
+    "about.builtBody":
+      "ZapFile ist mit Next.js gebaut und nutzt leistungsstarke Browser-APIs wie Canvas, Web Audio und WebAssembly. So können wir komplexe Dateioperationen — von Bildverarbeitung bis PDF — vollständig clientseitig ausführen.",
+    "about.opensourceTitle": "Open Source",
+    "about.opensourceBody":
+      "ZapFile ist ein Open-Source-Projekt. Wir setzen auf Transparenz und Community-Entwicklung. Sie können den Code prüfen, Verbesserungen vorschlagen oder neue Tools beitragen. Offene Entwicklung macht unsere Datenschutzversprechen für jeden nachvollziehbar.",
+
+    "blog.subtitle":
+      "Anleitungen, Vergleiche und Tipps zum Arbeiten mit Dateien online — von Bildkompression über PDF-Zusammenführung bis zu mehr Privatsphäre im Web.",
+    "blog.backHome": "Zurück zur Startseite",
+
+    "terms.title": "Nutzungsbedingungen",
+    "terms.updated": "Zuletzt aktualisiert: Januar 2025",
+    "terms.acceptanceTitle": "Annahme der Bedingungen",
+    "terms.acceptanceBody":
+      "Durch den Zugriff auf und die Nutzung von ZapFile (zapfile.xyz) akzeptieren Sie diese Nutzungsbedingungen.",
+    "terms.serviceTitle": "Leistungsbeschreibung",
+    "terms.serviceBody":
+      "ZapFile bietet kostenlose, browserbasierte Dateiverarbeitung. Die gesamte Verarbeitung erfolgt lokal in Ihrem Webbrowser. Dateien werden nicht auf unsere Server hochgeladen.",
+    "terms.disclaimerTitle": "Haftungsausschluss",
+    "terms.disclaimerBody":
+      "Der Dienst wird „wie besehen“ ohne Gewährleistung jeglicher Art bereitgestellt. Wir garantieren nicht die Genauigkeit oder Zuverlässigkeit von Ergebnissen. Bewahren Sie immer Backups Ihrer Originaldateien auf.",
+    "terms.liabilityTitle": "Haftungsbeschränkung",
+    "terms.liabilityBody":
+      "ZapFile haftet nicht für Schäden aus der Nutzung dieses Dienstes, einschließlich Datenverlust oder -beschädigung.",
+    "terms.changesTitle": "Änderungen",
+    "terms.changesBody":
+      "Wir behalten uns vor, diese Bedingungen jederzeit zu ändern. Die fortgesetzte Nutzung gilt als Annahme der aktualisierten Bedingungen.",
+
+    "privacy.title": "Datenschutzerklärung",
+    "privacy.updated": "Zuletzt aktualisiert: Januar 2025",
+    "privacy.mattersTitle": "Ihre Privatsphäre zählt",
+    "privacy.mattersBody":
+      "ZapFile ist mit Fokus auf Datenschutz entwickelt. Die gesamte Dateiverarbeitung erfolgt in Ihrem Webbrowser. Ihre Dateien werden nicht auf Server hochgeladen.",
+    "privacy.noCollectTitle": "Daten, die wir nicht erheben",
+    "privacy.noCollect1": "Wir laden, speichern oder greifen nicht auf Ihre Dateien zu",
+    "privacy.noCollect2": "Wir verfolgen nicht den Inhalt Ihrer verarbeiteten Dateien",
+    "privacy.noCollect3": "Wir verlangen keine Kontenerstellung oder persönliche Daten",
+    "privacy.mayCollectTitle": "Daten, die wir erheben können",
+    "privacy.mayCollect1":
+      "Anonyme Nutzungsstatistiken (Seitenaufrufe, Tool-Nutzung) zur Verbesserung des Dienstes",
+    "privacy.mayCollect2":
+      "Standard-Webserver-Logs (IP-Adresse, Browsertyp) zu Sicherheitszwecken",
+    "privacy.thirdPartyTitle": "Drittanbieter",
+    "privacy.thirdPartyBody":
+      "Wir können Google AdSense für Werbung nutzen; Cookies können relevante Anzeigen liefern. Einstellungen können Sie in den Google-Werbeeinstellungen verwalten.",
+    "privacy.contactTitle": "Kontakt",
+    "privacy.contactBody":
+      "Bei Fragen zu dieser Datenschutzerklärung kontaktieren Sie uns unter privacy@zapfile.xyz.",
   },
   fr: {
     "nav.allTools": "Tous les outils",
@@ -4278,6 +4469,68 @@ const translations: Record<Locale, Record<string, string>> = {
     "404.title": "Page non trouvée",
     "404.subtitle": "La page que vous recherchez n'existe pas ou a été déplacée.",
     "404.cta": "Retour à l'accueil",
+
+    "about.title": "À propos de ZapFile",
+    "about.intro":
+      "ZapFile est une collection d'outils de fichiers gratuits, rapides et privés qui s'exécutent entièrement dans votre navigateur. Pas d'envoi vers un serveur, pas de compte requis. Ouvrez un outil et commencez.",
+    "about.missionTitle": "Notre mission",
+    "about.missionBody":
+      "Nous pensons que tout le monde devrait avoir accès à des outils puissants sans sacrifier la vie privée ni payer un abonnement. ZapFile propose une suite complète pour les PDF, images, audio et plus — entièrement gratuite et accessible à tous.",
+    "about.howTitle": "Fonctionnement",
+    "about.howBody":
+      "Tout est traité directement dans votre navigateur avec les technologies web modernes. Lorsque vous compressez une image ou fusionnez des PDF, vos fichiers ne quittent pas votre appareil. Pas d'envoi vers des serveurs distants ni d'attente de traitement côté serveur. Vos fichiers restent privés ; les outils fonctionnent souvent hors ligne après le chargement de la page.",
+    "about.privacyTitle": "La confidentialité d'abord",
+    "about.privacyBody":
+      "La confidentialité n'est pas qu'une fonctionnalité — c'est le fondement de ZapFile. Nous ne collectons pas vos données, nous ne traitons pas vos fichiers sur nos serveurs et nous n'exigeons pas de compte. Vos fichiers sont à vous et restent sur votre appareil.",
+    "about.builtTitle": "Technologies",
+    "about.builtBody":
+      "ZapFile est construit avec Next.js et exploite les API du navigateur : Canvas, Web Audio, WebAssembly. Ces technologies permettent des opérations complexes — du traitement d'images à la manipulation de PDF — entièrement côté client.",
+    "about.opensourceTitle": "Open source",
+    "about.opensourceBody":
+      "ZapFile est un projet open source. Nous croyons en la transparence et au développement communautaire. Vous pouvez examiner le code, proposer des améliorations ou contribuer. Le développement ouvert rend nos promesses de confidentialité vérifiables.",
+
+    "blog.subtitle":
+      "Guides, comparaisons et astuces pour travailler avec des fichiers en ligne — de la compression d'images à la fusion de PDF et à la confidentialité sur le web.",
+    "blog.backHome": "Retour à l'accueil",
+
+    "terms.title": "Conditions d'utilisation",
+    "terms.updated": "Dernière mise à jour : janvier 2025",
+    "terms.acceptanceTitle": "Acceptation des conditions",
+    "terms.acceptanceBody":
+      "En accédant à ZapFile (zapfile.xyz), vous acceptez ces conditions d'utilisation.",
+    "terms.serviceTitle": "Description du service",
+    "terms.serviceBody":
+      "ZapFile fournit des outils de traitement de fichiers gratuits dans le navigateur. Tout le traitement a lieu localement dans votre navigateur web. Aucun fichier n'est téléversé sur nos serveurs.",
+    "terms.disclaimerTitle": "Avertissement",
+    "terms.disclaimerBody":
+      "Le service est fourni « tel quel » sans garantie d'aucune sorte. Nous ne garantissons pas l'exactitude des résultats. Conservez toujours des copies de vos fichiers originaux.",
+    "terms.liabilityTitle": "Limitation de responsabilité",
+    "terms.liabilityBody":
+      "ZapFile ne saurait être tenu responsable de tout dommage résultant de l'utilisation du service, y compris la perte ou la corruption de données.",
+    "terms.changesTitle": "Modifications",
+    "terms.changesBody":
+      "Nous nous réservons le droit de modifier ces conditions à tout moment. L'utilisation continue vaut acceptation des conditions mises à jour.",
+
+    "privacy.title": "Politique de confidentialité",
+    "privacy.updated": "Dernière mise à jour : janvier 2025",
+    "privacy.mattersTitle": "Votre vie privée compte",
+    "privacy.mattersBody":
+      "ZapFile est conçu avec la confidentialité comme principe central. Tout le traitement a lieu dans votre navigateur web. Vos fichiers ne sont jamais téléversés sur un serveur.",
+    "privacy.noCollectTitle": "Données que nous ne collectons pas",
+    "privacy.noCollect1": "Nous ne téléversons, stockons ni n'accédons à vos fichiers",
+    "privacy.noCollect2": "Nous ne suivons pas le contenu des fichiers que vous traitez",
+    "privacy.noCollect3": "Nous n'exigeons pas de compte ni d'informations personnelles",
+    "privacy.mayCollectTitle": "Données que nous pouvons collecter",
+    "privacy.mayCollect1":
+      "Statistiques d'utilisation anonymes (pages vues, utilisation des outils) pour améliorer le service",
+    "privacy.mayCollect2":
+      "Journaux serveur standards (adresse IP, type de navigateur) à des fins de sécurité",
+    "privacy.thirdPartyTitle": "Services tiers",
+    "privacy.thirdPartyBody":
+      "Nous pouvons utiliser Google AdSense pour la publicité, avec des cookies pour des annonces pertinentes. Gérez vos préférences dans les paramètres publicitaires Google.",
+    "privacy.contactTitle": "Contact",
+    "privacy.contactBody":
+      "Pour toute question sur cette politique : privacy@zapfile.xyz.",
   },
   es: mergeLocale(en, localeOverrides.es),
   pt: mergeLocale(en, localeOverrides.pt),

@@ -19,8 +19,6 @@ const resourceLinks = [
   { key: "footer.allTools", href: "/tools" },
   { key: "nav.about", href: "/about" },
   { key: "nav.blog", href: "/blog" },
-  { key: "nav.rssFeed", href: "/feed.xml" },
-  { key: "footer.compare", href: "/compare/zapfile-vs-smallpdf" },
   { key: "footer.privacy", href: "/privacy" },
   { key: "footer.terms", href: "/terms" },
 ];

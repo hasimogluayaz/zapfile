@@ -16,7 +16,6 @@ const releases = [
     items: [
       { type: "new", text: "ASCII Art Generator & Audio Waveform tools — full pages and OG metadata" },
       { type: "new", text: "30+ SEO blog articles (guides for PDF, images, dev tools, comparisons)" },
-      { type: "new", text: "ZapFile vs Smallpdf comparison page for branded search" },
       { type: "new", text: "Per-tool Open Graph images via /api/og and hreflang in metadata" },
       { type: "improved", text: "Compress Image: before/after slider, URL quality/maxDim params, share link, Ctrl+V paste on dropzones" },
       { type: "improved", text: "Pin favorite tools (localStorage), skip-to-content link, high-contrast mode, language radiogroup ARIA" },

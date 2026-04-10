@@ -334,7 +334,7 @@ Use the right tool for each direction in your workflow.`,
 
 ## ZapFile
 
-[ZapFile](/compare/zapfile-vs-smallpdf) compares approaches with privacy in mind.
+ZapFile is built so your files stay on your device — privacy by design.
 
 ## Summary
 
