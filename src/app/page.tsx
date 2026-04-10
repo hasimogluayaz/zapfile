@@ -43,8 +43,8 @@ export default function Home() {
 
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-t-primary leading-tight">
               {t("hero.title1")} <br className="hidden sm:block" />
-              <span className="gradient-text">{t("hero.title2")}</span>{" "}
-              {t("hero.title3") && t("hero.title3")}
+              <span className="gradient-text">{t("hero.title2")}</span>
+              {t("hero.title3") ? ` ${t("hero.title3")}` : ""}
             </h1>
 
             <p className="mt-5 text-[16px] text-t-secondary max-w-lg mx-auto leading-relaxed">

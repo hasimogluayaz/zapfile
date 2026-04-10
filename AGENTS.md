@@ -39,7 +39,7 @@ src/
 │   ├── tools.ts             # 50 tools registry (slug, name, description, category, acceptedFormats)
 │   ├── tool-i18n.ts         # toolField() helper for localized tool names/descriptions
 │   ├── i18n.tsx             # Full dictionaries (EN/TR/DE/FR) + context/hooks
-│   ├── i18n-overrides.ts    # Partial translations for ES/PT/IT/JA/AR
+│   ├── i18n-overrides.ts    # Partial translations for ES/PT/IT/JA
 │   └── locales.ts           # Locale type, SUPPORTED_LOCALES, LOCALE_LABELS, isRtlLocale
 └── app/globals.css          # Theme variables, utility classes (.glass, .gradient-text, etc.)
 ```
@@ -47,12 +47,12 @@ src/
 ## i18n System
 
 - Full dictionaries in `src/lib/i18n.tsx` for: EN, TR, DE, FR
-- Partial overrides in `src/lib/i18n-overrides.ts` for: ES, PT, IT, JA, AR (falls back to English)
+- ES, PT, IT, JA: merged at load time with `mergeLocale(en, localeOverrides.*)` so every key exists; missing strings use English until translated in `i18n-overrides.ts`
 - `useI18n()` hook returns `{ locale, setLocale, t }`
 - Tool names/descriptions keyed as `tool.[slug].name` / `tool.[slug].desc`
 - `toolField()` helper in `tool-i18n.ts` for fallback-aware tool metadata
 - Locale priority: explicit user choice (localStorage) → URL ?lang= param → geo cookie → browser lang → English
-- RTL support for Arabic (`dir="rtl"` on `<html>`)
+- `document.documentElement.dir` is set to `ltr` for all locales (no RTL UI language enabled)
 
 ## Tools
 

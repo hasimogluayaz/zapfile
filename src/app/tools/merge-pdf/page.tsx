@@ -307,13 +307,13 @@ export default function MergePdfPage() {
               <DownloadButton
                 blob={resultBlob}
                 filename="merged.pdf"
-                label="Download Merged PDF"
+                label={t("merge.download")}
               />
               <button
                 onClick={handleReset}
                 className="px-6 py-3 rounded-xl font-semibold text-brand-muted border border-white/10 hover:text-brand-text hover:border-white/20 transition-all duration-300"
               >
-                Merge More Files
+                {t("merge.more")}
               </button>
             </>
           )}

@@ -221,7 +221,7 @@ export default function ImageToPdfPage() {
 
             {resultBlob && (
               <div className="flex flex-wrap gap-4">
-                <DownloadButton blob={resultBlob} filename="images.pdf" label="Download PDF" />
+                <DownloadButton blob={resultBlob} filename="images.pdf" label={t("ui.downloadPdf")} />
                 <button
                   onClick={() => setResultBlob(null)}
                   className="px-6 py-3 rounded-xl font-semibold text-brand-text bg-white/5 hover:bg-white/10 transition-colors"

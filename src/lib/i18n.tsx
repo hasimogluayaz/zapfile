@@ -8,18 +8,13 @@ import {
   useContext,
 } from "react";
 import type { Locale } from "./locales";
-import {
-  SUPPORTED_LOCALES,
-  isRtlLocale,
-  LOCALES_FULL_DICTIONARY,
-} from "./locales";
+import { SUPPORTED_LOCALES, isRtlLocale } from "./locales";
 import { localeOverrides } from "./i18n-overrides";
 
 export type { Locale } from "./locales";
 
 // ─── Translations ───────────────────────────────────────────────
-const translations: Record<Locale, Record<string, string>> = {
-  en: {
+const en: Record<string, string> = {
     // Header
     "nav.allTools": "All Tools",
     "nav.browseAll": "Browse All",
@@ -302,6 +297,13 @@ const translations: Record<Locale, Record<string, string>> = {
     "ui.failedExport": "Failed to export image.",
     "ui.original": "Original",
     "ui.lockAspect": "Lock aspect ratio",
+    "ui.results": "Results",
+    "ui.downloadPdf": "Download PDF",
+    "a11y.skipToContent": "Skip to content",
+    "error.boundary.title": "Something went wrong",
+    "error.boundary.message":
+      "An unexpected error occurred. Please refresh the page and try again.",
+    "error.boundary.refresh": "Refresh page",
 
     // Merge PDF
     "merge.filesToMerge": "Files to Merge ({count})",
@@ -423,6 +425,10 @@ const translations: Record<Locale, Record<string, string>> = {
     "convimg.download": "Download Converted Image",
     "convimg.invalid": "Please select valid image files.",
     "convimg.selected": "{count} images selected",
+    "convroute.dropHint": "Drop your {from} files here or click to browse",
+    "convroute.filesSelected": "{count} file(s) selected",
+    "convroute.outputFormat": "Output Format",
+    "convroute.convertLabel": "Convert to {format}",
 
     // Crop Image
     "crop.free": "Free",
@@ -1136,7 +1142,21 @@ const translations: Record<Locale, Record<string, string>> = {
     "404.subtitle":
       "The page you're looking for doesn't exist or has been moved.",
     "404.cta": "Back to Home",
-  },
+};
+
+function mergeLocale(
+  base: Record<string, string>,
+  ov: Record<string, string> | undefined
+): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const key of Object.keys(base)) {
+    out[key] = ov?.[key] ?? base[key]!;
+  }
+  return out;
+}
+
+const translations: Record<Locale, Record<string, string>> = {
+  en,
   tr: {
     // Header
     "nav.allTools": "Tüm Araçlar",
@@ -1188,7 +1208,7 @@ const translations: Record<Locale, Record<string, string>> = {
     "tool.remove": "Kaldır",
     "tool.original": "Orijinal",
     "tool.result": "Sonuç",
-    "tool.saved": "Tasarruf",
+    "tool.saved": "Kazanılan",
 
     // Privacy section
     "home.privacy.badge": "Önce Gizlilik",
@@ -1425,6 +1445,13 @@ const translations: Record<Locale, Record<string, string>> = {
     "ui.failedExport": "Resim dışa aktarılamadı.",
     "ui.original": "Orijinal",
     "ui.lockAspect": "En boy oranını kilitle",
+    "ui.results": "Sonuçlar",
+    "ui.downloadPdf": "PDF İndir",
+    "a11y.skipToContent": "İçeriğe geç",
+    "error.boundary.title": "Bir sorun oluştu",
+    "error.boundary.message":
+      "Beklenmeyen bir hata oluştu. Sayfayı yenileyip tekrar deneyin.",
+    "error.boundary.refresh": "Sayfayı yenile",
 
     // Merge PDF
     "merge.filesToMerge": "Birleştirilecek Dosyalar ({count})",
@@ -1546,6 +1573,10 @@ const translations: Record<Locale, Record<string, string>> = {
     "convimg.download": "Dönüştürülmüş Resmi İndir",
     "convimg.invalid": "Lütfen geçerli resim dosyaları seçin.",
     "convimg.selected": "{count} resim seçildi",
+    "convroute.dropHint": "{from} dosyalarınızı buraya bırakın veya tıklayarak seçin",
+    "convroute.filesSelected": "{count} dosya seçildi",
+    "convroute.outputFormat": "Çıktı formatı",
+    "convroute.convertLabel": "{format} formatına dönüştür",
 
     // Crop Image
     "crop.free": "Serbest",
@@ -2075,7 +2106,7 @@ const translations: Record<Locale, Record<string, string>> = {
     "unit.millimeters": "Milimetre",
     "unit.meters": "Metre",
     "unit.inches": "İnç",
-    "unit.feet": "Feet",
+    "unit.feet": "Fit",
     "unit.yards": "Yard",
     "unit.grams": "Gram",
     "unit.kilograms": "Kilogram",
@@ -2499,6 +2530,13 @@ const translations: Record<Locale, Record<string, string>> = {
     "ui.failedExport": "Bild konnte nicht exportiert werden.",
     "ui.original": "Original",
     "ui.lockAspect": "Seitenverhältnis sperren",
+    "ui.results": "Ergebnisse",
+    "ui.downloadPdf": "PDF herunterladen",
+    "a11y.skipToContent": "Zum Inhalt springen",
+    "error.boundary.title": "Etwas ist schiefgelaufen",
+    "error.boundary.message":
+      "Ein unerwarteter Fehler ist aufgetreten. Bitte die Seite aktualisieren und es erneut versuchen.",
+    "error.boundary.refresh": "Seite aktualisieren",
     "merge.filesToMerge": "Zusammenzuführende Dateien ({count})",
     "merge.addPdf": "Bitte mindestens 2 PDF-Dateien zum Zusammenführen hinzufügen.",
     "merge.success": "{count} PDFs erfolgreich zu einem Dokument zusammengeführt.",
@@ -2604,6 +2642,10 @@ const translations: Record<Locale, Record<string, string>> = {
     "convimg.download": "Konvertiertes Bild herunterladen",
     "convimg.invalid": "Bitte wähle gültige Bilddateien aus.",
     "convimg.selected": "{count} Bilder ausgewählt",
+    "convroute.dropHint": "{from}-Dateien hier ablegen oder klicken zum Durchsuchen",
+    "convroute.filesSelected": "{count} Datei(en) ausgewählt",
+    "convroute.outputFormat": "Ausgabeformat",
+    "convroute.convertLabel": "In {format} konvertieren",
     "crop.free": "Frei",
     "crop.selection": "Auswahl: {w} × {h}px",
     "crop.from": "(von {x}, {y})",
@@ -3482,6 +3524,13 @@ const translations: Record<Locale, Record<string, string>> = {
     "ui.failedExport": "Échec de l'exportation de l'image.",
     "ui.original": "Original",
     "ui.lockAspect": "Verrouiller le rapport d'aspect",
+    "ui.results": "Résultats",
+    "ui.downloadPdf": "Télécharger le PDF",
+    "a11y.skipToContent": "Aller au contenu",
+    "error.boundary.title": "Une erreur s'est produite",
+    "error.boundary.message":
+      "Une erreur inattendue s'est produite. Actualisez la page et réessayez.",
+    "error.boundary.refresh": "Actualiser la page",
     "merge.filesToMerge": "Fichiers à fusionner ({count})",
     "merge.addPdf": "Veuillez ajouter au moins 2 fichiers PDF à fusionner.",
     "merge.success": "{count} PDFs fusionnés avec succès en un document.",
@@ -3587,6 +3636,11 @@ const translations: Record<Locale, Record<string, string>> = {
     "convimg.download": "Télécharger l'image convertie",
     "convimg.invalid": "Veuillez sélectionner des fichiers image valides.",
     "convimg.selected": "{count} images sélectionnées",
+    "convroute.dropHint":
+      "Déposez vos fichiers {from} ici ou cliquez pour parcourir",
+    "convroute.filesSelected": "{count} fichier(s) sélectionné(s)",
+    "convroute.outputFormat": "Format de sortie",
+    "convroute.convertLabel": "Convertir en {format}",
     "crop.free": "Libre",
     "crop.selection": "Sélection : {w} × {h}px",
     "crop.from": "(depuis {x}, {y})",
@@ -4225,25 +4279,23 @@ const translations: Record<Locale, Record<string, string>> = {
     "404.subtitle": "La page que vous recherchez n'existe pas ou a été déplacée.",
     "404.cta": "Retour à l'accueil",
   },
-  es: {},
-  pt: {},
-  it: {},
-  ja: {},
-  ar: {},
+  es: mergeLocale(en, localeOverrides.es),
+  pt: mergeLocale(en, localeOverrides.pt),
+  it: mergeLocale(en, localeOverrides.it),
+  ja: mergeLocale(en, localeOverrides.ja),
 };
 
-/** One language per string: full locales use i18n blocks; partial locales use overrides then English (never mix). */
+/** Every locale has a full key set; merged locales (es/pt/it/ja) inherit English for keys not in i18n-overrides. */
 function resolveTranslation(locale: Locale, key: string): string {
-  let out: string | undefined;
-  if (LOCALES_FULL_DICTIONARY.includes(locale)) {
-    out = translations[locale][key] ?? translations.en[key];
-  } else {
-    out = localeOverrides[locale]?.[key] ?? translations.en[key];
+  const fromLocale = translations[locale][key];
+  if (fromLocale !== undefined) {
+    return fromLocale;
   }
-  if (out === undefined || out === "") {
-    out = translations.en[key] ?? key;
+  const fromEn = translations.en[key];
+  if (fromEn !== undefined) {
+    return fromEn;
   }
-  return out;
+  return key;
 }
 
 // ─── Context ────────────────────────────────────────────────────
@@ -4277,7 +4329,6 @@ function localeFromBrowserLang(): Locale | null {
     ["pt", "pt"],
     ["it", "it"],
     ["ja", "ja"],
-    ["ar", "ar"],
   ];
   for (const [prefix, loc] of map) {
     if (browserLang.startsWith(prefix)) return loc;

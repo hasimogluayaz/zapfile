@@ -18,7 +18,6 @@ const FLAG: Record<Locale, string> = {
   pt: "🇧🇷",
   it: "🇮🇹",
   ja: "🇯🇵",
-  ar: "🇸🇦",
 };
 
 interface LanguageSwitcherProps {

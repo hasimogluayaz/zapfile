@@ -61,10 +61,10 @@ export default function ClientProviders({
   }, []);
 
   return (
-    <ErrorBoundary>
-      <ThemeContext.Provider value={{ theme, toggleTheme }}>
-        <I18nProvider>{children}</I18nProvider>
-      </ThemeContext.Provider>
-    </ErrorBoundary>
+    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+      <I18nProvider>
+        <ErrorBoundary>{children}</ErrorBoundary>
+      </I18nProvider>
+    </ThemeContext.Provider>
   );
 }

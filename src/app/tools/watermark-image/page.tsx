@@ -388,13 +388,13 @@ export default function WatermarkImagePage() {
                   <DownloadButton
                     blob={resultBlob}
                     filename={`${getFileNameWithoutExtension(file.name)}-watermarked.png`}
-                    label="Download Again"
+                    label={t("ui.downloadAgain")}
                   />
                   <button
                     onClick={reset}
                     className="px-6 py-2.5 rounded-xl text-[13px] font-semibold text-brand-muted bg-white/5 hover:bg-white/10 transition-colors"
                   >
-                    New Image
+                    {t("wm.newImage")}
                   </button>
                 </div>
               </div>

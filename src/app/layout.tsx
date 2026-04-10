@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Toaster } from "react-hot-toast";
 import ClientProviders from "@/components/ClientProviders";
+import SkipToContent from "@/components/SkipToContent";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
@@ -81,7 +82,6 @@ export const metadata: Metadata = {
       pt: `${SITE_URL}/?lang=pt`,
       it: `${SITE_URL}/?lang=it`,
       ja: `${SITE_URL}/?lang=ja`,
-      ar: `${SITE_URL}/?lang=ar`,
       "x-default": SITE_URL,
     },
   },
@@ -199,13 +199,8 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased min-h-screen flex flex-col">
-        <a
-          href="#main-content"
-          className="skip-link"
-        >
-          Skip to content
-        </a>
         <ClientProviders>
+          <SkipToContent />
           <Toaster
             position="bottom-right"
             toastOptions={{

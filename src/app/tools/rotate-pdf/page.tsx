@@ -306,7 +306,7 @@ export default function RotatePdfPage() {
                 <DownloadButton
                   blob={resultBlob}
                   filename={resultFilename}
-                  label={`Download (${formatFileSize(resultBlob.size)})`}
+                  label={`${t("ui.download")} (${formatFileSize(resultBlob.size)})`}
                 />
               )}
             </div>

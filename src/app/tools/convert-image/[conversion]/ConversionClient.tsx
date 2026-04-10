@@ -8,6 +8,7 @@ import DownloadButton from "@/components/DownloadButton";
 import FileSizeCompare from "@/components/FileSizeCompare";
 import { formatFileSize, getFileNameWithoutExtension } from "@/lib/utils";
 import type { ConversionDef } from "@/lib/conversions";
+import { useI18n } from "@/lib/i18n";
 
 type OutputFormat = "png" | "jpeg" | "webp";
 
@@ -27,6 +28,7 @@ export default function ConversionClient({
 }: {
   conversion: ConversionDef;
 }) {
+  const { t } = useI18n();
   const [files, setFiles] = useState<File[]>([]);
   const [quality, setQuality] = useState(0.92);
   const [processing, setProcessing] = useState(false);
@@ -41,13 +43,13 @@ export default function ConversionClient({
   const handleFilesSelected = useCallback((selected: File[]) => {
     const imageFiles = selected.filter((f) => f.type.startsWith("image/"));
     if (imageFiles.length === 0) {
-      toast.error("Please select valid image files.");
+      toast.error(t("convimg.invalid"));
       return;
     }
     setFiles(imageFiles);
     setResults([]);
     setZipBlob(null);
-  }, []);
+  }, [t]);
 
   const handleProcess = async () => {
     if (files.length === 0) return;
@@ -111,11 +113,11 @@ export default function ConversionClient({
       }
 
       toast.success(
-        `Converted ${converted.length} file${converted.length > 1 ? "s" : ""} to ${format.label}`
+        t("convimg.success", { count: converted.length, format: format.label })
       );
     } catch (error) {
       console.error(error);
-      toast.error("Conversion failed. Please try again.");
+      toast.error(t("convimg.fail"));
     } finally {
       setProcessing(false);
     }
@@ -138,7 +140,7 @@ export default function ConversionClient({
           accept={conversion.acceptMap}
           multiple
           formats={[conversion.fromLabel]}
-          label={`Drop your ${conversion.fromLabel} files here or click to browse`}
+          label={t("convroute.dropHint", { from: conversion.fromLabel })}
         />
       ) : results.length === 0 ? (
         <>
@@ -146,13 +148,13 @@ export default function ConversionClient({
           <div className="glass rounded-2xl p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-t-primary font-medium">
-                {files.length} file{files.length > 1 ? "s" : ""} selected
+                {t("convroute.filesSelected", { count: files.length })}
               </h3>
               <button
                 onClick={reset}
                 className="text-sm text-t-tertiary hover:text-red-400 transition-colors"
               >
-                Clear All
+                {t("ui.clearAll")}
               </button>
             </div>
             <div className="space-y-2 max-h-48 overflow-y-auto">
@@ -174,7 +176,7 @@ export default function ConversionClient({
 
           {/* Output format indicator */}
           <div className="glass rounded-2xl p-6 space-y-4">
-            <h3 className="font-semibold text-t-primary">Output Format</h3>
+            <h3 className="font-semibold text-t-primary">{t("convroute.outputFormat")}</h3>
             <div className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-accent/10 border border-accent/20">
               <span className="text-sm font-bold text-accent">
                 {format.label}
@@ -185,7 +187,7 @@ export default function ConversionClient({
             {outputFormat !== "png" && (
               <div>
                 <div className="flex justify-between mb-2">
-                  <span className="text-sm text-t-secondary">Quality</span>
+                  <span className="text-sm text-t-secondary">{t("ui.quality")}</span>
                   <span className="text-sm font-medium text-t-primary">
                     {Math.round(quality * 100)}%
                   </span>
@@ -207,8 +209,8 @@ export default function ConversionClient({
             onClick={handleProcess}
             loading={processing}
             disabled={files.length === 0}
-            label={`Convert to ${format.label}`}
-            loadingLabel="Converting..."
+            label={t("convroute.convertLabel", { format: format.label })}
+            loadingLabel={t("ui.converting")}
           />
         </>
       ) : (
@@ -221,7 +223,7 @@ export default function ConversionClient({
           )}
 
           <div className="glass rounded-2xl p-6">
-            <h3 className="text-t-primary font-medium mb-4">Results</h3>
+            <h3 className="text-t-primary font-medium mb-4">{t("ui.results")}</h3>
             <div className="space-y-3">
               {results.map((r, i) => (
                 <div
@@ -245,20 +247,20 @@ export default function ConversionClient({
               <DownloadButton
                 blob={results[0].converted}
                 filename={`${getFileNameWithoutExtension(results[0].original.name)}${results[0].ext}`}
-                label="Download"
+                label={t("ui.download")}
               />
             ) : zipBlob ? (
               <DownloadButton
                 blob={zipBlob}
                 filename="converted-images.zip"
-                label="Download ZIP"
+                label={t("ui.downloadZip")}
               />
             ) : null}
             <button
               onClick={reset}
               className="px-6 py-3 rounded-xl font-semibold text-t-primary bg-bg-secondary hover:bg-border transition-colors"
             >
-              Convert More
+              {t("ui.convertMore")}
             </button>
           </div>
         </div>
