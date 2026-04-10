@@ -64,6 +64,12 @@ Canonical list: `src/lib/tools.ts` — 50 tools across 4 categories (PDF, Image,
 - Dark theme via `[data-theme="dark"]` selector
 - Theme-aware classes: `text-t-primary`, `text-t-secondary`, `bg-bg-secondary`, `border-border`
 
+## Canonical URL (`src/lib/site-url.ts`)
+
+- `SITE_URL` defaults to `https://www.zapfile.xyz` (matches Vercel apex→www redirect).
+- Override with `NEXT_PUBLIC_SITE_URL` in Vercel if the primary domain changes.
+- Sitemap, robots, metadata, and feeds must use `SITE_URL` so Google Search Console can fetch `/sitemap.xml` without a cross-host redirect (submit `https://www.zapfile.xyz/sitemap.xml` in GSC).
+
 ## Important Notes
 
 - File type validation is enforced in FileDropzone (double-checks extensions)

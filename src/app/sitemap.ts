@@ -2,9 +2,10 @@ import { MetadataRoute } from "next";
 import { tools } from "@/lib/tools";
 import { getImageConversions } from "@/lib/conversions";
 import { getAllPosts } from "@/lib/blog";
+import { SITE_URL } from "@/lib/site-url";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = "https://zapfile.xyz";
+  const baseUrl = SITE_URL;
 
   const toolPages = tools.map((tool) => ({
     url: `${baseUrl}/tools/${tool.slug}`,

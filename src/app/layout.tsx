@@ -4,10 +4,11 @@ import ClientProviders from "@/components/ClientProviders";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
+import { SITE_URL } from "@/lib/site-url";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://zapfile.xyz"),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "ZapFile - Free Online File Tools | Fast, Private, Browser-Based",
     template: "%s | ZapFile",
@@ -31,13 +32,13 @@ export const metadata: Metadata = {
     "crop image",
     "json formatter",
   ],
-  authors: [{ name: "ZapFile", url: "https://zapfile.xyz" }],
+  authors: [{ name: "ZapFile", url: SITE_URL }],
   creator: "ZapFile",
   publisher: "ZapFile",
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://zapfile.xyz",
+    url: SITE_URL,
     siteName: "ZapFile",
     title: "ZapFile - Free Online File Tools",
     description:
@@ -70,18 +71,18 @@ export const metadata: Metadata = {
     },
   },
   alternates: {
-    canonical: "https://zapfile.xyz",
+    canonical: SITE_URL,
     languages: {
-      en: "https://zapfile.xyz/?lang=en",
-      tr: "https://zapfile.xyz/?lang=tr",
-      de: "https://zapfile.xyz/?lang=de",
-      fr: "https://zapfile.xyz/?lang=fr",
-      es: "https://zapfile.xyz/?lang=es",
-      pt: "https://zapfile.xyz/?lang=pt",
-      it: "https://zapfile.xyz/?lang=it",
-      ja: "https://zapfile.xyz/?lang=ja",
-      ar: "https://zapfile.xyz/?lang=ar",
-      "x-default": "https://zapfile.xyz",
+      en: `${SITE_URL}/?lang=en`,
+      tr: `${SITE_URL}/?lang=tr`,
+      de: `${SITE_URL}/?lang=de`,
+      fr: `${SITE_URL}/?lang=fr`,
+      es: `${SITE_URL}/?lang=es`,
+      pt: `${SITE_URL}/?lang=pt`,
+      it: `${SITE_URL}/?lang=it`,
+      ja: `${SITE_URL}/?lang=ja`,
+      ar: `${SITE_URL}/?lang=ar`,
+      "x-default": SITE_URL,
     },
   },
   verification: {
@@ -105,7 +106,7 @@ const jsonLd = {
   "@context": "https://schema.org",
   "@type": "WebApplication",
   name: "ZapFile",
-  url: "https://zapfile.xyz",
+  url: SITE_URL,
   description:
     "Fast, free, and private file tools. Compress PDFs, convert images, generate QR codes and more. All processing happens in your browser.",
   applicationCategory: "UtilityApplication",
@@ -166,7 +167,7 @@ export default function RootLayout({
           rel="alternate"
           type="application/rss+xml"
           title="ZapFile Blog"
-          href="https://zapfile.xyz/feed.xml"
+          href={`${SITE_URL}/feed.xml`}
         />
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link

@@ -3,6 +3,7 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { getAllPosts } from "@/lib/blog";
+import { SITE_URL } from "@/lib/site-url";
 
 export const metadata: Metadata = {
   title: "Blog | ZapFile",
@@ -12,11 +13,11 @@ export const metadata: Metadata = {
     title: "Blog | ZapFile",
     description:
       "Tips, guides, and comparisons about image compression, PDF tools, file formats, and online privacy.",
-    url: "https://zapfile.xyz/blog",
+    url: `${SITE_URL}/blog`,
     type: "website",
   },
   alternates: {
-    canonical: "https://zapfile.xyz/blog",
+    canonical: `${SITE_URL}/blog`,
   },
 };
 

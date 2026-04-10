@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { SITE_URL } from "@/lib/site-url";
 
 export const metadata: Metadata = {
   title: "All Free Online File Tools | ZapFile",
@@ -8,21 +9,21 @@ export const metadata: Metadata = {
     title: "All Free Online File Tools | ZapFile",
     description:
       "Browse all free online file tools. Fast, private, browser-based processing.",
-    url: "https://zapfile.xyz/tools",
+    url: `${SITE_URL}/tools`,
   },
   alternates: {
-    canonical: "https://zapfile.xyz/tools",
+    canonical: `${SITE_URL}/tools`,
     languages: {
-      en: "https://zapfile.xyz/tools?lang=en",
-      tr: "https://zapfile.xyz/tools?lang=tr",
-      de: "https://zapfile.xyz/tools?lang=de",
-      fr: "https://zapfile.xyz/tools?lang=fr",
-      es: "https://zapfile.xyz/tools?lang=es",
-      pt: "https://zapfile.xyz/tools?lang=pt",
-      it: "https://zapfile.xyz/tools?lang=it",
-      ja: "https://zapfile.xyz/tools?lang=ja",
-      ar: "https://zapfile.xyz/tools?lang=ar",
-      "x-default": "https://zapfile.xyz/tools",
+      en: `${SITE_URL}/tools?lang=en`,
+      tr: `${SITE_URL}/tools?lang=tr`,
+      de: `${SITE_URL}/tools?lang=de`,
+      fr: `${SITE_URL}/tools?lang=fr`,
+      es: `${SITE_URL}/tools?lang=es`,
+      pt: `${SITE_URL}/tools?lang=pt`,
+      it: `${SITE_URL}/tools?lang=it`,
+      ja: `${SITE_URL}/tools?lang=ja`,
+      ar: `${SITE_URL}/tools?lang=ar`,
+      "x-default": `${SITE_URL}/tools`,
     },
   },
 };

@@ -84,7 +84,7 @@ export async function GET(request: NextRequest) {
             Z
           </div>
           <div style={{ color: "#818cf8", fontSize: 26, fontWeight: 600 }}>
-            zapfile.xyz
+            www.zapfile.xyz
           </div>
         </div>
       </div>

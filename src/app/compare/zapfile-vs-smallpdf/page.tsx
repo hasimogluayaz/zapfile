@@ -2,19 +2,20 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { SITE_URL } from "@/lib/site-url";
 
 export const metadata: Metadata = {
   title: "ZapFile vs Smallpdf & ILovePDF — Privacy-first comparison",
   description:
     "Compare ZapFile with Smallpdf and ILovePDF: browser-based processing, no uploads, free tools, and how to choose the right PDF and image tool.",
   alternates: {
-    canonical: "https://zapfile.xyz/compare/zapfile-vs-smallpdf",
+    canonical: `${SITE_URL}/compare/zapfile-vs-smallpdf`,
   },
   openGraph: {
     title: "ZapFile vs Smallpdf & ILovePDF",
     description:
       "Why browser-based tools win on privacy — feature comparison and when to use ZapFile.",
-    url: "https://zapfile.xyz/compare/zapfile-vs-smallpdf",
+    url: `${SITE_URL}/compare/zapfile-vs-smallpdf`,
     siteName: "ZapFile",
   },
 };
@@ -23,7 +24,7 @@ const jsonLd = {
   "@context": "https://schema.org",
   "@type": "WebPage",
   name: "ZapFile vs Smallpdf comparison",
-  url: "https://zapfile.xyz/compare/zapfile-vs-smallpdf",
+  url: `${SITE_URL}/compare/zapfile-vs-smallpdf`,
   description:
     "Comparison of ZapFile with popular online PDF tools from a privacy and pricing perspective.",
 };

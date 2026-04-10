@@ -9,8 +9,9 @@ import ConversionClient from "./ConversionClient";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import AdPlaceholder from "@/components/AdPlaceholder";
+import { SITE_URL } from "@/lib/site-url";
 
-const BASE_URL = "https://zapfile.xyz";
+const BASE_URL = SITE_URL;
 
 /* ---------- static params ---------- */
 

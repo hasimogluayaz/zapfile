@@ -1,6 +1,7 @@
 import { getAllPosts } from "@/lib/blog";
+import { SITE_URL } from "@/lib/site-url";
 
-const BASE = "https://zapfile.xyz";
+const BASE = SITE_URL;
 
 function escapeXml(s: string): string {
   return s

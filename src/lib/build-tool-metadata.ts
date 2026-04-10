@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { getToolBySlug } from "@/lib/tools";
+import { SITE_URL } from "@/lib/site-url";
 
-const BASE = "https://zapfile.xyz";
+const BASE = SITE_URL;
 
 const HREFLANG_LANGS = [
   "en",

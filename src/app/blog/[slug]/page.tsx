@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { getAllPosts, getPostBySlug } from "@/lib/blog";
 import { renderMarkdown } from "@/lib/markdown";
+import { SITE_URL } from "@/lib/site-url";
 
 // ---------------------------------------------------------------------------
 // Static params — pre-render every blog post at build time
@@ -30,7 +31,7 @@ export function generateMetadata({
     openGraph: {
       title: post.title,
       description: post.description,
-      url: `https://zapfile.xyz/blog/${post.slug}`,
+      url: `${SITE_URL}/blog/${post.slug}`,
       type: "article",
       publishedTime: post.date,
       authors: ["ZapFile"],
@@ -42,7 +43,7 @@ export function generateMetadata({
       description: post.description,
     },
     alternates: {
-      canonical: `https://zapfile.xyz/blog/${post.slug}`,
+      canonical: `${SITE_URL}/blog/${post.slug}`,
     },
   };
 }
@@ -90,20 +91,20 @@ export default function BlogPostPage({
     author: {
       "@type": "Organization",
       name: "ZapFile",
-      url: "https://zapfile.xyz",
+      url: SITE_URL,
     },
     publisher: {
       "@type": "Organization",
       name: "ZapFile",
-      url: "https://zapfile.xyz",
+      url: SITE_URL,
       logo: {
         "@type": "ImageObject",
-        url: "https://zapfile.xyz/android-chrome-192x192.png",
+        url: `${SITE_URL}/android-chrome-192x192.png`,
       },
     },
     mainEntityOfPage: {
       "@type": "WebPage",
-      "@id": `https://zapfile.xyz/blog/${post.slug}`,
+      "@id": `${SITE_URL}/blog/${post.slug}`,
     },
     keywords: post.tags.join(", "),
   };
