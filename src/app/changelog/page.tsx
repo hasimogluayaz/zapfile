@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
+import { SITE_URL } from "@/lib/site-url";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
   title: "Changelog",
   description: "ZapFile release history — new tools, improvements, and fixes.",
+  alternates: {
+    canonical: `${SITE_URL}/changelog`,
+  },
 };
 
 const releases = [

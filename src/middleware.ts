@@ -33,8 +33,11 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     /*
-     * Run on all app paths except static assets and Next internals.
+     * Run on all app paths except:
+     * - Next.js internals (_next/static, _next/image, _next/data)
+     * - Static assets (fonts, images, icons, manifests)
+     * - SEO files (sitemap.xml, robots.txt, feed.xml)
      */
-    "/((?!_next/static|_next/image|_next/data|favicon.ico|sw\\.js|.*\\.(?:ico|png|jpg|jpeg|gif|svg|webp|woff2?|ttf|eot|webmanifest|txt|xml)$).*)",
+    "/((?!_next/static|_next/image|_next/data|favicon.ico|sw\\.js|sitemap\\.xml|robots\\.txt|feed\\.xml|.*\\.(?:ico|png|jpg|jpeg|gif|svg|webp|woff2?|ttf|eot|webmanifest|txt|xml)$).*)",
   ],
 };

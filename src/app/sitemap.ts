@@ -49,12 +49,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "weekly" as const,
       priority: 0.7,
     },
-    {
-      url: `${baseUrl}/feed.xml`,
-      lastModified: new Date(),
-      changeFrequency: "daily" as const,
-      priority: 0.4,
-    },
     ...blogPostPages,
     {
       url: `${baseUrl}/privacy`,
