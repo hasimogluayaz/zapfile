@@ -221,7 +221,7 @@ export default function CropImagePage() {
         if (!pt) return;
         const sx = d.startCrop.x;
         const sy = d.startCrop.y;
-        let rawW = pt.x - sx;
+        const rawW = pt.x - sx;
         let rawH = pt.y - sy;
         if (aspectRatio) rawH = rawW / aspectRatio;
         const nx = rawW >= 0 ? sx : sx + rawW;
