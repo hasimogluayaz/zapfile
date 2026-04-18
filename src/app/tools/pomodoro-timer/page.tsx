@@ -9,6 +9,7 @@ type TimerState = "work" | "short-break" | "long-break";
 type PlayState = "idle" | "running" | "paused";
 
 const POMO_STORAGE_KEY = "zapfile-pomodoro-v1";
+const POMO_STATS_KEY = "zapfile-pomodoro-stats-v1";
 
 interface PomodoroPersist {
   workDuration: number;
@@ -21,6 +22,21 @@ interface PomodoroPersist {
   currentSession: number;
   /** When running: wall-clock ms when current phase should reach 0 */
   wallEndAt: number | null;
+  soundEnabled?: boolean;
+  autoStartBreaks?: boolean;
+  autoStartWork?: boolean;
+  taskName?: string;
+}
+
+interface PomodoroStats {
+  /** YYYY-MM-DD date string */
+  date: string;
+  completed: number;
+}
+
+function todayStr(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 function formatTime(seconds: number): string {
@@ -32,17 +48,23 @@ function formatTime(seconds: number): string {
 function playBeep() {
   try {
     const ctx = new AudioContext();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.frequency.value = 800;
-    gain.gain.value = 0.3;
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start();
-    setTimeout(() => {
-      osc.stop();
-      ctx.close();
-    }, 200);
+    // Two-tone chime: bright then soft
+    const playTone = (freq: number, startOffset: number, duration: number, vol: number) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, ctx.currentTime + startOffset);
+      gain.gain.linearRampToValueAtTime(vol, ctx.currentTime + startOffset + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + startOffset + duration);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(ctx.currentTime + startOffset);
+      osc.stop(ctx.currentTime + startOffset + duration);
+    };
+    playTone(880, 0, 0.25, 0.25);
+    playTone(660, 0.18, 0.3, 0.2);
+    setTimeout(() => ctx.close(), 700);
   } catch {
     // Audio not available
   }
@@ -59,10 +81,76 @@ export default function PomodoroTimerPage() {
   const [playState, setPlayState] = useState<PlayState>("idle");
   const [timeLeft, setTimeLeft] = useState(25 * 60);
   const [currentSession, setCurrentSession] = useState(1);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [autoStartBreaks, setAutoStartBreaks] = useState(false);
+  const [autoStartWork, setAutoStartWork] = useState(false);
+  const [taskName, setTaskName] = useState("");
+  const [completedToday, setCompletedToday] = useState(0);
+  const [notifPerm, setNotifPerm] = useState<NotificationPermission | "unavailable">("default");
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const originalTitle = useRef("");
   const [storageReady, setStorageReady] = useState(false);
+
+  // Detect notification support
+  useEffect(() => {
+    if (typeof window === "undefined" || !("Notification" in window)) {
+      setNotifPerm("unavailable");
+    } else {
+      setNotifPerm(Notification.permission);
+    }
+  }, []);
+
+  const requestNotif = async () => {
+    if (notifPerm === "unavailable" || !("Notification" in window)) return;
+    try {
+      const p = await Notification.requestPermission();
+      setNotifPerm(p);
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const sendNotif = useCallback(
+    (title: string, body: string) => {
+      if (typeof window === "undefined") return;
+      if (!("Notification" in window)) return;
+      if (Notification.permission !== "granted") return;
+      try {
+        new Notification(title, { body, icon: "/favicon.ico", tag: "pomodoro" });
+      } catch {
+        /* ignore */
+      }
+    },
+    []
+  );
+
+  // Load today's completed count
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(POMO_STATS_KEY);
+      if (!raw) return;
+      const s = JSON.parse(raw) as PomodoroStats;
+      if (s && s.date === todayStr() && typeof s.completed === "number") {
+        setCompletedToday(s.completed);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const incrementCompleted = useCallback(() => {
+    setCompletedToday((prev) => {
+      const next = prev + 1;
+      try {
+        const stats: PomodoroStats = { date: todayStr(), completed: next };
+        localStorage.setItem(POMO_STATS_KEY, JSON.stringify(stats));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  }, []);
 
   const getTotalSeconds = useCallback(
     (state: TimerState): number => {
@@ -100,6 +188,10 @@ export default function PomodoroTimerPage() {
         setTimerState(p.timerState);
       }
       if (typeof p.currentSession === "number") setCurrentSession(p.currentSession);
+      if (typeof p.soundEnabled === "boolean") setSoundEnabled(p.soundEnabled);
+      if (typeof p.autoStartBreaks === "boolean") setAutoStartBreaks(p.autoStartBreaks);
+      if (typeof p.autoStartWork === "boolean") setAutoStartWork(p.autoStartWork);
+      if (typeof p.taskName === "string") setTaskName(p.taskName);
       if (p.playState === "running" && p.wallEndAt && typeof p.wallEndAt === "number") {
         const tl = Math.max(0, Math.ceil((p.wallEndAt - Date.now()) / 1000));
         setTimeLeft(tl);
@@ -136,6 +228,10 @@ export default function PomodoroTimerPage() {
         timeLeft,
         currentSession,
         wallEndAt,
+        soundEnabled,
+        autoStartBreaks,
+        autoStartWork,
+        taskName,
       };
       localStorage.setItem(POMO_STORAGE_KEY, JSON.stringify(payload));
     } catch {
@@ -151,6 +247,10 @@ export default function PomodoroTimerPage() {
     timeLeft,
     currentSession,
     storageReady,
+    soundEnabled,
+    autoStartBreaks,
+    autoStartWork,
+    taskName,
   ]);
 
   // Update document title
@@ -196,7 +296,7 @@ export default function PomodoroTimerPage() {
   // Handle timer completion
   useEffect(() => {
     if (timeLeft === 0 && playState === "running") {
-      playBeep();
+      if (soundEnabled) playBeep();
       handleTimerComplete();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -204,6 +304,8 @@ export default function PomodoroTimerPage() {
 
   const handleTimerComplete = () => {
     if (timerState === "work") {
+      incrementCompleted();
+      sendNotif(t("pomo.notifWorkDone"), taskName || t("pomo.shortBreakMsg"));
       if (currentSession >= sessionsBeforeLong) {
         setTimerState("long-break");
         setTimeLeft(longBreakDuration * 60);
@@ -213,8 +315,10 @@ export default function PomodoroTimerPage() {
         setTimeLeft(shortBreakDuration * 60);
         toast.success(t("pomo.shortBreakMsg"));
       }
+      setPlayState(autoStartBreaks ? "running" : "idle");
     } else {
       // Break finished
+      sendNotif(t("pomo.notifBreakDone"), t("pomo.focusMsg"));
       if (timerState === "long-break") {
         setCurrentSession(1);
       } else {
@@ -223,6 +327,7 @@ export default function PomodoroTimerPage() {
       setTimerState("work");
       setTimeLeft(workDuration * 60);
       toast.success(t("pomo.focusMsg"));
+      setPlayState(autoStartWork ? "running" : "idle");
     }
   };
 
@@ -265,6 +370,30 @@ export default function PomodoroTimerPage() {
     }
   };
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.code === "Space") {
+        e.preventDefault();
+        setPlayState((prev) => {
+          if (prev === "running") return "paused";
+          if (prev === "idle") {
+            setTimeLeft(getTotalSeconds(timerState));
+          }
+          return "running";
+        });
+      } else if (e.code === "KeyR") {
+        setPlayState("idle");
+        setTimerState("work");
+        setTimeLeft(workDuration * 60);
+        setCurrentSession(1);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [timerState, workDuration, getTotalSeconds]);
+
   // Update timeLeft when durations change in idle state
   useEffect(() => {
     if (playState === "idle") {
@@ -294,6 +423,20 @@ export default function PomodoroTimerPage() {
       toolDescription={t("tool.pomodoro-timer.desc")}
     >
       <div className="space-y-6">
+        {/* Task name input */}
+        <div className="glass rounded-xl p-4">
+          <label className="block text-xs text-t-secondary mb-1.5 font-medium">
+            {t("pomo.taskLabel")}
+          </label>
+          <input
+            type="text"
+            value={taskName}
+            onChange={(e) => setTaskName(e.target.value)}
+            placeholder={t("pomo.taskPlaceholder")}
+            className="w-full px-3 py-2 rounded-lg bg-bg-secondary border border-border text-t-primary text-sm focus:outline-none focus:border-indigo-500/50"
+          />
+        </div>
+
         {/* Timer Display */}
         <div className="glass rounded-xl p-8 flex flex-col items-center">
           {/* State Label */}
@@ -309,6 +452,9 @@ export default function PomodoroTimerPage() {
             </span>
             <span className="text-sm text-t-tertiary ml-3">
               {t("pomo.session")} {currentSession}/{sessionsBeforeLong}
+            </span>
+            <span className="text-sm text-amber-400 ml-3" title={t("pomo.completedToday")}>
+              🍅 {completedToday}
             </span>
           </div>
 
@@ -387,11 +533,104 @@ export default function PomodoroTimerPage() {
               {t("ui.reset")}
             </button>
           </div>
+
+          <p className="mt-4 text-[11px] text-t-tertiary">
+            <kbd className="px-1.5 py-0.5 rounded bg-bg-secondary border border-border font-mono text-[10px]">Space</kbd>
+            {" / "}
+            <kbd className="px-1.5 py-0.5 rounded bg-bg-secondary border border-border font-mono text-[10px]">R</kbd>
+            {" — "}{t("pomo.kbdHint")}
+          </p>
         </div>
 
-        {/* Settings */}
+        {/* Preferences */}
+        <div className="glass rounded-xl p-6 space-y-3">
+          <h3 className="text-sm font-semibold text-t-primary mb-1">{t("ui.settings")}</h3>
+
+          {/* Sound toggle */}
+          <label className="flex items-center justify-between cursor-pointer py-1">
+            <span className="text-sm text-t-secondary flex items-center gap-2">
+              <span>{soundEnabled ? "🔊" : "🔇"}</span> {t("pomo.sound")}
+            </span>
+            <button
+              type="button"
+              onClick={() => setSoundEnabled((v) => !v)}
+              className={`relative w-11 h-6 rounded-full transition-colors ${
+                soundEnabled ? "bg-indigo-500" : "bg-bg-secondary border border-border"
+              }`}
+              aria-label={soundEnabled ? t("pomo.soundOn") : t("pomo.soundOff")}
+            >
+              <span
+                className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
+                  soundEnabled ? "translate-x-5" : "translate-x-0.5"
+                }`}
+              />
+            </button>
+          </label>
+
+          {/* Notifications */}
+          <div className="flex items-center justify-between py-1">
+            <span className="text-sm text-t-secondary flex items-center gap-2">
+              <span>🔔</span> {t("pomo.notifications")}
+            </span>
+            {notifPerm === "granted" ? (
+              <span className="text-xs text-emerald-400 font-medium">✓ {t("pomo.notifEnabled")}</span>
+            ) : notifPerm === "denied" ? (
+              <span className="text-xs text-red-400">{t("pomo.notifDenied")}</span>
+            ) : notifPerm === "unavailable" ? (
+              <span className="text-xs text-t-tertiary">{t("pomo.notifUnavailable")}</span>
+            ) : (
+              <button
+                type="button"
+                onClick={requestNotif}
+                className="px-3 py-1 rounded-lg text-xs font-medium text-indigo-400 bg-indigo-500/10 hover:bg-indigo-500/20 transition-colors"
+              >
+                {t("pomo.enableNotif")}
+              </button>
+            )}
+          </div>
+
+          {/* Auto-start breaks */}
+          <label className="flex items-center justify-between cursor-pointer py-1">
+            <span className="text-sm text-t-secondary">{t("pomo.autoStartBreaks")}</span>
+            <button
+              type="button"
+              onClick={() => setAutoStartBreaks((v) => !v)}
+              className={`relative w-11 h-6 rounded-full transition-colors ${
+                autoStartBreaks ? "bg-emerald-500" : "bg-bg-secondary border border-border"
+              }`}
+            >
+              <span
+                className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
+                  autoStartBreaks ? "translate-x-5" : "translate-x-0.5"
+                }`}
+              />
+            </button>
+          </label>
+
+          {/* Auto-start next work session */}
+          <label className="flex items-center justify-between cursor-pointer py-1">
+            <span className="text-sm text-t-secondary">{t("pomo.autoStartWork")}</span>
+            <button
+              type="button"
+              onClick={() => setAutoStartWork((v) => !v)}
+              className={`relative w-11 h-6 rounded-full transition-colors ${
+                autoStartWork ? "bg-indigo-500" : "bg-bg-secondary border border-border"
+              }`}
+            >
+              <span
+                className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
+                  autoStartWork ? "translate-x-5" : "translate-x-0.5"
+                }`}
+              />
+            </button>
+          </label>
+        </div>
+
+        {/* Durations */}
         <div className="glass rounded-xl p-6">
-          <h3 className="text-sm font-semibold text-t-primary mb-4">{t("ui.settings")}</h3>
+          <h3 className="text-sm font-semibold text-t-primary mb-4">
+            ⏱️ {t("pomo.workDuration")} · {t("pomo.shortBreakDur")} · {t("pomo.longBreakDur")}
+          </h3>
           <div className="space-y-5">
             {/* Work Duration */}
             <div>
