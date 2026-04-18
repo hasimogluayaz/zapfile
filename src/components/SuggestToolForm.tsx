@@ -30,7 +30,9 @@ export default function SuggestToolForm() {
     }
 
     const form = document.createElement("form");
-    form.action = "https://formsubmit.co/hasimogluayaz@gmail.com";
+    // Hashed FormSubmit endpoint → routes to hasimogluayaz@gmail.com
+    // without exposing the email in page source to scrapers.
+    form.action = "https://formsubmit.co/c14b61512ad48efc9fd9ce471b1b09b1";
     form.method = "POST";
     form.target = iframeName;
     form.style.display = "none";
