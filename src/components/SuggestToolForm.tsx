@@ -12,41 +12,53 @@ export default function SuggestToolForm() {
   const [submitted, setSubmitted] = useState(false);
   const [sending, setSending] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!toolName.trim()) { toast.error("Please enter a tool name."); return; }
     if (sending) return;
 
     setSending(true);
-    try {
-      const res = await fetch("https://formsubmit.co/ajax/hasimogluayaz@gmail.com", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({
-          _subject: `ZapFile · Tool suggestion: ${toolName.trim()}`,
-          _template: "table",
-          _captcha: "false",
-          tool_name: toolName.trim(),
-          description: description.trim() || "(none)",
-          page_url: typeof window !== "undefined" ? window.location.href : "",
-          user_agent: typeof navigator !== "undefined" ? navigator.userAgent : "",
-          submitted_at: new Date().toISOString(),
-        }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || (data && data.success === "false")) {
-        throw new Error("formsubmit failed");
-      }
-      setSubmitted(true);
-      toast.success("Thank you! Your suggestion has been sent.");
-    } catch {
-      toast.error("Could not send. Please try again later.");
-    } finally {
-      setSending(false);
+
+    // Use hidden iframe + classic form POST to avoid CORS on FormSubmit
+    const iframeName = "zapfile-suggest-iframe";
+    let iframe = document.getElementsByName(iframeName)[0] as HTMLIFrameElement | undefined;
+    if (!iframe) {
+      iframe = document.createElement("iframe");
+      iframe.name = iframeName;
+      iframe.style.display = "none";
+      document.body.appendChild(iframe);
     }
+
+    const form = document.createElement("form");
+    form.action = "https://formsubmit.co/hasimogluayaz@gmail.com";
+    form.method = "POST";
+    form.target = iframeName;
+    form.style.display = "none";
+
+    const addField = (name: string, value: string) => {
+      const input = document.createElement("input");
+      input.type = "hidden";
+      input.name = name;
+      input.value = value;
+      form.appendChild(input);
+    };
+
+    addField("_subject", `ZapFile · Tool suggestion: ${toolName.trim()}`);
+    addField("_template", "table");
+    addField("_captcha", "false");
+    addField("tool_name", toolName.trim());
+    addField("description", description.trim() || "(none)");
+    addField("page_url", window.location.href);
+    addField("user_agent", navigator.userAgent);
+    addField("submitted_at", new Date().toISOString());
+
+    document.body.appendChild(form);
+    form.submit();
+    setTimeout(() => form.remove(), 1000);
+
+    setSubmitted(true);
+    setSending(false);
+    toast.success("Thank you! Your suggestion has been sent.");
   };
 
   const handleReset = () => {
