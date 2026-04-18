@@ -4,385 +4,795 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import toast from "react-hot-toast";
 import ToolLayout from "@/components/ToolLayout";
 import FileDropzone from "@/components/FileDropzone";
-import DownloadButton from "@/components/DownloadButton";
-import {
-  formatFileSize,
-  getFileNameWithoutExtension,
-  downloadBlob,
-} from "@/lib/utils";
-import { useI18n } from "@/lib/i18n";
+import { downloadBlob, getFileNameWithoutExtension } from "@/lib/utils";
+
+interface TextItem {
+  id: string;
+  text: string;
+  x: number;
+  y: number;
+  fontSize: number;
+  fontFamily: string;
+  color: string;
+  strokeColor: string;
+  strokeWidth: number;
+  rotation: number;
+  align: "left" | "center" | "right";
+  bold: boolean;
+  italic: boolean;
+}
+
+const FONT_FAMILIES = [
+  "Impact",
+  "Arial Black",
+  "Arial",
+  "Comic Sans MS",
+  "Georgia",
+  "Verdana",
+  "Courier New",
+];
+
+type PresetTemplate = {
+  label: string;
+  items: Omit<TextItem, "id">[];
+};
+
+const PRESETS: PresetTemplate[] = [
+  {
+    label: "Classic Top/Bottom",
+    items: [
+      {
+        text: "TOP TEXT",
+        x: 50,
+        y: 8,
+        fontSize: 48,
+        fontFamily: "Impact",
+        color: "#ffffff",
+        strokeColor: "#000000",
+        strokeWidth: 3,
+        rotation: 0,
+        align: "center",
+        bold: false,
+        italic: false,
+      },
+      {
+        text: "BOTTOM TEXT",
+        x: 50,
+        y: 92,
+        fontSize: 48,
+        fontFamily: "Impact",
+        color: "#ffffff",
+        strokeColor: "#000000",
+        strokeWidth: 3,
+        rotation: 0,
+        align: "center",
+        bold: false,
+        italic: false,
+      },
+    ],
+  },
+  {
+    label: "Bottom Caption",
+    items: [
+      {
+        text: "Caption here",
+        x: 50,
+        y: 90,
+        fontSize: 44,
+        fontFamily: "Impact",
+        color: "#ffffff",
+        strokeColor: "#000000",
+        strokeWidth: 3,
+        rotation: 0,
+        align: "center",
+        bold: false,
+        italic: false,
+      },
+    ],
+  },
+  {
+    label: "Reaction",
+    items: [
+      {
+        text: "Me:",
+        x: 20,
+        y: 10,
+        fontSize: 36,
+        fontFamily: "Arial Black",
+        color: "#ffffff",
+        strokeColor: "#000000",
+        strokeWidth: 2,
+        rotation: 0,
+        align: "left",
+        bold: true,
+        italic: false,
+      },
+      {
+        text: "Also me:",
+        x: 70,
+        y: 10,
+        fontSize: 36,
+        fontFamily: "Arial Black",
+        color: "#ffffff",
+        strokeColor: "#000000",
+        strokeWidth: 2,
+        rotation: 0,
+        align: "left",
+        bold: true,
+        italic: false,
+      },
+    ],
+  },
+  {
+    label: "Distracted Boyfriend",
+    items: [
+      {
+        text: "New thing",
+        x: 25,
+        y: 88,
+        fontSize: 32,
+        fontFamily: "Impact",
+        color: "#ffffff",
+        strokeColor: "#000000",
+        strokeWidth: 2,
+        rotation: 0,
+        align: "center",
+        bold: false,
+        italic: false,
+      },
+      {
+        text: "Old thing",
+        x: 75,
+        y: 88,
+        fontSize: 32,
+        fontFamily: "Impact",
+        color: "#ffffff",
+        strokeColor: "#000000",
+        strokeWidth: 2,
+        rotation: 0,
+        align: "center",
+        bold: false,
+        italic: false,
+      },
+      {
+        text: "Me",
+        x: 50,
+        y: 55,
+        fontSize: 32,
+        fontFamily: "Impact",
+        color: "#ffffff",
+        strokeColor: "#000000",
+        strokeWidth: 2,
+        rotation: 0,
+        align: "center",
+        bold: false,
+        italic: false,
+      },
+    ],
+  },
+];
+
+function makeId() {
+  return Math.random().toString(36).slice(2, 10);
+}
+
+function defaultItems(): TextItem[] {
+  return [
+    {
+      id: makeId(),
+      text: "TOP TEXT",
+      x: 50,
+      y: 8,
+      fontSize: 48,
+      fontFamily: "Impact",
+      color: "#ffffff",
+      strokeColor: "#000000",
+      strokeWidth: 3,
+      rotation: 0,
+      align: "center",
+      bold: false,
+      italic: false,
+    },
+    {
+      id: makeId(),
+      text: "BOTTOM TEXT",
+      x: 50,
+      y: 92,
+      fontSize: 48,
+      fontFamily: "Impact",
+      color: "#ffffff",
+      strokeColor: "#000000",
+      strokeWidth: 3,
+      rotation: 0,
+      align: "center",
+      bold: false,
+      italic: false,
+    },
+  ];
+}
+
 
 export default function MemeGeneratorPage() {
-  const { t } = useI18n();
   const [file, setFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
-  const [topText, setTopText] = useState("");
-  const [bottomText, setBottomText] = useState("");
-  const [fontSize, setFontSize] = useState(40);
-  const [textColor, setTextColor] = useState("#ffffff");
-  const [strokeColor, setStrokeColor] = useState("#000000");
-  const [strokeWidth, setStrokeWidth] = useState(2);
-  const [resultBlob, setResultBlob] = useState<Blob | null>(null);
+  const [imgSrc, setImgSrc] = useState<string | null>(null);
+  const [textItems, setTextItems] = useState<TextItem[]>(defaultItems());
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
+  const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
 
-  const drawMeme = useCallback(
-    (
-      img: HTMLImageElement,
-      top: string,
-      bottom: string,
-      fSize: number,
-      tColor: string,
-      sColor: string,
-      sWidth: number
-    ) => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
+  // Drag state
+  const dragRef = useRef<{
+    id: string;
+    startMouseX: number;
+    startMouseY: number;
+    startItemX: number;
+    startItemY: number;
+  } | null>(null);
 
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
+  // Load image
+  const handleFilesSelected = useCallback((files: File[]) => {
+    const f = files[0];
+    setFile(f);
+    const url = URL.createObjectURL(f);
+    setImgSrc(url);
+    const img = new window.Image();
+    img.onload = () => {
+      imgRef.current = img;
+    };
+    img.onerror = () => toast.error("Failed to load image.");
+    img.src = url;
+    setTextItems(defaultItems());
+    setSelectedId(null);
+  }, []);
 
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
+  const selectedItem = textItems.find((t) => t.id === selectedId) ?? null;
 
-      // Draw base image
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(img, 0, 0);
+  function updateItem(id: string, patch: Partial<TextItem>) {
+    setTextItems((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, ...patch } : t))
+    );
+  }
 
-      // Scale font size relative to image
-      const scaledFontSize = Math.round(fSize * (canvas.width / 600));
-      const scaledStrokeWidth = Math.round(sWidth * (canvas.width / 600));
-      const padding = scaledFontSize * 0.5;
+  function addText() {
+    const id = makeId();
+    setTextItems((prev) => [
+      ...prev,
+      {
+        id,
+        text: "New Text",
+        x: 50,
+        y: 50,
+        fontSize: 48,
+        fontFamily: "Impact",
+        color: "#ffffff",
+        strokeColor: "#000000",
+        strokeWidth: 3,
+        rotation: 0,
+        align: "center",
+        bold: false,
+        italic: false,
+      },
+    ]);
+    setSelectedId(id);
+  }
 
-      // Configure text style (Impact-style: uppercase, bold)
-      ctx.font = `bold ${scaledFontSize}px Impact, "Arial Black", sans-serif`;
-      ctx.textAlign = "center";
+  function deleteItem(id: string) {
+    setTextItems((prev) => prev.filter((t) => t.id !== id));
+    if (selectedId === id) setSelectedId(null);
+  }
+
+  function applyPreset(preset: PresetTemplate) {
+    setTextItems(preset.items.map((item) => ({ ...item, id: makeId() })));
+    setSelectedId(null);
+  }
+
+  // Drag handlers
+  function handleMouseDown(e: React.MouseEvent, id: string) {
+    e.preventDefault();
+    e.stopPropagation();
+    setSelectedId(id);
+    const container = containerRef.current;
+    if (!container) return;
+    const item = textItems.find((t) => t.id === id);
+    if (!item) return;
+    dragRef.current = {
+      id,
+      startMouseX: e.clientX,
+      startMouseY: e.clientY,
+      startItemX: item.x,
+      startItemY: item.y,
+    };
+  }
+
+  function handleTouchStart(e: React.TouchEvent, id: string) {
+    e.stopPropagation();
+    setSelectedId(id);
+    const container = containerRef.current;
+    if (!container) return;
+    const item = textItems.find((t) => t.id === id);
+    if (!item) return;
+    const touch = e.touches[0];
+    dragRef.current = {
+      id,
+      startMouseX: touch.clientX,
+      startMouseY: touch.clientY,
+      startItemX: item.x,
+      startItemY: item.y,
+    };
+  }
+
+  useEffect(() => {
+    function handleMouseMove(e: MouseEvent) {
+      if (!dragRef.current || !containerRef.current) return;
+      const { id, startMouseX, startMouseY, startItemX, startItemY } = dragRef.current;
+      const rect = containerRef.current.getBoundingClientRect();
+      const dx = ((e.clientX - startMouseX) / rect.width) * 100;
+      const dy = ((e.clientY - startMouseY) / rect.height) * 100;
+      updateItem(id, {
+        x: Math.max(0, Math.min(100, startItemX + dx)),
+        y: Math.max(0, Math.min(100, startItemY + dy)),
+      });
+    }
+    function handleTouchMove(e: TouchEvent) {
+      if (!dragRef.current || !containerRef.current) return;
+      const { id, startMouseX, startMouseY, startItemX, startItemY } = dragRef.current;
+      const rect = containerRef.current.getBoundingClientRect();
+      const touch = e.touches[0];
+      const dx = ((touch.clientX - startMouseX) / rect.width) * 100;
+      const dy = ((touch.clientY - startMouseY) / rect.height) * 100;
+      updateItem(id, {
+        x: Math.max(0, Math.min(100, startItemX + dx)),
+        y: Math.max(0, Math.min(100, startItemY + dy)),
+      });
+    }
+    function handleUp() {
+      dragRef.current = null;
+    }
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleUp);
+    window.addEventListener("touchmove", handleTouchMove, { passive: true });
+    window.addEventListener("touchend", handleUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleUp);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", handleUp);
+    };
+  }, [textItems]);
+
+  function handleDownload() {
+    const img = imgRef.current;
+    const canvas = canvasRef.current;
+    const container = containerRef.current;
+    if (!img || !canvas || !file || !container) return;
+
+    const nw = img.naturalWidth;
+    const nh = img.naturalHeight;
+    canvas.width = nw;
+    canvas.height = nh;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    ctx.drawImage(img, 0, 0);
+
+    const displayW = container.clientWidth;
+    const displayH = container.clientHeight;
+    const scaleX = nw / displayW;
+    const scaleY = nh / displayH;
+
+    for (const item of textItems) {
+      if (!item.text.trim()) continue;
+
+      const cx = (item.x / 100) * nw;
+      const cy = (item.y / 100) * nh;
+      const scaledFontSize = item.fontSize * Math.min(scaleX, scaleY);
+
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate((item.rotation * Math.PI) / 180);
+
+      const style = item.italic ? "italic " : "";
+      const weight = item.bold ? "bold " : "";
+      ctx.font = `${style}${weight}${scaledFontSize}px ${item.fontFamily}, sans-serif`;
+      ctx.textAlign = item.align;
+      ctx.textBaseline = "middle";
       ctx.lineJoin = "round";
       ctx.miterLimit = 2;
 
-      // Draw top text
-      if (top.trim()) {
-        const upperTop = top.toUpperCase();
-        ctx.textBaseline = "top";
-
-        // Stroke
-        ctx.strokeStyle = sColor;
-        ctx.lineWidth = scaledStrokeWidth * 2;
-        ctx.strokeText(upperTop, canvas.width / 2, padding, canvas.width - padding * 2);
-
-        // Fill
-        ctx.fillStyle = tColor;
-        ctx.fillText(upperTop, canvas.width / 2, padding, canvas.width - padding * 2);
+      if (item.strokeWidth > 0) {
+        ctx.strokeStyle = item.strokeColor;
+        ctx.lineWidth = item.strokeWidth * Math.min(scaleX, scaleY) * 2;
+        ctx.strokeText(item.text, 0, 0);
       }
 
-      // Draw bottom text
-      if (bottom.trim()) {
-        const upperBottom = bottom.toUpperCase();
-        ctx.textBaseline = "bottom";
-
-        // Stroke
-        ctx.strokeStyle = sColor;
-        ctx.lineWidth = scaledStrokeWidth * 2;
-        ctx.strokeText(
-          upperBottom,
-          canvas.width / 2,
-          canvas.height - padding,
-          canvas.width - padding * 2
-        );
-
-        // Fill
-        ctx.fillStyle = tColor;
-        ctx.fillText(
-          upperBottom,
-          canvas.width / 2,
-          canvas.height - padding,
-          canvas.width - padding * 2
-        );
-      }
-
-      setPreview(canvas.toDataURL("image/png"));
-    },
-    []
-  );
-
-  // Redraw on any setting change
-  useEffect(() => {
-    if (imgRef.current) {
-      drawMeme(
-        imgRef.current,
-        topText,
-        bottomText,
-        fontSize,
-        textColor,
-        strokeColor,
-        strokeWidth
-      );
+      ctx.fillStyle = item.color;
+      ctx.fillText(item.text, 0, 0);
+      ctx.restore();
     }
-  }, [topText, bottomText, fontSize, textColor, strokeColor, strokeWidth, drawMeme]);
-
-  const handleFilesSelected = useCallback(
-    (files: File[]) => {
-      const f = files[0];
-      setFile(f);
-      setResultBlob(null);
-
-      const img = new window.Image();
-      img.onload = () => {
-        imgRef.current = img;
-        drawMeme(img, topText, bottomText, fontSize, textColor, strokeColor, strokeWidth);
-      };
-      img.onerror = () => toast.error(t("meme.loadFail"));
-      img.src = URL.createObjectURL(f);
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [drawMeme]
-  );
-
-  const handleDownload = () => {
-    const canvas = canvasRef.current;
-    if (!canvas || !file) return;
 
     canvas.toBlob((blob) => {
       if (blob) {
-        setResultBlob(blob);
         const baseName = getFileNameWithoutExtension(file.name);
         downloadBlob(blob, `${baseName}-meme.png`);
-        toast.success(t("meme.success"));
+        toast.success("Meme downloaded!");
       } else {
-        toast.error(t("meme.fail"));
+        toast.error("Download failed.");
       }
     }, "image/png");
-  };
+  }
 
-  const reset = () => {
+  function reset() {
     setFile(null);
-    setPreview(null);
-    setTopText("");
-    setBottomText("");
-    setFontSize(40);
-    setTextColor("#ffffff");
-    setStrokeColor("#000000");
-    setStrokeWidth(2);
-    setResultBlob(null);
+    setImgSrc(null);
     imgRef.current = null;
-  };
+    setTextItems(defaultItems());
+    setSelectedId(null);
+  }
 
   return (
     <ToolLayout
       toolName="Meme Generator"
-      toolDescription="Add text to images to create memes"
+      toolDescription="Add draggable text layers to images to create memes"
     >
       <canvas ref={canvasRef} className="hidden" />
 
       <div className="space-y-6">
         {!file ? (
-          <FileDropzone
-            onFilesSelected={handleFilesSelected}
-            accept={{
-              "image/*": [".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp"],
-            }}
-            formats={["JPG", "PNG", "WEBP"]}
-            label="Drop your image here to create a meme"
-          />
-        ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
-              {/* Left: Live preview */}
-              <div className="glass rounded-xl p-3 space-y-2">
-                <div className="flex items-center justify-between">
-                  <p className="text-[12px] font-medium text-brand-muted">
-                    Live Preview
-                  </p>
-                  <button
-                    onClick={reset}
-                    className="text-[11px] text-brand-muted hover:text-red-400 transition-colors"
+            <FileDropzone
+              onFilesSelected={handleFilesSelected}
+              accept={{
+                "image/*": [".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp"],
+              }}
+              formats={["JPG", "PNG", "WEBP", "GIF"]}
+              label="Drop your image here to start making memes"
+            />
+
+            {/* Presets preview */}
+            <div className="glass rounded-xl p-5 space-y-3">
+              <p className="text-[13px] font-semibold text-t-primary">Meme Templates</p>
+              <p className="text-[12px] text-t-secondary">
+                Upload an image first, then apply a template to quickly set up text layers.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {PRESETS.map((p) => (
+                  <span
+                    key={p.label}
+                    className="text-[11px] px-3 py-1.5 rounded-lg border border-border bg-bg-secondary text-t-secondary"
                   >
-                    Remove
-                  </button>
-                </div>
-                {preview ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={preview}
-                    alt="Meme preview"
-                    className="w-full rounded-lg border border-white/10 object-contain max-h-72"
-                  />
-                ) : (
-                  <div className="h-40 flex items-center justify-center rounded-lg border border-white/10 text-[12px] text-brand-muted">
-                    Loading...
-                  </div>
-                )}
-                <p className="text-[11px] text-brand-muted truncate">
-                  {file.name} &middot; {formatFileSize(file.size)}
-                </p>
-              </div>
-
-              {/* Right: Controls */}
-              <div className="glass rounded-xl p-4 space-y-4">
-                <h3 className="text-[13px] font-semibold text-brand-text">
-                  Meme Text
-                </h3>
-
-                {/* Top Text */}
-                <div>
-                  <label className="block text-[12px] text-brand-muted mb-1.5">
-                    Top Text
-                  </label>
-                  <input
-                    type="text"
-                    value={topText}
-                    onChange={(e) => setTopText(e.target.value)}
-                    placeholder={t("meme.enterTop")}
-                    className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-[13px] text-brand-text placeholder:text-brand-muted/50 focus:outline-none focus:border-brand-indigo/50 transition-colors"
-                  />
-                </div>
-
-                {/* Bottom Text */}
-                <div>
-                  <label className="block text-[12px] text-brand-muted mb-1.5">
-                    Bottom Text
-                  </label>
-                  <input
-                    type="text"
-                    value={bottomText}
-                    onChange={(e) => setBottomText(e.target.value)}
-                    placeholder={t("meme.enterBottom")}
-                    className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-[13px] text-brand-text placeholder:text-brand-muted/50 focus:outline-none focus:border-brand-indigo/50 transition-colors"
-                  />
-                </div>
-
-                {/* Font Size */}
-                <div>
-                  <div className="flex justify-between mb-1.5">
-                    <label className="text-[12px] text-brand-muted">Font Size</label>
-                    <span className="text-[12px] font-mono text-brand-muted">
-                      {fontSize}px
-                    </span>
-                  </div>
-                  <input
-                    type="range"
-                    min={20}
-                    max={80}
-                    step={1}
-                    value={fontSize}
-                    onChange={(e) => setFontSize(Number(e.target.value))}
-                    className="w-full accent-brand-indigo"
-                  />
-                  <div className="flex justify-between mt-0.5">
-                    <span className="text-[10px] text-brand-muted">20</span>
-                    <span className="text-[10px] text-brand-muted">80</span>
-                  </div>
-                </div>
-
-                {/* Stroke Width */}
-                <div>
-                  <div className="flex justify-between mb-1.5">
-                    <label className="text-[12px] text-brand-muted">
-                      Stroke Width
-                    </label>
-                    <span className="text-[12px] font-mono text-brand-muted">
-                      {strokeWidth}px
-                    </span>
-                  </div>
-                  <input
-                    type="range"
-                    min={1}
-                    max={5}
-                    step={1}
-                    value={strokeWidth}
-                    onChange={(e) => setStrokeWidth(Number(e.target.value))}
-                    className="w-full accent-brand-indigo"
-                  />
-                  <div className="flex justify-between mt-0.5">
-                    <span className="text-[10px] text-brand-muted">1</span>
-                    <span className="text-[10px] text-brand-muted">5</span>
-                  </div>
-                </div>
-
-                {/* Colors */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[12px] text-brand-muted mb-1.5">
-                      Text Color
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="color"
-                        value={textColor}
-                        onChange={(e) => setTextColor(e.target.value)}
-                        className="w-8 h-8 rounded-lg cursor-pointer border border-white/10 bg-white/5 p-0.5"
-                      />
-                      <span className="text-[11px] font-mono text-brand-muted">
-                        {textColor}
-                      </span>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-[12px] text-brand-muted mb-1.5">
-                      Stroke Color
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="color"
-                        value={strokeColor}
-                        onChange={(e) => setStrokeColor(e.target.value)}
-                        className="w-8 h-8 rounded-lg cursor-pointer border border-white/10 bg-white/5 p-0.5"
-                      />
-                      <span className="text-[11px] font-mono text-brand-muted">
-                        {strokeColor}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Download */}
-                <button
-                  onClick={handleDownload}
-                  disabled={!topText.trim() && !bottomText.trim()}
-                  className={`w-full py-3 rounded-xl font-semibold text-[14px] text-white transition-all mt-2 ${
-                    !topText.trim() && !bottomText.trim()
-                      ? "bg-white/10 cursor-not-allowed text-brand-muted"
-                      : "bg-gradient-to-r from-indigo-500 to-purple-500 hover:shadow-lg hover:shadow-indigo-500/25 hover:scale-[1.02] active:scale-[0.98]"
-                  }`}
-                >
-                  {t("meme.download")}
-                </button>
-
-                {/* Reset */}
-                <button
-                  onClick={reset}
-                  className="w-full py-2.5 rounded-xl text-[13px] font-semibold text-brand-muted bg-white/5 hover:bg-white/10 transition-colors"
-                >
-                  Reset
-                </button>
+                    {p.label}
+                  </span>
+                ))}
               </div>
             </div>
-
-            {/* Result download */}
-            {resultBlob && (
-              <div className="glass rounded-xl p-4 space-y-3">
-                <p className="text-[13px] font-medium text-brand-text">
-                  Last Export
-                </p>
-                <div className="flex flex-wrap gap-3 justify-center">
-                  <DownloadButton
-                    blob={resultBlob}
-                    filename={`${getFileNameWithoutExtension(file.name)}-meme.png`}
-                    label={t("meme.download")}
-                  />
+          </>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
+            {/* Canvas area */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-[13px] font-semibold text-t-primary">Preview</p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={addText}
+                    className="px-3 py-1.5 rounded-lg text-[12px] font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:shadow-lg hover:shadow-indigo-500/25 transition-all"
+                  >
+                    + Add Text
+                  </button>
                   <button
                     onClick={reset}
-                    className="px-6 py-2.5 rounded-xl text-[13px] font-semibold text-brand-muted bg-white/5 hover:bg-white/10 transition-colors"
+                    className="px-3 py-1.5 rounded-lg text-[12px] font-semibold text-t-secondary bg-bg-secondary border border-border hover:bg-white/10 transition-colors"
                   >
-                    New Meme
+                    New Image
                   </button>
                 </div>
               </div>
-            )}
-          </>
+
+              {/* Interactive preview container */}
+              <div
+                ref={containerRef}
+                className="relative select-none rounded-xl overflow-hidden border border-border"
+                style={{ cursor: "default" }}
+                onClick={() => setSelectedId(null)}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={imgSrc!}
+                  alt="Meme base"
+                  className="w-full max-w-full block"
+                  draggable={false}
+                />
+
+                {/* Text overlays */}
+                {textItems.map((item) => (
+                  <div
+                    key={item.id}
+                    onMouseDown={(e) => handleMouseDown(e, item.id)}
+                    onTouchStart={(e) => handleTouchStart(e, item.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedId(item.id);
+                    }}
+                    style={{
+                      position: "absolute",
+                      left: `${item.x}%`,
+                      top: `${item.y}%`,
+                      transform: `translate(-50%, -50%) rotate(${item.rotation}deg)`,
+                      fontSize: `${item.fontSize}px`,
+                      fontFamily: `${item.fontFamily}, sans-serif`,
+                      fontWeight: item.bold ? "bold" : "normal",
+                      fontStyle: item.italic ? "italic" : "normal",
+                      color: item.color,
+                      textAlign: item.align,
+                      WebkitTextStroke: item.strokeWidth > 0
+                        ? `${item.strokeWidth}px ${item.strokeColor}`
+                        : undefined,
+                      cursor: "move",
+                      whiteSpace: "pre-wrap",
+                      lineHeight: 1.1,
+                      padding: "4px 6px",
+                      outline: selectedId === item.id
+                        ? "2px dashed rgba(99,102,241,0.8)"
+                        : "2px dashed transparent",
+                      outlineOffset: "2px",
+                      borderRadius: "4px",
+                      userSelect: "none",
+                      pointerEvents: "auto",
+                    }}
+                  >
+                    {item.text || "\u00A0"}
+                  </div>
+                ))}
+              </div>
+
+              {/* Presets */}
+              <div className="glass rounded-xl p-4 space-y-2">
+                <p className="text-[12px] font-semibold text-t-primary">Quick Templates</p>
+                <div className="flex flex-wrap gap-2">
+                  {PRESETS.map((p) => (
+                    <button
+                      key={p.label}
+                      onClick={() => applyPreset(p)}
+                      className="px-3 py-1.5 rounded-lg text-[11px] font-medium text-t-secondary bg-bg-secondary border border-border hover:border-indigo-500/50 hover:text-t-primary transition-colors"
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Download */}
+              <button
+                onClick={handleDownload}
+                className="w-full py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:shadow-lg hover:shadow-indigo-500/25 hover:scale-[1.01] active:scale-[0.99] transition-all text-[14px]"
+              >
+                Download Meme
+              </button>
+            </div>
+
+            {/* Controls panel */}
+            <div className="glass rounded-xl p-5 space-y-5">
+              {/* Text layers list */}
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-[13px] font-semibold text-t-primary">Text Layers</p>
+                  <button
+                    onClick={addText}
+                    className="text-[11px] px-2.5 py-1 rounded-lg text-indigo-400 bg-indigo-500/10 hover:bg-indigo-500/20 transition-colors"
+                  >
+                    + Add
+                  </button>
+                </div>
+                <div className="space-y-1.5">
+                  {textItems.map((item) => (
+                    <div
+                      key={item.id}
+                      onClick={() => setSelectedId(item.id)}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors ${
+                        selectedId === item.id
+                          ? "bg-indigo-500/15 border border-indigo-500/30"
+                          : "bg-bg-secondary border border-border hover:bg-white/5"
+                      }`}
+                    >
+                      <span className="flex-1 text-[12px] text-t-primary truncate">
+                        {item.text || "(empty)"}
+                      </span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteItem(item.id);
+                        }}
+                        className="text-[14px] text-t-secondary hover:text-red-400 transition-colors leading-none"
+                        title="Delete layer"
+                      >
+                        &times;
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Selected item controls */}
+              {selectedItem ? (
+                <div className="space-y-4 border-t border-border pt-4">
+                  <p className="text-[12px] font-semibold text-t-secondary uppercase tracking-wide">
+                    Edit Selected
+                  </p>
+
+                  {/* Text */}
+                  <div>
+                    <label className="block text-[11px] text-t-secondary mb-1">Text</label>
+                    <textarea
+                      value={selectedItem.text}
+                      onChange={(e) => updateItem(selectedItem.id, { text: e.target.value })}
+                      rows={2}
+                      className="w-full px-3 py-2 rounded-lg bg-bg-secondary border border-border text-[13px] text-t-primary placeholder:text-t-secondary/50 focus:outline-none focus:border-indigo-500/50 transition-colors resize-none"
+                      placeholder="Enter text..."
+                    />
+                  </div>
+
+                  {/* Font Family */}
+                  <div>
+                    <label className="block text-[11px] text-t-secondary mb-1">Font Family</label>
+                    <select
+                      value={selectedItem.fontFamily}
+                      onChange={(e) => updateItem(selectedItem.id, { fontFamily: e.target.value })}
+                      className="w-full px-3 py-2 rounded-lg bg-bg-secondary border border-border text-[13px] text-t-primary focus:outline-none focus:border-indigo-500/50 transition-colors"
+                    >
+                      {FONT_FAMILIES.map((f) => (
+                        <option key={f} value={f} style={{ fontFamily: f }}>
+                          {f}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Bold / Italic */}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => updateItem(selectedItem.id, { bold: !selectedItem.bold })}
+                      className={`flex-1 py-2 rounded-lg text-[12px] font-bold transition-colors border ${
+                        selectedItem.bold
+                          ? "bg-indigo-500/20 border-indigo-500/40 text-indigo-300"
+                          : "bg-bg-secondary border-border text-t-secondary hover:bg-white/5"
+                      }`}
+                    >
+                      B
+                    </button>
+                    <button
+                      onClick={() => updateItem(selectedItem.id, { italic: !selectedItem.italic })}
+                      className={`flex-1 py-2 rounded-lg text-[12px] font-bold italic transition-colors border ${
+                        selectedItem.italic
+                          ? "bg-indigo-500/20 border-indigo-500/40 text-indigo-300"
+                          : "bg-bg-secondary border-border text-t-secondary hover:bg-white/5"
+                      }`}
+                    >
+                      I
+                    </button>
+                  </div>
+
+                  {/* Font Size */}
+                  <div>
+                    <div className="flex justify-between mb-1">
+                      <label className="text-[11px] text-t-secondary">Font Size</label>
+                      <span className="text-[11px] font-mono text-t-secondary">{selectedItem.fontSize}px</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={16}
+                      max={120}
+                      step={1}
+                      value={selectedItem.fontSize}
+                      onChange={(e) => updateItem(selectedItem.id, { fontSize: Number(e.target.value) })}
+                      className="w-full accent-indigo-500"
+                    />
+                  </div>
+
+                  {/* Rotation */}
+                  <div>
+                    <div className="flex justify-between mb-1">
+                      <label className="text-[11px] text-t-secondary">Rotation</label>
+                      <span className="text-[11px] font-mono text-t-secondary">{selectedItem.rotation}&deg;</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={-180}
+                      max={180}
+                      step={1}
+                      value={selectedItem.rotation}
+                      onChange={(e) => updateItem(selectedItem.id, { rotation: Number(e.target.value) })}
+                      className="w-full accent-indigo-500"
+                    />
+                  </div>
+
+                  {/* Stroke Width */}
+                  <div>
+                    <div className="flex justify-between mb-1">
+                      <label className="text-[11px] text-t-secondary">Stroke Width</label>
+                      <span className="text-[11px] font-mono text-t-secondary">{selectedItem.strokeWidth}px</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={6}
+                      step={1}
+                      value={selectedItem.strokeWidth}
+                      onChange={(e) => updateItem(selectedItem.id, { strokeWidth: Number(e.target.value) })}
+                      className="w-full accent-indigo-500"
+                    />
+                  </div>
+
+                  {/* Colors */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] text-t-secondary mb-1">Text Color</label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="color"
+                          value={selectedItem.color}
+                          onChange={(e) => updateItem(selectedItem.id, { color: e.target.value })}
+                          className="w-8 h-8 rounded-lg cursor-pointer border border-border bg-bg-secondary p-0.5"
+                        />
+                        <span className="text-[10px] font-mono text-t-secondary">{selectedItem.color}</span>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-[11px] text-t-secondary mb-1">Stroke Color</label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="color"
+                          value={selectedItem.strokeColor}
+                          onChange={(e) => updateItem(selectedItem.id, { strokeColor: e.target.value })}
+                          className="w-8 h-8 rounded-lg cursor-pointer border border-border bg-bg-secondary p-0.5"
+                        />
+                        <span className="text-[10px] font-mono text-t-secondary">{selectedItem.strokeColor}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Alignment */}
+                  <div>
+                    <label className="block text-[11px] text-t-secondary mb-1">Alignment</label>
+                    <div className="flex gap-1">
+                      {(["left", "center", "right"] as const).map((a) => (
+                        <button
+                          key={a}
+                          onClick={() => updateItem(selectedItem.id, { align: a })}
+                          className={`flex-1 py-1.5 rounded-lg text-[11px] font-medium capitalize transition-colors border ${
+                            selectedItem.align === a
+                              ? "bg-indigo-500/20 border-indigo-500/40 text-indigo-300"
+                              : "bg-bg-secondary border-border text-t-secondary hover:bg-white/5"
+                          }`}
+                        >
+                          {a}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Delete */}
+                  <button
+                    onClick={() => deleteItem(selectedItem.id)}
+                    className="w-full py-2 rounded-lg text-[12px] font-semibold text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors"
+                  >
+                    Delete This Layer
+                  </button>
+                </div>
+              ) : (
+                <div className="border-t border-border pt-4">
+                  <p className="text-[12px] text-t-secondary text-center py-4">
+                    Click a text layer above or click text on the preview to edit it.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
         )}
       </div>
     </ToolLayout>
   );
 }
+

@@ -3,6 +3,8 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ToolCard from "@/components/ToolCard";
+import ToolOfTheDay from "@/components/ToolOfTheDay";
+import SuggestToolForm from "@/components/SuggestToolForm";
 import { tools, categoryEmojis, getToolBySlug, type ToolCategory } from "@/lib/tools";
 import { toolField } from "@/lib/tool-i18n";
 import { useI18n } from "@/lib/i18n";
@@ -130,37 +132,50 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Tool of the Day */}
+        <ToolOfTheDay />
+
         {/* Recent Tools */}
         {recentReady && recentTools.length > 0 && (
           <section className="max-w-6xl mx-auto px-5 pb-8">
-            <div className="flex items-center gap-3 mb-4">
-              <svg
-                className="w-5 h-5 text-accent"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              <h2 className="text-[18px] font-bold text-t-primary">
-                {t("recently.title")}
-              </h2>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
+                  <svg
+                    className="w-4 h-4 text-accent"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+                <h2 className="text-[16px] font-bold text-t-primary">
+                  {t("recently.title")}
+                </h2>
+                <span className="text-[11px] text-t-tertiary bg-bg-secondary px-2 py-0.5 rounded-full font-medium">
+                  {recentTools.length}
+                </span>
+              </div>
+              <Link href="/tools" className="text-[12px] text-accent hover:underline font-medium">
+                {t("hero.cta")} →
+              </Link>
             </div>
             <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
               {recentTools.map((tool) => (
                 <Link
                   key={tool.slug}
                   href={`/tools/${tool.slug}`}
-                  className="flex-shrink-0 flex items-center gap-3 px-4 py-3 rounded-xl bg-surface border border-border hover:border-accent/20 hover:shadow-card-hover transition-all duration-200 min-w-[200px] max-w-[260px]"
+                  className="flex-shrink-0 flex items-center gap-3 px-4 py-3 rounded-xl bg-surface border border-border hover:border-accent/30 hover:shadow-card-hover hover:bg-accent/5 transition-all duration-200 min-w-[200px] max-w-[260px] group"
                 >
-                  <span className="text-xl">{tool.emoji}</span>
+                  <span className="text-xl group-hover:scale-110 transition-transform duration-200">{tool.emoji}</span>
                   <div className="min-w-0">
-                    <p className="text-[13px] font-semibold text-t-primary truncate">
+                    <p className="text-[13px] font-semibold text-t-primary truncate group-hover:text-accent transition-colors">
                       {toolField(t, tool.slug, tool, "name")}
                     </p>
                     <p className="text-[11px] text-t-tertiary truncate">
@@ -334,6 +349,9 @@ export default function Home() {
             </p>
           </div>
         </section>
+
+        {/* Suggest a Tool */}
+        <SuggestToolForm />
 
         {/* Bottom CTA */}
         <section className="border-t border-border bg-bg-secondary">

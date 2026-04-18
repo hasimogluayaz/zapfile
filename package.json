@@ -11,6 +11,7 @@
     "analyze": "cross-env ANALYZE=true next build"
   },
   "dependencies": {
+    "@imgly/background-removal": "^1.7.0",
     "@types/figlet": "^1.7.0",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
