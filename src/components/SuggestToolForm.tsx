@@ -10,22 +10,43 @@ export default function SuggestToolForm() {
   const [toolName, setToolName] = useState("");
   const [description, setDescription] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [sending, setSending] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!toolName.trim()) { toast.error("Please enter a tool name."); return; }
+    if (sending) return;
 
-    // Store suggestion in localStorage (no backend needed)
-    const suggestions = JSON.parse(localStorage.getItem("zapfile-suggestions") || "[]");
-    suggestions.push({
-      name: toolName.trim(),
-      description: description.trim(),
-      date: new Date().toISOString(),
-    });
-    localStorage.setItem("zapfile-suggestions", JSON.stringify(suggestions));
-
-    setSubmitted(true);
-    toast.success("Thank you! Your suggestion has been saved.");
+    setSending(true);
+    try {
+      const res = await fetch("https://formsubmit.co/ajax/hasimogluayaz@gmail.com", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          _subject: `ZapFile · Tool suggestion: ${toolName.trim()}`,
+          _template: "table",
+          _captcha: "false",
+          tool_name: toolName.trim(),
+          description: description.trim() || "(none)",
+          page_url: typeof window !== "undefined" ? window.location.href : "",
+          user_agent: typeof navigator !== "undefined" ? navigator.userAgent : "",
+          submitted_at: new Date().toISOString(),
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || (data && data.success === "false")) {
+        throw new Error("formsubmit failed");
+      }
+      setSubmitted(true);
+      toast.success("Thank you! Your suggestion has been sent.");
+    } catch {
+      toast.error("Could not send. Please try again later.");
+    } finally {
+      setSending(false);
+    }
   };
 
   const handleReset = () => {
@@ -115,9 +136,10 @@ export default function SuggestToolForm() {
                 </div>
                 <button
                   type="submit"
-                  className="px-6 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:opacity-90 transition-all"
+                  disabled={sending}
+                  className="px-6 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Submit Suggestion
+                  {sending ? "Sending…" : "Submit Suggestion"}
                 </button>
               </form>
             )}
