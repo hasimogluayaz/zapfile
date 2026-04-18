@@ -1,21 +1,61 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import toast from "react-hot-toast";
 import { useI18n } from "@/lib/i18n";
+
+const RATE_LIMIT_KEY = "zapfile-suggest-last";
+const RATE_LIMIT_MS = 5 * 60 * 1000; // 5 min between submissions per browser
+const MIN_FILL_MS = 3000; // humans take > 3s to fill a form
 
 export default function SuggestToolForm() {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [toolName, setToolName] = useState("");
   const [description, setDescription] = useState("");
+  // Honeypot — bots fill this, humans don't (it's invisible + aria-hidden)
+  const [website, setWebsite] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [sending, setSending] = useState(false);
+  const openedAt = useRef<number>(0);
+
+  useEffect(() => {
+    if (open && openedAt.current === 0) openedAt.current = Date.now();
+  }, [open]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!toolName.trim()) { toast.error("Please enter a tool name."); return; }
     if (sending) return;
+
+    // 1. Honeypot — if filled, silently fake success and drop
+    if (website.trim() !== "") {
+      setSubmitted(true);
+      return;
+    }
+
+    // 2. Min fill time — forms filled in <3s are almost certainly bots
+    const elapsed = Date.now() - (openedAt.current || Date.now());
+    if (elapsed < MIN_FILL_MS) {
+      toast.error("Please take a moment before submitting.");
+      return;
+    }
+
+    // 3. Rate limit per browser — max 1 submission / 5 min
+    try {
+      const last = Number(localStorage.getItem(RATE_LIMIT_KEY) || "0");
+      const remain = RATE_LIMIT_MS - (Date.now() - last);
+      if (remain > 0) {
+        const mins = Math.ceil(remain / 60000);
+        toast.error(`Please wait ${mins} min before sending another suggestion.`);
+        return;
+      }
+    } catch { /* ignore localStorage errors */ }
+
+    // 4. Length / content sanity
+    const name = toolName.trim().slice(0, 80);
+    const desc = description.trim().slice(0, 500);
+    if (name.length < 2) { toast.error("Tool name too short."); return; }
 
     setSending(true);
 
@@ -37,26 +77,31 @@ export default function SuggestToolForm() {
     form.target = iframeName;
     form.style.display = "none";
 
-    const addField = (name: string, value: string) => {
+    const addField = (fname: string, value: string) => {
       const input = document.createElement("input");
       input.type = "hidden";
-      input.name = name;
+      input.name = fname;
       input.value = value;
       form.appendChild(input);
     };
 
-    addField("_subject", `ZapFile · Tool suggestion: ${toolName.trim()}`);
+    addField("_subject", `ZapFile · Tool suggestion: ${name}`);
     addField("_template", "table");
     addField("_captcha", "false");
-    addField("tool_name", toolName.trim());
-    addField("description", description.trim() || "(none)");
+    // FormSubmit built-in honeypot (second line of defense)
+    addField("_honey", "");
+    addField("tool_name", name);
+    addField("description", desc || "(none)");
     addField("page_url", window.location.href);
     addField("user_agent", navigator.userAgent);
     addField("submitted_at", new Date().toISOString());
+    addField("fill_time_sec", String(Math.round(elapsed / 1000)));
 
     document.body.appendChild(form);
     form.submit();
     setTimeout(() => form.remove(), 1000);
+
+    try { localStorage.setItem(RATE_LIMIT_KEY, String(Date.now())); } catch { /* ignore */ }
 
     setSubmitted(true);
     setSending(false);
@@ -66,8 +111,10 @@ export default function SuggestToolForm() {
   const handleReset = () => {
     setToolName("");
     setDescription("");
+    setWebsite("");
     setSubmitted(false);
     setOpen(false);
+    openedAt.current = 0;
   };
 
   return (
@@ -121,7 +168,31 @@ export default function SuggestToolForm() {
                 </button>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-4 pt-5">
+              <form onSubmit={handleSubmit} className="space-y-4 pt-5" autoComplete="off">
+                {/* Honeypot — invisible to humans, filled by bots */}
+                <div
+                  aria-hidden="true"
+                  style={{
+                    position: "absolute",
+                    left: "-9999px",
+                    top: "-9999px",
+                    width: 0,
+                    height: 0,
+                    overflow: "hidden",
+                  }}
+                >
+                  <label>
+                    Website (leave blank)
+                    <input
+                      type="text"
+                      tabIndex={-1}
+                      autoComplete="off"
+                      value={website}
+                      onChange={(e) => setWebsite(e.target.value)}
+                    />
+                  </label>
+                </div>
+
                 <div>
                   <label className="text-xs font-semibold text-t-secondary mb-1.5 block">
                     Tool Name <span className="text-red-400">*</span>
