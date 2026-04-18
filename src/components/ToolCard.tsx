@@ -37,7 +37,6 @@ export default function ToolCard({ tool }: { tool: Tool }) {
   const colors = toolColors[tool.slug] ?? defaultColor;
   const { t } = useI18n();
   const name = toolField(t, tool.slug, tool, "name");
-  const desc = toolField(t, tool.slug, tool, "desc");
 
   return (
     <Link
