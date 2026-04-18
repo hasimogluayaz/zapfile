@@ -159,9 +159,19 @@ export default function ToolLayout({
           {showTrustPanel && <TrustPanel />}
 
           {/* Tool header */}
-          <div className="mb-8 flex items-start justify-between gap-4">
-            <div className="min-w-0">
-              <h1 className="text-2xl font-bold text-t-primary">{finalName}</h1>
+          <div className="mb-8 flex items-start gap-4">
+            {currentTool && (
+              <div className="relative shrink-0">
+                <div className="absolute inset-0 -m-1 rounded-2xl bg-gradient-to-br from-indigo-400 to-violet-400 opacity-30 blur-lg" aria-hidden="true" />
+                <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-100 to-violet-100 dark:from-indigo-900/40 dark:to-violet-900/30 flex items-center justify-center border border-white/10">
+                  <span className="text-3xl leading-none drop-shadow-sm">{currentTool.emoji}</span>
+                </div>
+              </div>
+            )}
+            <div className="min-w-0 flex-1">
+              <h1 className="text-3xl sm:text-4xl font-bold text-t-primary tracking-tight leading-[1.1]">
+                {finalName}
+              </h1>
               <p className="text-[14px] text-t-secondary mt-2 leading-relaxed">
                 {finalDesc}
               </p>
@@ -188,12 +198,12 @@ export default function ToolLayout({
               <h2 className="text-xl font-semibold text-t-primary mb-6">
                 {t("related.title")}
               </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 stagger-in">
                 {relatedTools.map((tool) => (
                   <Link
                     key={tool.slug}
                     href={`/tools/${tool.slug}`}
-                    className="glass rounded-xl p-4 hover:border-accent/50 border border-transparent transition-all group"
+                    className="card-premium p-4 group"
                   >
                     <span className="text-2xl">{tool.emoji}</span>
                     <h3 className="font-medium text-t-primary mt-2 group-hover:text-accent transition-colors">

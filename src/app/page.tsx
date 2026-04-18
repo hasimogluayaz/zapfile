@@ -32,31 +32,32 @@ export default function Home() {
       <main id="main-content" className="flex-1" tabIndex={-1}>
         {/* Hero */}
         <section className="relative overflow-hidden">
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-accent/5 blur-3xl" />
-            <div className="absolute -bottom-24 -left-24 w-96 h-96 rounded-full bg-purple-500/5 blur-3xl" />
-          </div>
+          <div className="aurora-bg" />
+          <div className="absolute inset-0 grid-pattern pointer-events-none" />
 
-          <div className="max-w-6xl mx-auto px-5 pt-20 pb-16 text-center relative">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent-light border border-accent/10 text-accent text-[12px] font-medium mb-6">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          <div className="max-w-6xl mx-auto px-5 pt-24 pb-20 text-center relative z-[1]">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent-light border border-accent/20 text-accent text-[12px] font-medium mb-7 backdrop-blur-sm">
+              <span className="relative flex w-2 h-2">
+                <span className="absolute inline-flex w-full h-full rounded-full bg-emerald-500 opacity-75 animate-ping" />
+                <span className="relative inline-flex w-2 h-2 rounded-full bg-emerald-500" />
+              </span>
               {t("hero.badge")}
             </div>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-t-primary leading-tight">
+            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tighter text-t-primary leading-[1.05]">
               {t("hero.title1")} <br className="hidden sm:block" />
               <span className="gradient-text">{t("hero.title2")}</span>
               {t("hero.title3") ? ` ${t("hero.title3")}` : ""}
             </h1>
 
-            <p className="mt-5 text-[16px] text-t-secondary max-w-lg mx-auto leading-relaxed">
+            <p className="mt-6 text-[17px] sm:text-[18px] text-t-secondary max-w-xl mx-auto leading-relaxed">
               {t("hero.subtitle")}
             </p>
 
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
               <Link
                 href="/tools"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-[14px] font-semibold bg-accent text-white hover:bg-accent-hover transition-all hover:shadow-lg hover:shadow-accent/20 hover:scale-[1.02] active:scale-[0.98]"
+                className="shine-btn inline-flex items-center gap-2 px-7 py-3.5 rounded-xl text-[14px] font-semibold bg-gradient-to-r from-indigo-500 via-violet-500 to-fuchsia-500 text-white hover:shadow-xl hover:shadow-accent/30 transition-all hover:scale-[1.03] active:scale-[0.98]"
               >
                 {t("hero.cta")}
                 <svg
@@ -75,7 +76,7 @@ export default function Home() {
               </Link>
               <Link
                 href="/workflows"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-[14px] font-semibold border border-border text-t-primary hover:bg-bg-secondary transition-all hover:scale-[1.02] active:scale-[0.98]"
+                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl text-[14px] font-semibold border border-border bg-surface/60 backdrop-blur-sm text-t-primary hover:bg-bg-secondary transition-all hover:scale-[1.03] active:scale-[0.98]"
               >
                 {t("nav.workflows")}
               </Link>
@@ -227,7 +228,7 @@ export default function Home() {
                     {categoryTools.length}
                   </span>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                <div className="stagger-in grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                   {categoryTools.map((tool) => (
                     <ToolCard key={tool.slug} tool={tool} />
                   ))}
@@ -240,7 +241,7 @@ export default function Home() {
         {/* Privacy & Trust */}
         <section className="max-w-6xl mx-auto px-5 pb-20">
           {/* Privacy Hero Block */}
-          <div className="glass rounded-2xl p-8 sm:p-12 text-center mb-8">
+          <div className="glass-elevated rounded-3xl p-8 sm:p-12 text-center mb-8">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 text-emerald-500 text-[12px] font-medium mb-6">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -251,16 +252,19 @@ export default function Home() {
               {t("home.privacy.heading")}
             </h2>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 stagger-in">
               {/* Zero Uploads */}
-              <div className="flex flex-col items-center gap-3 p-6 rounded-xl bg-bg-secondary/50">
-                <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center">
-                  <svg className="w-6 h-6 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 11v4m-2-2h4" />
-                  </svg>
+              <div className="card-premium flex flex-col items-center gap-3 p-6 text-center">
+                <div className="relative">
+                  <div className="absolute inset-0 -m-1 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-400 opacity-30 blur-lg" aria-hidden="true" />
+                  <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/30">
+                    <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 11v4m-2-2h4" />
+                    </svg>
+                  </div>
                 </div>
-                <h3 className="text-[15px] font-bold text-t-primary">
+                <h3 className="text-[15px] font-bold text-t-primary mt-2">
                   {t("home.privacy.zeroUploads.title")}
                 </h3>
                 <p className="text-[13px] text-t-secondary leading-relaxed">
@@ -269,14 +273,17 @@ export default function Home() {
               </div>
 
               {/* No Server Storage */}
-              <div className="flex flex-col items-center gap-3 p-6 rounded-xl bg-bg-secondary/50">
-                <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center">
-                  <svg className="w-6 h-6 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2" />
-                    <line x1="4" y1="4" x2="20" y2="20" strokeLinecap="round" strokeWidth={1.5} />
-                  </svg>
+              <div className="card-premium flex flex-col items-center gap-3 p-6 text-center">
+                <div className="relative">
+                  <div className="absolute inset-0 -m-1 rounded-2xl bg-gradient-to-br from-indigo-400 to-violet-400 opacity-30 blur-lg" aria-hidden="true" />
+                  <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                    <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2" />
+                      <line x1="4" y1="4" x2="20" y2="20" strokeLinecap="round" strokeWidth={1.75} />
+                    </svg>
+                  </div>
                 </div>
-                <h3 className="text-[15px] font-bold text-t-primary">
+                <h3 className="text-[15px] font-bold text-t-primary mt-2">
                   {t("home.privacy.noServer.title")}
                 </h3>
                 <p className="text-[13px] text-t-secondary leading-relaxed">
@@ -285,14 +292,17 @@ export default function Home() {
               </div>
 
               {/* No Account Required */}
-              <div className="flex flex-col items-center gap-3 p-6 rounded-xl bg-bg-secondary/50">
-                <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center">
-                  <svg className="w-6 h-6 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M18 12l4-4m0 0l-4-4m4 4H14" />
-                  </svg>
+              <div className="card-premium flex flex-col items-center gap-3 p-6 text-center">
+                <div className="relative">
+                  <div className="absolute inset-0 -m-1 rounded-2xl bg-gradient-to-br from-fuchsia-400 to-pink-400 opacity-30 blur-lg" aria-hidden="true" />
+                  <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-fuchsia-500 to-pink-500 flex items-center justify-center shadow-lg shadow-fuchsia-500/30">
+                    <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M18 12l4-4m0 0l-4-4m4 4H14" />
+                    </svg>
+                  </div>
                 </div>
-                <h3 className="text-[15px] font-bold text-t-primary">
+                <h3 className="text-[15px] font-bold text-t-primary mt-2">
                   {t("home.privacy.noAccount.title")}
                 </h3>
                 <p className="text-[13px] text-t-secondary leading-relaxed">
@@ -303,15 +313,15 @@ export default function Home() {
           </div>
 
           {/* How It Works */}
-          <div className="glass rounded-2xl p-8 sm:p-10 mb-8">
+          <div className="glass-elevated rounded-3xl p-8 sm:p-10 mb-8">
             <h3 className="text-[18px] font-bold text-t-primary text-center mb-8">
               {t("home.privacy.howTitle")}
             </h3>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6">
               {/* Step 1 */}
-              <div className="flex items-center gap-3 px-5 py-3 rounded-xl bg-accent/10">
-                <span className="w-7 h-7 rounded-full bg-accent text-white text-[13px] font-bold flex items-center justify-center">1</span>
-                <span className="text-[14px] font-semibold text-accent">{t("home.privacy.step1")}</span>
+              <div className="flex items-center gap-3 px-5 py-3 rounded-xl bg-gradient-to-r from-indigo-500/10 to-violet-500/10 border border-indigo-500/20">
+                <span className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 text-white text-[13px] font-bold flex items-center justify-center shadow-md shadow-indigo-500/40">1</span>
+                <span className="text-[14px] font-semibold text-t-primary">{t("home.privacy.step1")}</span>
               </div>
               {/* Arrow */}
               <svg className="w-5 h-5 text-t-tertiary hidden sm:block rtl:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -321,9 +331,9 @@ export default function Home() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
               {/* Step 2 */}
-              <div className="flex items-center gap-3 px-5 py-3 rounded-xl bg-accent/10">
-                <span className="w-7 h-7 rounded-full bg-accent text-white text-[13px] font-bold flex items-center justify-center">2</span>
-                <span className="text-[14px] font-semibold text-accent">{t("home.privacy.step2")}</span>
+              <div className="flex items-center gap-3 px-5 py-3 rounded-xl bg-gradient-to-r from-violet-500/10 to-fuchsia-500/10 border border-violet-500/20">
+                <span className="w-7 h-7 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white text-[13px] font-bold flex items-center justify-center shadow-md shadow-violet-500/40">2</span>
+                <span className="text-[14px] font-semibold text-t-primary">{t("home.privacy.step2")}</span>
               </div>
               {/* Arrow */}
               <svg className="w-5 h-5 text-t-tertiary hidden sm:block rtl:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -333,9 +343,9 @@ export default function Home() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
               {/* Step 3 */}
-              <div className="flex items-center gap-3 px-5 py-3 rounded-xl bg-accent/10">
-                <span className="w-7 h-7 rounded-full bg-accent text-white text-[13px] font-bold flex items-center justify-center">3</span>
-                <span className="text-[14px] font-semibold text-accent">{t("home.privacy.step3")}</span>
+              <div className="flex items-center gap-3 px-5 py-3 rounded-xl bg-gradient-to-r from-fuchsia-500/10 to-pink-500/10 border border-fuchsia-500/20">
+                <span className="w-7 h-7 rounded-full bg-gradient-to-br from-fuchsia-500 to-pink-500 text-white text-[13px] font-bold flex items-center justify-center shadow-md shadow-fuchsia-500/40">3</span>
+                <span className="text-[14px] font-semibold text-t-primary">{t("home.privacy.step3")}</span>
               </div>
             </div>
             <p className="text-[13px] text-t-secondary text-center mt-6 max-w-lg mx-auto leading-relaxed">
@@ -370,7 +380,7 @@ export default function Home() {
             </p>
             <Link
               href="/tools"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-[14px] font-semibold bg-accent text-white hover:bg-accent-hover transition-all hover:shadow-lg hover:shadow-accent/20"
+              className="shine-btn inline-flex items-center gap-2 px-6 py-3 rounded-xl text-[14px] font-semibold text-white bg-gradient-to-r from-indigo-500 via-violet-500 to-fuchsia-500 hover:opacity-90 transition-all hover:scale-[1.02] hover:shadow-xl hover:shadow-violet-500/30"
             >
               {t("hero.cta")}
               <svg
