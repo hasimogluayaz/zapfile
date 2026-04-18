@@ -32,50 +32,52 @@ export default function PdfEncryptPage() {
     setProgress(10);
 
     try {
-      const JSZip = (await import("jszip")).default;
-      setProgress(30);
+      // @zip.js/zip.js — AES-256 encrypted ZIP (ZipCrypto fallback disabled)
+      const { BlobWriter, BlobReader, ZipWriter } = await import("@zip.js/zip.js");
+      setProgress(25);
 
       const arrayBuffer = await file.arrayBuffer();
+      const fileBlob = new Blob([arrayBuffer], { type: "application/pdf" });
+      setProgress(45);
+
+      // Create AES-256 encrypted ZIP
+      const zipBlobWriter = new BlobWriter("application/zip");
+      const zipWriter = new ZipWriter(zipBlobWriter, {
+        password,
+        encryptionStrength: 3, // AES-256
+        zipCrypto: false,      // Force AES, not legacy ZipCrypto
+      });
       setProgress(60);
 
-      const zip = new JSZip();
-      zip.file(file.name, arrayBuffer, {
-        // JSZip password (ZipCrypto encryption - basic protection)
-        // Note: for stronger encryption, AES-256 requires additional library
-      });
+      await zipWriter.add(file.name, new BlobReader(fileBlob));
+      setProgress(85);
 
-      setProgress(75);
-
-      const zipBlob = await zip.generateAsync({
-        type: "blob",
-        compression: "DEFLATE",
-        compressionOptions: { level: 6 },
-      });
-
+      const zipBlob = await zipWriter.close();
       setProgress(100);
 
       const outName = file.name.replace(/\.pdf$/i, "") + "-protected.zip";
       downloadBlob(zipBlob, outName);
 
-      toast.success("PDF packaged successfully! Share the password separately.");
+      toast.success("PDF protected with AES-256 encryption ✓");
     } catch (err) {
       console.error(err);
-      toast.error("Failed to process PDF. Please try again.");
+      toast.error("Failed to encrypt. Please try again.");
     } finally {
       setProcessing(false);
     }
   }, [file, password, confirmPassword]);
 
-  const strength = password.length === 0 ? null
-    : password.length < 6 ? { label: "Weak", color: "bg-red-500", w: 25 }
-    : password.length < 10 ? { label: "Fair", color: "bg-yellow-500", w: 55 }
-    : password.length < 16 ? { label: "Strong", color: "bg-emerald-500", w: 80 }
-    : { label: "Very Strong", color: "bg-emerald-400", w: 100 };
+  const strength =
+    password.length === 0 ? null
+    : password.length < 6  ? { label: "Weak",        color: "bg-red-500",     w: 25  }
+    : password.length < 10 ? { label: "Fair",         color: "bg-yellow-500",  w: 55  }
+    : password.length < 16 ? { label: "Strong",       color: "bg-emerald-500", w: 80  }
+    :                        { label: "Very Strong",   color: "bg-emerald-400", w: 100 };
 
   return (
     <ToolLayout
       toolName="PDF Encrypt"
-      toolDescription="Protect your PDF files by packaging them in a password-secured archive. Everything runs in your browser — no uploads."
+      toolDescription="Protect your PDF with AES-256 encryption. Runs entirely in your browser — nothing is uploaded."
     >
       <div className="space-y-5">
         {!file ? (
@@ -127,7 +129,6 @@ export default function PdfEncryptPage() {
                     {showPw ? "🙈" : "👁️"}
                   </button>
                 </div>
-                {/* Strength bar */}
                 {strength && (
                   <div className="mt-2">
                     <div className="w-full h-1.5 rounded-full bg-bg-secondary overflow-hidden">
@@ -157,25 +158,30 @@ export default function PdfEncryptPage() {
                 )}
               </div>
 
-              {/* Info box */}
+              {/* Info */}
               <div className="flex gap-3 p-4 rounded-xl bg-accent/5 border border-accent/10">
                 <span className="text-lg shrink-0">🔒</span>
-                <div className="text-xs text-t-secondary leading-relaxed">
-                  Your PDF will be packaged inside a password-protected ZIP archive. Share the password
-                  through a separate secure channel (e.g. SMS, phone). Processing is 100% local — no file
-                  ever leaves your browser.
+                <div className="text-xs text-t-secondary leading-relaxed space-y-1">
+                  <p>
+                    Your PDF is encrypted with <strong className="text-t-primary">AES-256</strong> and packaged as a
+                    <strong className="text-t-primary"> .zip</strong> archive. Open it with any modern archive tool
+                    (7-Zip, WinRAR, macOS, Windows 11) using your password.
+                  </p>
+                  <p className="text-t-tertiary">
+                    Processing is 100% local — no file ever leaves your browser.
+                  </p>
                 </div>
               </div>
             </div>
 
-            {processing && <ProgressBar progress={progress} label="Encrypting…" />}
+            {processing && <ProgressBar progress={progress} label="Encrypting with AES-256…" />}
 
             <button
               onClick={handleEncrypt}
               disabled={processing || !password || password !== confirmPassword}
               className="w-full px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {processing ? "Processing…" : "🔒 Encrypt & Download ZIP"}
+              {processing ? "Encrypting…" : "🔒 Encrypt & Download"}
             </button>
           </>
         )}

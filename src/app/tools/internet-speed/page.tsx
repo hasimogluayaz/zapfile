@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import toast from "react-hot-toast";
 import ToolLayout from "@/components/ToolLayout";
 
 type TestState = "idle" | "testing-ping" | "testing-download" | "done";
@@ -94,17 +95,18 @@ export default function InternetSpeedPage() {
     // ── Download test ──
     setState("testing-download");
 
+    // Multiple reliable CORS-friendly endpoints — tried in order, first success wins
     const DOWNLOAD_URLS = [
-      "https://speed.cloudflare.com/__down?bytes=1000000",
-      "https://cdn.zapfile.xyz/speedtest/1mb.bin",
+      "https://speed.cloudflare.com/__down?bytes=2000000",       // 2 MB – Cloudflare primary
+      "https://speed.cloudflare.com/__down?bytes=1000000",       // 1 MB – Cloudflare fallback
+      "https://httpbin.org/bytes/1000000",                        // 1 MB – httpbin fallback
     ];
 
     for (const url of DOWNLOAD_URLS) {
       try {
+        const cacheBust = url.includes("?") ? `&_=${Date.now()}` : `?_=${Date.now()}`;
         const t0 = performance.now();
-        const res = await fetch(url + (url.includes("?") ? "&" : "?") + "nocache=" + Date.now(), {
-          cache: "no-store",
-        });
+        const res = await fetch(url + cacheBust, { cache: "no-store" });
         if (!res.ok) continue;
         const blob = await res.blob();
         const elapsed = (performance.now() - t0) / 1000; // seconds
@@ -114,6 +116,10 @@ export default function InternetSpeedPage() {
       } catch {
         continue;
       }
+    }
+
+    if (download === null) {
+      toast.error("Download test failed. Your network may be blocking test endpoints.");
     }
 
     setResult({ ping, download });

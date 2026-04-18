@@ -32,6 +32,45 @@ export default function HtmlToPdfPage() {
   const [isConverting, setIsConverting] = useState(false);
   const hiddenRef = useRef<HTMLDivElement>(null);
 
+  /** Fetch an external image URL and return it as a data-URL (base64).
+   *  Returns null if the request fails (CORS or network error). */
+  const fetchImageAsDataUrl = async (src: string): Promise<string | null> => {
+    try {
+      const res = await fetch(src, { mode: "cors", cache: "force-cache" });
+      if (!res.ok) return null;
+      const blob = await res.blob();
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => resolve(null);
+        reader.readAsDataURL(blob);
+      });
+    } catch {
+      return null;
+    }
+  };
+
+  /** Replace all external <img src="…"> with inline data-URLs so html2canvas
+   *  can render them without CORS errors. Returns the patched HTML string. */
+  const inlineExternalImages = async (rawHtml: string): Promise<string> => {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(rawHtml, "text/html");
+    const imgs = Array.from(doc.querySelectorAll("img[src]"));
+
+    await Promise.all(
+      imgs.map(async (img) => {
+        const src = img.getAttribute("src") ?? "";
+        // Only process absolute http(s) URLs — skip data: and relative paths
+        if (!/^https?:\/\//i.test(src)) return;
+        const dataUrl = await fetchImageAsDataUrl(src);
+        if (dataUrl) img.setAttribute("src", dataUrl);
+        else img.removeAttribute("src"); // remove broken images instead of showing broken icon
+      })
+    );
+
+    return doc.documentElement.outerHTML;
+  };
+
   const convertToPdf = async () => {
     if (!html.trim()) {
       toast.error(t("html2pdf.hint"));
@@ -46,6 +85,9 @@ export default function HtmlToPdfPage() {
       ]);
       const html2canvas = html2canvasModule.default;
       const { jsPDF } = jsPDFModule;
+
+      // Pre-process: inline external images as base64 data-URLs to bypass CORS
+      const processedHtml = await inlineExternalImages(html);
 
       // Create a temporary container rendered off-screen
       const container = document.createElement("div");
@@ -63,7 +105,7 @@ export default function HtmlToPdfPage() {
         "box-sizing:border-box",
         "z-index:-1",
       ].join(";");
-      container.innerHTML = html;
+      container.innerHTML = processedHtml;
       document.body.appendChild(container);
 
       const canvas = await html2canvas(container, {
@@ -227,9 +269,10 @@ export default function HtmlToPdfPage() {
             <div>
               <p className="text-sm font-medium text-t-primary mb-1">Tips</p>
               <ul className="text-xs text-t-secondary space-y-1 list-disc list-inside">
-                <li>External images and fonts may not load due to CORS</li>
-                <li>Inline styles and embedded CSS work best</li>
-                <li>Conversion runs entirely in your browser</li>
+                <li>External images are automatically fetched and inlined — most load correctly</li>
+                <li>Images on servers that block cross-origin requests may still be skipped</li>
+                <li>Inline styles and embedded CSS work best for consistent results</li>
+                <li>Conversion runs entirely in your browser — nothing is uploaded</li>
               </ul>
             </div>
           </div>

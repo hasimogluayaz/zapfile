@@ -15,6 +15,7 @@
     "@types/figlet": "^1.7.0",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
+    "@zip.js/zip.js": "^2.8.26",
     "browser-image-compression": "^2.0.2",
     "docx": "^9.6.1",
     "figlet": "^1.11.0",
