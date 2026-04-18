@@ -61,11 +61,6 @@ export default function ToolCard({ tool }: { tool: Tool }) {
       <p className="text-[13px] font-semibold text-t-primary group-hover:text-accent transition-colors leading-snug w-full line-clamp-2">
         {name}
       </p>
-
-      {/* Hidden description slides in on hover (desktop) */}
-      <p className="hidden sm:block absolute bottom-3 left-3 right-3 text-[10.5px] text-t-tertiary opacity-0 group-hover:opacity-100 transition-opacity duration-300 line-clamp-1">
-        {desc}
-      </p>
     </Link>
   );
 }
