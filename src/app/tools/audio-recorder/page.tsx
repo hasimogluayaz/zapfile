@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import toast from "react-hot-toast";
 import ToolLayout from "@/components/ToolLayout";
+import { useI18n } from "@/lib/i18n";
 
 type RecordingState = "idle" | "recording" | "paused" | "stopped";
 
@@ -20,15 +21,69 @@ function formatBytes(bytes: number): string {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
 }
 
+/** Encode an AudioBuffer to a 16-bit PCM WAV Blob (universal format). */
+function encodeWav(audioBuffer: AudioBuffer): Blob {
+  const numChannels = audioBuffer.numberOfChannels;
+  const sampleRate = audioBuffer.sampleRate;
+  const numSamples = audioBuffer.length;
+  const bytesPerSample = 2;
+  const blockAlign = numChannels * bytesPerSample;
+  const byteRate = sampleRate * blockAlign;
+  const dataSize = numSamples * blockAlign;
+  const bufferSize = 44 + dataSize;
+
+  const buf = new ArrayBuffer(bufferSize);
+  const view = new DataView(buf);
+
+  const writeStr = (offset: number, str: string) => {
+    for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
+  };
+
+  // RIFF header
+  writeStr(0, "RIFF");
+  view.setUint32(4, bufferSize - 8, true);
+  writeStr(8, "WAVE");
+  // fmt sub-chunk
+  writeStr(12, "fmt ");
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true); // PCM
+  view.setUint16(22, numChannels, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, byteRate, true);
+  view.setUint16(32, blockAlign, true);
+  view.setUint16(34, 16, true); // bits per sample
+  // data sub-chunk
+  writeStr(36, "data");
+  view.setUint32(40, dataSize, true);
+
+  // interleave channels
+  const channels: Float32Array[] = [];
+  for (let ch = 0; ch < numChannels; ch++) channels.push(audioBuffer.getChannelData(ch));
+
+  let offset = 44;
+  for (let i = 0; i < numSamples; i++) {
+    for (let ch = 0; ch < numChannels; ch++) {
+      const sample = Math.max(-1, Math.min(1, channels[ch][i]));
+      view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true);
+      offset += 2;
+    }
+  }
+
+  return new Blob([buf], { type: "audio/wav" });
+}
+
 const BAR_COUNT = 40;
 
 export default function AudioRecorderPage() {
+  const { t } = useI18n();
   const [recordingState, setRecordingState] = useState<RecordingState>("idle");
   const [duration, setDuration] = useState(0);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [fileSize, setFileSize] = useState(0);
   const [bars, setBars] = useState<number[]>(Array(BAR_COUNT).fill(0));
   const [mimeType, setMimeType] = useState("audio/webm");
+  const [encoding, setEncoding] = useState(false);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -38,13 +93,6 @@ export default function AudioRecorderPage() {
   const chunksRef = useRef<BlobPart[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const prevAudioUrlRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    return () => {
-      cleanup();
-      if (prevAudioUrlRef.current) URL.revokeObjectURL(prevAudioUrlRef.current);
-    };
-  }, []);
 
   const cleanup = useCallback(() => {
     if (timerRef.current) {
@@ -56,7 +104,7 @@ export default function AudioRecorderPage() {
       animFrameRef.current = 0;
     }
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current.getTracks().forEach((tr) => tr.stop());
       streamRef.current = null;
     }
     if (audioCtxRef.current && audioCtxRef.current.state !== "closed") {
@@ -66,6 +114,13 @@ export default function AudioRecorderPage() {
     analyserRef.current = null;
     setBars(Array(BAR_COUNT).fill(0));
   }, []);
+
+  useEffect(() => {
+    return () => {
+      cleanup();
+      if (prevAudioUrlRef.current) URL.revokeObjectURL(prevAudioUrlRef.current);
+    };
+  }, [cleanup]);
 
   const drawBars = useCallback(() => {
     const analyser = analyserRef.current;
@@ -89,7 +144,6 @@ export default function AudioRecorderPage() {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
 
-      // Set up Web Audio API for visualizer
       const audioCtx = new AudioContext();
       audioCtxRef.current = audioCtx;
       const source = audioCtx.createMediaStreamSource(stream);
@@ -99,7 +153,6 @@ export default function AudioRecorderPage() {
       source.connect(analyser);
       analyserRef.current = analyser;
 
-      // Determine best MIME type
       const preferredMime = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
         ? "audio/webm;codecs=opus"
         : MediaRecorder.isTypeSupported("audio/webm")
@@ -126,6 +179,7 @@ export default function AudioRecorderPage() {
         if (prevAudioUrlRef.current) URL.revokeObjectURL(prevAudioUrlRef.current);
         const url = URL.createObjectURL(blob);
         prevAudioUrlRef.current = url;
+        setAudioBlob(blob);
         setAudioUrl(url);
         setFileSize(blob.size);
         cleanup();
@@ -143,9 +197,9 @@ export default function AudioRecorderPage() {
       drawBars();
     } catch (err) {
       console.error(err);
-      toast.error("Microphone access denied. Please allow microphone permissions.");
+      toast.error(t("ar.micDenied"));
     }
-  }, [cleanup, drawBars]);
+  }, [cleanup, drawBars, t]);
 
   const pauseRecording = useCallback(() => {
     if (mediaRecorderRef.current?.state === "recording") {
@@ -186,6 +240,7 @@ export default function AudioRecorderPage() {
       prevAudioUrlRef.current = null;
     }
     setAudioUrl(null);
+    setAudioBlob(null);
     setFileSize(0);
     setDuration(0);
     setRecordingState("idle");
@@ -200,6 +255,30 @@ export default function AudioRecorderPage() {
     a.download = `recording-${Date.now()}.${ext}`;
     a.click();
   }, [audioUrl, mimeType]);
+
+  const handleDownloadWav = useCallback(async () => {
+    if (!audioBlob) return;
+    setEncoding(true);
+    try {
+      const arrayBuffer = await audioBlob.arrayBuffer();
+      const ctx = new AudioContext();
+      const decoded = await ctx.decodeAudioData(arrayBuffer.slice(0));
+      const wavBlob = encodeWav(decoded);
+      await ctx.close();
+
+      const url = URL.createObjectURL(wavBlob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `recording-${Date.now()}.wav`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+    } catch (err) {
+      console.error(err);
+      toast.error(t("ui.copyFailed"));
+    } finally {
+      setEncoding(false);
+    }
+  }, [audioBlob, t]);
 
   const isRecording = recordingState === "recording";
   const isPaused = recordingState === "paused";
@@ -231,7 +310,7 @@ export default function AudioRecorderPage() {
                   isRecording ? "bg-red-500 animate-pulse" : "bg-amber-400"
                 }`}
               />
-              {isRecording ? "Recording…" : "Paused"}
+              {isRecording ? t("ar.recording") : t("ar.paused")}
             </div>
           )}
 
@@ -260,7 +339,7 @@ export default function AudioRecorderPage() {
                 className="px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:opacity-90 transition-opacity flex items-center gap-2"
               >
                 <span className="w-3 h-3 rounded-full bg-red-400 inline-block" />
-                Start Recording
+                {t("ar.startRec")}
               </button>
             )}
 
@@ -271,14 +350,14 @@ export default function AudioRecorderPage() {
                   onClick={pauseRecording}
                   className="px-5 py-3 rounded-xl font-semibold border border-border text-t-secondary hover:bg-bg-secondary transition-colors"
                 >
-                  Pause
+                  {t("ar.pause")}
                 </button>
                 <button
                   type="button"
                   onClick={stopRecording}
                   className="px-5 py-3 rounded-xl font-semibold text-white bg-red-500 hover:bg-red-600 transition-colors"
                 >
-                  Stop
+                  {t("ar.stop")}
                 </button>
               </>
             )}
@@ -290,14 +369,14 @@ export default function AudioRecorderPage() {
                   onClick={resumeRecording}
                   className="px-5 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:opacity-90 transition-opacity"
                 >
-                  Resume
+                  {t("ar.resume")}
                 </button>
                 <button
                   type="button"
                   onClick={stopRecording}
                   className="px-5 py-3 rounded-xl font-semibold text-white bg-red-500 hover:bg-red-600 transition-colors"
                 >
-                  Stop
+                  {t("ar.stop")}
                 </button>
               </>
             )}
@@ -308,7 +387,7 @@ export default function AudioRecorderPage() {
                 onClick={handleRecordAgain}
                 className="px-5 py-3 rounded-xl font-semibold border border-border text-t-secondary hover:bg-bg-secondary transition-colors"
               >
-                Record Again
+                {t("ar.recordAgain")}
               </button>
             )}
           </div>
@@ -318,7 +397,7 @@ export default function AudioRecorderPage() {
         {isStopped && audioUrl && (
           <div className="glass rounded-xl p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-t-primary">Recording Preview</h3>
+              <h3 className="text-sm font-semibold text-t-primary">{t("ar.preview")}</h3>
               <span className="text-xs text-t-tertiary">{formatBytes(fileSize)}</span>
             </div>
 
@@ -329,19 +408,24 @@ export default function AudioRecorderPage() {
               <button
                 type="button"
                 onClick={handleDownload}
-                className="flex-1 px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:opacity-90 transition-opacity"
+                className="flex-1 min-w-[180px] px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:opacity-90 transition-opacity"
               >
-                Download Recording
+                {t("ar.download")}
+              </button>
+              <button
+                type="button"
+                onClick={handleDownloadWav}
+                disabled={encoding}
+                className="flex-1 min-w-[180px] px-6 py-3 rounded-xl font-semibold text-t-secondary bg-bg-secondary border border-border hover:text-t-primary transition-colors disabled:opacity-50"
+              >
+                {encoding ? t("ar.encodingWav") : t("ar.downloadWav")}
               </button>
             </div>
 
             <p className="text-xs text-t-tertiary">
-              Format: {mimeType.split(";")[0]} &nbsp;·&nbsp; Duration:{" "}
-              {formatDuration(duration)} &nbsp;·&nbsp; Size: {formatBytes(fileSize)}
-            </p>
-            <p className="text-xs text-t-tertiary">
-              Note: Browser audio recording saves as WebM/Ogg. Direct MP3 encoding
-              is not supported by browser APIs without additional libraries.
+              {t("ar.format")}: {mimeType.split(";")[0]} &nbsp;·&nbsp;
+              {t("ar.duration")}: {formatDuration(duration)} &nbsp;·&nbsp;
+              {t("ar.size")}: {formatBytes(fileSize)}
             </p>
           </div>
         )}
@@ -349,10 +433,7 @@ export default function AudioRecorderPage() {
         {/* Permission note */}
         {isIdle && !audioUrl && (
           <div className="glass rounded-xl p-4">
-            <p className="text-xs text-t-tertiary text-center">
-              Clicking &quot;Start Recording&quot; will request microphone permission.
-              Your audio stays entirely in your browser — nothing is uploaded.
-            </p>
+            <p className="text-xs text-t-tertiary text-center">{t("ar.permNote")}</p>
           </div>
         )}
       </div>

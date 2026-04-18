@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import ToolLayout from "@/components/ToolLayout";
+import { useI18n } from "@/lib/i18n";
 
 interface PlatformLimit {
   name: string;
@@ -17,13 +18,8 @@ const PLATFORMS: PlatformLimit[] = [
   { name: "SMS (1 message)", limit: 160, color: "#22c55e" },
 ];
 
-function getSmsCount(chars: number): string {
-  if (chars === 0) return "0 SMS";
-  const msgs = Math.ceil(chars / 160);
-  return `${msgs} SMS (${chars} chars)`;
-}
-
 export default function CharacterCounterPage() {
+  const { t } = useI18n();
   const [text, setText] = useState("");
 
   const stats = useMemo(() => {
@@ -42,13 +38,19 @@ export default function CharacterCounterPage() {
     return { chars, charsNoSpaces, words, lines, sentences, paragraphs };
   }, [text]);
 
+  const getSmsCount = (chars: number): string => {
+    if (chars === 0) return t("cc.noSms");
+    const msgs = Math.ceil(chars / 160);
+    return t("cc.sms", { n: msgs, chars });
+  };
+
   const statItems = [
-    { label: "Characters", value: stats.chars },
-    { label: "Characters (no spaces)", value: stats.charsNoSpaces },
-    { label: "Words", value: stats.words },
-    { label: "Lines", value: stats.lines },
-    { label: "Sentences", value: stats.sentences },
-    { label: "Paragraphs", value: stats.paragraphs },
+    { label: t("cc.chars"), value: stats.chars },
+    { label: t("cc.charsNoSpace"), value: stats.charsNoSpaces },
+    { label: t("cc.words"), value: stats.words },
+    { label: t("cc.lines"), value: stats.lines },
+    { label: t("cc.sentences"), value: stats.sentences },
+    { label: t("cc.paragraphs"), value: stats.paragraphs },
   ];
 
   return (
@@ -60,20 +62,20 @@ export default function CharacterCounterPage() {
         {/* Textarea */}
         <div className="glass rounded-xl p-6">
           <div className="flex items-center justify-between mb-3">
-            <label className="text-sm font-medium text-t-secondary">Your Text</label>
+            <label className="text-sm font-medium text-t-secondary">{t("cc.yourText")}</label>
             {text.length > 0 && (
               <button
                 onClick={() => setText("")}
                 className="px-4 py-2 rounded-lg text-t-secondary bg-bg-secondary border border-border hover:text-t-primary transition-colors text-sm"
               >
-                Clear
+                {t("ui.clear")}
               </button>
             )}
           </div>
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="Start typing or paste your text here..."
+            placeholder={t("cc.placeholder")}
             rows={8}
             className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border text-t-primary focus:outline-none focus:border-accent/50 resize-y placeholder:text-t-tertiary font-mono text-sm"
           />
@@ -93,7 +95,7 @@ export default function CharacterCounterPage() {
 
         {/* Platform Limits */}
         <div className="glass rounded-xl p-6">
-          <h3 className="text-sm font-semibold text-t-primary mb-4">Platform Limits</h3>
+          <h3 className="text-sm font-semibold text-t-primary mb-4">{t("cc.platformLimits")}</h3>
           <div className="space-y-4">
             {PLATFORMS.map((platform) => {
               const used = stats.chars;
@@ -111,7 +113,7 @@ export default function CharacterCounterPage() {
                       }`}
                     >
                       {over
-                        ? `${Math.abs(remaining).toLocaleString()} over`
+                        ? `${Math.abs(remaining).toLocaleString()} ${t("cc.over")}`
                         : platform.name === "SMS (1 message)"
                         ? getSmsCount(used)
                         : `${used.toLocaleString()} / ${platform.limit.toLocaleString()}`}
@@ -128,10 +130,10 @@ export default function CharacterCounterPage() {
                   </div>
                   <div className="flex justify-between mt-1">
                     <span className="text-xs text-t-tertiary">
-                      {Math.round(pct)}% used
+                      {Math.round(pct)}% {t("cc.used")}
                     </span>
                     <span className="text-xs text-t-tertiary">
-                      Limit: {platform.limit.toLocaleString()}
+                      {t("cc.limit")}: {platform.limit.toLocaleString()}
                     </span>
                   </div>
                 </div>

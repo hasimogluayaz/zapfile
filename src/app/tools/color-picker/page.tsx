@@ -92,9 +92,9 @@ export default function ColorPickerPage() {
   const copy = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      toast.success(`Copied: ${text}`);
+      toast.success(t("clr.copied", { value: text }));
     } catch {
-      toast.error("Failed to copy");
+      toast.error(t("clr.copyFail"));
     }
   };
 

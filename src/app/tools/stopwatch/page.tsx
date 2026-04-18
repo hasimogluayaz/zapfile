@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import ToolLayout from "@/components/ToolLayout";
+import { useI18n } from "@/lib/i18n";
 
 interface Lap {
   lapNumber: number;
@@ -24,6 +25,7 @@ function formatTime(ms: number, showMs = true): string {
 }
 
 export default function StopwatchPage() {
+  const { t } = useI18n();
   const [running, setRunning] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [laps, setLaps] = useState<Lap[]>([]);
@@ -87,6 +89,8 @@ export default function StopwatchPage() {
 
   const fastestLap = laps.length > 1 ? Math.min(...laps.map((l) => l.lapTime)) : null;
   const slowestLap = laps.length > 1 ? Math.max(...laps.map((l) => l.lapTime)) : null;
+  const avgLap =
+    laps.length > 0 ? laps.reduce((sum, l) => sum + l.lapTime, 0) / laps.length : null;
 
   return (
     <ToolLayout
@@ -110,38 +114,62 @@ export default function StopwatchPage() {
                   : "bg-gradient-to-r from-indigo-500 to-purple-500"
               }`}
             >
-              {running ? "Stop" : elapsed > 0 ? "Resume" : "Start"}
+              {running ? t("sw.stop") : elapsed > 0 ? t("sw.resume") : t("sw.start")}
             </button>
             <button
               onClick={handleLap}
               disabled={!running}
               className="px-6 py-3 rounded-xl font-semibold text-t-secondary bg-bg-secondary border border-border hover:text-t-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              Lap
+              {t("sw.lap")}
             </button>
             <button
               onClick={handleReset}
               disabled={running && elapsed === 0}
               className="px-6 py-3 rounded-xl font-semibold text-t-secondary bg-bg-secondary border border-border hover:text-t-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              Reset
+              {t("sw.reset")}
             </button>
           </div>
 
           {/* Keyboard hints */}
           <div className="mt-5 flex gap-4 text-[11px] text-t-tertiary">
-            <span><kbd className="px-1.5 py-0.5 rounded bg-bg-secondary border border-border font-mono">Space</kbd> Start/Stop</span>
-            <span><kbd className="px-1.5 py-0.5 rounded bg-bg-secondary border border-border font-mono">L</kbd> Lap</span>
-            <span><kbd className="px-1.5 py-0.5 rounded bg-bg-secondary border border-border font-mono">R</kbd> Reset</span>
+            <span><kbd className="px-1.5 py-0.5 rounded bg-bg-secondary border border-border font-mono">Space</kbd> {t("sw.startStop")}</span>
+            <span><kbd className="px-1.5 py-0.5 rounded bg-bg-secondary border border-border font-mono">L</kbd> {t("sw.lap")}</span>
+            <span><kbd className="px-1.5 py-0.5 rounded bg-bg-secondary border border-border font-mono">R</kbd> {t("sw.reset")}</span>
           </div>
         </div>
+
+        {/* Lap statistics */}
+        {laps.length >= 2 && (
+          <div className="grid grid-cols-3 gap-3">
+            <div className="glass rounded-xl p-4 text-center">
+              <div className="text-xs text-t-tertiary mb-1">{t("sw.fastestLap")}</div>
+              <div className="font-mono font-bold text-emerald-500 tabular-nums">
+                {fastestLap !== null ? formatTime(fastestLap) : "—"}
+              </div>
+            </div>
+            <div className="glass rounded-xl p-4 text-center">
+              <div className="text-xs text-t-tertiary mb-1">{t("sw.avgLap")}</div>
+              <div className="font-mono font-bold text-t-primary tabular-nums">
+                {avgLap !== null ? formatTime(avgLap) : "—"}
+              </div>
+            </div>
+            <div className="glass rounded-xl p-4 text-center">
+              <div className="text-xs text-t-tertiary mb-1">{t("sw.slowestLap")}</div>
+              <div className="font-mono font-bold text-red-400 tabular-nums">
+                {slowestLap !== null ? formatTime(slowestLap) : "—"}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Lap Times */}
         {laps.length > 0 && (
           <div className="glass rounded-xl overflow-hidden">
             <div className="px-5 py-3 border-b border-border flex items-center justify-between">
-              <span className="text-sm font-semibold text-t-primary">Lap Times</span>
-              <span className="text-xs text-t-tertiary">{laps.length} laps</span>
+              <span className="text-sm font-semibold text-t-primary">{t("sw.lapTimes")}</span>
+              <span className="text-xs text-t-tertiary">{t("sw.lapsCount", { n: laps.length })}</span>
             </div>
             <div className="divide-y divide-border max-h-72 overflow-y-auto">
               {laps.map((lap) => {
@@ -156,8 +184,8 @@ export default function StopwatchPage() {
                   >
                     <div className="flex items-center gap-3">
                       <span className="text-t-tertiary tabular-nums w-10">#{lap.lapNumber}</span>
-                      {isFastest && <span className="text-[10px] text-emerald-500 font-semibold">BEST</span>}
-                      {isSlowest && <span className="text-[10px] text-red-400 font-semibold">SLOW</span>}
+                      {isFastest && <span className="text-[10px] text-emerald-500 font-semibold">{t("sw.best")}</span>}
+                      {isSlowest && <span className="text-[10px] text-red-400 font-semibold">{t("sw.slow")}</span>}
                     </div>
                     <span className={`font-mono font-semibold tabular-nums ${isFastest ? "text-emerald-500" : isSlowest ? "text-red-400" : "text-t-primary"}`}>
                       {formatTime(lap.lapTime)}
