@@ -169,6 +169,13 @@ const en: Record<string, string> = {
       "WebAssembly and Canvas API handle all processing directly in your browser — nothing is uploaded.",
     "home.privacy.comparison":
       "Unlike other tools, ZapFile processes everything in your browser. Your files stay on your device.",
+    "home.suggest.title": "Suggest a Tool",
+    "home.suggest.subtitle": "Missing a tool? Let us know what you need.",
+    "home.suggest.thanks": "Thanks for your suggestion!",
+    "home.suggest.thanksDesc": "We review all suggestions and add the most requested tools.",
+    "home.suggest.placeholder": "What tool would you like to see?",
+    "home.suggest.send": "Send Suggestion",
+    "home.toolOfDay": "Tool of the Day",
 
     // CTA
     "cta.title": "Ready to get started?",
@@ -1858,6 +1865,13 @@ const translations: Record<Locale, Record<string, string>> = {
       "WebAssembly ve Canvas API tüm işlemleri doğrudan tarayıcınızda gerçekleştirir — hiçbir şey yüklenmez.",
     "home.privacy.comparison":
       "Diğer araçların aksine, ZapFile her şeyi tarayıcınızda işler. Dosyalarınız cihazınızda kalır.",
+    "home.suggest.title": "Araç Öner",
+    "home.suggest.subtitle": "Eksik bir araç mı var? İhtiyacınız olanı bize bildirin.",
+    "home.suggest.thanks": "Öneriniz için teşekkürler!",
+    "home.suggest.thanksDesc": "Tüm önerileri inceliyor ve en çok istenen araçları ekliyoruz.",
+    "home.suggest.placeholder": "Hangi aracı görmek istersiniz?",
+    "home.suggest.send": "Öneri Gönder",
+    "home.toolOfDay": "Günün Aracı",
 
     // CTA
     "cta.title": "Başlamaya hazır mısınız?",
