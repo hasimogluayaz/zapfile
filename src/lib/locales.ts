@@ -6,7 +6,8 @@ export type Locale =
   | "es"
   | "pt"
   | "it"
-  | "ja";
+  | "ja"
+  | "ar";
 
 export const SUPPORTED_LOCALES: Locale[] = [
   "en",
@@ -17,9 +18,10 @@ export const SUPPORTED_LOCALES: Locale[] = [
   "pt",
   "it",
   "ja",
+  "ar",
 ];
 
-/** Locales with a complete key set in `translations` (es/pt/it/ja are merged from en + i18n-overrides). */
+/** Locales with a complete key set in `translations` (es/pt/it/ja/ar are merged from en + overrides). */
 export const LOCALES_FULL_DICTIONARY: Locale[] = [
   "en",
   "tr",
@@ -29,6 +31,7 @@ export const LOCALES_FULL_DICTIONARY: Locale[] = [
   "pt",
   "it",
   "ja",
+  "ar",
 ];
 
 export const LOCALE_LABELS: Record<Locale, string> = {
@@ -40,10 +43,9 @@ export const LOCALE_LABELS: Record<Locale, string> = {
   pt: "Português",
   it: "Italiano",
   ja: "日本語",
+  ar: "العربية",
 };
 
-/** Reserved for future RTL locales; no RTL UI languages are enabled yet. */
 export function isRtlLocale(locale: Locale): boolean {
-  void locale;
-  return false;
+  return locale === "ar";
 }

@@ -25,6 +25,8 @@ export default function BlurImagePage() {
   const [blurMode, setBlurMode] = useState<BlurMode>("gaussian");
   const [intensity, setIntensity] = useState(5);
   const [blurAreas, setBlurAreas] = useState<BlurArea[]>([]);
+  const [redoAreas, setRedoAreas] = useState<BlurArea[]>([]);
+  const [feather, setFeather] = useState(0);
   const [isDrawing, setIsDrawing] = useState(false);
   const [startPos, setStartPos] = useState<{ x: number; y: number } | null>(null);
   const [processing, setProcessing] = useState(false);
@@ -49,6 +51,8 @@ export default function BlurImagePage() {
     area: BlurArea,
     mode: BlurMode,
     value: number,
+    featherPx: number,
+    originalFull: ImageData | null,
   ) {
     const x = Math.max(0, Math.min(area.x, canvas.width));
     const y = Math.max(0, Math.min(area.y, canvas.height));
@@ -82,6 +86,27 @@ export default function BlurImagePage() {
       const offsetX = x - srcX;
       const offsetY = y - srcY;
       ctx.drawImage(tempCanvas, offsetX, offsetY, w, h, x, y, w, h);
+
+      if (featherPx > 0 && originalFull) {
+        const patch = ctx.getImageData(x, y, w, h);
+        const od = originalFull.data;
+        const fw = originalFull.width;
+        for (let py = 0; py < h; py++) {
+          for (let px = 0; px < w; px++) {
+            const dist = Math.min(px, py, w - 1 - px, h - 1 - py);
+            let t = Math.min(1, dist / featherPx);
+            t = t * t;
+            const i = (py * w + px) * 4;
+            const j = ((y + py) * fw + (x + px)) * 4;
+            for (let c = 0; c < 4; c++) {
+              patch.data[i + c] = Math.round(
+                patch.data[i + c] * t + od[j + c] * (1 - t),
+              );
+            }
+          }
+        }
+        ctx.putImageData(patch, x, y);
+      }
     } else {
       // Pixelate
       const blockSize = Math.max(1, value);
@@ -123,6 +148,27 @@ export default function BlurImagePage() {
       }
 
       ctx.putImageData(imageData, x, y);
+
+      if (featherPx > 0 && originalFull) {
+        const patch = ctx.getImageData(x, y, w, h);
+        const od = originalFull.data;
+        const fw = originalFull.width;
+        for (let py = 0; py < h; py++) {
+          for (let px = 0; px < w; px++) {
+            const dist = Math.min(px, py, w - 1 - px, h - 1 - py);
+            let t = Math.min(1, dist / featherPx);
+            t = t * t;
+            const i = (py * w + px) * 4;
+            const j = ((y + py) * fw + (x + px)) * 4;
+            for (let c = 0; c < 4; c++) {
+              patch.data[i + c] = Math.round(
+                patch.data[i + c] * t + od[j + c] * (1 - t),
+              );
+            }
+          }
+        }
+        ctx.putImageData(patch, x, y);
+      }
     }
   }
 
@@ -131,11 +177,12 @@ export default function BlurImagePage() {
       const canvas = canvasRef.current;
       if (!canvas || !originalDataRef.current) return;
       const ctx = canvas.getContext("2d")!;
+      const orig = originalDataRef.current;
 
-      ctx.putImageData(originalDataRef.current, 0, 0);
+      ctx.putImageData(orig, 0, 0);
 
       for (const area of areas) {
-        applyBlurToArea(canvas, ctx, area, blurMode, intensity);
+        applyBlurToArea(canvas, ctx, area, blurMode, intensity, feather, orig);
       }
 
       if (selectionRect) {
@@ -149,19 +196,20 @@ export default function BlurImagePage() {
         ctx.restore();
       }
     },
-    [blurMode, intensity],
+    [blurMode, intensity, feather],
   );
 
   useEffect(() => {
     if (imgRef.current && originalDataRef.current && blurAreas.length > 0) {
       redraw(blurAreas);
     }
-  }, [blurMode, intensity, blurAreas, redraw]);
+  }, [blurMode, intensity, feather, blurAreas, redraw]);
 
   const handleFilesSelected = useCallback((files: File[]) => {
     const f = files[0];
     setFile(f);
     setBlurAreas([]);
+    setRedoAreas([]);
     setShowComparison(false);
 
     const img = new window.Image();
@@ -254,6 +302,7 @@ export default function BlurImagePage() {
       if (area.w > 4 && area.h > 4) {
         const newAreas = [...blurAreas, area];
         setBlurAreas(newAreas);
+        setRedoAreas([]);
         redraw(newAreas);
         toast.success(t("blur.applied"));
       }
@@ -266,7 +315,9 @@ export default function BlurImagePage() {
 
   const handleUndo = () => {
     if (blurAreas.length === 0) return;
+    const removed = blurAreas[blurAreas.length - 1]!;
     const newAreas = blurAreas.slice(0, -1);
+    setRedoAreas((r) => [...r, removed]);
     setBlurAreas(newAreas);
     const canvas = canvasRef.current;
     if (canvas && originalDataRef.current) {
@@ -277,18 +328,30 @@ export default function BlurImagePage() {
     toast(t("blur.undone"));
   };
 
+  const handleRedo = () => {
+    if (redoAreas.length === 0) return;
+    const last = redoAreas[redoAreas.length - 1]!;
+    const newAreas = [...blurAreas, last];
+    setRedoAreas((r) => r.slice(0, -1));
+    setBlurAreas(newAreas);
+    redraw(newAreas);
+    toast(t("blur.redone"));
+  };
+
   const handleBlurEntire = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const area: BlurArea = { x: 0, y: 0, w: canvas.width, h: canvas.height };
     const newAreas = [...blurAreas, area];
     setBlurAreas(newAreas);
+    setRedoAreas([]);
     redraw(newAreas);
     toast.success(t("blur.entireDone"));
   };
 
   const handleReset = () => {
     setBlurAreas([]);
+    setRedoAreas([]);
     const canvas = canvasRef.current;
     if (canvas && originalDataRef.current) {
       const ctx = canvas.getContext("2d")!;
@@ -319,6 +382,7 @@ export default function BlurImagePage() {
   const reset = () => {
     setFile(null);
     setBlurAreas([]);
+    setRedoAreas([]);
     setIsDrawing(false);
     setStartPos(null);
     setProcessing(false);
@@ -330,7 +394,7 @@ export default function BlurImagePage() {
   const modeConfig: { key: BlurMode; label: string }[] = [
     { key: "gaussian", label: t("blur.gaussian") },
     { key: "pixelate", label: t("blur.pixelate") },
-    { key: "blackout", label: "Blackout" },
+    { key: "blackout", label: t("blur.blackout") },
   ];
 
   return (
@@ -384,7 +448,7 @@ export default function BlurImagePage() {
                       : "bg-white/5 text-t-secondary hover:text-t-primary"
                   }`}
                 >
-                  Edited
+                  {t("blur.edited")}
                 </button>
                 <button
                   onClick={() => setShowComparison(true)}
@@ -397,11 +461,11 @@ export default function BlurImagePage() {
                       : "bg-white/5 text-t-secondary hover:text-t-primary"
                   }`}
                 >
-                  Original
+                  {t("blur.viewOriginalBtn")}
                 </button>
                 {blurAreas.length > 0 && (
                   <span className="text-[11px] text-t-secondary ml-auto">
-                    {blurAreas.length} region{blurAreas.length !== 1 ? "s" : ""} applied
+                    {t("blur.regionsApplied", { count: blurAreas.length })}
                   </span>
                 )}
               </div>
@@ -489,9 +553,32 @@ export default function BlurImagePage() {
                 </div>
               )}
 
+              {blurMode !== "blackout" && (
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[13px] text-t-secondary font-medium">
+                      {t("blur.feather")}
+                    </span>
+                    <span className="text-[12px] font-mono px-2.5 py-1 rounded-lg bg-white/5 text-t-secondary border border-border">
+                      {feather}px
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min={0}
+                    max={48}
+                    value={feather}
+                    onChange={(e) => setFeather(Number(e.target.value))}
+                    className="w-full accent-indigo-500"
+                  />
+                  <p className="text-[11px] text-t-tertiary mt-1.5">{t("blur.featherHint")}</p>
+                </div>
+              )}
+
               {/* Action buttons */}
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 <button
+                  type="button"
                   onClick={handleUndo}
                   disabled={blurAreas.length === 0}
                   className={`flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl text-[12px] font-medium transition-all ${
@@ -504,6 +591,20 @@ export default function BlurImagePage() {
                   <span>{t("blur.undo")}</span>
                 </button>
                 <button
+                  type="button"
+                  onClick={handleRedo}
+                  disabled={redoAreas.length === 0}
+                  className={`flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl text-[12px] font-medium transition-all ${
+                    redoAreas.length === 0
+                      ? "bg-white/5 text-t-secondary/50 cursor-not-allowed"
+                      : "bg-white/5 hover:bg-white/10 text-t-secondary hover:text-t-primary"
+                  }`}
+                >
+                  <span className="text-lg leading-none">&#x21AA;</span>
+                  <span>{t("blur.redo")}</span>
+                </button>
+                <button
+                  type="button"
                   onClick={handleBlurEntire}
                   className="flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-t-secondary hover:text-t-primary transition-all text-[12px] font-medium"
                 >
@@ -511,6 +612,7 @@ export default function BlurImagePage() {
                   <span>{t("blur.blurEntire")}</span>
                 </button>
                 <button
+                  type="button"
                   onClick={handleReset}
                   disabled={blurAreas.length === 0}
                   className={`flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl text-[12px] font-medium transition-all ${

@@ -151,7 +151,7 @@ export default function ColorPalettePage() {
           setIsExtracting(false);
           return;
         }
-        const maxDim = 100;
+        const maxDim = 320;
         const scale = Math.min(maxDim / img.width, maxDim / img.height);
         canvas.width = Math.round(img.width * scale);
         canvas.height = Math.round(img.height * scale);

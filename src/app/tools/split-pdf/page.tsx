@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import toast from "react-hot-toast";
 import ToolLayout from "@/components/ToolLayout";
 import FileDropzone from "@/components/FileDropzone";
@@ -9,6 +9,7 @@ import DownloadButton from "@/components/DownloadButton";
 import ProgressBar from "@/components/ProgressBar";
 import { formatFileSize, getFileNameWithoutExtension } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n";
+import { pdfPageThumbnail } from "@/lib/pdf-thumb";
 
 interface PageRange {
   start: number;
@@ -57,6 +58,9 @@ export default function SplitPdfPage() {
   const [progress, setProgress] = useState(0);
   const [resultBlob, setResultBlob] = useState<Blob | null>(null);
   const [resultFilename, setResultFilename] = useState("split-pdfs.zip");
+  const [pageThumbs, setPageThumbs] = useState<string[]>([]);
+  const [thumbsLoading, setThumbsLoading] = useState(false);
+  const pdfBufferRef = useRef<ArrayBuffer | null>(null);
 
   const handleFilesSelected = useCallback(async (files: File[]) => {
     const selected = files[0];
@@ -69,6 +73,7 @@ export default function SplitPdfPage() {
 
     try {
       const arrayBuffer = await selected.arrayBuffer();
+      pdfBufferRef.current = arrayBuffer.slice(0);
       const { PDFDocument } = await import("pdf-lib");
       const doc = await PDFDocument.load(arrayBuffer, {
         ignoreEncryption: true,
@@ -80,13 +85,35 @@ export default function SplitPdfPage() {
       setRangeInput("");
       setResultBlob(null);
       setProgress(0);
+      setPageThumbs([]);
+      setThumbsLoading(true);
+
+      const buf = pdfBufferRef.current;
+      if (buf) {
+        const cap = Math.min(pageCount, 96);
+        const thumbs: string[] = [];
+        try {
+          for (let p = 1; p <= cap; p++) {
+            thumbs.push(await pdfPageThumbnail(buf, p, 108));
+          }
+          setPageThumbs(thumbs);
+        } catch (e) {
+          console.error(e);
+          setPageThumbs([]);
+        } finally {
+          setThumbsLoading(false);
+        }
+      } else {
+        setThumbsLoading(false);
+      }
 
       toast.success(t("split.loaded", { count: pageCount }));
     } catch (error) {
       console.error("Error loading PDF:", error);
       toast.error(t("split.loadFail"));
+      setThumbsLoading(false);
     }
-  }, []);
+  }, [t]);
 
   const handleSplit = useCallback(async () => {
     if (!file || totalPages === 0) return;
@@ -162,7 +189,7 @@ export default function SplitPdfPage() {
     } finally {
       setProcessing(false);
     }
-  }, [file, totalPages, rangeInput]);
+  }, [file, totalPages, rangeInput, t]);
 
   const handleReset = useCallback(() => {
     setFile(null);
@@ -170,12 +197,14 @@ export default function SplitPdfPage() {
     setRangeInput("");
     setResultBlob(null);
     setProgress(0);
+    setPageThumbs([]);
+    pdfBufferRef.current = null;
   }, []);
 
   return (
     <ToolLayout
-      toolName="Split PDF"
-      toolDescription="Extract specific pages or page ranges from a PDF file. Download the results as a ZIP archive."
+      toolName={t("tool.split-pdf.name")}
+      toolDescription={t("tool.split-pdf.desc")}
     >
       <div className="space-y-6">
         {/* File Drop Area */}
@@ -184,7 +213,7 @@ export default function SplitPdfPage() {
             onFilesSelected={handleFilesSelected}
             accept={{ "application/pdf": [".pdf"] }}
             multiple={false}
-            label="Drop your PDF here or click to browse"
+            label={t("split.dropLabel")}
             formats={["pdf"]}
           />
         )}
@@ -210,17 +239,18 @@ export default function SplitPdfPage() {
                   </svg>
                 </div>
                 <div>
-                  <p className="text-brand-text font-medium">{file.name}</p>
-                  <p className="text-sm text-brand-muted">
-                    {formatFileSize(file.size)} &middot; {totalPages} page
-                    {totalPages !== 1 ? "s" : ""}
+                  <p className="text-t-primary font-medium">{file.name}</p>
+                  <p className="text-sm text-t-secondary">
+                    {formatFileSize(file.size)} &middot;{" "}
+                    {t("split.pagesCount", { count: totalPages })}
                   </p>
                 </div>
               </div>
               <button
                 onClick={handleReset}
-                className="text-brand-muted hover:text-brand-text transition-colors p-2 rounded-lg hover:bg-white/5"
-                title="Remove file"
+                className="text-t-secondary hover:text-t-primary transition-colors p-2 rounded-lg hover:bg-bg-secondary"
+                title={t("ui.remove")}
+                type="button"
               >
                 <svg
                   className="w-5 h-5"
@@ -237,6 +267,47 @@ export default function SplitPdfPage() {
                 </svg>
               </button>
             </div>
+
+            {totalPages > 0 && (
+              <div className="mt-5 pt-5 border-t border-border space-y-3">
+                <p className="text-[13px] font-semibold text-t-primary">
+                  {t("split.pagePreview")}
+                  {thumbsLoading && (
+                    <span className="ml-2 text-[12px] font-normal text-t-secondary">
+                      {t("split.thumbsLoading")}
+                    </span>
+                  )}
+                </p>
+                {pageThumbs.length > 0 && (
+                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 max-h-[320px] overflow-y-auto pr-1">
+                    {pageThumbs.map((src, i) => (
+                      <div
+                        key={i}
+                        className="rounded-lg border border-border overflow-hidden bg-bg-secondary"
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={src}
+                          alt=""
+                          className="w-full h-auto object-cover aspect-[3/4]"
+                        />
+                        <p className="text-[10px] text-center py-1 text-t-secondary tabular-nums">
+                          {t("split.pageLabel", { n: i + 1 })}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {totalPages > pageThumbs.length && pageThumbs.length > 0 && (
+                  <p className="text-[11px] text-t-secondary">
+                    {t("split.thumbsPartial", {
+                      shown: pageThumbs.length,
+                      total: totalPages,
+                    })}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         )}
 
@@ -246,7 +317,7 @@ export default function SplitPdfPage() {
             <div>
               <label
                 htmlFor="pageRanges"
-                className="block text-sm font-medium text-brand-text mb-2"
+                className="block text-sm font-medium text-t-primary mb-2"
               >
                 {t("split.pageRanges")}
               </label>
@@ -256,9 +327,9 @@ export default function SplitPdfPage() {
                 value={rangeInput}
                 onChange={(e) => setRangeInput(e.target.value)}
                 placeholder={`e.g. 1-3, 5, 7-${totalPages}`}
-                className="w-full px-4 py-3 rounded-xl bg-brand-card border border-white/10 text-brand-text placeholder:text-brand-muted focus:outline-none focus:border-brand-indigo/50 transition-colors"
+                className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border text-t-primary placeholder:text-t-secondary/60 focus:outline-none focus:border-accent/50 transition-colors"
               />
-              <p className="text-xs text-brand-muted mt-2">
+              <p className="text-xs text-t-secondary mt-2">
                 {t("split.rangesHelp")}
               </p>
             </div>
@@ -266,30 +337,33 @@ export default function SplitPdfPage() {
             {/* Quick select buttons */}
             <div className="flex flex-wrap gap-2">
               <button
+                type="button"
                 onClick={() => setRangeInput(`1-${totalPages}`)}
-                className="px-3 py-1.5 text-xs rounded-lg bg-white/5 text-brand-muted hover:text-brand-text hover:bg-white/10 transition-colors"
+                className="px-3 py-1.5 text-xs rounded-lg bg-bg-secondary border border-border text-t-secondary hover:text-t-primary hover:border-accent/40 transition-colors"
               >
                 {t("split.allPages")}
               </button>
               {totalPages > 1 && (
                 <button
+                  type="button"
                   onClick={() =>
                     setRangeInput(
                       Array.from({ length: totalPages }, (_, i) => String(i + 1)).join(", ")
                     )
                   }
-                  className="px-3 py-1.5 text-xs rounded-lg bg-white/5 text-brand-muted hover:text-brand-text hover:bg-white/10 transition-colors"
+                  className="px-3 py-1.5 text-xs rounded-lg bg-bg-secondary border border-border text-t-secondary hover:text-t-primary hover:border-accent/40 transition-colors"
                 >
                   {t("split.eachPage")}
                 </button>
               )}
               {totalPages >= 2 && (
                 <button
+                  type="button"
                   onClick={() => {
                     const mid = Math.ceil(totalPages / 2);
                     setRangeInput(`1-${mid}, ${mid + 1}-${totalPages}`);
                   }}
-                  className="px-3 py-1.5 text-xs rounded-lg bg-white/5 text-brand-muted hover:text-brand-text hover:bg-white/10 transition-colors"
+                  className="px-3 py-1.5 text-xs rounded-lg bg-bg-secondary border border-border text-t-secondary hover:text-t-primary hover:border-accent/40 transition-colors"
                 >
                   {t("split.half")}
                 </button>
@@ -322,8 +396,9 @@ export default function SplitPdfPage() {
                 label={t("split.download")}
               />
               <button
+                type="button"
                 onClick={handleReset}
-                className="px-6 py-3 rounded-xl font-semibold text-brand-muted border border-white/10 hover:text-brand-text hover:border-white/20 transition-all duration-300"
+                className="px-6 py-3 rounded-xl font-semibold text-t-secondary border border-border hover:text-t-primary hover:border-accent/40 transition-all duration-300"
               >
                 {t("split.another")}
               </button>

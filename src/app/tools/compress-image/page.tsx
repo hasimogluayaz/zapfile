@@ -28,6 +28,9 @@ export default function CompressImagePage() {
   const [files, setFiles] = useState<File[]>([]);
   const [quality, setQuality] = useState(0.7);
   const [maxDimension, setMaxDimension] = useState(1920);
+  const [outputFormat, setOutputFormat] = useState<"original" | "webp">(
+    "original",
+  );
   const [urlReady, setUrlReady] = useState(false);
 
   useEffect(() => {
@@ -58,24 +61,27 @@ export default function CompressImagePage() {
   const [results, setResults] = useState<CompressedFile[]>([]);
   const [zipBlob, setZipBlob] = useState<Blob | null>(null);
 
-  const handleFilesSelected = useCallback((selected: File[]) => {
-    const imageFiles = selected.filter((f) =>
-      ["image/jpeg", "image/png", "image/webp"].includes(f.type)
-    );
-    if (imageFiles.length === 0) {
-      toast.error(t("compimg.invalid"));
-      return;
-    }
-    if (imageFiles.length < selected.length) {
-      toast.error(
-        t("compimg.skipped", { count: selected.length - imageFiles.length })
+  const handleFilesSelected = useCallback(
+    (selected: File[]) => {
+      const imageFiles = selected.filter((f) =>
+        ["image/jpeg", "image/png", "image/webp"].includes(f.type),
       );
-    }
-    setFiles(imageFiles);
-    setResults([]);
-    setZipBlob(null);
-    setProgress(0);
-  }, [t]);
+      if (imageFiles.length === 0) {
+        toast.error(t("compimg.invalid"));
+        return;
+      }
+      if (imageFiles.length < selected.length) {
+        toast.error(
+          t("compimg.skipped", { count: selected.length - imageFiles.length }),
+        );
+      }
+      setFiles(imageFiles);
+      setResults([]);
+      setZipBlob(null);
+      setProgress(0);
+    },
+    [t],
+  );
 
   const handleCompress = useCallback(async () => {
     if (files.length === 0) return;
@@ -94,12 +100,13 @@ export default function CompressImagePage() {
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
 
+        const targetType = outputFormat === "webp" ? "image/webp" : file.type;
         const options = {
           maxSizeMB: Infinity,
           maxWidthOrHeight: maxDimension,
           initialQuality: quality,
           useWebWorker: true,
-          fileType: file.type as string,
+          fileType: targetType as string,
         };
 
         const compressedFile = await imageCompression(file, options);
@@ -125,7 +132,10 @@ export default function CompressImagePage() {
         const zip = new JSZip();
 
         for (const item of compressed) {
-          const ext = item.original.name.split(".").pop() || "jpg";
+          const ext =
+            outputFormat === "webp"
+              ? "webp"
+              : item.original.name.split(".").pop() || "jpg";
           const baseName = getFileNameWithoutExtension(item.original.name);
           zip.file(`${baseName}-compressed.${ext}`, item.compressed);
         }
@@ -136,24 +146,22 @@ export default function CompressImagePage() {
 
       setProgress(100);
 
-      const totalOriginal = compressed.reduce(
-        (s, r) => s + r.originalSize,
-        0
-      );
+      const totalOriginal = compressed.reduce((s, r) => s + r.originalSize, 0);
       const totalCompressed = compressed.reduce(
         (s, r) => s + r.compressedSize,
-        0
+        0,
       );
       const saved = totalOriginal - totalCompressed;
 
       if (saved > 0) {
         toast.success(
-          t("compimg.success", { count: compressed.length, size: formatFileSize(saved) })
+          t("compimg.success", {
+            count: compressed.length,
+            size: formatFileSize(saved),
+          }),
         );
       } else {
-        toast.success(
-          t("compimg.optimized")
-        );
+        toast.success(t("compimg.optimized"));
       }
     } catch (error) {
       console.error("Compression error:", error);
@@ -161,7 +169,7 @@ export default function CompressImagePage() {
     } finally {
       setProcessing(false);
     }
-  }, [files, quality, maxDimension, t]);
+  }, [files, quality, maxDimension, outputFormat, t]);
 
   const handleReset = useCallback(() => {
     setFiles([]);
@@ -171,10 +179,7 @@ export default function CompressImagePage() {
   }, []);
 
   const totalOriginalSize = results.reduce((s, r) => s + r.originalSize, 0);
-  const totalCompressedSize = results.reduce(
-    (s, r) => s + r.compressedSize,
-    0
-  );
+  const totalCompressedSize = results.reduce((s, r) => s + r.compressedSize, 0);
 
   const [comparePair, setComparePair] = useState<{
     before: string;
@@ -274,7 +279,9 @@ export default function CompressImagePage() {
         {/* Settings */}
         {files.length > 0 && results.length === 0 && (
           <div className="glass rounded-xl p-6 space-y-6">
-            <h3 className="text-brand-text font-medium">{t("compimg.settings")}</h3>
+            <h3 className="text-brand-text font-medium">
+              {t("compimg.settings")}
+            </h3>
 
             {/* Quality Slider */}
             <div>
@@ -322,6 +329,39 @@ export default function CompressImagePage() {
                 <span>320px</span>
                 <span>4096px</span>
               </div>
+            </div>
+
+            {/* Output Format */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm text-brand-muted">
+                  {t("compimg.format") || "Output Format"}
+                </label>
+              </div>
+              <div className="flex gap-2">
+                {(["original", "webp"] as const).map((fmt) => (
+                  <button
+                    key={fmt}
+                    onClick={() => setOutputFormat(fmt)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      outputFormat === fmt
+                        ? "bg-brand-indigo/20 border border-brand-indigo text-brand-text"
+                        : "bg-white/[0.04] border border-white/[0.08] text-brand-muted hover:border-white/20"
+                    }`}
+                  >
+                    {fmt === "original"
+                      ? t("compimg.keepFormat") || "Keep Original"
+                      : "WebP"}
+                  </button>
+                ))}
+              </div>
+              {outputFormat === "webp" && (
+                <p className="text-xs text-brand-muted mt-2 flex items-center gap-1.5">
+                  <span className="text-emerald-400">✓</span>
+                  {t("compimg.webpHint") ||
+                    "WebP typically offers 25-35% smaller files with same quality"}
+                </p>
+              )}
             </div>
           </div>
         )}
@@ -387,13 +427,16 @@ export default function CompressImagePage() {
                         <button
                           onClick={() => {
                             const ext =
-                              result.original.name.split(".").pop() || "jpg";
+                              outputFormat === "webp"
+                                ? "webp"
+                                : result.original.name.split(".").pop() ||
+                                  "jpg";
                             const baseName = getFileNameWithoutExtension(
-                              result.original.name
+                              result.original.name,
                             );
                             downloadBlob(
                               result.compressed,
-                              `${baseName}-compressed.${ext}`
+                              `${baseName}-compressed.${ext}`,
                             );
                           }}
                           className="text-sm text-brand-indigo hover:text-brand-purple transition-colors whitespace-nowrap"
@@ -416,7 +459,11 @@ export default function CompressImagePage() {
               onClick={handleCompress}
               disabled={files.length === 0}
               loading={processing}
-              label={files.length > 1 ? t("compimg.buttonMulti", { count: files.length }) : t("compimg.button")}
+              label={
+                files.length > 1
+                  ? t("compimg.buttonMulti", { count: files.length })
+                  : t("compimg.button")
+              }
               loadingLabel={t("compimg.compressing")}
             />
           )}
@@ -425,7 +472,7 @@ export default function CompressImagePage() {
             <>
               <DownloadButton
                 blob={results[0].compressed}
-                filename={`${getFileNameWithoutExtension(results[0].original.name)}-compressed.${results[0].original.name.split(".").pop() || "jpg"}`}
+                filename={`${getFileNameWithoutExtension(results[0].original.name)}-compressed.${outputFormat === "webp" ? "webp" : results[0].original.name.split(".").pop() || "jpg"}`}
                 label={t("compimg.download")}
               />
               <button

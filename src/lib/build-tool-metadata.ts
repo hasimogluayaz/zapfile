@@ -13,6 +13,7 @@ const HREFLANG_LANGS = [
   "pt",
   "it",
   "ja",
+  "ar",
 ] as const;
 
 function toolLanguages(path: string): Record<string, string> {

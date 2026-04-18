@@ -91,7 +91,7 @@ export default function JSONFormatterPage() {
     if (!output) return;
     try {
       await navigator.clipboard.writeText(output);
-      toast.success(t("ui.copied"));
+      toast.success(t("ui.copied"), { duration: 4000 });
     } catch {
       toast.error(t("ui.copyFailed"));
     }
@@ -120,52 +120,52 @@ export default function JSONFormatterPage() {
     setError("");
   };
 
+  const indentOptions: { value: IndentType; labelKey: string }[] = [
+    { value: "2", labelKey: "json.indent2" },
+    { value: "4", labelKey: "json.indent4" },
+    { value: "tab", labelKey: "json.indentTab" },
+  ];
+
   return (
     <ToolLayout
-      toolName="JSON Formatter & Validator"
-      toolDescription="Format, minify, and validate JSON data instantly. All processing happens in your browser."
+      toolName={t("tool.json-formatter.name")}
+      toolDescription={t("tool.json-formatter.desc")}
     >
       <div className="space-y-6">
-        {/* Controls */}
         <div className="glass rounded-2xl p-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            {/* Indentation options */}
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-brand-muted">{t("ui.indent")}</span>
-              <div className="flex gap-1.5">
-                {(
-                  [
-                    { value: "2", label: "2 Spaces" },
-                    { value: "4", label: "4 Spaces" },
-                    { value: "tab", label: "Tabs" },
-                  ] as { value: IndentType; label: string }[]
-                ).map((option) => (
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="text-sm text-t-secondary">{t("ui.indent")}</span>
+              <div className="flex gap-1.5 flex-wrap">
+                {indentOptions.map((option) => (
                   <button
                     key={option.value}
+                    type="button"
                     onClick={() => setIndent(option.value)}
                     className={`px-3 py-1.5 text-xs rounded-lg font-medium transition-all ${
                       indent === option.value
-                        ? "bg-brand-indigo text-white shadow-lg shadow-brand-indigo/25"
-                        : "bg-white/[0.04] text-brand-muted hover:bg-white/[0.08] hover:text-brand-text"
+                        ? "bg-accent text-white shadow-md shadow-accent/25"
+                        : "bg-bg-secondary text-t-secondary hover:bg-bg-tertiary hover:text-t-primary border border-border"
                     }`}
                   >
-                    {option.label}
+                    {t(option.labelKey)}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Action buttons */}
             <div className="flex gap-2">
               <button
+                type="button"
                 onClick={loadSample}
-                className="px-3 py-1.5 text-xs rounded-lg bg-white/[0.04] text-brand-muted hover:bg-white/[0.08] hover:text-brand-text transition-all font-medium"
+                className="px-3 py-1.5 text-xs rounded-lg bg-bg-secondary text-t-secondary hover:bg-bg-tertiary hover:text-t-primary transition-all font-medium border border-border"
               >
                 {t("json.sample")}
               </button>
               <button
+                type="button"
                 onClick={clearAll}
-                className="px-3 py-1.5 text-xs rounded-lg bg-white/[0.04] text-brand-muted hover:bg-white/[0.08] hover:text-brand-text transition-all font-medium"
+                className="px-3 py-1.5 text-xs rounded-lg bg-bg-secondary text-t-secondary hover:bg-bg-tertiary hover:text-t-primary transition-all font-medium border border-border"
               >
                 {t("ui.clear")}
               </button>
@@ -173,9 +173,8 @@ export default function JSONFormatterPage() {
           </div>
         </div>
 
-        {/* Input */}
         <div className="glass rounded-2xl p-6">
-          <label className="block text-sm text-brand-muted mb-2">
+          <label className="block text-sm text-t-secondary mb-2">
             {t("json.inputJson")}
           </label>
           <textarea
@@ -187,33 +186,34 @@ export default function JSONFormatterPage() {
             placeholder='{"key": "value", "array": [1, 2, 3]}'
             rows={10}
             spellCheck={false}
-            className="w-full px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-brand-text placeholder:text-brand-muted/50 focus:outline-none focus:border-brand-indigo/40 font-mono text-sm resize-y"
+            className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border text-t-primary placeholder:text-t-tertiary focus:outline-none focus:border-accent/50 font-mono text-sm resize-y"
           />
         </div>
 
-        {/* Action buttons */}
         <div className="grid grid-cols-3 gap-3">
           <button
+            type="button"
             onClick={handleFormat}
-            className="py-3 rounded-xl text-sm font-semibold transition-all bg-gradient-brand text-white shadow-lg shadow-brand-indigo/25 hover:shadow-brand-indigo/40"
+            className="py-3 rounded-xl text-sm font-semibold transition-all bg-accent text-white shadow-lg shadow-accent/25 hover:bg-accent-hover"
           >
             {t("ui.format")}
           </button>
           <button
+            type="button"
             onClick={handleMinify}
-            className="py-3 rounded-xl text-sm font-semibold transition-all bg-gradient-brand text-white shadow-lg shadow-brand-indigo/25 hover:shadow-brand-indigo/40"
+            className="py-3 rounded-xl text-sm font-semibold transition-all bg-accent text-white shadow-lg shadow-accent/25 hover:bg-accent-hover"
           >
             {t("ui.minify")}
           </button>
           <button
+            type="button"
             onClick={handleValidate}
-            className="py-3 rounded-xl text-sm font-semibold transition-all bg-white/[0.04] text-brand-muted hover:bg-white/[0.08] hover:text-brand-text border border-white/[0.08]"
+            className="py-3 rounded-xl text-sm font-semibold transition-all bg-bg-secondary text-t-secondary hover:bg-bg-tertiary hover:text-t-primary border border-border"
           >
             {t("ui.validate")}
           </button>
         </div>
 
-        {/* Error display */}
         {error && (
           <div className="glass rounded-2xl p-4 border border-red-500/20 bg-red-500/5">
             <div className="flex items-start gap-3">
@@ -242,25 +242,26 @@ export default function JSONFormatterPage() {
           </div>
         )}
 
-        {/* Output */}
         {output && (
           <div className="glass rounded-2xl p-6">
             <div className="flex items-center justify-between mb-2">
-              <label className="text-sm text-brand-muted">Output</label>
+              <label className="text-sm text-t-secondary">{t("json.output")}</label>
               <div className="flex gap-2">
                 <button
+                  type="button"
                   onClick={copyToClipboard}
-                  className="px-3 py-1.5 text-xs rounded-lg bg-brand-indigo/20 text-brand-indigo hover:bg-brand-indigo/30 transition-colors font-medium"
+                  className="px-3 py-1.5 text-xs rounded-lg bg-accent/15 text-accent hover:bg-accent/25 transition-colors font-medium border border-accent/30"
                 >
                   {t("ui.copy")}
                 </button>
                 <button
+                  type="button"
                   onClick={() => {
                     setInput(output);
                     setOutput("");
                     setError("");
                   }}
-                  className="px-3 py-1.5 text-xs rounded-lg bg-white/[0.04] text-brand-muted hover:bg-white/[0.08] hover:text-brand-text transition-colors font-medium"
+                  className="px-3 py-1.5 text-xs rounded-lg bg-bg-secondary text-t-secondary hover:bg-bg-tertiary hover:text-t-primary transition-colors font-medium border border-border"
                 >
                   {t("json.useAsInput")}
                 </button>
@@ -270,10 +271,10 @@ export default function JSONFormatterPage() {
               value={output}
               readOnly
               rows={10}
-              className="w-full px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-brand-text font-mono text-sm resize-y"
+              className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border text-t-primary font-mono text-sm resize-y"
             />
-            <p className="text-xs text-brand-muted mt-2">
-              {output.length.toLocaleString()} characters
+            <p className="text-xs text-t-tertiary mt-2">
+              {t("json.charCount", { count: output.length.toLocaleString() })}
             </p>
           </div>
         )}

@@ -5,17 +5,17 @@ import ToolLayout from "@/components/ToolLayout";
 import { useI18n } from "@/lib/i18n";
 
 interface PlatformLimit {
-  name: string;
+  id: "twitter" | "instagram" | "linkedin" | "facebook" | "sms";
   limit: number;
   color: string;
 }
 
 const PLATFORMS: PlatformLimit[] = [
-  { name: "Twitter / X", limit: 280, color: "#1DA1F2" },
-  { name: "Instagram Caption", limit: 2200, color: "#E1306C" },
-  { name: "LinkedIn Post", limit: 3000, color: "#0077B5" },
-  { name: "Facebook Post", limit: 63206, color: "#1877F2" },
-  { name: "SMS (1 message)", limit: 160, color: "#22c55e" },
+  { id: "twitter", limit: 280, color: "#1DA1F2" },
+  { id: "instagram", limit: 2200, color: "#E1306C" },
+  { id: "linkedin", limit: 3000, color: "#0077B5" },
+  { id: "facebook", limit: 63206, color: "#1877F2" },
+  { id: "sms", limit: 160, color: "#22c55e" },
 ];
 
 export default function CharacterCounterPage() {
@@ -55,8 +55,8 @@ export default function CharacterCounterPage() {
 
   return (
     <ToolLayout
-      toolName="Character Counter"
-      toolDescription="Count characters, words, lines and check platform limits in real-time"
+      toolName={t("tool.character-counter.name")}
+      toolDescription={t("tool.character-counter.desc")}
     >
       <div className="space-y-6">
         {/* Textarea */}
@@ -102,11 +102,12 @@ export default function CharacterCounterPage() {
               const pct = Math.min((used / platform.limit) * 100, 100);
               const over = used > platform.limit;
               const remaining = platform.limit - used;
+              const label = t(`cc.platform.${platform.id}`);
 
               return (
-                <div key={platform.name}>
+                <div key={platform.id}>
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-sm text-t-secondary">{platform.name}</span>
+                    <span className="text-sm text-t-secondary">{label}</span>
                     <span
                       className={`text-sm font-mono font-semibold ${
                         over ? "text-red-400" : "text-green-400"
@@ -114,7 +115,7 @@ export default function CharacterCounterPage() {
                     >
                       {over
                         ? `${Math.abs(remaining).toLocaleString()} ${t("cc.over")}`
-                        : platform.name === "SMS (1 message)"
+                        : platform.id === "sms"
                         ? getSmsCount(used)
                         : `${used.toLocaleString()} / ${platform.limit.toLocaleString()}`}
                     </span>

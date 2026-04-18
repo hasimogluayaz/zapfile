@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import ToolLayout from "@/components/ToolLayout";
 import FileDropzone from "@/components/FileDropzone";
 import { downloadBlob, getFileNameWithoutExtension } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 
 interface TextItem {
   id: string;
@@ -22,12 +23,19 @@ interface TextItem {
   italic: boolean;
 }
 
+function cloneTextItems(items: TextItem[]): TextItem[] {
+  return items.map((t) => ({ ...t }));
+}
+
 const FONT_FAMILIES = [
   "Impact",
   "Arial Black",
   "Arial",
+  "Helvetica",
   "Comic Sans MS",
   "Georgia",
+  "Times New Roman",
+  "Trebuchet MS",
   "Verdana",
   "Courier New",
 ];
@@ -213,14 +221,19 @@ function defaultItems(): TextItem[] {
 
 
 export default function MemeGeneratorPage() {
+  const { t } = useI18n();
   const [file, setFile] = useState<File | null>(null);
   const [imgSrc, setImgSrc] = useState<string | null>(null);
   const [textItems, setTextItems] = useState<TextItem[]>(defaultItems());
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [undoStack, setUndoStack] = useState<TextItem[][]>([]);
+  const [redoStack, setRedoStack] = useState<TextItem[][]>([]);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
+  const itemsRef = useRef<TextItem[]>(textItems);
+  itemsRef.current = textItems;
 
   // Drag state
   const dragRef = useRef<{
@@ -229,6 +242,7 @@ export default function MemeGeneratorPage() {
     startMouseY: number;
     startItemX: number;
     startItemY: number;
+    beforeItems: TextItem[];
   } | null>(null);
 
   // Load image
@@ -241,13 +255,15 @@ export default function MemeGeneratorPage() {
     img.onload = () => {
       imgRef.current = img;
     };
-    img.onerror = () => toast.error("Failed to load image.");
+    img.onerror = () => toast.error(t("meme.loadFail"));
     img.src = url;
     setTextItems(defaultItems());
     setSelectedId(null);
-  }, []);
+    setUndoStack([]);
+    setRedoStack([]);
+  }, [t]);
 
-  const selectedItem = textItems.find((t) => t.id === selectedId) ?? null;
+  const selectedItem = textItems.find((item) => item.id === selectedId) ?? null;
 
   function updateItem(id: string, patch: Partial<TextItem>) {
     setTextItems((prev) =>
@@ -256,6 +272,8 @@ export default function MemeGeneratorPage() {
   }
 
   function addText() {
+    setUndoStack((u) => [...u.slice(-49), cloneTextItems(itemsRef.current)]);
+    setRedoStack([]);
     const id = makeId();
     setTextItems((prev) => [
       ...prev,
@@ -279,11 +297,15 @@ export default function MemeGeneratorPage() {
   }
 
   function deleteItem(id: string) {
+    setUndoStack((u) => [...u.slice(-49), cloneTextItems(itemsRef.current)]);
+    setRedoStack([]);
     setTextItems((prev) => prev.filter((t) => t.id !== id));
     if (selectedId === id) setSelectedId(null);
   }
 
   function applyPreset(preset: PresetTemplate) {
+    setUndoStack((u) => [...u.slice(-49), cloneTextItems(itemsRef.current)]);
+    setRedoStack([]);
     setTextItems(preset.items.map((item) => ({ ...item, id: makeId() })));
     setSelectedId(null);
   }
@@ -303,6 +325,7 @@ export default function MemeGeneratorPage() {
       startMouseY: e.clientY,
       startItemX: item.x,
       startItemY: item.y,
+      beforeItems: cloneTextItems(textItems),
     };
   }
 
@@ -320,6 +343,7 @@ export default function MemeGeneratorPage() {
       startMouseY: touch.clientY,
       startItemX: item.x,
       startItemY: item.y,
+      beforeItems: cloneTextItems(textItems),
     };
   }
 
@@ -348,6 +372,14 @@ export default function MemeGeneratorPage() {
       });
     }
     function handleUp() {
+      const d = dragRef.current;
+      if (d?.beforeItems) {
+        const after = itemsRef.current;
+        if (JSON.stringify(after) !== JSON.stringify(d.beforeItems)) {
+          setUndoStack((u) => [...u.slice(-49), d.beforeItems]);
+          setRedoStack([]);
+        }
+      }
       dragRef.current = null;
     }
     window.addEventListener("mousemove", handleMouseMove);
@@ -361,6 +393,22 @@ export default function MemeGeneratorPage() {
       window.removeEventListener("touchend", handleUp);
     };
   }, [textItems]);
+
+  function undoMeme() {
+    if (undoStack.length === 0) return;
+    const prev = undoStack[undoStack.length - 1]!;
+    setRedoStack((r) => [...r, cloneTextItems(itemsRef.current)]);
+    setUndoStack((u) => u.slice(0, -1));
+    setTextItems(cloneTextItems(prev));
+  }
+
+  function redoMeme() {
+    if (redoStack.length === 0) return;
+    const next = redoStack[redoStack.length - 1]!;
+    setUndoStack((u) => [...u.slice(-49), cloneTextItems(itemsRef.current)]);
+    setRedoStack((r) => r.slice(0, -1));
+    setTextItems(cloneTextItems(next));
+  }
 
   function handleDownload() {
     const img = imgRef.current;
@@ -417,9 +465,9 @@ export default function MemeGeneratorPage() {
       if (blob) {
         const baseName = getFileNameWithoutExtension(file.name);
         downloadBlob(blob, `${baseName}-meme.png`);
-        toast.success("Meme downloaded!");
+        toast.success(t("meme.success"));
       } else {
-        toast.error("Download failed.");
+        toast.error(t("meme.fail"));
       }
     }, "image/png");
   }
@@ -430,6 +478,8 @@ export default function MemeGeneratorPage() {
     imgRef.current = null;
     setTextItems(defaultItems());
     setSelectedId(null);
+    setUndoStack([]);
+    setRedoStack([]);
   }
 
   return (
@@ -475,14 +525,32 @@ export default function MemeGeneratorPage() {
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <p className="text-[13px] font-semibold text-t-primary">Preview</p>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <button
+                    type="button"
+                    onClick={undoMeme}
+                    disabled={undoStack.length === 0}
+                    className="px-3 py-1.5 rounded-lg text-[12px] font-semibold text-t-secondary bg-bg-secondary border border-border hover:bg-white/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {t("meme.undo")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={redoMeme}
+                    disabled={redoStack.length === 0}
+                    className="px-3 py-1.5 rounded-lg text-[12px] font-semibold text-t-secondary bg-bg-secondary border border-border hover:bg-white/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {t("meme.redo")}
+                  </button>
+                  <button
+                    type="button"
                     onClick={addText}
                     className="px-3 py-1.5 rounded-lg text-[12px] font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:shadow-lg hover:shadow-indigo-500/25 transition-all"
                   >
                     + Add Text
                   </button>
                   <button
+                    type="button"
                     onClick={reset}
                     className="px-3 py-1.5 rounded-lg text-[12px] font-semibold text-t-secondary bg-bg-secondary border border-border hover:bg-white/10 transition-colors"
                   >

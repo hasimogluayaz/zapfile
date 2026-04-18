@@ -8,6 +8,10 @@ interface ImageCompareSliderProps {
   beforeLabel?: string;
   afterLabel?: string;
   className?: string;
+  /** Override inner frame (default: aspect-[4/3] max-h-80) */
+  frameClassName?: string;
+  dragHandleAriaLabel?: string;
+  rangeAriaLabel?: string;
 }
 
 export default function ImageCompareSlider({
@@ -16,11 +20,18 @@ export default function ImageCompareSlider({
   beforeLabel = "Before",
   afterLabel = "After",
   className = "",
+  frameClassName = "aspect-[4/3] max-h-80",
+  dragHandleAriaLabel = "Drag to compare before and after",
+  rangeAriaLabel = "Compare before and after",
 }: ImageCompareSliderProps) {
   const [pct, setPct] = useState(50);
   const dragging = useRef(false);
   const wrap = useRef<HTMLDivElement>(null);
   const [boxW, setBoxW] = useState(0);
+
+  useEffect(() => {
+    setPct(50);
+  }, [beforeSrc, afterSrc]);
 
   useEffect(() => {
     const el = wrap.current;
@@ -55,11 +66,32 @@ export default function ImageCompareSlider({
     };
   }, [setFromClientX]);
 
+  const onTouchStart = useCallback(
+    (e: React.TouchEvent) => {
+      e.preventDefault();
+      dragging.current = true;
+      setFromClientX(e.touches[0].clientX);
+    },
+    [setFromClientX],
+  );
+
+  const onTouchMove = useCallback(
+    (e: React.TouchEvent) => {
+      if (!dragging.current) return;
+      setFromClientX(e.touches[0].clientX);
+    },
+    [setFromClientX],
+  );
+
+  const onTouchEnd = useCallback(() => {
+    dragging.current = false;
+  }, []);
+
   return (
     <div className={`relative select-none ${className}`}>
       <div
         ref={wrap}
-        className="relative overflow-hidden rounded-xl border border-border aspect-[4/3] max-h-80 bg-bg-secondary"
+        className={`relative overflow-hidden rounded-xl border border-border bg-bg-secondary ${frameClassName}`}
         onMouseMove={(e) => {
           if (!dragging.current) return;
           setFromClientX(e.clientX);
@@ -70,6 +102,9 @@ export default function ImageCompareSlider({
         onMouseLeave={() => {
           dragging.current = false;
         }}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
       >
         {/* After (full background) */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -97,9 +132,12 @@ export default function ImageCompareSlider({
         />
         <button
           type="button"
-          aria-label="Drag to compare before and after"
-          className="absolute top-1/2 z-20 w-10 h-10 -ml-5 rounded-full bg-white shadow-lg border-2 border-accent flex items-center justify-center text-accent text-xs font-bold cursor-ew-resize"
-          style={{ left: `${pct}%`, transform: "translate(-50%, -50%)" }}
+          aria-label={dragHandleAriaLabel}
+          className="absolute top-1/2 z-20 w-10 h-10 -ml-5 rounded-full bg-white shadow-lg border-2 border-accent flex items-center justify-center text-accent text-xs font-bold cursor-ew-resize touch-none"
+          style={{
+            left: `${pct}%`,
+            transform: "translate(-50%, -50%)",
+          }}
           onMouseDown={(e) => {
             e.preventDefault();
             dragging.current = true;
@@ -116,7 +154,7 @@ export default function ImageCompareSlider({
         value={pct}
         onChange={(e) => setPct(Number(e.target.value))}
         className="w-full mt-2 accent-accent"
-        aria-label="Compare before and after"
+        aria-label={rangeAriaLabel}
       />
       <div className="flex justify-between text-xs text-t-tertiary mt-1">
         <span>{beforeLabel}</span>

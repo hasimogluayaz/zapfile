@@ -43,8 +43,67 @@ export default function FaviconGeneratorPage() {
     new Map(),
   );
   const [processing, setProcessing] = useState(false);
+  const [appName, setAppName] = useState("My App");
+  const [themeColor, setThemeColor] = useState("#6366f1");
+  const [bgColor, setBgColor] = useState("#ffffff");
 
   const imgRef = useRef<HTMLImageElement | null>(null);
+
+  const buildHtmlSnippet = useCallback(
+    (selected: FaviconSize[]): string => {
+      const lines: string[] = [];
+      const has = (size: number) => selected.some((s) => s.checked && s.size === size);
+      if (has(16))
+        lines.push(
+          '<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">',
+        );
+      if (has(32))
+        lines.push(
+          '<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">',
+        );
+      if (has(48))
+        lines.push(
+          '<link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">',
+        );
+      if (has(180))
+        lines.push(
+          '<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">',
+        );
+      if (has(192) || has(512)) {
+        lines.push('<link rel="manifest" href="/manifest.json">');
+      }
+      lines.push(`<meta name="theme-color" content="${themeColor}">`);
+      return lines.join("\n");
+    },
+    [themeColor],
+  );
+
+  const buildManifest = useCallback(
+    (selected: FaviconSize[]): string => {
+      const icons: { src: string; sizes: string; type: string }[] = [];
+      for (const s of selected) {
+        if (!s.checked) continue;
+        if (s.size === 192 || s.size === 512) {
+          icons.push({
+            src: `/${s.filename}`,
+            sizes: `${s.size}x${s.size}`,
+            type: "image/png",
+          });
+        }
+      }
+      const manifest = {
+        name: appName,
+        short_name: appName,
+        icons,
+        theme_color: themeColor,
+        background_color: bgColor,
+        display: "standalone",
+        start_url: "/",
+      };
+      return JSON.stringify(manifest, null, 2);
+    },
+    [appName, themeColor, bgColor],
+  );
 
   const generateFavicons = useCallback(
     (img: HTMLImageElement, selectedSizes: FaviconSize[]) => {
@@ -164,6 +223,10 @@ export default function FaviconGeneratorPage() {
         }
       }
 
+      // Include HTML snippet and manifest.json
+      zip.file("favicon-snippet.html", buildHtmlSnippet(sizes));
+      zip.file("manifest.json", buildManifest(sizes));
+
       const zipBlob = await zip.generateAsync({ type: "blob" });
       const baseName = file
         ? getFileNameWithoutExtension(file.name)
@@ -188,6 +251,17 @@ export default function FaviconGeneratorPage() {
   };
 
   const checkedCount = sizes.filter((s) => s.checked).length;
+  const htmlSnippet = buildHtmlSnippet(sizes);
+  const manifestJson = buildManifest(sizes);
+
+  const copyText = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success(t("fav.copied"));
+    } catch {
+      toast.error(t("fav.copyFail"));
+    }
+  };
 
   return (
     <ToolLayout
@@ -371,6 +445,89 @@ export default function FaviconGeneratorPage() {
                 </div>
               </div>
             )}
+
+            {/* Manifest config */}
+            <div className="glass rounded-xl p-6 space-y-3">
+              <span className="text-[13px] text-t-secondary font-medium block">
+                {t("fav.manifestJson")}
+              </span>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <label className="block">
+                  <span className="text-[11px] text-t-secondary">{t("fav.appName")}</span>
+                  <input
+                    type="text"
+                    value={appName}
+                    onChange={(e) => setAppName(e.target.value)}
+                    className="mt-1 w-full px-3 py-2 rounded-lg bg-bg-secondary border border-border text-t-primary text-sm focus:outline-none focus:border-indigo-500/50"
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-[11px] text-t-secondary">{t("fav.themeColor")}</span>
+                  <div className="mt-1 flex gap-2">
+                    <input
+                      type="color"
+                      value={themeColor}
+                      onChange={(e) => setThemeColor(e.target.value)}
+                      className="w-10 h-10 rounded-lg bg-transparent border-0 cursor-pointer"
+                    />
+                    <input
+                      type="text"
+                      value={themeColor}
+                      onChange={(e) => setThemeColor(e.target.value)}
+                      className="flex-1 px-3 py-2 rounded-lg bg-bg-secondary border border-border text-t-primary text-sm font-mono focus:outline-none focus:border-indigo-500/50"
+                    />
+                  </div>
+                </label>
+                <label className="block">
+                  <span className="text-[11px] text-t-secondary">{t("fav.bgColor")}</span>
+                  <div className="mt-1 flex gap-2">
+                    <input
+                      type="color"
+                      value={bgColor}
+                      onChange={(e) => setBgColor(e.target.value)}
+                      className="w-10 h-10 rounded-lg bg-transparent border-0 cursor-pointer"
+                    />
+                    <input
+                      type="text"
+                      value={bgColor}
+                      onChange={(e) => setBgColor(e.target.value)}
+                      className="flex-1 px-3 py-2 rounded-lg bg-bg-secondary border border-border text-t-primary text-sm font-mono focus:outline-none focus:border-indigo-500/50"
+                    />
+                  </div>
+                </label>
+              </div>
+              <p className="text-[11px] text-t-tertiary">{t("fav.manifestHint")}</p>
+              <div className="relative">
+                <pre className="p-3 rounded-lg bg-bg-secondary border border-border text-t-primary text-[11px] font-mono overflow-x-auto max-h-48">
+                  {manifestJson}
+                </pre>
+                <button
+                  onClick={() => copyText(manifestJson)}
+                  className="absolute top-2 right-2 px-2 py-1 rounded-md bg-white/10 hover:bg-white/20 text-[11px] text-t-primary transition-colors"
+                >
+                  {t("fav.copySnippet")}
+                </button>
+              </div>
+            </div>
+
+            {/* HTML Snippet */}
+            <div className="glass rounded-xl p-6 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[13px] text-t-secondary font-medium">
+                  {t("fav.htmlSnippet")}
+                </span>
+                <button
+                  onClick={() => copyText(htmlSnippet)}
+                  className="px-3 py-1.5 rounded-lg bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/30 transition-colors text-[11px]"
+                >
+                  {t("fav.copySnippet")}
+                </button>
+              </div>
+              <p className="text-[11px] text-t-tertiary">{t("fav.htmlSnippetHint")}</p>
+              <pre className="p-3 rounded-lg bg-bg-secondary border border-border text-t-primary text-[11px] font-mono overflow-x-auto whitespace-pre-wrap">
+                {htmlSnippet}
+              </pre>
+            </div>
 
             {/* ICO hint */}
             <div className="glass rounded-xl p-4 border border-border">

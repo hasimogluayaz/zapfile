@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { localeFromCountryCode } from "@/lib/region-locale";
 import type { Locale } from "@/lib/locales";
-
-const GEO_COOKIE = "zapfile-geo-locale";
+import { SUPPORTED_LOCALES } from "@/lib/locales";
+import { LOCALE_COOKIE, LOCALE_PREF_COOKIE } from "@/lib/locale-cookies";
 
 function detectCountry(request: NextRequest): string | undefined {
   const g = request.geo;
@@ -18,9 +18,13 @@ function detectCountry(request: NextRequest): string | undefined {
 export function middleware(request: NextRequest) {
   const res = NextResponse.next();
   const country = detectCountry(request);
-  const locale: Locale = localeFromCountryCode(country);
+  const pref = request.cookies.get(LOCALE_PREF_COOKIE)?.value;
+  const locale: Locale =
+    pref && SUPPORTED_LOCALES.includes(pref as Locale)
+      ? (pref as Locale)
+      : localeFromCountryCode(country);
 
-  res.cookies.set(GEO_COOKIE, locale, {
+  res.cookies.set(LOCALE_COOKIE, locale, {
     path: "/",
     maxAge: 60 * 60 * 24 * 180,
     sameSite: "lax",

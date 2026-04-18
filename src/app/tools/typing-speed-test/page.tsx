@@ -173,6 +173,7 @@ export default function TypingSpeedTestPage() {
   const [userInput, setUserInput] = useState("");
 
   const [isStarted, setIsStarted] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
   const [startTime, setStartTime] = useState<number | null>(null);
   const [endTime, setEndTime] = useState<number | null>(null);
@@ -187,6 +188,7 @@ export default function TypingSpeedTestPage() {
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const frozenElapsedRef = useRef(0);
   const currentKey = recordKey(mode, difficulty, timeLimit);
 
   const pickText = useCallback((d: Difficulty, l: Lang) => {
@@ -201,6 +203,7 @@ export default function TypingSpeedTestPage() {
       setCharData(text.split("").map((c) => ({ char: c, state: "pending" })));
       setUserInput("");
       setIsStarted(false);
+      setIsPaused(false);
       setIsFinished(false);
       setStartTime(null);
       setEndTime(null);
@@ -223,7 +226,7 @@ export default function TypingSpeedTestPage() {
 
   // Timer
   useEffect(() => {
-    if (isStarted && !isFinished) {
+    if (isStarted && !isFinished && !isPaused) {
       timerRef.current = setInterval(() => {
         const now = Date.now();
         const e = now - (startTime ?? now);
@@ -245,7 +248,7 @@ export default function TypingSpeedTestPage() {
     }
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isStarted, isFinished, startTime, mode, timeLimit]);
+  }, [isStarted, isFinished, isPaused, startTime, mode, timeLimit]);
 
   // Need a ref for userInput in the timer closure
   const userInputRef = useRef(userInput);
@@ -279,7 +282,7 @@ export default function TypingSpeedTestPage() {
   );
 
   const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    if (isFinished) return;
+    if (isFinished || isPaused) return;
     const value = e.target.value;
 
     if (!isStarted && value.length > 0) {
@@ -308,6 +311,19 @@ export default function TypingSpeedTestPage() {
 
   const handleReset = () => {
     initTest(difficulty, lang, mode);
+    setTimeout(() => textareaRef.current?.focus(), 50);
+  };
+
+  const handlePause = () => {
+    if (!isStarted || isFinished || isPaused) return;
+    frozenElapsedRef.current = elapsed;
+    setIsPaused(true);
+  };
+
+  const handleResume = () => {
+    if (!isPaused || isFinished) return;
+    setStartTime(Date.now() - frozenElapsedRef.current);
+    setIsPaused(false);
     setTimeout(() => textareaRef.current?.focus(), 50);
   };
 
@@ -388,7 +404,7 @@ export default function TypingSpeedTestPage() {
 
             <div>
               <p className="text-xs font-semibold text-t-tertiary uppercase tracking-wider mb-2">
-                {mode === "time" ? `Duration` : t("typing.difficulty")}
+                {mode === "time" ? t("typing.duration") : t("typing.difficulty")}
               </p>
               {mode === "time" ? (
                 <div className="flex gap-2">
@@ -462,7 +478,7 @@ export default function TypingSpeedTestPage() {
               ref={textareaRef}
               value={userInput}
               onChange={handleInput}
-              disabled={isFinished}
+              disabled={isFinished || isPaused}
               placeholder={isFinished ? "" : t("typing.startPrompt")}
               rows={3}
               spellCheck={false}
@@ -470,7 +486,7 @@ export default function TypingSpeedTestPage() {
               autoCapitalize="off"
               autoComplete="off"
               className={`w-full px-4 py-3 rounded-xl bg-bg-secondary text-t-primary placeholder:text-t-tertiary focus:outline-none resize-none font-mono text-sm transition-colors border ${
-                isFinished
+                isFinished || isPaused
                   ? "border-border opacity-50 cursor-not-allowed"
                   : isStarted
                   ? "border-accent/40 focus:border-accent/70"
@@ -489,13 +505,25 @@ export default function TypingSpeedTestPage() {
             )}
           </div>
 
-          <div className="flex gap-3 mt-4">
-            <button onClick={handleReset}
+          <div className="flex flex-wrap gap-3 mt-4">
+            <button type="button" onClick={handleReset}
               className="px-6 py-2.5 rounded-xl font-semibold text-white bg-accent hover:bg-accent-hover transition-all hover:scale-[1.02] active:scale-[0.98] text-sm">
               {isFinished ? t("typing.tryAgain") : t("typing.reset")}
             </button>
+            {isStarted && !isFinished && !isPaused && (
+              <button type="button" onClick={handlePause}
+                className="px-6 py-2.5 rounded-xl text-sm font-medium text-t-secondary bg-bg-secondary border border-border hover:border-border-strong transition-all">
+                {t("typing.pause")}
+              </button>
+            )}
+            {isStarted && !isFinished && isPaused && (
+              <button type="button" onClick={handleResume}
+                className="px-6 py-2.5 rounded-xl text-sm font-medium text-white bg-accent hover:bg-accent-hover transition-all">
+                {t("typing.resume")}
+              </button>
+            )}
             {!isStarted && !isFinished && (
-              <button onClick={() => textareaRef.current?.focus()}
+              <button type="button" onClick={() => textareaRef.current?.focus()}
                 className="px-6 py-2.5 rounded-xl text-sm font-medium text-t-secondary bg-bg-secondary border border-border hover:border-border-strong transition-all">
                 {t("typing.start")}
               </button>
@@ -508,7 +536,7 @@ export default function TypingSpeedTestPage() {
           {[
             { label: t("typing.wpm"), value: liveWpm, unit: "", hi: isFinished },
             { label: t("typing.accuracy"), value: accuracy, unit: "%", hi: false },
-            { label: mode === "time" ? "Remaining" : t("typing.time"),
+            { label: mode === "time" ? t("typing.remaining") : t("typing.time"),
               value: mode === "time" && isStarted ? `${countdown}s` : formatTime(elapsed), unit: "", hi: false },
             { label: t("typing.errors"), value: errorCount, unit: "", hi: false },
           ].map(({ label, value, unit, hi }) => (

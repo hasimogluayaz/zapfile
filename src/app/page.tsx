@@ -73,7 +73,13 @@ export default function Home() {
                   />
                 </svg>
               </Link>
-              <span className="text-[13px] text-t-tertiary">
+              <Link
+                href="/workflows"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-[14px] font-semibold border border-border text-t-primary hover:bg-bg-secondary transition-all hover:scale-[1.02] active:scale-[0.98]"
+              >
+                {t("nav.workflows")}
+              </Link>
+              <span className="text-[13px] text-t-tertiary w-full sm:w-auto text-center sm:text-start basis-full sm:basis-auto">
                 {t("hero.toolCount", { count: tools.length })}
               </span>
             </div>

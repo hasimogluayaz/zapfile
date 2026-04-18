@@ -2,23 +2,7 @@
 
 import { useState, useRef, useEffect, useId } from "react";
 import { useI18n } from "@/lib/i18n";
-import {
-  SUPPORTED_LOCALES,
-  LOCALE_LABELS,
-  isRtlLocale,
-  type Locale,
-} from "@/lib/locales";
-
-const FLAG: Record<Locale, string> = {
-  en: "🇬🇧",
-  tr: "🇹🇷",
-  de: "🇩🇪",
-  fr: "🇫🇷",
-  es: "🇪🇸",
-  pt: "🇧🇷",
-  it: "🇮🇹",
-  ja: "🇯🇵",
-};
+import { SUPPORTED_LOCALES, LOCALE_LABELS, isRtlLocale } from "@/lib/locales";
 
 interface LanguageSwitcherProps {
   /** Full width (mobile drawer) */
@@ -65,11 +49,11 @@ export default function LanguageSwitcher({ fullWidth }: LanguageSwitcherProps) {
           fullWidth ? "w-full justify-between" : "min-w-[10rem] max-w-[min(220px,32vw)]"
         }`}
       >
-        <span className="flex items-center gap-2 min-w-0">
-          <span className="text-lg leading-none shrink-0" aria-hidden>
-            {FLAG[locale]}
-          </span>
-          <span className="truncate">{LOCALE_LABELS[locale]}</span>
+        <span
+          className="truncate min-w-0 flex-1"
+          dir={isRtlLocale(locale) ? "rtl" : "ltr"}
+        >
+          {LOCALE_LABELS[locale]}
         </span>
         <svg
           className={`w-4 h-4 shrink-0 text-t-tertiary transition-transform ${open ? "rotate-180" : ""}`}
@@ -113,9 +97,6 @@ export default function LanguageSwitcher({ fullWidth }: LanguageSwitcherProps) {
                     : "text-t-secondary hover:bg-bg-secondary hover:text-t-primary"
                 }`}
               >
-                <span className="text-lg leading-none" aria-hidden>
-                  {FLAG[loc]}
-                </span>
                 <span
                   className="flex-1 truncate"
                   dir={isRtlLocale(loc) ? "rtl" : "ltr"}

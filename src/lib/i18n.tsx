@@ -12,6 +12,8 @@ import { SUPPORTED_LOCALES, isRtlLocale } from "./locales";
 import { localeOverrides } from "./i18n-overrides";
 import { partialStaticPageLocales } from "./i18n-partial-static-pages";
 import { partialBlogChromeLocales } from "./i18n-partial-blog-chrome";
+import { arLocaleStrings } from "./i18n-locale-ar";
+import { LOCALE_COOKIE, LOCALE_PREF_COOKIE } from "./locale-cookies";
 
 export type { Locale } from "./locales";
 
@@ -26,8 +28,86 @@ const en: Record<string, string> = {
     "nav.about": "About",
     "nav.blog": "Blog",
     "nav.changelog": "Changelog",
+    "nav.workflows": "Workflows",
     "nav.language": "Language",
+
+    "trust.panelTitle": "Runs on your device, not our servers",
+    "trust.panelLead":
+      "This page uses browser APIs (Canvas, WebAssembly, workers, etc.) so your files stay on your machine.",
+    "trust.bullet1": "Processing happens in this tab — close the tab and the session ends.",
+    "trust.bullet2": "No ZapFile account is required and we do not store your uploads (there are none).",
+    "trust.bullet3": "Download only what you choose; nothing is sent to us for “cloud processing.”",
+    "trust.bulletNetwork":
+      "Verify it yourself: DevTools → Network while using a tool — you should not see your file bytes uploaded to ZapFile.",
+    "trust.bulletPwa":
+      "Add ZapFile to your home screen for a faster app shell and offline access to cached pages (tools still need a capable browser).",
+    "trust.linkPrivacy": "Privacy policy",
+    "trust.linkWorkflows": "Popular workflows",
+
+    "workflows.eyebrow": "Guides",
+    "workflows.heroTitle": "Popular workflows",
+    "workflows.heroSubtitle":
+      "Chain a few tools in order — each step opens in a new page. Everything stays local in your browser.",
+    "workflows.openTool": "Open",
+    "workflows.footnote":
+      "Tip: bookmark this page or add ZapFile to your home screen (PWA) for quick access.",
+    "workflow.bundle0.title": "All-in-one image prep",
+    "workflow.bundle0.desc":
+      "Resize, compress, and convert in one guided flow — best when you have many images.",
+    "workflow.bundle1.title": "Lighter PDFs, then merge",
+    "workflow.bundle1.desc":
+      "Shrink PDFs first to save space, then combine them into a single document when needed.",
+    "workflow.bundle2.title": "Web-ready images",
+    "workflow.bundle2.desc":
+      "Crop to the right framing, compress for weight, then export WebP or PNG for the web.",
+    "workflow.bundle3.title": "Safer sharing (metadata)",
+    "workflow.bundle3.desc":
+      "Inspect EXIF, crop if needed, then compress — useful before posting photos online.",
+    "workflow.bundle4.title": "Images → one PDF",
+    "workflow.bundle4.desc":
+      "Turn images into a PDF, then compress the PDF if the file is still large.",
     "nav.favoriteToggle": "Pin this tool",
+    "nav.shortcuts": "Keyboard shortcuts",
+    "ui.close": "Close",
+
+    "shortcuts.title": "Keyboard shortcuts",
+    "shortcuts.intro": "These work on most pages when a text field is not focused.",
+    "shortcuts.search": "Open tool search",
+    "shortcuts.thisHelp": "Show this help",
+    "shortcuts.closeModal": "Close dialog",
+    "shortcuts.toolsHint": "Some tools",
+    "shortcuts.stopwatchHint": "Stopwatch: start/pause, lap, reset",
+    "shortcuts.compareHint": "Image compare: nudge slider",
+
+    "diff.viewUnified": "Unified",
+    "diff.viewSplit": "Side by side",
+    "diff.columnOriginal": "Original",
+    "diff.columnModified": "Modified",
+
+    "emoji.recent": "Recently copied",
+    "emoji.recentEmpty": "Copied emojis appear here.",
+
+    "photofilter.previewTabs": "Tabs",
+    "photofilter.previewSlider": "Before / after slider",
+    "photofilter.filtered": "Filtered",
+
+    "imgcompare.keyboardHint": "Use arrow keys to move the divider (hold Shift for larger steps).",
+    "imgcompare.before": "Before",
+    "imgcompare.after": "After",
+    "imgcompare.dropBefore": "Drop Before image",
+    "imgcompare.dropAfter": "Drop After image",
+    "imgcompare.compare": "Compare",
+    "imgcompare.swap": "Swap",
+    "imgcompare.swapped": "Images swapped",
+    "imgcompare.navigate": "Navigate",
+    "imgcompare.shiftSteps": "Shift + Arrow = ±5",
+    "imgcompare.changeImages": "Change images",
+    "imgcompare.dragHandle": "Drag to compare",
+
+    "regex.groupN": "Group {n}",
+
+    "crop.showThirds": "Rule of thirds guide",
+
     "share.copy": "Copy page link",
     "share.tweet": "Share on X",
     "share.copied": "Link copied",
@@ -167,6 +247,18 @@ const en: Record<string, string> = {
     "tool.word-counter.name": "Word Counter",
     "tool.word-counter.desc":
       "Count words, characters, sentences and reading time",
+    "tool.character-counter.name": "Character Counter",
+    "tool.character-counter.desc":
+      "Count characters, words, lines and check social platform limits in real time",
+    "tool.fake-identity.name": "Fake Identity Generator",
+    "tool.fake-identity.desc":
+      "Generate random test identities for development and QA — all local, no uploads",
+    "tool.random-color.name": "Random Color Generator",
+    "tool.random-color.desc":
+      "Generate random colors with HEX, RGB, HSL and harmony palettes",
+    "tool.stopwatch.name": "Stopwatch",
+    "tool.stopwatch.desc":
+      "Online stopwatch with laps, stats, and keyboard shortcuts",
     "tool.pdf-to-word.name": "PDF to Word",
     "tool.pdf-to-word.desc":
       "Convert PDF documents to editable Word (DOCX) files",
@@ -302,6 +394,10 @@ const en: Record<string, string> = {
     "ui.results": "Results",
     "ui.downloadPdf": "Download PDF",
     "a11y.skipToContent": "Skip to content",
+    "a11y.searchTools": "Search tools",
+    "a11y.toggleTheme": "Toggle theme",
+    "a11y.closeMenu": "Close menu",
+    "a11y.openMenu": "Open menu",
     "error.boundary.title": "Something went wrong",
     "error.boundary.message":
       "An unexpected error occurred. Please refresh the page and try again.",
@@ -320,6 +416,11 @@ const en: Record<string, string> = {
     "merge.skipped": "Some files were skipped because they are not PDFs.",
     "merge.invalid": "Please select valid PDF files.",
     "merge.removeFile": "Remove file",
+    "merge.clearAll": "Clear all",
+    "merge.dragHint": "Drag rows to reorder, or use the arrows.",
+    "merge.moveUp": "Move up",
+    "merge.moveDown": "Move down",
+    "merge.dropLabel": "Drop your PDF files here or click to browse",
 
     // Split PDF
     "split.pageRanges": "Page Ranges",
@@ -339,6 +440,12 @@ const en: Record<string, string> = {
     "split.loaded": "PDF loaded with {count} pages.",
     "split.invalidFile": "Please select a valid PDF file.",
     "split.loadFail": "Failed to load PDF. The file may be corrupted or encrypted.",
+    "split.dropLabel": "Drop your PDF here or click to browse",
+    "split.pagePreview": "Page thumbnails",
+    "split.thumbsLoading": "Loading page previews…",
+    "split.pageLabel": "Page {n}",
+    "split.pagesCount": "{count} pages",
+    "split.thumbsPartial": "Showing {shown} of {total} page previews",
 
     // PDF to Images
     "pdfimg.outputFormat": "Output Format",
@@ -468,6 +575,77 @@ const en: Record<string, string> = {
     "wm.success": "Watermark applied and downloaded!",
     "wm.lastExport": "Last Export",
     "wm.newImage": "New Image",
+    "wm.watermarkType": "Watermark type",
+    "wm.typeText": "Text",
+    "wm.typeImage": "Image",
+    "wm.typeBoth": "Text + image",
+    "wm.uploadImage": "Upload logo / watermark image",
+    "wm.imageScale": "Image size",
+    "wm.imageHint": "PNG or JPG with transparency works best.",
+    "wm.fontFamily": "Font family",
+    "wm.rotation": "Rotation",
+    "wm.color": "Color",
+    "wm.strokeOutline": "Stroke / outline",
+    "wm.loadingPreview": "Loading…",
+    "wm.textSection": "Text",
+    "wm.enableOutline": "Enable outline",
+    "wm.strokeColor": "Outline color",
+    "wm.strokeWidth": "Outline width",
+    "wm.gridPosition": "Grid position",
+    "wm.customXY": "Custom X/Y",
+    "wm.xPosition": "X position",
+    "wm.yPosition": "Y position",
+    "wm.extraOptions": "Extra options",
+    "wm.tileLabel": "Tile across entire image",
+    "wm.tileDesc": "Repeat the watermark in a diagonal grid.",
+    "wm.textBgLabel": "Text background",
+    "wm.textBgDesc": "Semi-transparent dark fill behind text.",
+    "wm.dropMainImage": "Drop your image here or click to browse",
+    "wm.previewAlt": "Watermark preview",
+    "wm.undo": "Undo",
+    "wm.redo": "Redo",
+    "wm.historyNothingUndo": "Nothing to undo yet.",
+    "wm.historyNothingRedo": "Nothing to redo.",
+
+    "blur.edited": "Edited",
+    "blur.viewOriginalBtn": "Original",
+    "blur.regionsApplied": "{count} region(s) applied",
+
+    "photofilter.filterLabel": "Filter",
+    "photofilter.changeImage": "Change image",
+    "photofilter.filtersHeading": "Filters",
+    "photofilter.intensity": "Intensity",
+    "photofilter.intensityMin": "Original blend",
+    "photofilter.intensityMax": "Full effect",
+    "photofilter.exporting": "Exporting…",
+    "photofilter.downloadPng": "Download PNG",
+    "photofilter.downloaded": "Saved to your device.",
+    "photofilter.exportFail": "Could not export image.",
+    "photofilter.filter.original": "Original",
+    "photofilter.filter.grayscale": "Grayscale",
+    "photofilter.filter.sepia": "Sepia",
+    "photofilter.filter.vintage": "Vintage",
+    "photofilter.filter.bright": "Bright",
+    "photofilter.filter.contrast": "Contrast",
+    "photofilter.filter.invert": "Invert",
+    "photofilter.filter.warm": "Warm",
+    "photofilter.filter.cold": "Cold",
+    "photofilter.filter.fade": "Fade",
+    "photofilter.filter.saturate": "Saturate",
+    "photofilter.filter.blur": "Blur",
+    "photofilter.altSource": "Source photo",
+    "photofilter.altOriginalPreview": "Original photo",
+    "photofilter.compareDrag": "Drag to compare original and filtered image",
+    "photofilter.compareRange": "Blend position between original and filtered",
+    "wm.resultAlt": "Watermarked result",
+    "wm.fontSans": "Sans-serif",
+    "wm.fontSerif": "Serif",
+    "wm.fontMono": "Monospace",
+    "wm.fontImpact": "Impact",
+    "wm.fontGeorgia": "Georgia",
+    "wm.needText": "Enter watermark text.",
+    "wm.needImage": "Upload a watermark image.",
+    "wm.needBoth": "Add text and upload a watermark image.",
 
     // Image to PDF
     "img2pdf.pageSize": "Page Size",
@@ -487,6 +665,11 @@ const en: Record<string, string> = {
     "blur.radius": "Blur Radius",
     "blur.blockSize": "Block Size",
     "blur.undo": "Undo",
+    "blur.redo": "Redo",
+    "blur.feather": "Edge feather",
+    "blur.featherHint": "Soften the border of each region (Gaussian and pixelate).",
+    "blur.blackout": "Blackout",
+    "blur.redone": "Restored blur region.",
     "blur.blurEntire": "Blur Entire",
     "blur.applied": "blur area applied!",
     "blur.undone": "Undo: removed last blur area.",
@@ -505,6 +688,16 @@ const en: Record<string, string> = {
     "fav.noSizes": "No sizes selected.",
     "fav.zipSuccess": "ZIP downloaded!",
     "fav.zipFail": "Failed to create ZIP file.",
+    "fav.htmlSnippet": "HTML Snippet",
+    "fav.htmlSnippetHint": "Paste these tags into your <head> section.",
+    "fav.manifestJson": "manifest.json",
+    "fav.manifestHint": "Web app manifest for PWA support (Android/Chrome).",
+    "fav.copySnippet": "Copy",
+    "fav.copied": "Copied to clipboard!",
+    "fav.copyFail": "Failed to copy.",
+    "fav.appName": "App name",
+    "fav.themeColor": "Theme color",
+    "fav.bgColor": "Background color",
 
     // EXIF Viewer
     "exif.dropText": "Drop your image here to view EXIF data",
@@ -524,6 +717,14 @@ const en: Record<string, string> = {
     "exif.jpegOnly": "EXIF parsing is only available for JPEG files.",
     "exif.removed": "EXIF data removed! Download the cleaned image.",
     "exif.processFail": "Failed to process image.",
+    "exif.batchTitle": "Batch: remove EXIF (JPEG)",
+    "exif.batchHint": "Add multiple JPEGs — we strip metadata and pack PNGs into one ZIP.",
+    "exif.stripZip": "Strip all & download ZIP",
+    "exif.batchZipName": "clean-images.zip",
+    "exif.batchEmpty": "Add at least one JPEG.",
+    "exif.batchDone": "ZIP ready — metadata removed from {count} images.",
+    "exif.batchFail": "Could not build ZIP. Check that files are valid JPEGs.",
+    "exif.batchCount": "{count} JPEG file(s) selected",
 
     // Image Collage
     "collage.images": "Images",
@@ -557,6 +758,8 @@ const en: Record<string, string> = {
     "meme.success": "Meme downloaded!",
     "meme.fail": "Failed to export meme.",
     "meme.loadFail": "Failed to load image.",
+    "meme.undo": "Undo",
+    "meme.redo": "Redo",
 
     // Remove Background
     "rmbg.button": "Remove Background",
@@ -695,6 +898,7 @@ const en: Record<string, string> = {
     "vid2gif.startTime": "Start time (seconds)",
     "vid2gif.duration": "Duration (seconds)",
     "vid2gif.tip": "Tip: Keep GIFs under 10 seconds for best results.",
+    "vid2gif.dropLabel": "Drop a video here or click to upload",
     "vid2gif.qualityPresets": "Quality Presets",
     "vid2gif.high": "High (15fps, 480px)",
     "vid2gif.medium": "Medium (10fps, 320px)",
@@ -709,6 +913,10 @@ const en: Record<string, string> = {
     "vid2gif.success": "GIF created successfully",
     "vid2gif.fail": "Failed to create GIF. Try shorter duration or lower quality.",
     "vid2gif.invalidStart": "Invalid start time",
+    "vid2gif.loop": "Loop",
+    "vid2gif.loopForever": "Forever",
+    "vid2gif.loopOnce": "Once",
+    "vid2gif.loopNTimes": "{n}×",
 
     // QR Generator
     "qr.content": "Content",
@@ -733,8 +941,20 @@ const en: Record<string, string> = {
     "qr.typeTel": "Phone",
     "qr.typeEmail": "Email",
     "qr.typeWifi": "WiFi",
-    "qr.copyImage": "Copy Image",
+    "qr.copyImage": "Copy PNG",
+    "qr.copySVG": "Copy SVG code",
     "qr.copied": "Copied!",
+    "qr.sectionType": "Type",
+    "qr.svgExportFail": "SVG export failed",
+    "qr.copyNotSupported": "Copy not supported in this browser",
+    "qr.svgCopied": "SVG copied to clipboard",
+    "qr.logoLoaded": "Logo loaded",
+    "qr.logoCenterHint": "Shown in the center of the QR code",
+    "qr.placeholderFreeText": "Enter your text here…",
+    "qr.phUrl": "https://example.com",
+    "qr.phTel": "+1 234 567 8900",
+    "qr.phEmail": "email@example.com",
+    "qr.wifiNoPass": "No password",
 
     // SVG to PNG
     "svg2png.outputSize": "Output Size",
@@ -759,6 +979,12 @@ const en: Record<string, string> = {
     "clr.presets": "Presets",
     "clr.copied": "Copied {value}",
     "clr.copyFail": "Failed to copy",
+    "clr.hex": "HEX",
+    "clr.rgb": "RGB",
+    "clr.hsl": "HSL",
+    "clr.css": "CSS",
+    "clr.copy": "Copy",
+    "clr.cssColor": "color: {value};",
 
     // Character Counter
     "cc.yourText": "Your Text",
@@ -775,6 +1001,11 @@ const en: Record<string, string> = {
     "cc.limit": "Limit",
     "cc.sms": "{n} SMS ({chars} chars)",
     "cc.noSms": "0 SMS",
+    "cc.platform.twitter": "Twitter / X",
+    "cc.platform.instagram": "Instagram Caption",
+    "cc.platform.linkedin": "LinkedIn Post",
+    "cc.platform.facebook": "Facebook Post",
+    "cc.platform.sms": "SMS (1 message)",
 
     // Random Color Generator
     "rc.clickOrSpace": "Click or press Space",
@@ -790,6 +1021,19 @@ const en: Record<string, string> = {
     "rc.historyHint": "click to restore",
     "rc.copied": "Copied {value}",
     "rc.copyFail": "Failed to copy",
+    "rc.harmonyMode": "Color harmony",
+    "rc.harmonySwatches": "Harmony colors",
+    "rc.harmony.none": "None",
+    "rc.harmony.complementary": "Complementary",
+    "rc.harmony.analogous": "Analogous",
+    "rc.harmony.triadic": "Triadic",
+    "rc.harmony.splitComp": "Split-comp",
+    "rc.harmony.tetradic": "Tetradic",
+    "rc.baseLabel": "BASE",
+    "rc.spaceKey": "Space",
+    "rc.hexLabel": "HEX",
+    "rc.rgbLabel": "RGB",
+    "rc.hslLabel": "HSL",
 
     // Stopwatch
     "sw.start": "Start",
@@ -823,6 +1067,10 @@ const en: Record<string, string> = {
     "ar.size": "Size",
     "ar.permNote": "Clicking \"Start Recording\" will request microphone permission. Your audio stays entirely in your browser — nothing is uploaded.",
     "ar.encodingWav": "Encoding WAV…",
+    "ar.downloadMp3": "Download as MP3",
+    "ar.encodingMp3": "Encoding MP3…",
+    "ar.downloadOgg": "Download as OGG",
+    "ar.exportNote": "Browser records as WebM/OGG Opus; WAV is decoded and re-encoded as uncompressed PCM.",
 
     // JSON Formatter
     "json.sample": "Sample",
@@ -833,6 +1081,11 @@ const en: Record<string, string> = {
     "json.validJson": "Valid JSON!",
     "json.enterJson": "Please enter some JSON.",
     "json.useAsInput": "Use as Input",
+    "json.output": "Output",
+    "json.charCount": "{count} characters",
+    "json.indent2": "2 spaces",
+    "json.indent4": "4 spaces",
+    "json.indentTab": "Tabs",
 
     // Hash Generator
     "hash.textInput": "Text Input",
@@ -847,6 +1100,55 @@ const en: Record<string, string> = {
     "hash.fail": "Failed to generate hashes",
     "hash.results": "Hash Results",
     "hash.copyAll": "Copy All",
+    "hash.largeFileWarn": "This file is very large ({size}). Hashing may freeze the tab or run out of memory. Continue?",
+    "hash.ackLargeFile": "Got it",
+
+    // Fake Identity Generator
+    "fake.generateNew": "Generate New",
+    "fake.copyJson": "Copy as JSON",
+    "fake.copyCsv": "Copy as CSV",
+    "fake.copyVcard": "Copy as vCard",
+    "fake.copiedJson": "Copied as JSON",
+    "fake.copiedCsv": "Copied as CSV",
+    "fake.copiedVcard": "Copied as vCard",
+    "fake.copyFailed": "Failed to copy",
+    "fake.copiedField": "{label} copied",
+    "fake.newIdentity": "New identity generated!",
+    "fake.disclaimer": "All data is randomly generated and does not represent any real person. For testing purposes only.",
+    "fake.card.personal": "Personal Info",
+    "fake.card.contact": "Contact",
+    "fake.card.online": "Online",
+    "fake.card.professional": "Professional",
+    "fake.field.fullName": "Full Name",
+    "fake.field.gender": "Gender",
+    "fake.field.age": "Age",
+    "fake.field.birthday": "Birthday",
+    "fake.field.bloodType": "Blood Type",
+    "fake.field.height": "Height",
+    "fake.field.weight": "Weight",
+    "fake.field.hobbies": "Hobbies",
+    "fake.field.email": "Email",
+    "fake.field.phone": "Phone",
+    "fake.field.address": "Address",
+    "fake.field.country": "Country",
+    "fake.field.username": "Username",
+    "fake.field.password": "Password",
+    "fake.field.website": "Website",
+    "fake.field.linkedin": "LinkedIn",
+    "fake.field.company": "Company",
+    "fake.field.jobTitle": "Job Title",
+    "fake.field.ssn": "SSN",
+    "fake.field.creditCard": "Credit Card (Visa)",
+    "fake.badge.fake": "FAKE",
+    "fake.badge.testOnly": "TEST ONLY",
+    "fake.yearsOld": "{n} years old",
+    "fake.gender.male": "Male",
+    "fake.gender.female": "Female",
+    "fake.country.us": "United States",
+    "fake.country.uk": "United Kingdom",
+    "fake.country.de": "Germany",
+    "fake.country.tr": "Turkey",
+    "fake.country.fr": "France",
 
     // Word Counter
     "wc.enterText": "Enter or paste your text",
@@ -1085,6 +1387,40 @@ const en: Record<string, string> = {
     "tool.color-contrast.desc": "Check WCAG contrast ratios for text and UI colors",
     "tool.csv-viewer.name": "CSV Table Viewer",
     "tool.csv-viewer.desc": "Paste CSV and browse it as a sortable table",
+    "tool.ip-address.name": "My IP Address",
+    "tool.ip-address.desc": "Show your public IP, location and ISP information",
+    "tool.screen-resolution.name": "Screen Resolution",
+    "tool.screen-resolution.desc": "View your screen size, DPI and device pixel ratio",
+    "tool.internet-speed.name": "Internet Speed Test",
+    "tool.internet-speed.desc": "Test your download speed and connection latency",
+    "tool.password-strength.name": "Password Strength Tester",
+    "tool.password-strength.desc": "Check how strong and secure your password is",
+    "tool.emoji-picker.name": "Emoji Picker",
+    "tool.emoji-picker.desc": "Search and copy emojis by category",
+    "tool.text-case.name": "Text Case Converter",
+    "tool.text-case.desc": "Convert text to UPPER, lower, Title or camelCase",
+    "tool.world-clock.name": "World Clock",
+    "tool.world-clock.desc": "See current time in cities around the world",
+    "tool.background-remover.name": "Background Remover",
+    "tool.background-remover.desc": "Remove image backgrounds automatically in your browser",
+    "tool.color-dropper.name": "Color Dropper",
+    "tool.color-dropper.desc": "Pick colors from any image and get the HEX code",
+    "tool.photo-filter.name": "Photo Filter",
+    "tool.photo-filter.desc": "Apply vintage, grayscale and other CSS filters to photos",
+    "tool.image-compare.name": "Image Comparator",
+    "tool.image-compare.desc": "Compare two images side by side with a slider",
+    "tool.pdf-encrypt.name": "PDF Encrypt",
+    "tool.pdf-encrypt.desc": "Add password protection to your PDF files",
+    "tool.pdf-text-extractor.name": "PDF Text Extractor",
+    "tool.pdf-text-extractor.desc": "Extract and copy all text content from PDF files",
+    "tool.pdf-compress.name": "PDF Compressor",
+    "tool.pdf-compress.desc": "Reduce PDF file size by compressing embedded images",
+    "tool.video-to-gif.name": "Video to GIF",
+    "tool.video-to-gif.desc": "Convert short video clips to animated GIFs",
+    "tool.audio-recorder.name": "Audio Recorder",
+    "tool.audio-recorder.desc": "Record audio from your microphone and download as MP3, WAV, WebM, or OGG",
+    "tool.text-to-speech.name": "Text to Speech",
+    "tool.text-to-speech.desc": "Convert text to spoken audio in Turkish and English",
     "nav.rssFeed": "RSS",
     "pipeline.step1": "1 · Image",
     "pipeline.step2": "2 · Compress",
@@ -1208,6 +1544,10 @@ const en: Record<string, string> = {
     "typing.wordsTyped": "Words",
     "typing.charsTyped": "Chars",
     "typing.tryAgain": "Try Again",
+    "typing.duration": "Duration",
+    "typing.pause": "Pause",
+    "typing.resume": "Resume",
+    "typing.remaining": "Remaining",
     // Color Palette
     "palette.extract": "Extract Colors",
     "palette.colors": "Colors",
@@ -1238,6 +1578,55 @@ const en: Record<string, string> = {
     "404.subtitle":
       "The page you're looking for doesn't exist or has been moved.",
     "404.cta": "Back to Home",
+
+    // Image format conversion landing (/tools/convert-image/[slug])
+    "conversion.heroTitle": "Convert {from} to {to} Online - Free & Private",
+    "conversion.heroSubtitle":
+      "Instantly convert your {from} images to {to} format right in your browser. No uploads, no sign-ups, no watermarks. Your files stay on your device for complete privacy. Batch conversion is supported.",
+    "conversion.howTitle": "How It Works",
+    "conversion.step1Title": "Upload Your Files",
+    "conversion.step1Desc":
+      "Drag and drop your {from} files or click to browse. You can select multiple files for batch conversion.",
+    "conversion.step2Title": "Adjust Settings",
+    "conversion.step2DescPng":
+      "Your files will be converted to lossless {to} format with full quality preservation.",
+    "conversion.step2DescOther":
+      "Optionally adjust the quality slider to balance file size and image quality for your {to} output.",
+    "conversion.step3Title": "Download Results",
+    "conversion.step3Desc":
+      "Click convert and download your {to} files instantly. For multiple files, download them all as a single ZIP archive.",
+    "conversion.benefitsTitle": "Why Use Our {from} to {to} Converter",
+    "conversion.benefitPrivateTitle": "100% Private",
+    "conversion.benefitPrivateDesc":
+      "All conversion happens in your browser. Your images are never uploaded to any server.",
+    "conversion.benefitFreeTitle": "Completely Free",
+    "conversion.benefitFreeDesc":
+      "No hidden fees, no premium tiers, no file count limits. Convert as many images as you need.",
+    "conversion.benefitBatchTitle": "Batch Conversion",
+    "conversion.benefitBatchDesc":
+      "Convert multiple {from} files to {to} at once and download them as a ZIP.",
+    "conversion.benefitFastTitle": "Lightning Fast",
+    "conversion.benefitFastDesc":
+      "Browser-based processing means no waiting for server uploads or downloads. Conversion is instant.",
+    "conversion.faq1q": "Is this {from} to {to} converter free?",
+    "conversion.faq1a":
+      "Yes, this tool is completely free to use. There are no limits on the number of files you can convert, and no account or sign-up is required.",
+    "conversion.faq2q": "Is it safe to convert my {from} files here?",
+    "conversion.faq2a":
+      "Absolutely. Your files never leave your browser. All conversion happens locally on your device using browser APIs, so your images are never uploaded to any server.",
+    "conversion.faq3q": "Can I convert multiple {from} files to {to} at once?",
+    "conversion.faq3a":
+      "Yes, batch conversion is fully supported. Simply select or drop multiple {from} files and they will all be converted to {to} format. You can download them individually or as a ZIP archive.",
+    "conversion.faq4q": "What is the maximum file size I can convert?",
+    "conversion.faq4a":
+      "Since all processing is done in your browser, there is no strict file size limit imposed by the server. However, very large files may take longer to process depending on your device's capabilities.",
+    "conversion.faq5q": "Will the image quality be preserved during conversion?",
+    "conversion.faq5aPng":
+      "PNG is a lossless format, so the visual quality of your image will be fully preserved during conversion.",
+    "conversion.faq5aOther":
+      "You can adjust the quality slider to balance between file size and image quality. Higher quality settings preserve more detail but produce larger files.",
+    "conversion.otherConversions": "Other Image Conversions",
+    "conversion.privacyLine": "Your files never leave your browser. 100% private.",
 
     // Static pages — About
     "about.title": "About ZapFile",
@@ -1335,6 +1724,8 @@ const translations: Record<Locale, Record<string, string>> = {
     "nav.about": "Hakkımızda",
     "nav.blog": "Blog",
     "nav.changelog": "Değişiklikler",
+    "nav.workflows": "İş akışları",
+    "nav.shortcuts": "Klavye kısayolları",
     "nav.language": "Dil",
     "nav.favoriteToggle": "Bu aracı sabitle",
     "share.copy": "Sayfa bağlantısını kopyala",
@@ -1356,6 +1747,44 @@ const translations: Record<Locale, Record<string, string>> = {
     "hero.trust1": "Dosyalarınız cihazınızda kalır",
     "hero.trust2": "Anında işleme",
     "hero.trust3": "Sınır yok, sonsuza kadar ücretsiz",
+
+    "trust.panelTitle": "Cihazınızda çalışır, sunucularımızda değil",
+    "trust.panelLead":
+      "Bu sayfa tarayıcı API'leri (Canvas, WebAssembly, worker vb.) kullanır; dosyalarınız cihazınızda kalır.",
+    "trust.bullet1":
+      "İşlem bu sekmede gerçekleşir — sekmeyi kapatınca oturum sona erer.",
+    "trust.bullet2":
+      "ZapFile hesabı gerekmez ve yüklediğiniz dosya olmadığı için bir şey saklamayız.",
+    "trust.bullet3":
+      "Yalnızca indirmeyi seçtiğiniz çıktıyı alırsınız; dosyalarınız bize “bulut işleme” için gönderilmez.",
+    "trust.bulletNetwork":
+      "Kendiniz doğrulayın: bir araç kullanırken Geliştirici Araçları → Ağ — dosya baytlarınızın ZapFile'a yüklenmediğini görmelisiniz.",
+    "trust.bulletPwa":
+      "Daha hızlı uygulama kabuğu ve önbelleğe alınmış sayfalara çevrimdışı erişim için ZapFile'ı ana ekranınıza ekleyin (araçlar yine de uyumlu bir tarayıcı gerektirir).",
+    "trust.linkPrivacy": "Gizlilik politikası",
+    "trust.linkWorkflows": "Popüler iş akışları",
+    "workflows.eyebrow": "Rehberler",
+    "workflows.heroTitle": "Popüler iş akışları",
+    "workflows.heroSubtitle":
+      "Birkaç aracı sırayla zincirleyin — her adım yeni bir sayfada açılır. Her şey tarayıcınızda yerel kalır.",
+    "workflows.openTool": "Aç",
+    "workflows.footnote":
+      "İpucu: bu sayfayı yer imlerine ekleyin veya hızlı erişim için ZapFile'ı ana ekranınıza (PWA) ekleyin.",
+    "workflow.bundle0.title": "Hepsi bir arada görüntü hazırlığı",
+    "workflow.bundle0.desc":
+      "Birden çok görüntünüz olduğunda yeniden boyutlandırma, sıkıştırma ve dönüştürmeyi tek akışta yapın.",
+    "workflow.bundle1.title": "Daha hafif PDF'ler, sonra birleştirme",
+    "workflow.bundle1.desc":
+      "Önce PDF'leri küçültün, ardından gerektiğinde tek belgede birleştirin.",
+    "workflow.bundle2.title": "Web için görseller",
+    "workflow.bundle2.desc":
+      "Doğru kadraj için kırpın, boyut için sıkıştırın, ardından WebP veya PNG dışa aktarın.",
+    "workflow.bundle3.title": "Daha güvenli paylaşım (üst veri)",
+    "workflow.bundle3.desc":
+      "EXIF'e bakın, gerekirse kırpın, sonra sıkıştırın — çevrimiçi fotoğraf paylaşımı öncesinde kullanışlıdır.",
+    "workflow.bundle4.title": "Görseller → tek PDF",
+    "workflow.bundle4.desc":
+      "Görselleri PDF yapın; dosya hâlâ büyükse PDF'i sıkıştırın.",
 
     // Tool categories
     "cat.pdf": "PDF Araçları",
@@ -1481,6 +1910,16 @@ const translations: Record<Locale, Record<string, string>> = {
     "tool.word-counter.name": "Kelime Sayacı",
     "tool.word-counter.desc":
       "Metindeki kelime, harf, cümle sayısını ve okuma süresini hesaplayın",
+    "tool.character-counter.name": "Karakter Sayacı",
+    "tool.character-counter.desc":
+      "Karakter, kelime, satır sayın ve platform limitlerini anlık görün",
+    "tool.fake-identity.name": "Sahte Kimlik Üretici",
+    "tool.fake-identity.desc":
+      "Geliştirme ve test için rastgele kimlik — tamamen yerel",
+    "tool.random-color.name": "Rastgele Renk Üretici",
+    "tool.random-color.desc": "HEX, RGB, HSL ve uyum paletleriyle rastgele renkler",
+    "tool.stopwatch.name": "Kronometre",
+    "tool.stopwatch.desc": "Tur, istatistik ve klavye kısayollarıyla çevrimiçi kronometre",
     "tool.pdf-to-word.name": "PDF'den Word'e",
     "tool.pdf-to-word.desc":
       "PDF belgelerini düzenlenebilir Word (DOCX) dosyalarına dönüştürün",
@@ -1616,6 +2055,10 @@ const translations: Record<Locale, Record<string, string>> = {
     "ui.results": "Sonuçlar",
     "ui.downloadPdf": "PDF İndir",
     "a11y.skipToContent": "İçeriğe geç",
+    "a11y.searchTools": "Araçlarda ara",
+    "a11y.toggleTheme": "Temayı değiştir",
+    "a11y.closeMenu": "Menüyü kapat",
+    "a11y.openMenu": "Menüyü aç",
     "error.boundary.title": "Bir sorun oluştu",
     "error.boundary.message":
       "Beklenmeyen bir hata oluştu. Sayfayı yenileyip tekrar deneyin.",
@@ -1634,6 +2077,11 @@ const translations: Record<Locale, Record<string, string>> = {
     "merge.skipped": "Bazı dosyalar PDF olmadığı için atlandı.",
     "merge.invalid": "Lütfen geçerli PDF dosyaları seçin.",
     "merge.removeFile": "Dosyayı kaldır",
+    "merge.clearAll": "Tümünü temizle",
+    "merge.dragHint": "Sıralamak için satırları sürükleyin veya okları kullanın.",
+    "merge.moveUp": "Yukarı taşı",
+    "merge.moveDown": "Aşağı taşı",
+    "merge.dropLabel": "PDF dosyalarını buraya bırakın veya göz atın",
 
     // Split PDF
     "split.pageRanges": "Sayfa Aralıkları",
@@ -1653,6 +2101,12 @@ const translations: Record<Locale, Record<string, string>> = {
     "split.loaded": "{count} sayfalı PDF yüklendi.",
     "split.invalidFile": "Lütfen geçerli bir PDF dosyası seçin.",
     "split.loadFail": "PDF yüklenemedi. Dosya bozuk veya şifreli olabilir.",
+    "split.dropLabel": "PDF'yi buraya bırakın veya göz atın",
+    "split.pagePreview": "Sayfa önizlemeleri",
+    "split.thumbsLoading": "Sayfa önizlemeleri yükleniyor…",
+    "split.pageLabel": "Sayfa {n}",
+    "split.pagesCount": "{count} sayfa",
+    "split.thumbsPartial": "{total} sayfadan {shown} önizleme gösteriliyor",
 
     // PDF to Images
     "pdfimg.outputFormat": "Çıktı Formatı",
@@ -1782,6 +2236,42 @@ const translations: Record<Locale, Record<string, string>> = {
     "wm.success": "Filigran uygulandı ve indirildi!",
     "wm.lastExport": "Son Dışa Aktarma",
     "wm.newImage": "Yeni Resim",
+    "wm.watermarkType": "Filigran türü",
+    "wm.typeText": "Metin",
+    "wm.typeImage": "Görsel",
+    "wm.typeBoth": "Metin + görsel",
+    "wm.uploadImage": "Logo / filigran görseli yükle",
+    "wm.imageScale": "Görsel boyutu",
+    "wm.imageHint": "Şeffaflıklı PNG veya JPG en iyi sonucu verir.",
+    "wm.fontFamily": "Yazı tipi",
+    "wm.rotation": "Döndürme",
+    "wm.color": "Renk",
+    "wm.strokeOutline": "Kontur / dış çizgi",
+    "wm.loadingPreview": "Yükleniyor…",
+    "wm.textSection": "Metin",
+    "wm.enableOutline": "Konturu etkinleştir",
+    "wm.strokeColor": "Kontur rengi",
+    "wm.strokeWidth": "Kontur kalınlığı",
+    "wm.gridPosition": "Izgara konumu",
+    "wm.customXY": "Özel X/Y",
+    "wm.xPosition": "X konumu",
+    "wm.yPosition": "Y konumu",
+    "wm.extraOptions": "Ek seçenekler",
+    "wm.tileLabel": "Tüm görsele döşe",
+    "wm.tileDesc": "Filigranı çapraz ızgarada tekrarla.",
+    "wm.textBgLabel": "Metin arka planı",
+    "wm.textBgDesc": "Metnin arkasında yarı saydam koyu dolgu.",
+    "wm.dropMainImage": "Resmi buraya bırakın veya göz atın",
+    "wm.previewAlt": "Filigran önizlemesi",
+    "wm.resultAlt": "Filigranlı sonuç",
+    "wm.fontSans": "Sans-serif",
+    "wm.fontSerif": "Serif",
+    "wm.fontMono": "Monospace",
+    "wm.fontImpact": "Impact",
+    "wm.fontGeorgia": "Georgia",
+    "wm.needText": "Filigran metnini girin.",
+    "wm.needImage": "Bir filigran görseli yükleyin.",
+    "wm.needBoth": "Metin ve filigran görseli ekleyin.",
 
     // Image to PDF
     "img2pdf.pageSize": "Sayfa Boyutu",
@@ -1819,6 +2309,16 @@ const translations: Record<Locale, Record<string, string>> = {
     "fav.noSizes": "Boyut seçilmedi.",
     "fav.zipSuccess": "ZIP indirildi!",
     "fav.zipFail": "ZIP dosyası oluşturulamadı.",
+    "fav.htmlSnippet": "HTML Kod Parçası",
+    "fav.htmlSnippetHint": "Bu etiketleri <head> bölümünüze yapıştırın.",
+    "fav.manifestJson": "manifest.json",
+    "fav.manifestHint": "PWA desteği için web uygulama manifesti (Android/Chrome).",
+    "fav.copySnippet": "Kopyala",
+    "fav.copied": "Panoya kopyalandı!",
+    "fav.copyFail": "Kopyalanamadı.",
+    "fav.appName": "Uygulama adı",
+    "fav.themeColor": "Tema rengi",
+    "fav.bgColor": "Arka plan rengi",
 
     // EXIF Viewer
     "exif.dropText": "EXIF verilerini görüntülemek için resmi buraya bırakın",
@@ -1838,6 +2338,14 @@ const translations: Record<Locale, Record<string, string>> = {
     "exif.jpegOnly": "EXIF ayrıştırma yalnızca JPEG dosyaları için kullanılabilir.",
     "exif.removed": "EXIF verisi kaldırıldı! Temizlenmiş resmi indirin.",
     "exif.processFail": "Resim işlenemedi.",
+    "exif.batchTitle": "Toplu: EXIF kaldır (JPEG)",
+    "exif.batchHint": "Birden fazla JPEG ekleyin — meta veriyi temizleyip PNG'leri ZIP içinde veririz.",
+    "exif.stripZip": "Tümünü temizle ve ZIP indir",
+    "exif.batchZipName": "temiz-gorseller.zip",
+    "exif.batchEmpty": "En az bir JPEG ekleyin.",
+    "exif.batchDone": "ZIP hazır — {count} görselden meta veri kaldırıldı.",
+    "exif.batchFail": "ZIP oluşturulamadı. Dosyaların geçerli JPEG olduğundan emin olun.",
+    "exif.batchCount": "{count} JPEG seçildi",
 
     // Image Collage
     "collage.images": "Resimler",
@@ -2009,6 +2517,7 @@ const translations: Record<Locale, Record<string, string>> = {
     "vid2gif.startTime": "Başlangıç zamanı (saniye)",
     "vid2gif.duration": "Süre (saniye)",
     "vid2gif.tip": "İpucu: En iyi sonuçlar için GIF'leri 10 saniyenin altında tutun.",
+    "vid2gif.dropLabel": "Videoyu buraya bırakın veya yüklemek için tıklayın",
     "vid2gif.qualityPresets": "Kalite Ayarları",
     "vid2gif.high": "Yüksek (15fps, 480px)",
     "vid2gif.medium": "Orta (10fps, 320px)",
@@ -2023,6 +2532,10 @@ const translations: Record<Locale, Record<string, string>> = {
     "vid2gif.success": "GIF başarıyla oluşturuldu",
     "vid2gif.fail": "GIF oluşturulamadı. Daha kısa süre veya düşük kalite deneyin.",
     "vid2gif.invalidStart": "Geçersiz başlangıç zamanı",
+    "vid2gif.loop": "Döngü",
+    "vid2gif.loopForever": "Sonsuz",
+    "vid2gif.loopOnce": "Bir kez",
+    "vid2gif.loopNTimes": "{n}×",
 
     // QR Generator
     "qr.content": "İçerik",
@@ -2047,8 +2560,20 @@ const translations: Record<Locale, Record<string, string>> = {
     "qr.typeTel": "Telefon",
     "qr.typeEmail": "E-posta",
     "qr.typeWifi": "WiFi",
-    "qr.copyImage": "Görseli Kopyala",
+    "qr.copyImage": "PNG kopyala",
+    "qr.copySVG": "SVG kodunu kopyala",
     "qr.copied": "Kopyalandı!",
+    "qr.sectionType": "Tür",
+    "qr.svgExportFail": "SVG dışa aktarılamadı",
+    "qr.copyNotSupported": "Bu tarayıcıda panoya kopyalama desteklenmiyor",
+    "qr.svgCopied": "SVG panoya kopyalandı",
+    "qr.logoLoaded": "Logo yüklendi",
+    "qr.logoCenterHint": "QR kodun ortasında gösterilir",
+    "qr.placeholderFreeText": "Metninizi buraya yazın…",
+    "qr.phUrl": "https://ornek.com",
+    "qr.phTel": "+90 5xx xxx xx xx",
+    "qr.phEmail": "ornek@eposta.com",
+    "qr.wifiNoPass": "Şifre yok",
 
     // SVG to PNG
     "svg2png.outputSize": "Çıktı Boyutu",
@@ -2073,6 +2598,12 @@ const translations: Record<Locale, Record<string, string>> = {
     "clr.presets": "Hazır Renkler",
     "clr.copied": "Kopyalandı: {value}",
     "clr.copyFail": "Kopyalanamadı",
+    "clr.hex": "HEX",
+    "clr.rgb": "RGB",
+    "clr.hsl": "HSL",
+    "clr.css": "CSS",
+    "clr.copy": "Kopyala",
+    "clr.cssColor": "color: {value};",
 
     // Character Counter
     "cc.yourText": "Metniniz",
@@ -2089,6 +2620,11 @@ const translations: Record<Locale, Record<string, string>> = {
     "cc.limit": "Limit",
     "cc.sms": "{n} SMS ({chars} karakter)",
     "cc.noSms": "0 SMS",
+    "cc.platform.twitter": "Twitter / X",
+    "cc.platform.instagram": "Instagram gönderisi",
+    "cc.platform.linkedin": "LinkedIn gönderisi",
+    "cc.platform.facebook": "Facebook gönderisi",
+    "cc.platform.sms": "SMS (1 mesaj)",
 
     // Random Color Generator
     "rc.clickOrSpace": "Tıklayın veya Space'e basın",
@@ -2104,6 +2640,19 @@ const translations: Record<Locale, Record<string, string>> = {
     "rc.historyHint": "geri yüklemek için tıklayın",
     "rc.copied": "Kopyalandı: {value}",
     "rc.copyFail": "Kopyalanamadı",
+    "rc.harmonyMode": "Renk uyumu",
+    "rc.harmonySwatches": "Uyum renkleri",
+    "rc.harmony.none": "Yok",
+    "rc.harmony.complementary": "Tamamlayıcı",
+    "rc.harmony.analogous": "Benzer",
+    "rc.harmony.triadic": "Triadik",
+    "rc.harmony.splitComp": "Bölünmüş tamamlayıcı",
+    "rc.harmony.tetradic": "Tetradik",
+    "rc.baseLabel": "TEMEL",
+    "rc.spaceKey": "Space",
+    "rc.hexLabel": "HEX",
+    "rc.rgbLabel": "RGB",
+    "rc.hslLabel": "HSL",
 
     // Stopwatch
     "sw.start": "Başlat",
@@ -2137,6 +2686,8 @@ const translations: Record<Locale, Record<string, string>> = {
     "ar.size": "Boyut",
     "ar.permNote": "\"Kaydı Başlat\"a tıklandığında mikrofon izni istenecek. Sesiniz tamamen tarayıcınızda kalır — hiçbir şey yüklenmez.",
     "ar.encodingWav": "WAV kodlanıyor…",
+    "ar.downloadMp3": "MP3 olarak indir",
+    "ar.encodingMp3": "MP3 kodlanıyor…",
 
     // JSON Formatter
     "json.sample": "Örnek",
@@ -2147,6 +2698,11 @@ const translations: Record<Locale, Record<string, string>> = {
     "json.validJson": "Geçerli JSON!",
     "json.enterJson": "Lütfen JSON girin.",
     "json.useAsInput": "Giriş Olarak Kullan",
+    "json.output": "Çıktı",
+    "json.charCount": "{count} karakter",
+    "json.indent2": "2 boşluk",
+    "json.indent4": "4 boşluk",
+    "json.indentTab": "Sekmeler",
 
     // Hash Generator
     "hash.textInput": "Metin Girişi",
@@ -2161,6 +2717,55 @@ const translations: Record<Locale, Record<string, string>> = {
     "hash.fail": "Hash oluşturulamadı",
     "hash.results": "Hash Sonuçları",
     "hash.copyAll": "Hepsini Kopyala",
+    "hash.largeFileWarn": "Bu dosya çok büyük ({size}). Hash hesaplama sekmeyi kilitleyebilir veya bellek hatasına yol açabilir. Devam edilsin mi?",
+    "hash.ackLargeFile": "Anladım",
+
+    // Fake Identity Generator
+    "fake.generateNew": "Yeni Üret",
+    "fake.copyJson": "JSON olarak kopyala",
+    "fake.copyCsv": "CSV olarak kopyala",
+    "fake.copyVcard": "vCard olarak kopyala",
+    "fake.copiedJson": "JSON kopyalandı",
+    "fake.copiedCsv": "CSV kopyalandı",
+    "fake.copiedVcard": "vCard kopyalandı",
+    "fake.copyFailed": "Kopyalanamadı",
+    "fake.copiedField": "{label} kopyalandı",
+    "fake.newIdentity": "Yeni kimlik üretildi!",
+    "fake.disclaimer": "Tüm veriler rastgele üretilir; gerçek kişileri temsil etmez. Yalnızca test amaçlıdır.",
+    "fake.card.personal": "Kişisel",
+    "fake.card.contact": "İletişim",
+    "fake.card.online": "Çevrimiçi",
+    "fake.card.professional": "Profesyonel",
+    "fake.field.fullName": "Ad Soyad",
+    "fake.field.gender": "Cinsiyet",
+    "fake.field.age": "Yaş",
+    "fake.field.birthday": "Doğum günü",
+    "fake.field.bloodType": "Kan grubu",
+    "fake.field.height": "Boy",
+    "fake.field.weight": "Kilo",
+    "fake.field.hobbies": "Hobiler",
+    "fake.field.email": "E-posta",
+    "fake.field.phone": "Telefon",
+    "fake.field.address": "Adres",
+    "fake.field.country": "Ülke",
+    "fake.field.username": "Kullanıcı adı",
+    "fake.field.password": "Şifre",
+    "fake.field.website": "Web sitesi",
+    "fake.field.linkedin": "LinkedIn",
+    "fake.field.company": "Şirket",
+    "fake.field.jobTitle": "İş unvanı",
+    "fake.field.ssn": "SSN",
+    "fake.field.creditCard": "Kredi kartı (Visa)",
+    "fake.badge.fake": "SAHTE",
+    "fake.badge.testOnly": "YALNIZCA TEST",
+    "fake.yearsOld": "{n} yaşında",
+    "fake.gender.male": "Erkek",
+    "fake.gender.female": "Kadın",
+    "fake.country.us": "Amerika Birleşik Devletleri",
+    "fake.country.uk": "Birleşik Krallık",
+    "fake.country.de": "Almanya",
+    "fake.country.tr": "Türkiye",
+    "fake.country.fr": "Fransa",
 
     // Word Counter
     "wc.enterText": "Metni girin veya yapıştırın",
@@ -2399,6 +3004,40 @@ const translations: Record<Locale, Record<string, string>> = {
     "tool.color-contrast.desc": "Metin ve arayüz renkleri için WCAG kontrastını kontrol et",
     "tool.csv-viewer.name": "CSV Tablo",
     "tool.csv-viewer.desc": "CSV yapıştır ve tabloda gezin",
+    "tool.ip-address.name": "IP Adresim",
+    "tool.ip-address.desc": "Genel IP, konum ve ISS bilgilerinizi görün",
+    "tool.screen-resolution.name": "Ekran Çözünürlüğü",
+    "tool.screen-resolution.desc": "Ekran boyutu, DPI ve cihaz piksel oranını görün",
+    "tool.internet-speed.name": "İnternet Hız Testi",
+    "tool.internet-speed.desc": "İndirme hızı ve bağlantı gecikmesini ölçün",
+    "tool.password-strength.name": "Şifre Gücü Testi",
+    "tool.password-strength.desc": "Şifrenizin ne kadar güçlü olduğunu kontrol edin",
+    "tool.emoji-picker.name": "Emoji Seçici",
+    "tool.emoji-picker.desc": "Kategorilere göre emoji arayın ve kopyalayın",
+    "tool.text-case.name": "Metin Büyük/Küçük Harf",
+    "tool.text-case.desc": "Metni BÜYÜK, küçük, Başlık veya camelCase yapın",
+    "tool.world-clock.name": "Dünya Saati",
+    "tool.world-clock.desc": "Dünya şehirlerindeki güncel saati görün",
+    "tool.background-remover.name": "Arka Plan Kaldırıcı",
+    "tool.background-remover.desc": "Görsel arka planlarını tarayıcıda otomatik kaldırın",
+    "tool.color-dropper.name": "Renk Damlalığı",
+    "tool.color-dropper.desc": "Görselden renk seçin ve HEX kodunu alın",
+    "tool.photo-filter.name": "Fotoğraf Filtresi",
+    "tool.photo-filter.desc": "Vintage, gri tonlama ve diğer filtreleri uygulayın",
+    "tool.image-compare.name": "Görsel Karşılaştırıcı",
+    "tool.image-compare.desc": "İki görseli kaydırıcıyla yan yana karşılaştırın",
+    "tool.pdf-encrypt.name": "PDF Şifreleme",
+    "tool.pdf-encrypt.desc": "PDF dosyalarına parola koruması ekleyin",
+    "tool.pdf-text-extractor.name": "PDF Metin Çıkarıcı",
+    "tool.pdf-text-extractor.desc": "PDF içindeki metni çıkarıp kopyalayın",
+    "tool.pdf-compress.name": "PDF Sıkıştırıcı",
+    "tool.pdf-compress.desc": "Gömülü görselleri sıkıştırarak PDF boyutunu düşürün",
+    "tool.video-to-gif.name": "Video'dan GIF",
+    "tool.video-to-gif.desc": "Kısa videoları animasyonlu GIF'e dönüştürün",
+    "tool.audio-recorder.name": "Ses Kaydedici",
+    "tool.audio-recorder.desc": "Mikrofondan kaydedin; MP3, WAV, WebM veya OGG olarak indirin",
+    "tool.text-to-speech.name": "Metinden Ses",
+    "tool.text-to-speech.desc": "Metni Türkçe ve İngilizce dahil sese dönüştürün",
     "nav.rssFeed": "RSS",
     "pipeline.step1": "1 · Görüntü",
     "pipeline.step2": "2 · Sıkıştır",
@@ -2522,6 +3161,10 @@ const translations: Record<Locale, Record<string, string>> = {
     "typing.wordsTyped": "Kelime",
     "typing.charsTyped": "Karakter",
     "typing.tryAgain": "Tekrar Dene",
+    "typing.duration": "Süre",
+    "typing.pause": "Duraklat",
+    "typing.resume": "Devam",
+    "typing.remaining": "Kalan",
     // Color Palette
     "palette.extract": "Renkleri Çıkar",
     "palette.colors": "Renkler",
@@ -2551,6 +3194,54 @@ const translations: Record<Locale, Record<string, string>> = {
     "404.title": "Sayfa bulunamadı",
     "404.subtitle": "Aradığınız sayfa mevcut değil veya taşınmış olabilir.",
     "404.cta": "Ana Sayfaya Dön",
+
+    "conversion.heroTitle": "{from} - {to} dönüştürücü — ücretsiz ve gizli",
+    "conversion.heroSubtitle":
+      "{from} görsellerinizi anında {to} biçimine tarayıcınızda dönüştürün. Yükleme yok, kayıt yok, filigran yok. Dosyalarınız cihazınızda kalır; toplu dönüşüm desteklenir.",
+    "conversion.howTitle": "Nasıl çalışır",
+    "conversion.step1Title": "Dosyalarınızı yükleyin",
+    "conversion.step1Desc":
+      "{from} dosyalarınızı sürükleyip bırakın veya tıklayıp seçin. Toplu dönüşüm için birden fazla dosya seçebilirsiniz.",
+    "conversion.step2Title": "Ayarları yapın",
+    "conversion.step2DescPng":
+      "Dosyalarınız kayıpsız {to} biçimine dönüştürülür; görsel kalite korunur.",
+    "conversion.step2DescOther":
+      "Kalite kaydırıcısıyla dosya boyutu ile görüntü kalitesi arasında denge kurun ({to} çıktısı).",
+    "conversion.step3Title": "Sonuçları indirin",
+    "conversion.step3Desc":
+      "Dönüştürün ve {to} dosyalarınızı anında indirin. Birden fazla dosyada tek ZIP olarak da indirebilirsiniz.",
+    "conversion.benefitsTitle": "Neden {from} → {to} dönüştürücümüz",
+    "conversion.benefitPrivateTitle": "%100 gizli",
+    "conversion.benefitPrivateDesc":
+      "Tüm dönüşüm tarayıcınızda olur; görselleriniz sunucuya yüklenmez.",
+    "conversion.benefitFreeTitle": "Tamamen ücretsiz",
+    "conversion.benefitFreeDesc":
+      "Gizli ücret, kota veya dosya sınırı yok; ihtiyacınız kadar dönüştürün.",
+    "conversion.benefitBatchTitle": "Toplu dönüşüm",
+    "conversion.benefitBatchDesc":
+      "Birden fazla {from} dosyasını aynı anda {to} yapın ve ZIP olarak indirin.",
+    "conversion.benefitFastTitle": "Çok hızlı",
+    "conversion.benefitFastDesc":
+      "İşlem tarayıcıda olduğu için yükleme beklemezsiniz; dönüşüm anında başlar.",
+    "conversion.faq1q": "Bu {from} - {to} dönüştürücü ücretsiz mi?",
+    "conversion.faq1a":
+      "Evet, tamamen ücretsizdir. Dönüştürebileceğiniz dosya sayısında sınır yoktur; hesap veya kayıt gerekmez.",
+    "conversion.faq2q": "{from} dosyalarımı burada dönüştürmek güvenli mi?",
+    "conversion.faq2a":
+      "Evet. Dosyalarınız tarayıcınızdan çıkmaz; tüm işlem cihazınızda tarayıcı API'leriyle yerel olarak yapılır.",
+    "conversion.faq3q": "Birden fazla {from} dosyasını aynı anda {to} yapabilir miyim?",
+    "conversion.faq3a":
+      "Evet, toplu dönüşüm desteklenir. Birden fazla {from} dosyası seçin; hepsi {to} olur; tek tek veya ZIP olarak indirin.",
+    "conversion.faq4q": "En fazla ne kadar büyük dosya dönüştürebilirim?",
+    "conversion.faq4a":
+      "İşlem tarayıcınızda olduğu için sunucu kaynaklı sert bir üst sınır yoktur; çok büyük dosyalar cihazınıza bağlı olarak daha uzun sürebilir.",
+    "conversion.faq5q": "Dönüşüm sırasında görüntü kalitesi korunur mu?",
+    "conversion.faq5aPng":
+      "PNG kayıpsız bir biçimdir; görsel kalite tam olarak korunur.",
+    "conversion.faq5aOther":
+      "Kalite kaydırıcısıyla boyut ve ayrıntı dengesini ayarlayabilirsiniz; daha yüksek kalite daha büyük dosya demektir.",
+    "conversion.otherConversions": "Diğer görüntü dönüşümleri",
+    "conversion.privacyLine": "Dosyalarınız tarayıcınızdan çıkmaz. %100 gizli.",
 
     "about.title": "ZapFile Hakkında",
     "about.intro":
@@ -2628,6 +3319,8 @@ const translations: Record<Locale, Record<string, string>> = {
     "nav.about": "Über uns",
     "nav.blog": "Blog",
     "nav.changelog": "Änderungsprotokoll",
+    "nav.workflows": "Workflows",
+    "nav.shortcuts": "Tastenkürzel",
     "nav.language": "Sprache",
     "nav.favoriteToggle": "Dieses Tool anheften",
     "share.copy": "Seitenlink kopieren",
@@ -2646,6 +3339,45 @@ const translations: Record<Locale, Record<string, string>> = {
     "hero.trust1": "Deine Dateien bleiben auf deinem Gerät",
     "hero.trust2": "Sofortige Verarbeitung",
     "hero.trust3": "Keine Beschränkungen, für immer kostenlos",
+
+    "trust.panelTitle": "Läuft auf Ihrem Gerät, nicht auf unseren Servern",
+    "trust.panelLead":
+      "Diese Seite nutzt Browser-APIs (Canvas, WebAssembly, Worker usw.), damit Ihre Dateien auf Ihrem Gerät bleiben.",
+    "trust.bullet1":
+      "Die Verarbeitung erfolgt in diesem Tab — schließen Sie den Tab und die Sitzung endet.",
+    "trust.bullet2":
+      "Kein ZapFile-Konto nötig und wir speichern keine Uploads (es gibt keine).",
+    "trust.bullet3":
+      "Laden Sie nur herunter, was Sie wählen; nichts wird für „Cloud-Verarbeitung“ an uns gesendet.",
+    "trust.bulletNetwork":
+      "Selbst prüfen: Entwicklertools → Netzwerk bei Tool-Nutzung — Ihre Dateibytes sollten nicht zu ZapFile hochgeladen werden.",
+    "trust.bulletPwa":
+      "Fügen Sie ZapFile zum Startbildschirm hinzu für schnellere App-Hülle und Offline-Zugriff auf gecachte Seiten (Tools brauchen weiterhin einen fähigen Browser).",
+    "trust.linkPrivacy": "Datenschutz",
+    "trust.linkWorkflows": "Beliebte Workflows",
+    "workflows.eyebrow": "Anleitungen",
+    "workflows.heroTitle": "Beliebte Workflows",
+    "workflows.heroSubtitle":
+      "Verketten Sie mehrere Tools der Reihe nach — jeder Schritt öffnet eine neue Seite. Alles bleibt lokal im Browser.",
+    "workflows.openTool": "Öffnen",
+    "workflows.footnote":
+      "Tipp: Lesezeichen setzen oder ZapFile als PWA zum Startbildschirm hinzufügen.",
+    "workflow.bundle0.title": "All-in-one-Bildvorbereitung",
+    "workflow.bundle0.desc":
+      "Größe ändern, komprimieren und konvertieren in einem geführten Ablauf — ideal bei vielen Bildern.",
+    "workflow.bundle1.title": "Leichtere PDFs, dann zusammenführen",
+    "workflow.bundle1.desc":
+      "PDFs zuerst verkleinern, dann bei Bedarf zu einem Dokument zusammenführen.",
+    "workflow.bundle2.title": "Web-taugliche Bilder",
+    "workflow.bundle2.desc":
+      "Zuschneiden, komprimieren, dann WebP oder PNG exportieren.",
+    "workflow.bundle3.title": "Sichereres Teilen (Metadaten)",
+    "workflow.bundle3.desc":
+      "EXIF prüfen, ggf. zuschneiden, dann komprimieren — hilfreich vor dem Online-Posten.",
+    "workflow.bundle4.title": "Bilder → ein PDF",
+    "workflow.bundle4.desc":
+      "Bilder in PDF umwandeln, dann das PDF komprimieren, falls es noch groß ist.",
+
     "cat.pdf": "PDF-Werkzeuge",
     "cat.image": "Bild-Werkzeuge",
     "cat.video": "Video & Audio",
@@ -2736,6 +3468,16 @@ const translations: Record<Locale, Record<string, string>> = {
     "tool.hash-generator.desc": "SHA-1, SHA-256, SHA-384, SHA-512 Hashes generieren",
     "tool.word-counter.name": "Wortzähler",
     "tool.word-counter.desc": "Wörter, Zeichen, Sätze und Lesezeit zählen",
+    "tool.character-counter.name": "Zeichenzähler",
+    "tool.character-counter.desc":
+      "Zeichen, Wörter und Zeilen zählen sowie Plattform-Limits prüfen",
+    "tool.fake-identity.name": "Fake-Identitätsgenerator",
+    "tool.fake-identity.desc":
+      "Zufällige Testidentitäten für Entwicklung und QA — lokal, ohne Upload",
+    "tool.random-color.name": "Zufallsfarben-Generator",
+    "tool.random-color.desc": "Zufallsfarben mit HEX, RGB, HSL und Harmonien",
+    "tool.stopwatch.name": "Stoppuhr",
+    "tool.stopwatch.desc": "Online-Stoppuhr mit Runden, Statistik und Tastenkürzeln",
     "tool.pdf-to-word.name": "PDF zu Word",
     "tool.pdf-to-word.desc": "PDF-Dokumente in bearbeitbare Word (DOCX)-Dateien konvertieren",
     "tool.pdf-to-excel.name": "PDF zu Excel",
@@ -2862,6 +3604,10 @@ const translations: Record<Locale, Record<string, string>> = {
     "ui.results": "Ergebnisse",
     "ui.downloadPdf": "PDF herunterladen",
     "a11y.skipToContent": "Zum Inhalt springen",
+    "a11y.searchTools": "Tools durchsuchen",
+    "a11y.toggleTheme": "Design wechseln",
+    "a11y.closeMenu": "Menü schließen",
+    "a11y.openMenu": "Menü öffnen",
     "error.boundary.title": "Etwas ist schiefgelaufen",
     "error.boundary.message":
       "Ein unerwarteter Fehler ist aufgetreten. Bitte die Seite aktualisieren und es erneut versuchen.",
@@ -2878,6 +3624,11 @@ const translations: Record<Locale, Record<string, string>> = {
     "merge.skipped": "Einige Dateien wurden übersprungen, da sie keine PDFs sind.",
     "merge.invalid": "Bitte wähle gültige PDF-Dateien aus.",
     "merge.removeFile": "Datei entfernen",
+    "merge.clearAll": "Alle löschen",
+    "merge.dragHint": "Ziehe Zeilen zum Sortieren oder nutze die Pfeile.",
+    "merge.moveUp": "Nach oben",
+    "merge.moveDown": "Nach unten",
+    "merge.dropLabel": "PDF-Dateien hier ablegen oder durchsuchen",
     "split.pageRanges": "Seitenbereiche",
     "split.enterRanges": "Bitte Seitenbereiche zum Aufteilen eingeben.",
     "split.invalidRanges": "Ungültige Seitenbereiche. Verwende das Format wie \"1-3, 5, 7-9\".",
@@ -2895,6 +3646,12 @@ const translations: Record<Locale, Record<string, string>> = {
     "split.loaded": "PDF mit {count} Seiten geladen.",
     "split.invalidFile": "Bitte wähle eine gültige PDF-Datei aus.",
     "split.loadFail": "PDF konnte nicht geladen werden. Die Datei ist möglicherweise beschädigt oder verschlüsselt.",
+    "split.dropLabel": "PDF hier ablegen oder durchsuchen",
+    "split.pagePreview": "Seitenvorschau",
+    "split.thumbsLoading": "Seitenvorschau wird geladen…",
+    "split.pageLabel": "Seite {n}",
+    "split.pagesCount": "{count} Seiten",
+    "split.thumbsPartial": "Vorschau: {shown} von {total} Seiten",
     "pdfimg.outputFormat": "Ausgabeformat",
     "pdfimg.pngLossless": "PNG (verlustfrei)",
     "pdfimg.jpgSmaller": "JPG (kleinere Datei)",
@@ -3006,6 +3763,42 @@ const translations: Record<Locale, Record<string, string>> = {
     "wm.success": "Wasserzeichen angewendet und heruntergeladen!",
     "wm.lastExport": "Letzter Export",
     "wm.newImage": "Neues Bild",
+    "wm.watermarkType": "Wasserzeichentyp",
+    "wm.typeText": "Text",
+    "wm.typeImage": "Bild",
+    "wm.typeBoth": "Text + Bild",
+    "wm.uploadImage": "Logo / Wasserzeichenbild hochladen",
+    "wm.imageScale": "Bildgröße",
+    "wm.imageHint": "PNG oder JPG mit Transparenz funktionieren am besten.",
+    "wm.fontFamily": "Schriftfamilie",
+    "wm.rotation": "Rotation",
+    "wm.color": "Farbe",
+    "wm.strokeOutline": "Kontur / Umriss",
+    "wm.loadingPreview": "Lädt…",
+    "wm.textSection": "Text",
+    "wm.enableOutline": "Kontur aktivieren",
+    "wm.strokeColor": "Konturfarbe",
+    "wm.strokeWidth": "Konturstärke",
+    "wm.gridPosition": "Rasterposition",
+    "wm.customXY": "Benutzerdefiniert X/Y",
+    "wm.xPosition": "X-Position",
+    "wm.yPosition": "Y-Position",
+    "wm.extraOptions": "Weitere Optionen",
+    "wm.tileLabel": "Über das ganze Bild kacheln",
+    "wm.tileDesc": "Wasserzeichen diagonal wiederholen.",
+    "wm.textBgLabel": "Texthintergrund",
+    "wm.textBgDesc": "Halbtransparenter dunkler Hintergrund hinter Text.",
+    "wm.dropMainImage": "Bild hier ablegen oder durchsuchen",
+    "wm.previewAlt": "Wasserzeichen-Vorschau",
+    "wm.resultAlt": "Ergebnis mit Wasserzeichen",
+    "wm.fontSans": "Sans-serif",
+    "wm.fontSerif": "Serif",
+    "wm.fontMono": "Monospace",
+    "wm.fontImpact": "Impact",
+    "wm.fontGeorgia": "Georgia",
+    "wm.needText": "Wasserzeichentext eingeben.",
+    "wm.needImage": "Wasserzeichenbild hochladen.",
+    "wm.needBoth": "Text und Wasserzeichenbild hinzufügen.",
     "img2pdf.pageSize": "Seitengröße",
     "img2pdf.fitToImage": "An Bild anpassen",
     "img2pdf.dragReorder": "{count} Bilder – ziehen zum Sortieren",
@@ -3054,6 +3847,14 @@ const translations: Record<Locale, Record<string, string>> = {
     "exif.jpegOnly": "EXIF-Analyse ist nur für JPEG-Dateien verfügbar.",
     "exif.removed": "EXIF-Daten entfernt! Das bereinigte Bild herunterladen.",
     "exif.processFail": "Bild konnte nicht verarbeitet werden.",
+    "exif.batchTitle": "Stapel: EXIF entfernen (JPEG)",
+    "exif.batchHint": "Mehrere JPEGs hinzufügen — Metadaten werden entfernt, PNGs als ZIP geliefert.",
+    "exif.stripZip": "Alle bereinigen & ZIP laden",
+    "exif.batchZipName": "bereinigte-bilder.zip",
+    "exif.batchEmpty": "Mindestens ein JPEG hinzufügen.",
+    "exif.batchDone": "ZIP fertig — Metadaten von {count} Bildern entfernt.",
+    "exif.batchFail": "ZIP konnte nicht erstellt werden. Bitte gültige JPEGs verwenden.",
+    "exif.batchCount": "{count} JPEG-Datei(en) ausgewählt",
     "collage.images": "Bilder",
     "collage.addMore": "Weitere Bilder hinzufügen",
     "collage.settings": "Collage-Einstellungen",
@@ -3203,6 +4004,7 @@ const translations: Record<Locale, Record<string, string>> = {
     "vid2gif.startTime": "Startzeit (Sekunden)",
     "vid2gif.duration": "Dauer (Sekunden)",
     "vid2gif.tip": "Tipp: Halte GIFs unter 10 Sekunden für beste Ergebnisse.",
+    "vid2gif.dropLabel": "Video hier ablegen oder zum Hochladen klicken",
     "vid2gif.qualityPresets": "Qualitätsvoreinstellungen",
     "vid2gif.high": "Hoch (15fps, 480px)",
     "vid2gif.medium": "Mittel (10fps, 320px)",
@@ -3217,6 +4019,10 @@ const translations: Record<Locale, Record<string, string>> = {
     "vid2gif.success": "GIF erfolgreich erstellt",
     "vid2gif.fail": "GIF konnte nicht erstellt werden. Versuche kürzere Dauer oder niedrigere Qualität.",
     "vid2gif.invalidStart": "Ungültige Startzeit",
+    "vid2gif.loop": "Wiederholung",
+    "vid2gif.loopForever": "Endlos",
+    "vid2gif.loopOnce": "Einmal",
+    "vid2gif.loopNTimes": "{n}×",
     "qr.content": "Inhalt",
     "qr.colors": "Farben",
     "qr.foreground": "Vordergrund",
@@ -3239,8 +4045,20 @@ const translations: Record<Locale, Record<string, string>> = {
     "qr.typeTel": "Telefon",
     "qr.typeEmail": "E-Mail",
     "qr.typeWifi": "WiFi",
-    "qr.copyImage": "Bild kopieren",
+    "qr.copyImage": "PNG kopieren",
+    "qr.copySVG": "SVG-Code kopieren",
     "qr.copied": "Kopiert!",
+    "qr.sectionType": "Typ",
+    "qr.svgExportFail": "SVG-Export fehlgeschlagen",
+    "qr.copyNotSupported": "Kopieren wird in diesem Browser nicht unterstützt",
+    "qr.svgCopied": "SVG in die Zwischenablage kopiert",
+    "qr.logoLoaded": "Logo geladen",
+    "qr.logoCenterHint": "Wird in der QR-Mitte angezeigt",
+    "qr.placeholderFreeText": "Text hier eingeben…",
+    "qr.phUrl": "https://beispiel.de",
+    "qr.phTel": "+49 30 12345678",
+    "qr.phEmail": "mail@beispiel.de",
+    "qr.wifiNoPass": "Kein Passwort",
     "svg2png.outputSize": "Ausgabegröße",
     "svg2png.svgPreview": "SVG-Vorschau",
     "svg2png.convert": "In PNG konvertieren",
@@ -3257,6 +4075,14 @@ const translations: Record<Locale, Record<string, string>> = {
     "b64.decodedText": "Dekodierter Text",
     "b64.invalidBase64": "Ungültige Base64-Zeichenfolge",
     "clr.presets": "Voreinstellungen",
+    "clr.copied": "Kopiert: {value}",
+    "clr.copyFail": "Kopieren fehlgeschlagen",
+    "clr.hex": "HEX",
+    "clr.rgb": "RGB",
+    "clr.hsl": "HSL",
+    "clr.css": "CSS",
+    "clr.copy": "Kopieren",
+    "clr.cssColor": "color: {value};",
     "json.sample": "Beispiel",
     "json.inputJson": "JSON-Eingabe",
     "json.invalidJson": "Ungültiges JSON",
@@ -3265,6 +4091,11 @@ const translations: Record<Locale, Record<string, string>> = {
     "json.validJson": "Gültiges JSON!",
     "json.enterJson": "Bitte gib etwas JSON ein.",
     "json.useAsInput": "Als Eingabe verwenden",
+    "json.output": "Ausgabe",
+    "json.charCount": "{count} Zeichen",
+    "json.indent2": "2 Leerzeichen",
+    "json.indent4": "4 Leerzeichen",
+    "json.indentTab": "Tabs",
     "hash.textInput": "Texteingabe",
     "hash.fileInput": "Dateieingabe",
     "hash.enterText": "Zu hashenden Text eingeben...",
@@ -3277,6 +4108,53 @@ const translations: Record<Locale, Record<string, string>> = {
     "hash.fail": "Hashes konnten nicht generiert werden",
     "hash.results": "Hash-Ergebnisse",
     "hash.copyAll": "Alle kopieren",
+    "hash.largeFileWarn": "Diese Datei ist sehr groß ({size}). Das Hashen kann den Tab einfrieren oder den Speicher überlasten. Fortfahren?",
+    "hash.ackLargeFile": "Verstanden",
+    "fake.generateNew": "Neu generieren",
+    "fake.copyJson": "Als JSON kopieren",
+    "fake.copyCsv": "Als CSV kopieren",
+    "fake.copyVcard": "Als vCard kopieren",
+    "fake.copiedJson": "Als JSON kopiert",
+    "fake.copiedCsv": "Als CSV kopiert",
+    "fake.copiedVcard": "Als vCard kopiert",
+    "fake.copyFailed": "Kopieren fehlgeschlagen",
+    "fake.copiedField": "{label} kopiert",
+    "fake.newIdentity": "Neue Identität erstellt!",
+    "fake.disclaimer": "Alle Daten sind zufällig und stellen keine realen Personen dar. Nur zu Testzwecken.",
+    "fake.card.personal": "Persönlich",
+    "fake.card.contact": "Kontakt",
+    "fake.card.online": "Online",
+    "fake.card.professional": "Beruflich",
+    "fake.field.fullName": "Vollständiger Name",
+    "fake.field.gender": "Geschlecht",
+    "fake.field.age": "Alter",
+    "fake.field.birthday": "Geburtstag",
+    "fake.field.bloodType": "Blutgruppe",
+    "fake.field.height": "Größe",
+    "fake.field.weight": "Gewicht",
+    "fake.field.hobbies": "Hobbys",
+    "fake.field.email": "E-Mail",
+    "fake.field.phone": "Telefon",
+    "fake.field.address": "Adresse",
+    "fake.field.country": "Land",
+    "fake.field.username": "Benutzername",
+    "fake.field.password": "Passwort",
+    "fake.field.website": "Webseite",
+    "fake.field.linkedin": "LinkedIn",
+    "fake.field.company": "Firma",
+    "fake.field.jobTitle": "Berufsbezeichnung",
+    "fake.field.ssn": "SSN",
+    "fake.field.creditCard": "Kreditkarte (Visa)",
+    "fake.badge.fake": "FAKE",
+    "fake.badge.testOnly": "NUR TEST",
+    "fake.yearsOld": "{n} Jahre",
+    "fake.gender.male": "Männlich",
+    "fake.gender.female": "Weiblich",
+    "fake.country.us": "Vereinigte Staaten",
+    "fake.country.uk": "Vereinigtes Königreich",
+    "fake.country.de": "Deutschland",
+    "fake.country.tr": "Türkei",
+    "fake.country.fr": "Frankreich",
     "wc.enterText": "Text eingeben oder einfügen",
     "wc.placeholder": "Beginne hier zu tippen oder füge deinen Text ein...",
     "wc.chars": "Zeichen",
@@ -3489,6 +4367,40 @@ const translations: Record<Locale, Record<string, string>> = {
     "tool.color-contrast.desc": "WCAG-Kontrast für Text- und UI-Farben prüfen",
     "tool.csv-viewer.name": "CSV-Tabellenansicht",
     "tool.csv-viewer.desc": "CSV einfügen und als Tabelle durchsuchen",
+    "tool.ip-address.name": "Meine IP-Adresse",
+    "tool.ip-address.desc": "Öffentliche IP, Standort und ISP-Infos anzeigen",
+    "tool.screen-resolution.name": "Bildschirmauflösung",
+    "tool.screen-resolution.desc": "Bildschirmgröße, DPI und Device-Pixel-Ratio",
+    "tool.internet-speed.name": "Internet-Geschwindigkeitstest",
+    "tool.internet-speed.desc": "Download-Geschwindigkeit und Latenz messen",
+    "tool.password-strength.name": "Passwortstärke-Test",
+    "tool.password-strength.desc": "Prüfen, wie stark Ihr Passwort ist",
+    "tool.emoji-picker.name": "Emoji-Auswahl",
+    "tool.emoji-picker.desc": "Emojis nach Kategorie suchen und kopieren",
+    "tool.text-case.name": "Groß-/Kleinschreibung",
+    "tool.text-case.desc": "Text in GROSS, klein, Titel oder camelCase umwandeln",
+    "tool.world-clock.name": "Weltuhr",
+    "tool.world-clock.desc": "Aktuelle Zeit in Städten weltweit",
+    "tool.background-remover.name": "Hintergrund entfernen",
+    "tool.background-remover.desc": "Bildhintergründe automatisch im Browser entfernen",
+    "tool.color-dropper.name": "Farbpipette",
+    "tool.color-dropper.desc": "Farben aus Bildern wählen und HEX erhalten",
+    "tool.photo-filter.name": "Fotofilter",
+    "tool.photo-filter.desc": "Vintage, Graustufen und weitere Filter anwenden",
+    "tool.image-compare.name": "Bildvergleich",
+    "tool.image-compare.desc": "Zwei Bilder mit Schieberegler vergleichen",
+    "tool.pdf-encrypt.name": "PDF verschlüsseln",
+    "tool.pdf-encrypt.desc": "PDF-Dateien mit Passwort schützen",
+    "tool.pdf-text-extractor.name": "PDF-Text extrahieren",
+    "tool.pdf-text-extractor.desc": "Text aus PDFs extrahieren und kopieren",
+    "tool.pdf-compress.name": "PDF komprimieren",
+    "tool.pdf-compress.desc": "PDF-Größe durch Bildkompression reduzieren",
+    "tool.video-to-gif.name": "Video zu GIF",
+    "tool.video-to-gif.desc": "Kurze Videos in animierte GIFs umwandeln",
+    "tool.audio-recorder.name": "Audio-Rekorder",
+    "tool.audio-recorder.desc": "Mikrofon aufnehmen; als MP3, WAV, WebM oder OGG laden",
+    "tool.text-to-speech.name": "Text zu Sprache",
+    "tool.text-to-speech.desc": "Text in gesprochene Audio (u. a. TR/EN) umwandeln",
     "nav.rssFeed": "RSS",
     "pipeline.step1": "1 · Bild",
     "pipeline.step2": "2 · Komprimieren",
@@ -3612,6 +4524,10 @@ const translations: Record<Locale, Record<string, string>> = {
     "typing.wordsTyped": "Wörter",
     "typing.charsTyped": "Zeichen",
     "typing.tryAgain": "Nochmal",
+    "typing.duration": "Dauer",
+    "typing.pause": "Pause",
+    "typing.resume": "Fortsetzen",
+    "typing.remaining": "Verbleibend",
     // Color Palette
     "palette.extract": "Farben extrahieren",
     "palette.colors": "Farben",
@@ -3640,6 +4556,54 @@ const translations: Record<Locale, Record<string, string>> = {
     "404.title": "Seite nicht gefunden",
     "404.subtitle": "Die gesuchte Seite existiert nicht oder wurde verschoben.",
     "404.cta": "Zurück zur Startseite",
+
+    "conversion.heroTitle": "{from} in {to} konvertieren – kostenlos & privat",
+    "conversion.heroSubtitle":
+      "Konvertieren Sie {from}-Bilder sofort im Browser nach {to}. Keine Uploads, kein Konto, kein Wasserzeichen. Dateien bleiben auf Ihrem Gerät. Stapelverarbeitung möglich.",
+    "conversion.howTitle": "So funktioniert's",
+    "conversion.step1Title": "Dateien hochladen",
+    "conversion.step1Desc":
+      "{from}-Dateien per Drag & Drop ablegen oder auswählen. Mehrere Dateien für die Stapelkonvertierung möglich.",
+    "conversion.step2Title": "Einstellungen",
+    "conversion.step2DescPng":
+      "Konvertierung nach verlustfreiem {to} mit vollständiger Qualität.",
+    "conversion.step2DescOther":
+      "Qualitätsregler für Balance zwischen Dateigröße und Bildqualität ({to}-Ausgabe).",
+    "conversion.step3Title": "Ergebnisse herunterladen",
+    "conversion.step3Desc":
+      "Konvertieren und {to}-Dateien sofort laden. Bei mehreren Dateien als ZIP.",
+    "conversion.benefitsTitle": "Warum unser {from}-zu-{to}-Konverter",
+    "conversion.benefitPrivateTitle": "100 % privat",
+    "conversion.benefitPrivateDesc":
+      "Alles im Browser; Bilder werden nicht auf Server hochgeladen.",
+    "conversion.benefitFreeTitle": "Völlig kostenlos",
+    "conversion.benefitFreeDesc":
+      "Keine versteckten Kosten, keine Limits. Beliebig viele Bilder.",
+    "conversion.benefitBatchTitle": "Stapelkonvertierung",
+    "conversion.benefitBatchDesc":
+      "Mehrere {from}-Dateien auf einmal nach {to} – Download als ZIP.",
+    "conversion.benefitFastTitle": "Sehr schnell",
+    "conversion.benefitFastDesc":
+      "Kein Server-Upload – Konvertierung startet sofort im Browser.",
+    "conversion.faq1q": "Ist dieser {from}-zu-{to}-Konverter kostenlos?",
+    "conversion.faq1a":
+      "Ja, völlig kostenlos. Keine Begrenzung der Dateien, kein Konto nötig.",
+    "conversion.faq2q": "Ist es sicher, meine {from}-Dateien hier zu konvertieren?",
+    "conversion.faq2a":
+      "Ja. Dateien verlassen Ihren Browser nicht; Verarbeitung lokal per Browser-APIs.",
+    "conversion.faq3q": "Kann ich mehrere {from}-Dateien gleichzeitig nach {to} konvertieren?",
+    "conversion.faq3a":
+      "Ja, Stapelverarbeitung. Mehrere {from}-Dateien wählen, alle werden {to}; einzeln oder als ZIP.",
+    "conversion.faq4q": "Wie groß dürfen Dateien maximal sein?",
+    "conversion.faq4a":
+      "Kein hartes Server-Limit; große Dateien können je nach Gerät länger brauchen.",
+    "conversion.faq5q": "Bleibt die Bildqualität erhalten?",
+    "conversion.faq5aPng":
+      "PNG ist verlustfrei – die Qualität bleibt voll erhalten.",
+    "conversion.faq5aOther":
+      "Mit dem Qualitätsregler Größe und Detail steuern; höhere Qualität = größere Dateien.",
+    "conversion.otherConversions": "Weitere Bildkonvertierungen",
+    "conversion.privacyLine": "Dateien verlassen Ihren Browser nicht. 100 % privat.",
 
     "about.title": "Über ZapFile",
     "about.intro":
@@ -3717,6 +4681,8 @@ const translations: Record<Locale, Record<string, string>> = {
     "nav.about": "À propos",
     "nav.blog": "Blog",
     "nav.changelog": "Journal des modifications",
+    "nav.workflows": "Workflows",
+    "nav.shortcuts": "Raccourcis clavier",
     "nav.language": "Langue",
     "nav.favoriteToggle": "Épingler cet outil",
     "share.copy": "Copier le lien",
@@ -3735,6 +4701,45 @@ const translations: Record<Locale, Record<string, string>> = {
     "hero.trust1": "Vos fichiers restent sur votre appareil",
     "hero.trust2": "Traitement instantané",
     "hero.trust3": "Sans limites, gratuit pour toujours",
+
+    "trust.panelTitle": "S'exécute sur votre appareil, pas sur nos serveurs",
+    "trust.panelLead":
+      "Cette page utilise les API du navigateur (Canvas, WebAssembly, workers, etc.) pour que vos fichiers restent sur votre machine.",
+    "trust.bullet1":
+      "Le traitement se fait dans cet onglet — fermez l'onglet et la session se termine.",
+    "trust.bullet2":
+      "Aucun compte ZapFile requis et nous ne stockons pas vos envois (il n'y en a pas).",
+    "trust.bullet3":
+      "Téléchargez uniquement ce que vous choisissez ; rien ne nous est envoyé pour un « traitement cloud ».",
+    "trust.bulletNetwork":
+      "Vérifiez vous-même : Outils de développement → Réseau pendant l'utilisation — vos fichiers ne doivent pas être téléversés vers ZapFile.",
+    "trust.bulletPwa":
+      "Ajoutez ZapFile à l'écran d'accueil pour une coque d'application plus rapide et l'accès hors ligne aux pages mises en cache (les outils nécessitent toujours un navigateur adapté).",
+    "trust.linkPrivacy": "Politique de confidentialité",
+    "trust.linkWorkflows": "Workflows populaires",
+    "workflows.eyebrow": "Guides",
+    "workflows.heroTitle": "Workflows populaires",
+    "workflows.heroSubtitle":
+      "Enchaînez plusieurs outils dans l'ordre — chaque étape s'ouvre dans une nouvelle page. Tout reste local dans votre navigateur.",
+    "workflows.openTool": "Ouvrir",
+    "workflows.footnote":
+      "Astuce : ajoutez cette page aux favoris ou installez ZapFile (PWA) sur l'écran d'accueil.",
+    "workflow.bundle0.title": "Préparation d'images tout-en-un",
+    "workflow.bundle0.desc":
+      "Redimensionner, compresser et convertir dans un flux guidé — idéal avec de nombreuses images.",
+    "workflow.bundle1.title": "PDF plus légers, puis fusion",
+    "workflow.bundle1.desc":
+      "Réduisez d'abord les PDF, puis fusionnez-les en un seul document si besoin.",
+    "workflow.bundle2.title": "Images prêtes pour le web",
+    "workflow.bundle2.desc":
+      "Recadrez, compressez, puis exportez en WebP ou PNG pour le web.",
+    "workflow.bundle3.title": "Partage plus sûr (métadonnées)",
+    "workflow.bundle3.desc":
+      "Consultez l'EXIF, recadrez si besoin, puis compressez — utile avant de publier des photos.",
+    "workflow.bundle4.title": "Images → un seul PDF",
+    "workflow.bundle4.desc":
+      "Transformez des images en PDF, puis compressez le PDF s'il reste volumineux.",
+
     "cat.pdf": "Outils PDF",
     "cat.image": "Outils d'image",
     "cat.video": "Vidéo & Audio",
@@ -3825,6 +4830,16 @@ const translations: Record<Locale, Record<string, string>> = {
     "tool.hash-generator.desc": "Générer des hachages SHA-1, SHA-256, SHA-384, SHA-512",
     "tool.word-counter.name": "Compteur de mots",
     "tool.word-counter.desc": "Compter les mots, caractères, phrases et le temps de lecture",
+    "tool.character-counter.name": "Compteur de caractères",
+    "tool.character-counter.desc":
+      "Compter caractères, mots, lignes et vérifier les limites des réseaux",
+    "tool.fake-identity.name": "Générateur d'identité fictive",
+    "tool.fake-identity.desc":
+      "Identités de test aléatoires pour le dev et la QA — tout en local",
+    "tool.random-color.name": "Générateur de couleur aléatoire",
+    "tool.random-color.desc": "Couleurs aléatoires HEX, RVB, TSL et harmonies",
+    "tool.stopwatch.name": "Chronomètre",
+    "tool.stopwatch.desc": "Chronomètre en ligne avec tours, stats et raccourcis",
     "tool.pdf-to-word.name": "PDF en Word",
     "tool.pdf-to-word.desc": "Convertir des documents PDF en fichiers Word (DOCX) modifiables",
     "tool.pdf-to-excel.name": "PDF en Excel",
@@ -3951,6 +4966,10 @@ const translations: Record<Locale, Record<string, string>> = {
     "ui.results": "Résultats",
     "ui.downloadPdf": "Télécharger le PDF",
     "a11y.skipToContent": "Aller au contenu",
+    "a11y.searchTools": "Rechercher des outils",
+    "a11y.toggleTheme": "Changer le thème",
+    "a11y.closeMenu": "Fermer le menu",
+    "a11y.openMenu": "Ouvrir le menu",
     "error.boundary.title": "Une erreur s'est produite",
     "error.boundary.message":
       "Une erreur inattendue s'est produite. Actualisez la page et réessayez.",
@@ -3967,6 +4986,11 @@ const translations: Record<Locale, Record<string, string>> = {
     "merge.skipped": "Certains fichiers ont été ignorés car ce ne sont pas des PDFs.",
     "merge.invalid": "Veuillez sélectionner des fichiers PDF valides.",
     "merge.removeFile": "Supprimer le fichier",
+    "merge.clearAll": "Tout effacer",
+    "merge.dragHint": "Glissez les lignes pour réordonner, ou utilisez les flèches.",
+    "merge.moveUp": "Monter",
+    "merge.moveDown": "Descendre",
+    "merge.dropLabel": "Déposez vos PDF ici ou cliquez pour parcourir",
     "split.pageRanges": "Plages de pages",
     "split.enterRanges": "Veuillez entrer des plages de pages pour diviser.",
     "split.invalidRanges": "Plages de pages invalides. Utilisez le format comme \"1-3, 5, 7-9\".",
@@ -3984,6 +5008,12 @@ const translations: Record<Locale, Record<string, string>> = {
     "split.loaded": "PDF chargé avec {count} pages.",
     "split.invalidFile": "Veuillez sélectionner un fichier PDF valide.",
     "split.loadFail": "Échec du chargement du PDF. Le fichier peut être corrompu ou chiffré.",
+    "split.dropLabel": "Déposez le PDF ici ou parcourez",
+    "split.pagePreview": "Aperçu des pages",
+    "split.thumbsLoading": "Chargement des aperçus…",
+    "split.pageLabel": "Page {n}",
+    "split.pagesCount": "{count} pages",
+    "split.thumbsPartial": "Aperçu : {shown} sur {total} pages",
     "pdfimg.outputFormat": "Format de sortie",
     "pdfimg.pngLossless": "PNG (sans perte)",
     "pdfimg.jpgSmaller": "JPG (fichier plus petit)",
@@ -4096,6 +5126,42 @@ const translations: Record<Locale, Record<string, string>> = {
     "wm.success": "Filigrane appliqué et téléchargé !",
     "wm.lastExport": "Dernier export",
     "wm.newImage": "Nouvelle image",
+    "wm.watermarkType": "Type de filigrane",
+    "wm.typeText": "Texte",
+    "wm.typeImage": "Image",
+    "wm.typeBoth": "Texte + image",
+    "wm.uploadImage": "Télécharger logo / image de filigrane",
+    "wm.imageScale": "Taille de l'image",
+    "wm.imageHint": "PNG ou JPG avec transparence fonctionnent le mieux.",
+    "wm.fontFamily": "Police",
+    "wm.rotation": "Rotation",
+    "wm.color": "Couleur",
+    "wm.strokeOutline": "Contour",
+    "wm.loadingPreview": "Chargement…",
+    "wm.textSection": "Texte",
+    "wm.enableOutline": "Activer le contour",
+    "wm.strokeColor": "Couleur du contour",
+    "wm.strokeWidth": "Épaisseur du contour",
+    "wm.gridPosition": "Position sur la grille",
+    "wm.customXY": "X/Y personnalisés",
+    "wm.xPosition": "Position X",
+    "wm.yPosition": "Position Y",
+    "wm.extraOptions": "Options supplémentaires",
+    "wm.tileLabel": "Mosaïque sur toute l'image",
+    "wm.tileDesc": "Répéter le filigrane en diagonale.",
+    "wm.textBgLabel": "Fond du texte",
+    "wm.textBgDesc": "Remplissage sombre semi-transparent derrière le texte.",
+    "wm.dropMainImage": "Déposez votre image ici ou parcourez",
+    "wm.previewAlt": "Aperçu du filigrane",
+    "wm.resultAlt": "Résultat filigrané",
+    "wm.fontSans": "Sans empattement",
+    "wm.fontSerif": "Avec empattement",
+    "wm.fontMono": "Chasse fixe",
+    "wm.fontImpact": "Impact",
+    "wm.fontGeorgia": "Georgia",
+    "wm.needText": "Saisissez le texte du filigrane.",
+    "wm.needImage": "Téléchargez une image de filigrane.",
+    "wm.needBoth": "Ajoutez le texte et une image de filigrane.",
     "img2pdf.pageSize": "Taille de page",
     "img2pdf.fitToImage": "Adapter à l'image",
     "img2pdf.dragReorder": "{count} images — glisser pour réorganiser",
@@ -4144,6 +5210,14 @@ const translations: Record<Locale, Record<string, string>> = {
     "exif.jpegOnly": "L'analyse EXIF n'est disponible que pour les fichiers JPEG.",
     "exif.removed": "Données EXIF supprimées ! Téléchargez l'image nettoyée.",
     "exif.processFail": "Échec du traitement de l'image.",
+    "exif.batchTitle": "Lot : supprimer l'EXIF (JPEG)",
+    "exif.batchHint": "Ajoutez plusieurs JPEG — nous supprimons les métadonnées et livrons des PNG dans une archive ZIP.",
+    "exif.stripZip": "Tout nettoyer et télécharger le ZIP",
+    "exif.batchZipName": "images-nettoyees.zip",
+    "exif.batchEmpty": "Ajoutez au moins un JPEG.",
+    "exif.batchDone": "ZIP prêt — métadonnées supprimées pour {count} images.",
+    "exif.batchFail": "Impossible de créer le ZIP. Vérifiez que les fichiers sont des JPEG valides.",
+    "exif.batchCount": "{count} fichier(s) JPEG sélectionné(s)",
     "collage.images": "Images",
     "collage.addMore": "Ajouter plus d'images",
     "collage.settings": "Paramètres du collage",
@@ -4293,6 +5367,7 @@ const translations: Record<Locale, Record<string, string>> = {
     "vid2gif.startTime": "Heure de début (secondes)",
     "vid2gif.duration": "Durée (secondes)",
     "vid2gif.tip": "Astuce : Gardez les GIFs sous 10 secondes pour de meilleurs résultats.",
+    "vid2gif.dropLabel": "Déposez une vidéo ici ou cliquez pour téléverser",
     "vid2gif.qualityPresets": "Préréglages de qualité",
     "vid2gif.high": "Élevée (15fps, 480px)",
     "vid2gif.medium": "Moyenne (10fps, 320px)",
@@ -4307,6 +5382,10 @@ const translations: Record<Locale, Record<string, string>> = {
     "vid2gif.success": "GIF créé avec succès",
     "vid2gif.fail": "Échec de la création du GIF. Essayez une durée plus courte ou une qualité inférieure.",
     "vid2gif.invalidStart": "Heure de début invalide",
+    "vid2gif.loop": "Boucle",
+    "vid2gif.loopForever": "Infini",
+    "vid2gif.loopOnce": "Une fois",
+    "vid2gif.loopNTimes": "{n}×",
     "qr.content": "Contenu",
     "qr.colors": "Couleurs",
     "qr.foreground": "Premier plan",
@@ -4329,8 +5408,20 @@ const translations: Record<Locale, Record<string, string>> = {
     "qr.typeTel": "Téléphone",
     "qr.typeEmail": "E-mail",
     "qr.typeWifi": "WiFi",
-    "qr.copyImage": "Copier l'image",
+    "qr.copyImage": "Copier PNG",
+    "qr.copySVG": "Copier le code SVG",
     "qr.copied": "Copié!",
+    "qr.sectionType": "Type",
+    "qr.svgExportFail": "Échec de l'export SVG",
+    "qr.copyNotSupported": "Copie non prise en charge dans ce navigateur",
+    "qr.svgCopied": "SVG copié dans le presse-papiers",
+    "qr.logoLoaded": "Logo chargé",
+    "qr.logoCenterHint": "Affiché au centre du QR code",
+    "qr.placeholderFreeText": "Saisissez votre texte ici…",
+    "qr.phUrl": "https://exemple.com",
+    "qr.phTel": "+33 6 12 34 56 78",
+    "qr.phEmail": "courriel@exemple.com",
+    "qr.wifiNoPass": "Sans mot de passe",
     "svg2png.outputSize": "Taille de sortie",
     "svg2png.svgPreview": "Aperçu SVG",
     "svg2png.convert": "Convertir en PNG",
@@ -4347,6 +5438,14 @@ const translations: Record<Locale, Record<string, string>> = {
     "b64.decodedText": "Texte décodé",
     "b64.invalidBase64": "Chaîne Base64 invalide",
     "clr.presets": "Préréglages",
+    "clr.copied": "Copié : {value}",
+    "clr.copyFail": "Échec de la copie",
+    "clr.hex": "HEX",
+    "clr.rgb": "RVB",
+    "clr.hsl": "TSL",
+    "clr.css": "CSS",
+    "clr.copy": "Copier",
+    "clr.cssColor": "color: {value};",
     "json.sample": "Exemple",
     "json.inputJson": "Entrée JSON",
     "json.invalidJson": "JSON invalide",
@@ -4355,6 +5454,11 @@ const translations: Record<Locale, Record<string, string>> = {
     "json.validJson": "JSON valide !",
     "json.enterJson": "Veuillez entrer du JSON.",
     "json.useAsInput": "Utiliser comme entrée",
+    "json.output": "Sortie",
+    "json.charCount": "{count} caractères",
+    "json.indent2": "2 espaces",
+    "json.indent4": "4 espaces",
+    "json.indentTab": "Tabulations",
     "hash.textInput": "Entrée texte",
     "hash.fileInput": "Entrée fichier",
     "hash.enterText": "Entrez le texte à hacher...",
@@ -4367,6 +5471,53 @@ const translations: Record<Locale, Record<string, string>> = {
     "hash.fail": "Échec de la génération des hachages",
     "hash.results": "Résultats des hachages",
     "hash.copyAll": "Tout copier",
+    "hash.largeFileWarn": "Ce fichier est très volumineux ({size}). Le hachage peut figer l'onglet ou saturer la mémoire. Continuer ?",
+    "hash.ackLargeFile": "Compris",
+    "fake.generateNew": "Générer à nouveau",
+    "fake.copyJson": "Copier en JSON",
+    "fake.copyCsv": "Copier en CSV",
+    "fake.copyVcard": "Copier en vCard",
+    "fake.copiedJson": "Copié en JSON",
+    "fake.copiedCsv": "Copié en CSV",
+    "fake.copiedVcard": "Copié en vCard",
+    "fake.copyFailed": "Échec de la copie",
+    "fake.copiedField": "{label} copié",
+    "fake.newIdentity": "Nouvelle identité générée !",
+    "fake.disclaimer": "Toutes les données sont aléatoires et ne représentent aucune personne réelle. À des fins de test uniquement.",
+    "fake.card.personal": "Infos personnelles",
+    "fake.card.contact": "Contact",
+    "fake.card.online": "En ligne",
+    "fake.card.professional": "Professionnel",
+    "fake.field.fullName": "Nom complet",
+    "fake.field.gender": "Genre",
+    "fake.field.age": "Âge",
+    "fake.field.birthday": "Date de naissance",
+    "fake.field.bloodType": "Groupe sanguin",
+    "fake.field.height": "Taille",
+    "fake.field.weight": "Poids",
+    "fake.field.hobbies": "Loisirs",
+    "fake.field.email": "E-mail",
+    "fake.field.phone": "Téléphone",
+    "fake.field.address": "Adresse",
+    "fake.field.country": "Pays",
+    "fake.field.username": "Nom d'utilisateur",
+    "fake.field.password": "Mot de passe",
+    "fake.field.website": "Site web",
+    "fake.field.linkedin": "LinkedIn",
+    "fake.field.company": "Entreprise",
+    "fake.field.jobTitle": "Intitulé du poste",
+    "fake.field.ssn": "SSN",
+    "fake.field.creditCard": "Carte bancaire (Visa)",
+    "fake.badge.fake": "FAUX",
+    "fake.badge.testOnly": "TEST UNIQUEMENT",
+    "fake.yearsOld": "{n} ans",
+    "fake.gender.male": "Homme",
+    "fake.gender.female": "Femme",
+    "fake.country.us": "États-Unis",
+    "fake.country.uk": "Royaume-Uni",
+    "fake.country.de": "Allemagne",
+    "fake.country.tr": "Turquie",
+    "fake.country.fr": "France",
     "wc.enterText": "Entrez ou collez votre texte",
     "wc.placeholder": "Commencez à taper ou collez votre texte ici...",
     "wc.chars": "Caractères",
@@ -4579,6 +5730,40 @@ const translations: Record<Locale, Record<string, string>> = {
     "tool.color-contrast.desc": "Vérifier les ratios WCAG pour texte et UI",
     "tool.csv-viewer.name": "Tableur CSV",
     "tool.csv-viewer.desc": "Coller du CSV et parcourir le tableau",
+    "tool.ip-address.name": "Mon adresse IP",
+    "tool.ip-address.desc": "Afficher IP publique, localisation et FAI",
+    "tool.screen-resolution.name": "Résolution d'écran",
+    "tool.screen-resolution.desc": "Taille d'écran, DPI et ratio de pixels",
+    "tool.internet-speed.name": "Test de débit",
+    "tool.internet-speed.desc": "Mesurer débit descendant et latence",
+    "tool.password-strength.name": "Test de mot de passe",
+    "tool.password-strength.desc": "Vérifier la force de votre mot de passe",
+    "tool.emoji-picker.name": "Sélecteur d'emoji",
+    "tool.emoji-picker.desc": "Rechercher et copier des emojis par catégorie",
+    "tool.text-case.name": "Casse du texte",
+    "tool.text-case.desc": "Convertir en MAJUSCULES, minuscules, Titre ou camelCase",
+    "tool.world-clock.name": "Horloge mondiale",
+    "tool.world-clock.desc": "Heure actuelle dans les villes du monde",
+    "tool.background-remover.name": "Suppression d'arrière-plan",
+    "tool.background-remover.desc": "Retirer l'arrière-plan des images dans le navigateur",
+    "tool.color-dropper.name": "Pipette",
+    "tool.color-dropper.desc": "Choisir une couleur sur une image et obtenir le HEX",
+    "tool.photo-filter.name": "Filtre photo",
+    "tool.photo-filter.desc": "Appliquer vintage, niveaux de gris et autres filtres",
+    "tool.image-compare.name": "Comparateur d'images",
+    "tool.image-compare.desc": "Comparer deux images côte à côte avec un curseur",
+    "tool.pdf-encrypt.name": "Chiffrer PDF",
+    "tool.pdf-encrypt.desc": "Protéger des PDF par mot de passe",
+    "tool.pdf-text-extractor.name": "Extraction de texte PDF",
+    "tool.pdf-text-extractor.desc": "Extraire et copier le texte des PDF",
+    "tool.pdf-compress.name": "Compression PDF",
+    "tool.pdf-compress.desc": "Réduire la taille des PDF en compressant les images",
+    "tool.video-to-gif.name": "Vidéo vers GIF",
+    "tool.video-to-gif.desc": "Convertir de courtes vidéos en GIF animés",
+    "tool.audio-recorder.name": "Enregistreur audio",
+    "tool.audio-recorder.desc": "Enregistrer le micro ; télécharger en MP3, WAV, WebM ou OGG",
+    "tool.text-to-speech.name": "Synthèse vocale",
+    "tool.text-to-speech.desc": "Convertir du texte en audio parlé (TR, EN, etc.)",
     "nav.rssFeed": "RSS",
     "pipeline.step1": "1 · Image",
     "pipeline.step2": "2 · Compression",
@@ -4702,6 +5887,10 @@ const translations: Record<Locale, Record<string, string>> = {
     "typing.wordsTyped": "Mots",
     "typing.charsTyped": "Caractères",
     "typing.tryAgain": "Réessayer",
+    "typing.duration": "Durée",
+    "typing.pause": "Pause",
+    "typing.resume": "Reprendre",
+    "typing.remaining": "Restant",
     // Color Palette
     "palette.extract": "Extraire les couleurs",
     "palette.colors": "Couleurs",
@@ -4730,6 +5919,54 @@ const translations: Record<Locale, Record<string, string>> = {
     "404.title": "Page non trouvée",
     "404.subtitle": "La page que vous recherchez n'existe pas ou a été déplacée.",
     "404.cta": "Retour à l'accueil",
+
+    "conversion.heroTitle": "Convertir {from} en {to} en ligne – gratuit et privé",
+    "conversion.heroSubtitle":
+      "Convertissez instantanément vos images {from} en {to} dans le navigateur. Pas d'envoi, pas de compte, pas de filigrane. Fichiers sur votre appareil. Traitement par lots pris en charge.",
+    "conversion.howTitle": "Comment ça marche",
+    "conversion.step1Title": "Téléversez vos fichiers",
+    "conversion.step1Desc":
+      "Glissez-déposez vos fichiers {from} ou cliquez pour parcourir. Sélection multiple pour le lot.",
+    "conversion.step2Title": "Ajuster les réglages",
+    "conversion.step2DescPng":
+      "Conversion vers {to} sans perte, qualité préservée.",
+    "conversion.step2DescOther":
+      "Réglez la qualité pour équilibrer taille et rendu ({to}).",
+    "conversion.step3Title": "Télécharger les résultats",
+    "conversion.step3Desc":
+      "Convertissez et téléchargez vos fichiers {to} tout de suite. Plusieurs fichiers : ZIP unique.",
+    "conversion.benefitsTitle": "Pourquoi notre convertisseur {from} → {to}",
+    "conversion.benefitPrivateTitle": "100 % privé",
+    "conversion.benefitPrivateDesc":
+      "Tout se passe dans le navigateur ; pas d'envoi d'images sur serveur.",
+    "conversion.benefitFreeTitle": "Entièrement gratuit",
+    "conversion.benefitFreeDesc":
+      "Sans frais cachés ni limite de fichiers.",
+    "conversion.benefitBatchTitle": "Traitement par lots",
+    "conversion.benefitBatchDesc":
+      "Plusieurs fichiers {from} vers {to} ; téléchargement ZIP.",
+    "conversion.benefitFastTitle": "Très rapide",
+    "conversion.benefitFastDesc":
+      "Pas d'attente d'upload serveur ; conversion immédiate.",
+    "conversion.faq1q": "Ce convertisseur {from} vers {to} est-il gratuit ?",
+    "conversion.faq1a":
+      "Oui, totalement gratuit, sans limite ni compte.",
+    "conversion.faq2q": "Est-il sûr de convertir mes fichiers {from} ici ?",
+    "conversion.faq2a":
+      "Oui. Les fichiers ne quittent pas le navigateur ; traitement local via API du navigateur.",
+    "conversion.faq3q": "Puis-je convertir plusieurs fichiers {from} en {to} à la fois ?",
+    "conversion.faq3a":
+      "Oui. Sélectionnez plusieurs fichiers {from}, tout est converti en {to} ; individuellement ou en ZIP.",
+    "conversion.faq4q": "Quelle taille maximale de fichier ?",
+    "conversion.faq4a":
+      "Pas de plafond serveur strict ; les très gros fichiers peuvent prendre plus de temps selon l'appareil.",
+    "conversion.faq5q": "La qualité d'image est-elle préservée ?",
+    "conversion.faq5aPng":
+      "Le PNG est sans perte : la qualité visuelle est entièrement préservée.",
+    "conversion.faq5aOther":
+      "Ajustez le curseur qualité pour équilibrer taille et détail.",
+    "conversion.otherConversions": "Autres conversions d'images",
+    "conversion.privacyLine": "Vos fichiers ne quittent pas le navigateur. 100 % privé.",
 
     "about.title": "À propos de ZapFile",
     "about.intro":
@@ -4818,9 +6055,14 @@ const translations: Record<Locale, Record<string, string>> = {
     ...partialStaticPageLocales.ja,
     ...partialBlogChromeLocales.ja,
   }),
+  ar: mergeLocale(en, {
+    ...arLocaleStrings,
+    ...partialStaticPageLocales.ar,
+    ...partialBlogChromeLocales.ar,
+  }),
 };
 
-/** Every locale has a full key set; merged locales (es/pt/it/ja) inherit English for keys not in i18n-overrides. */
+/** Every locale has a full key set; merged locales inherit English for keys not overridden. */
 function resolveTranslation(locale: Locale, key: string): string {
   const fromLocale = translations[locale][key];
   if (fromLocale !== undefined) {
@@ -4846,21 +6088,59 @@ const I18nContext = createContext<I18nContextType>({
   t: (key) => key,
 });
 
-function readCookieLocale(): Locale | null {
+function readCookieValue(name: string): string | null {
   if (typeof document === "undefined") return null;
-  const m = document.cookie.match(/(?:^|;\s*)zapfile-geo-locale=([^;]*)/);
+  const m = document.cookie.match(
+    new RegExp(`(?:^|;\\s*)${name.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&")}=([^;]*)`),
+  );
   if (!m) return null;
-  const v = decodeURIComponent(m[1].trim());
+  return decodeURIComponent(m[1]!.trim());
+}
+
+function readCookieLocale(): Locale | null {
+  const v = readCookieValue(LOCALE_COOKIE);
+  if (!v) return null;
   return SUPPORTED_LOCALES.includes(v as Locale) ? (v as Locale) : null;
 }
 
+function setLocalePrefCookie(locale: Locale): void {
+  if (typeof document === "undefined") return;
+  const maxAge = 60 * 60 * 24 * 365;
+  const secure =
+    typeof window !== "undefined" && window.location.protocol === "https:"
+      ? "; Secure"
+      : "";
+  document.cookie = `${LOCALE_PREF_COOKIE}=${locale}; Path=/; Max-Age=${maxAge}; SameSite=Lax${secure}`;
+}
+
 /** When Vercel/geo omits country, infer locale from system timezone (e.g. Turkey → tr). */
+const ARABIC_PRIMARY_TIMEZONES = new Set([
+  "Asia/Riyadh",
+  "Asia/Dubai",
+  "Asia/Kuwait",
+  "Asia/Bahrain",
+  "Asia/Qatar",
+  "Asia/Baghdad",
+  "Asia/Aden",
+  "Asia/Muscat",
+  "Asia/Amman",
+  "Asia/Beirut",
+  "Asia/Damascus",
+  "Africa/Cairo",
+  "Africa/Khartoum",
+  "Africa/Tripoli",
+  "Africa/Tunis",
+  "Africa/Algiers",
+  "Africa/Casablanca",
+]);
+
 function localeFromTimeZone(): Locale | null {
   try {
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
     if (!tz) return null;
     if (tz === "Europe/Istanbul") return "tr";
     if (tz === "Asia/Tokyo") return "ja";
+    if (ARABIC_PRIMARY_TIMEZONES.has(tz)) return "ar";
   } catch {
     return null;
   }
@@ -4884,6 +6164,7 @@ function localeFromBrowserLang(): Locale | null {
     : [navigator.language];
   for (const raw of list) {
     const browserLang = raw.toLowerCase();
+    if (browserLang === "ar" || browserLang.startsWith("ar-")) return "ar";
     for (const [prefix, loc] of BROWSER_LANG_PREFIXES) {
       if (browserLang.startsWith(prefix)) return loc;
     }
@@ -4901,84 +6182,69 @@ function stripLangSearchParamIfStale(chosen: Locale): void {
   }
 }
 
-export function I18nProvider({ children }: { children: React.ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>("en");
-  const [mounted, setMounted] = useState(false);
+export function I18nProvider({
+  children,
+  initialLocale = "en",
+}: {
+  children: React.ReactNode;
+  /** From server cookie — aligns first paint with middleware locale. */
+  initialLocale?: Locale;
+}) {
+  const bootLocale =
+    initialLocale && SUPPORTED_LOCALES.includes(initialLocale) ? initialLocale : "en";
+  const [locale, setLocaleState] = useState<Locale>(bootLocale);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const urlLang = params.get("lang");
-
-    // Only respect localStorage if the user EXPLICITLY chose a language via the
-    // language switcher (flagged with "zapfile-locale-explicit"). A locale that
-    // was auto-saved from a ?lang= URL param does NOT count as explicit.
     const saved = localStorage.getItem("zapfile-locale") as Locale | null;
     const savedExplicit = localStorage.getItem("zapfile-locale-explicit") === "true";
+
+    let resolved: Locale = bootLocale;
+
     if (saved && savedExplicit && SUPPORTED_LOCALES.includes(saved)) {
-      setLocaleState(saved);
-      setMounted(true);
-      return;
+      resolved = saved;
+    } else {
+      const cookieLoc = readCookieLocale();
+      if (cookieLoc && cookieLoc !== "en") {
+        resolved = cookieLoc;
+        stripLangSearchParamIfStale(cookieLoc);
+      } else {
+        const fromTz = localeFromTimeZone();
+        if (fromTz) {
+          resolved = fromTz;
+          stripLangSearchParamIfStale(fromTz);
+        } else {
+          const fromBrowser = localeFromBrowserLang();
+          if (fromBrowser) {
+            resolved = fromBrowser;
+            stripLangSearchParamIfStale(fromBrowser);
+          } else if (urlLang && SUPPORTED_LOCALES.includes(urlLang as Locale)) {
+            resolved = urlLang as Locale;
+          } else if (cookieLoc) {
+            resolved = cookieLoc;
+          }
+        }
+      }
     }
 
-    const geo = readCookieLocale();
-
-    // Country from edge (middleware cookie) beats stale ?lang= and browser order.
-    // If cookie is "en" (unmapped country), keep resolving — do not lock UI to English.
-    if (geo && geo !== "en") {
-      setLocaleState(geo);
-      stripLangSearchParamIfStale(geo);
-      setMounted(true);
-      return;
-    }
-
-    const fromTz = localeFromTimeZone();
-    if (fromTz) {
-      setLocaleState(fromTz);
-      stripLangSearchParamIfStale(fromTz);
-      setMounted(true);
-      return;
-    }
-
-    const fromBrowser = localeFromBrowserLang();
-    if (fromBrowser) {
-      setLocaleState(fromBrowser);
-      stripLangSearchParamIfStale(fromBrowser);
-      setMounted(true);
-      return;
-    }
-
-    // Shared links: ?lang=de — only after geo/tz/browser could not decide.
-    if (urlLang && SUPPORTED_LOCALES.includes(urlLang as Locale)) {
-      setLocaleState(urlLang as Locale);
-      setMounted(true);
-      return;
-    }
-
-    if (geo) {
-      setLocaleState(geo);
-      setMounted(true);
-      return;
-    }
-
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!mounted) return;
-    document.documentElement.lang = locale;
-    document.documentElement.dir = isRtlLocale(locale) ? "rtl" : "ltr";
-  }, [locale, mounted]);
+    setLocaleState(resolved);
+    document.documentElement.lang = resolved;
+    document.documentElement.dir = isRtlLocale(resolved) ? "rtl" : "ltr";
+  }, [bootLocale]);
 
   const setLocale = useCallback((newLocale: Locale) => {
     if (!SUPPORTED_LOCALES.includes(newLocale)) return;
     setLocaleState(newLocale);
-    // Mark as an explicit user choice so geo/browser detection won't override it.
     localStorage.setItem("zapfile-locale", newLocale);
     localStorage.setItem("zapfile-locale-explicit", "true");
+    setLocalePrefCookie(newLocale);
     if (typeof window !== "undefined") {
       const url = new URL(window.location.href);
       url.searchParams.set("lang", newLocale);
       window.history.replaceState({}, "", url);
+      document.documentElement.lang = newLocale;
+      document.documentElement.dir = isRtlLocale(newLocale) ? "rtl" : "ltr";
     }
   }, []);
 
@@ -4994,27 +6260,6 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     },
     [locale],
   );
-
-  // Render with default locale until mounted to avoid hydration mismatch
-  if (!mounted) {
-    const defaultT = (
-      key: string,
-      params?: Record<string, string | number>,
-    ) => {
-      let text = resolveTranslation("en", key);
-      if (params) {
-        Object.entries(params).forEach(([k, v]) => {
-          text = text.replace(`{${k}}`, String(v));
-        });
-      }
-      return text;
-    };
-    return (
-      <I18nContext.Provider value={{ locale: "en", setLocale, t: defaultT }}>
-        {children}
-      </I18nContext.Provider>
-    );
-  }
 
   return (
     <I18nContext.Provider value={{ locale, setLocale, t }}>

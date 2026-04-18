@@ -11,6 +11,7 @@ export const BLOG_DATE_LOCALE: Record<Locale, string> = {
   pt: "pt-BR",
   it: "it-IT",
   ja: "ja-JP",
+  ar: "ar",
 };
 
 export function formatBlogDate(iso: string, locale: Locale): string {

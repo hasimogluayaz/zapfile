@@ -22,6 +22,7 @@ export const metadata: Metadata = {
       pt: `${SITE_URL}/tools?lang=pt`,
       it: `${SITE_URL}/tools?lang=it`,
       ja: `${SITE_URL}/tools?lang=ja`,
+      ar: `${SITE_URL}/tools?lang=ar`,
       "x-default": `${SITE_URL}/tools`,
     },
   },

@@ -158,7 +158,24 @@ export default function QRGeneratorPage() {
       });
       downloadBlob(new Blob([svgStr], { type: "image/svg+xml" }), "qrcode.svg");
     } catch {
-      toast.error("SVG export failed");
+      toast.error(t("qr.svgExportFail"));
+    }
+  };
+
+  const copySvgToClipboard = async () => {
+    if (!hasContent) return;
+    try {
+      const QRCode = (await import("qrcode")).default;
+      const svgStr = await QRCode.toString(formatContent(), {
+        type: "svg",
+        width: size,
+        margin: 2,
+        color: { dark: fgColor, light: bgColor },
+      });
+      await navigator.clipboard.writeText(svgStr);
+      toast.success(t("qr.svgCopied"), { duration: 4000 });
+    } catch {
+      toast.error(t("qr.copyNotSupported"));
     }
   };
 
@@ -168,21 +185,21 @@ export default function QRGeneratorPage() {
       const res = await fetch(qrDataUrl);
       const blob = await res.blob();
       await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
-      toast.success(t("qr.copied"));
+      toast.success(t("qr.copied"), { duration: 4000 });
     } catch {
-      toast.error("Copy not supported in this browser");
+      toast.error(t("qr.copyNotSupported"));
     }
   };
 
   return (
     <ToolLayout
-      toolName="QR Code Generator"
-      toolDescription="Generate QR codes for URLs, text, phone numbers, email addresses and WiFi networks. Add a custom logo or icon in the center."
+      toolName={t("tool.qr-generator.name")}
+      toolDescription={t("tool.qr-generator.desc")}
     >
       <div className="space-y-5">
         {/* Type selector */}
         <div className="glass rounded-2xl p-5">
-          <p className="text-xs font-semibold text-t-tertiary uppercase tracking-wider mb-3">Type</p>
+          <p className="text-xs font-semibold text-t-tertiary uppercase tracking-wider mb-3">{t("qr.sectionType")}</p>
           <div className="flex flex-wrap gap-2">
             {(Object.keys(TYPE_LABELS) as QRType[]).map((type) => (
               <button
@@ -231,7 +248,7 @@ export default function QRGeneratorPage() {
                     >
                       <option value="WPA">WPA/WPA2</option>
                       <option value="WEP">WEP</option>
-                      <option value="nopass">No Password</option>
+                      <option value="nopass">{t("qr.wifiNoPass")}</option>
                     </select>
                     <label className="flex items-center gap-2 text-sm text-t-secondary cursor-pointer select-none">
                       <input
@@ -248,7 +265,7 @@ export default function QRGeneratorPage() {
                 <textarea
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder={qrType === "text" ? "Enter your text here…" : ""}
+                  placeholder={qrType === "text" ? t("qr.placeholderFreeText") : ""}
                   rows={4}
                   className="w-full px-4 py-2.5 rounded-xl bg-bg-secondary border border-border text-t-primary placeholder:text-t-tertiary focus:outline-none focus:border-accent/50 text-sm resize-none"
                 />
@@ -258,9 +275,9 @@ export default function QRGeneratorPage() {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder={
-                    qrType === "url" ? "https://example.com" :
-                    qrType === "tel" ? "+1 234 567 8900" :
-                    "email@example.com"
+                    qrType === "url" ? t("qr.phUrl") :
+                    qrType === "tel" ? t("qr.phTel") :
+                    t("qr.phEmail")
                   }
                   className="w-full px-4 py-2.5 rounded-xl bg-bg-secondary border border-border text-t-primary placeholder:text-t-tertiary focus:outline-none focus:border-accent/50 text-sm"
                 />
@@ -328,8 +345,8 @@ export default function QRGeneratorPage() {
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={logoDataUrl} alt="Logo preview" className="w-12 h-12 rounded-lg object-contain border border-border" />
                   <div>
-                    <p className="text-sm text-t-primary font-medium">Logo loaded</p>
-                    <p className="text-xs text-t-tertiary">Will appear in QR center</p>
+                    <p className="text-sm text-t-primary font-medium">{t("qr.logoLoaded")}</p>
+                    <p className="text-xs text-t-tertiary">{t("qr.logoCenterHint")}</p>
                   </div>
                 </div>
               ) : (
@@ -384,12 +401,16 @@ export default function QRGeneratorPage() {
                   className="w-full py-3 rounded-xl font-semibold text-white bg-accent hover:bg-accent-hover transition-all hover:scale-[1.02] active:scale-[0.98] text-sm">
                   ⬇ {t("qr.downloadPNG")}
                 </button>
-                <div className="grid grid-cols-2 gap-2">
-                  <button onClick={downloadSVG}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <button type="button" onClick={downloadSVG}
                     className="py-2.5 rounded-xl font-medium text-t-secondary bg-bg-secondary hover:bg-bg-tertiary transition-all border border-border text-sm">
                     {t("qr.downloadSVG")}
                   </button>
-                  <button onClick={copyToClipboard}
+                  <button type="button" onClick={copySvgToClipboard}
+                    className="py-2.5 rounded-xl font-medium text-t-secondary bg-bg-secondary hover:bg-bg-tertiary transition-all border border-border text-sm">
+                    {t("qr.copySVG")}
+                  </button>
+                  <button type="button" onClick={copyToClipboard}
                     className="py-2.5 rounded-xl font-medium text-t-secondary bg-bg-secondary hover:bg-bg-tertiary transition-all border border-border text-sm">
                     {t("qr.copyImage")}
                   </button>

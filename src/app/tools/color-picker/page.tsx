@@ -110,8 +110,8 @@ export default function ColorPickerPage() {
 
   return (
     <ToolLayout
-      toolName="Color Picker"
-      toolDescription="Pick colors and convert between HEX, RGB, and HSL formats."
+      toolName={t("tool.color-picker.name")}
+      toolDescription={t("tool.color-picker.desc")}
     >
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Color preview & picker */}
@@ -119,7 +119,7 @@ export default function ColorPickerPage() {
           {/* Large color preview */}
           <div className="glass rounded-xl p-6">
             <div
-              className="w-full h-48 rounded-xl border border-white/10 transition-colors duration-200"
+              className="w-full h-48 rounded-xl border border-border transition-colors duration-200"
               style={{ backgroundColor: hex }}
             />
 
@@ -132,7 +132,7 @@ export default function ColorPickerPage() {
                 className="w-14 h-14 rounded-xl cursor-pointer bg-transparent border-0"
               />
               <div className="flex-1">
-                <p className="text-sm text-brand-muted mb-1">HEX</p>
+                <p className="text-sm text-t-secondary mb-1">{t("clr.hex")}</p>
                 <div className="flex gap-2">
                   <input
                     type="text"
@@ -142,13 +142,14 @@ export default function ColorPickerPage() {
                       setHex(v);
                       if (/^#[0-9a-f]{6}$/i.test(v)) updateFromHex(v);
                     }}
-                    className="flex-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-brand-text font-mono text-sm focus:outline-none focus:border-brand-indigo/50"
+                    className="flex-1 px-3 py-2 rounded-lg bg-bg-secondary border border-border text-t-primary font-mono text-sm focus:outline-none focus:border-accent/50"
                   />
                   <button
+                    type="button"
                     onClick={() => copy(hexString)}
-                    className="px-3 py-2 rounded-lg bg-white/5 text-brand-muted hover:text-brand-text hover:bg-white/10 transition-colors text-sm"
+                    className="px-3 py-2 rounded-lg bg-bg-secondary text-t-secondary hover:text-t-primary hover:bg-bg-tertiary transition-colors text-sm border border-border"
                   >
-                    Copy
+                    {t("clr.copy")}
                   </button>
                 </div>
               </div>
@@ -157,7 +158,7 @@ export default function ColorPickerPage() {
 
           {/* Preset colors */}
           <div className="glass rounded-xl p-6">
-            <h3 className="text-brand-text font-medium mb-3">{t("clr.presets")}</h3>
+            <h3 className="text-t-primary font-medium mb-3">{t("clr.presets")}</h3>
             <div className="flex flex-wrap gap-2">
               {presetColors.map((c) => (
                 <button
@@ -179,17 +180,18 @@ export default function ColorPickerPage() {
           {/* RGB */}
           <div className="glass rounded-xl p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-brand-text font-medium">RGB</h3>
+              <h3 className="text-t-primary font-medium">{t("clr.rgb")}</h3>
               <button
+                type="button"
                 onClick={() => copy(rgbString)}
-                className="px-3 py-1.5 text-xs rounded-lg bg-brand-indigo/20 text-brand-indigo hover:bg-brand-indigo/30 transition-colors"
+                className="px-3 py-1.5 text-xs rounded-lg bg-accent/15 text-accent hover:bg-accent/25 transition-colors border border-accent/30"
               >
-                Copy
+                {t("clr.copy")}
               </button>
             </div>
             {(["r", "g", "b"] as const).map((channel) => (
               <div key={channel} className="flex items-center gap-4">
-                <span className="text-sm text-brand-muted uppercase w-4">{channel}</span>
+                <span className="text-sm text-t-secondary uppercase w-4">{channel}</span>
                 <input
                   type="range"
                   min="0"
@@ -203,7 +205,7 @@ export default function ColorPickerPage() {
                       channel === "b" ? val : rgb.b
                     );
                   }}
-                  className="flex-1 accent-brand-indigo"
+                  className="flex-1 accent-accent"
                 />
                 <input
                   type="number"
@@ -218,22 +220,23 @@ export default function ColorPickerPage() {
                       channel === "b" ? val : rgb.b
                     );
                   }}
-                  className="w-16 px-2 py-1.5 rounded-lg bg-white/5 border border-white/10 text-brand-text text-sm text-center focus:outline-none focus:border-brand-indigo/50"
+                  className="w-16 px-2 py-1.5 rounded-lg bg-bg-secondary border border-border text-t-primary text-sm text-center focus:outline-none focus:border-accent/50"
                 />
               </div>
             ))}
-            <p className="text-sm text-brand-muted font-mono">{rgbString}</p>
+            <p className="text-sm text-t-secondary font-mono">{rgbString}</p>
           </div>
 
           {/* HSL */}
           <div className="glass rounded-xl p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-brand-text font-medium">HSL</h3>
+              <h3 className="text-t-primary font-medium">{t("clr.hsl")}</h3>
               <button
+                type="button"
                 onClick={() => copy(hslString)}
-                className="px-3 py-1.5 text-xs rounded-lg bg-brand-indigo/20 text-brand-indigo hover:bg-brand-indigo/30 transition-colors"
+                className="px-3 py-1.5 text-xs rounded-lg bg-accent/15 text-accent hover:bg-accent/25 transition-colors border border-accent/30"
               >
-                Copy
+                {t("clr.copy")}
               </button>
             </div>
             {([
@@ -242,7 +245,7 @@ export default function ColorPickerPage() {
               { key: "l" as const, label: "L", max: 100, unit: "%" },
             ]).map(({ key, label, max, unit }) => (
               <div key={key} className="flex items-center gap-4">
-                <span className="text-sm text-brand-muted w-4">{label}</span>
+                <span className="text-sm text-t-secondary w-4">{label}</span>
                 <input
                   type="range"
                   min="0"
@@ -256,7 +259,7 @@ export default function ColorPickerPage() {
                       key === "l" ? val : hsl.l
                     );
                   }}
-                  className="flex-1 accent-brand-indigo"
+                  className="flex-1 accent-accent"
                 />
                 <div className="flex items-center gap-1">
                   <input
@@ -272,30 +275,31 @@ export default function ColorPickerPage() {
                         key === "l" ? val : hsl.l
                       );
                     }}
-                    className="w-16 px-2 py-1.5 rounded-lg bg-white/5 border border-white/10 text-brand-text text-sm text-center focus:outline-none focus:border-brand-indigo/50"
+                    className="w-16 px-2 py-1.5 rounded-lg bg-bg-secondary border border-border text-t-primary text-sm text-center focus:outline-none focus:border-accent/50"
                   />
-                  <span className="text-xs text-brand-muted">{unit}</span>
+                  <span className="text-xs text-t-secondary">{unit}</span>
                 </div>
               </div>
             ))}
-            <p className="text-sm text-brand-muted font-mono">{hslString}</p>
+            <p className="text-sm text-t-secondary font-mono">{hslString}</p>
           </div>
 
           {/* CSS variable */}
           <div className="glass rounded-xl p-6">
-            <h3 className="text-brand-text font-medium mb-3">CSS</h3>
+            <h3 className="text-t-primary font-medium mb-3">{t("clr.css")}</h3>
             <div className="space-y-2">
               {[
-                { label: "HEX", value: hexString },
-                { label: "RGB", value: rgbString },
-                { label: "HSL", value: hslString },
+                { label: t("clr.hex"), value: hexString },
+                { label: t("clr.rgb"), value: rgbString },
+                { label: t("clr.hsl"), value: hslString },
               ].map((item) => (
                 <button
+                  type="button"
                   key={item.label}
                   onClick={() => copy(`color: ${item.value};`)}
-                  className="w-full text-left px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors font-mono text-sm text-brand-muted hover:text-brand-text"
+                  className="w-full text-left px-4 py-2 rounded-lg bg-bg-secondary hover:bg-bg-tertiary transition-colors font-mono text-sm text-t-secondary hover:text-t-primary border border-border"
                 >
-                  color: {item.value};
+                  {t("clr.cssColor", { value: item.value })}
                 </button>
               ))}
             </div>

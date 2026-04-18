@@ -1,6 +1,10 @@
 import type { Metadata, Viewport } from "next";
+import { cookies } from "next/headers";
 import { Toaster } from "react-hot-toast";
 import ClientProviders from "@/components/ClientProviders";
+import type { Locale } from "@/lib/locales";
+import { SUPPORTED_LOCALES } from "@/lib/locales";
+import { LOCALE_COOKIE } from "@/lib/locale-cookies";
 import SkipToContent from "@/components/SkipToContent";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -82,11 +86,17 @@ export const metadata: Metadata = {
       pt: `${SITE_URL}/?lang=pt`,
       it: `${SITE_URL}/?lang=it`,
       ja: `${SITE_URL}/?lang=ja`,
+      ar: `${SITE_URL}/?lang=ar`,
       "x-default": SITE_URL,
     },
   },
   verification: {
     google: "4k5LW57dXwNJkEYKplc4-IM_6uM5vskgXOZKLZRtGto",
+  },
+  appleWebApp: {
+    capable: true,
+    title: "ZapFile",
+    statusBarStyle: "default",
   },
 };
 
@@ -147,13 +157,18 @@ const jsonLd = {
   ],
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const raw = cookieStore.get(LOCALE_COOKIE)?.value;
+  const initialLocale: Locale =
+    raw && SUPPORTED_LOCALES.includes(raw as Locale) ? (raw as Locale) : "en";
+
   return (
-    <html lang="en" suppressHydrationWarning translate="no">
+    <html lang={initialLocale} suppressHydrationWarning translate="no">
       <head>
         <meta name="google" content="notranslate" />
         {process.env.NEXT_PUBLIC_GA_ID && (
@@ -199,12 +214,12 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased min-h-screen flex flex-col">
-        <ClientProviders>
+        <ClientProviders initialLocale={initialLocale}>
           <SkipToContent />
           <Toaster
             position="bottom-right"
             toastOptions={{
-              duration: 3000,
+              duration: 5500,
               style: {
                 background: "var(--surface)",
                 color: "var(--text-primary)",

@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import toast from "react-hot-toast";
 import ToolLayout from "@/components/ToolLayout";
+import { useI18n } from "@/lib/i18n";
 
 // ── Data Arrays ──────────────────────────────────────────────────────────────
 
@@ -93,13 +94,14 @@ const EMAIL_DOMAINS_TR = ["gmail.com","hotmail.com","outlook.com","yahoo.com","y
 const EMAIL_DOMAINS_FR = ["gmail.com","orange.fr","free.fr","laposte.net","outlook.fr"];
 
 type Country = "US" | "UK" | "DE" | "TR" | "FR";
+type GenderKey = "male" | "female";
 
-const COUNTRY_LABELS: Record<Country, string> = {
-  US: "United States",
-  UK: "United Kingdom",
-  DE: "Germany",
-  TR: "Turkey",
-  FR: "France",
+const COUNTRY_LABEL_KEYS: Record<Country, string> = {
+  US: "fake.country.us",
+  UK: "fake.country.uk",
+  DE: "fake.country.de",
+  TR: "fake.country.tr",
+  FR: "fake.country.fr",
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -128,7 +130,7 @@ function slugify(name: string): string {
 // Luhn-valid Visa card number
 function generateVisaCard(): string {
   const prefix = "4";
-  let digits = prefix + Array.from({ length: 14 }, () => randInt(0, 9)).join("");
+  const digits = prefix + Array.from({ length: 14 }, () => randInt(0, 9)).join("");
   // Luhn checksum
   let sum = 0;
   let alt = false;
@@ -159,7 +161,7 @@ function cmToFeetInches(cm: number): string {
 
 interface Identity {
   fullName: string;
-  gender: string;
+  genderKey: GenderKey;
   age: number;
   birthday: string;
   bloodType: string;
@@ -221,7 +223,7 @@ function generateIdentity(country: Country): Identity {
   const firstName = pick(isMale ? FIRST_NAMES_MALE : FIRST_NAMES_FEMALE);
   const lastName = pick(LAST_NAMES);
   const fullName = `${firstName} ${lastName}`;
-  const gender = isMale ? "Male" : "Female";
+  const genderKey: GenderKey = isMale ? "male" : "female";
 
   const age = randInt(18, 65);
   const year = new Date().getFullYear() - age;
@@ -257,7 +259,7 @@ function generateIdentity(country: Country): Identity {
   const hobbies = shuffled.slice(0, numHobbies).join(", ");
 
   return {
-    fullName, gender, age, birthday, bloodType,
+    fullName, genderKey, age, birthday, bloodType,
     heightCm, weightKg, email, phone, address,
     country, username, password: randPassword(),
     website, linkedin, company, jobTitle, ssn, creditCard, hobbies,
@@ -274,13 +276,54 @@ function CopyIcon() {
   );
 }
 
-function FieldRow({ label, value, mono, badge }: { label: string; value: string; mono?: boolean; badge?: string }) {
+function escapeVcf(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/\n/g, "\\n").replace(/;/g, "\\;");
+}
+
+function buildVcard(id: Identity, countryLabel: string): string {
+  const parts = id.fullName.trim().split(/\s+/);
+  const first = parts[0] ?? "";
+  const last = parts.slice(1).join(" ");
+  const lines = [
+    "BEGIN:VCARD",
+    "VERSION:3.0",
+    `FN:${escapeVcf(id.fullName)}`,
+    `N:${escapeVcf(last)};${escapeVcf(first)};;;`,
+    `EMAIL:${id.email}`,
+    `TEL:${id.phone}`,
+    `LABEL;TYPE=HOME:${escapeVcf(id.address)}`,
+    `ORG:${escapeVcf(id.company)}`,
+    `TITLE:${escapeVcf(id.jobTitle)}`,
+    `URL:${id.website}`,
+    `item1.URL:${id.linkedin}`,
+    `item1.X-ABLabel:LinkedIn`,
+    `NOTE:Test identity — ${escapeVcf(countryLabel)}`,
+    "END:VCARD",
+  ];
+  return lines.join("\r\n");
+}
+
+function FieldRow({
+  label,
+  value,
+  mono,
+  badge,
+  copyToastLabel,
+  onCopyFail,
+}: {
+  label: string;
+  value: string;
+  mono?: boolean;
+  badge?: string;
+  copyToastLabel: string;
+  onCopyFail: () => void;
+}) {
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(value);
-      toast.success(`${label} copied!`);
+      toast.success(copyToastLabel);
     } catch {
-      toast.error("Failed to copy");
+      onCopyFail();
     }
   };
 
@@ -319,25 +362,26 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
   );
 }
 
-const COUNTRIES: { code: Country; label: string; flag: string }[] = [
-  { code: "US", label: "USA", flag: "🇺🇸" },
-  { code: "UK", label: "UK", flag: "🇬🇧" },
-  { code: "DE", label: "Germany", flag: "🇩🇪" },
-  { code: "TR", label: "Turkey", flag: "🇹🇷" },
-  { code: "FR", label: "France", flag: "🇫🇷" },
+const COUNTRIES: { code: Country; flag: string }[] = [
+  { code: "US", flag: "🇺🇸" },
+  { code: "UK", flag: "🇬🇧" },
+  { code: "DE", flag: "🇩🇪" },
+  { code: "TR", flag: "🇹🇷" },
+  { code: "FR", flag: "🇫🇷" },
 ];
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function FakeIdentityPage() {
+  const { t } = useI18n();
   const [country, setCountry] = useState<Country>("US");
   const [identity, setIdentity] = useState<Identity>(() => generateIdentity("US"));
 
   const generate = useCallback((c?: Country) => {
     const target = c ?? country;
     setIdentity(generateIdentity(target));
-    toast.success("New identity generated!");
-  }, [country]);
+    toast.success(t("fake.newIdentity"));
+  }, [country, t]);
 
   const handleCountryChange = (c: Country) => {
     setCountry(c);
@@ -347,7 +391,7 @@ export default function FakeIdentityPage() {
   const copyAsJSON = async () => {
     const json = JSON.stringify({
       fullName: identity.fullName,
-      gender: identity.gender,
+      gender: identity.genderKey,
       age: identity.age,
       birthday: identity.birthday,
       bloodType: identity.bloodType,
@@ -357,7 +401,7 @@ export default function FakeIdentityPage() {
       email: identity.email,
       phone: identity.phone,
       address: identity.address,
-      country: COUNTRY_LABELS[identity.country],
+      country: t(COUNTRY_LABEL_KEYS[identity.country]),
       username: identity.username,
       password: identity.password,
       website: identity.website,
@@ -367,16 +411,16 @@ export default function FakeIdentityPage() {
     }, null, 2);
     try {
       await navigator.clipboard.writeText(json);
-      toast.success("Copied as JSON!");
+      toast.success(t("fake.copiedJson"));
     } catch {
-      toast.error("Failed to copy");
+      toast.error(t("fake.copyFailed"));
     }
   };
 
   const copyAsCSV = async () => {
     const headers = "Full Name,Gender,Age,Birthday,Blood Type,Height,Weight,Email,Phone,Address,Username,Password,Website,Company,Job Title";
     const values = [
-      identity.fullName, identity.gender, identity.age, identity.birthday,
+      identity.fullName, identity.genderKey, identity.age, identity.birthday,
       identity.bloodType,
       `${identity.heightCm}cm`,
       `${identity.weightKg}kg`,
@@ -386,16 +430,28 @@ export default function FakeIdentityPage() {
     ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(",");
     try {
       await navigator.clipboard.writeText(`${headers}\n${values}`);
-      toast.success("Copied as CSV!");
+      toast.success(t("fake.copiedCsv"));
     } catch {
-      toast.error("Failed to copy");
+      toast.error(t("fake.copyFailed"));
     }
   };
 
+  const copyAsVcard = async () => {
+    const v = buildVcard(identity, t(COUNTRY_LABEL_KEYS[identity.country]));
+    try {
+      await navigator.clipboard.writeText(v);
+      toast.success(t("fake.copiedVcard"));
+    } catch {
+      toast.error(t("fake.copyFailed"));
+    }
+  };
+
+  const countryLabel = t(COUNTRY_LABEL_KEYS[identity.country]);
+
   return (
     <ToolLayout
-      toolName="Fake Identity Generator"
-      toolDescription="Generate random test identities for development and QA. All data is created locally — nothing is sent to any server."
+      toolName={t("tool.fake-identity.name")}
+      toolDescription={t("tool.fake-identity.desc")}
     >
       <div className="space-y-5">
         {/* Country Selector */}
@@ -403,6 +459,7 @@ export default function FakeIdentityPage() {
           {COUNTRIES.map((c) => (
             <button
               key={c.code}
+              type="button"
               onClick={() => handleCountryChange(c.code)}
               className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium border transition-all ${
                 country === c.code
@@ -411,7 +468,7 @@ export default function FakeIdentityPage() {
               }`}
             >
               <span>{c.flag}</span>
-              <span>{c.label}</span>
+              <span>{t(COUNTRY_LABEL_KEYS[c.code])}</span>
             </button>
           ))}
         </div>
@@ -419,22 +476,32 @@ export default function FakeIdentityPage() {
         {/* Actions */}
         <div className="flex gap-3 flex-wrap">
           <button
+            type="button"
             onClick={() => generate()}
             className="px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:opacity-90 transition-all"
           >
-            Generate New
+            {t("fake.generateNew")}
           </button>
           <button
+            type="button"
             onClick={copyAsJSON}
             className="px-5 py-3 rounded-xl font-semibold text-t-primary bg-bg-secondary border border-border hover:bg-bg-secondary/80 transition-all text-sm"
           >
-            Copy as JSON
+            {t("fake.copyJson")}
           </button>
           <button
+            type="button"
             onClick={copyAsCSV}
             className="px-5 py-3 rounded-xl font-semibold text-t-primary bg-bg-secondary border border-border hover:bg-bg-secondary/80 transition-all text-sm"
           >
-            Copy as CSV
+            {t("fake.copyCsv")}
+          </button>
+          <button
+            type="button"
+            onClick={copyAsVcard}
+            className="px-5 py-3 rounded-xl font-semibold text-t-primary bg-bg-secondary border border-border hover:bg-bg-secondary/80 transition-all text-sm"
+          >
+            {t("fake.copyVcard")}
           </button>
         </div>
 
@@ -446,48 +513,48 @@ export default function FakeIdentityPage() {
           <div>
             <p className="font-bold text-t-primary text-lg leading-tight">{identity.fullName}</p>
             <p className="text-sm text-t-secondary">{identity.jobTitle} at {identity.company}</p>
-            <p className="text-xs text-t-secondary mt-0.5">{COUNTRY_LABELS[identity.country]}</p>
+            <p className="text-xs text-t-secondary mt-0.5">{countryLabel}</p>
           </div>
         </div>
 
         {/* Personal Info Card */}
-        <Card title="Personal Info">
-          <FieldRow label="Full Name" value={identity.fullName} />
-          <FieldRow label="Gender" value={identity.gender} />
-          <FieldRow label="Age" value={`${identity.age} years old`} />
-          <FieldRow label="Birthday" value={identity.birthday} />
-          <FieldRow label="Blood Type" value={identity.bloodType} />
-          <FieldRow label="Height" value={`${identity.heightCm} cm  /  ${cmToFeetInches(identity.heightCm)}`} />
-          <FieldRow label="Weight" value={`${identity.weightKg} kg  /  ${Math.round(identity.weightKg * 2.205)} lbs`} />
-          <FieldRow label="Hobbies" value={identity.hobbies} />
+        <Card title={t("fake.card.personal")}>
+          <FieldRow label={t("fake.field.fullName")} value={identity.fullName} copyToastLabel={t("fake.copiedField", { label: t("fake.field.fullName") })} onCopyFail={() => toast.error(t("fake.copyFailed"))} />
+          <FieldRow label={t("fake.field.gender")} value={t(`fake.gender.${identity.genderKey}`)} copyToastLabel={t("fake.copiedField", { label: t("fake.field.gender") })} onCopyFail={() => toast.error(t("fake.copyFailed"))} />
+          <FieldRow label={t("fake.field.age")} value={t("fake.yearsOld", { n: identity.age })} copyToastLabel={t("fake.copiedField", { label: t("fake.field.age") })} onCopyFail={() => toast.error(t("fake.copyFailed"))} />
+          <FieldRow label={t("fake.field.birthday")} value={identity.birthday} copyToastLabel={t("fake.copiedField", { label: t("fake.field.birthday") })} onCopyFail={() => toast.error(t("fake.copyFailed"))} />
+          <FieldRow label={t("fake.field.bloodType")} value={identity.bloodType} copyToastLabel={t("fake.copiedField", { label: t("fake.field.bloodType") })} onCopyFail={() => toast.error(t("fake.copyFailed"))} />
+          <FieldRow label={t("fake.field.height")} value={`${identity.heightCm} cm  /  ${cmToFeetInches(identity.heightCm)}`} copyToastLabel={t("fake.copiedField", { label: t("fake.field.height") })} onCopyFail={() => toast.error(t("fake.copyFailed"))} />
+          <FieldRow label={t("fake.field.weight")} value={`${identity.weightKg} kg  /  ${Math.round(identity.weightKg * 2.205)} lbs`} copyToastLabel={t("fake.copiedField", { label: t("fake.field.weight") })} onCopyFail={() => toast.error(t("fake.copyFailed"))} />
+          <FieldRow label={t("fake.field.hobbies")} value={identity.hobbies} copyToastLabel={t("fake.copiedField", { label: t("fake.field.hobbies") })} onCopyFail={() => toast.error(t("fake.copyFailed"))} />
         </Card>
 
         {/* Contact Card */}
-        <Card title="Contact">
-          <FieldRow label="Email" value={identity.email} mono />
-          <FieldRow label="Phone" value={identity.phone} mono />
-          <FieldRow label="Address" value={identity.address} />
-          <FieldRow label="Country" value={COUNTRY_LABELS[identity.country]} />
+        <Card title={t("fake.card.contact")}>
+          <FieldRow label={t("fake.field.email")} value={identity.email} mono copyToastLabel={t("fake.copiedField", { label: t("fake.field.email") })} onCopyFail={() => toast.error(t("fake.copyFailed"))} />
+          <FieldRow label={t("fake.field.phone")} value={identity.phone} mono copyToastLabel={t("fake.copiedField", { label: t("fake.field.phone") })} onCopyFail={() => toast.error(t("fake.copyFailed"))} />
+          <FieldRow label={t("fake.field.address")} value={identity.address} copyToastLabel={t("fake.copiedField", { label: t("fake.field.address") })} onCopyFail={() => toast.error(t("fake.copyFailed"))} />
+          <FieldRow label={t("fake.field.country")} value={countryLabel} copyToastLabel={t("fake.copiedField", { label: t("fake.field.country") })} onCopyFail={() => toast.error(t("fake.copyFailed"))} />
         </Card>
 
         {/* Online Card */}
-        <Card title="Online">
-          <FieldRow label="Username" value={identity.username} mono />
-          <FieldRow label="Password" value={identity.password} mono />
-          <FieldRow label="Website" value={identity.website} mono />
-          <FieldRow label="LinkedIn" value={identity.linkedin} mono />
+        <Card title={t("fake.card.online")}>
+          <FieldRow label={t("fake.field.username")} value={identity.username} mono copyToastLabel={t("fake.copiedField", { label: t("fake.field.username") })} onCopyFail={() => toast.error(t("fake.copyFailed"))} />
+          <FieldRow label={t("fake.field.password")} value={identity.password} mono copyToastLabel={t("fake.copiedField", { label: t("fake.field.password") })} onCopyFail={() => toast.error(t("fake.copyFailed"))} />
+          <FieldRow label={t("fake.field.website")} value={identity.website} mono copyToastLabel={t("fake.copiedField", { label: t("fake.field.website") })} onCopyFail={() => toast.error(t("fake.copyFailed"))} />
+          <FieldRow label={t("fake.field.linkedin")} value={identity.linkedin} mono copyToastLabel={t("fake.copiedField", { label: t("fake.field.linkedin") })} onCopyFail={() => toast.error(t("fake.copyFailed"))} />
         </Card>
 
         {/* Professional Card */}
-        <Card title="Professional">
-          <FieldRow label="Company" value={identity.company} />
-          <FieldRow label="Job Title" value={identity.jobTitle} />
-          <FieldRow label="SSN" value={identity.ssn} mono badge="FAKE" />
-          <FieldRow label="Credit Card (Visa)" value={identity.creditCard} mono badge="TEST ONLY" />
+        <Card title={t("fake.card.professional")}>
+          <FieldRow label={t("fake.field.company")} value={identity.company} copyToastLabel={t("fake.copiedField", { label: t("fake.field.company") })} onCopyFail={() => toast.error(t("fake.copyFailed"))} />
+          <FieldRow label={t("fake.field.jobTitle")} value={identity.jobTitle} copyToastLabel={t("fake.copiedField", { label: t("fake.field.jobTitle") })} onCopyFail={() => toast.error(t("fake.copyFailed"))} />
+          <FieldRow label={t("fake.field.ssn")} value={identity.ssn} mono badge={t("fake.badge.fake")} copyToastLabel={t("fake.copiedField", { label: t("fake.field.ssn") })} onCopyFail={() => toast.error(t("fake.copyFailed"))} />
+          <FieldRow label={t("fake.field.creditCard")} value={identity.creditCard} mono badge={t("fake.badge.testOnly")} copyToastLabel={t("fake.copiedField", { label: t("fake.field.creditCard") })} onCopyFail={() => toast.error(t("fake.copyFailed"))} />
         </Card>
 
         <p className="text-center text-xs text-t-secondary">
-          All data is randomly generated and does not represent any real person. For testing purposes only.
+          {t("fake.disclaimer")}
         </p>
       </div>
     </ToolLayout>

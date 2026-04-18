@@ -5,6 +5,8 @@ import toast from "react-hot-toast";
 import ToolLayout from "@/components/ToolLayout";
 import FileDropzone from "@/components/FileDropzone";
 import { downloadBlob, getFileNameWithoutExtension } from "@/lib/utils";
+import ImageCompareSlider from "@/components/ImageCompareSlider";
+import { useI18n } from "@/lib/i18n";
 
 // ─── Canvas-based pixel manipulation ──────────────────────────────
 
@@ -130,7 +132,7 @@ type FilterKey =
 
 interface FilterPreset {
   key: FilterKey;
-  name: string;
+  nameKey: string;
   // Returns a new array of pixel data (modifies copy, not in-place)
   apply: (data: Uint8ClampedArray, w: number, h: number) => Uint8ClampedArray;
 }
@@ -149,22 +151,22 @@ function cloneAndApply(
 const FILTERS: FilterPreset[] = [
   {
     key: "original",
-    name: "Original",
+    nameKey: "photofilter.filter.original",
     apply: (d) => new Uint8ClampedArray(d),
   },
   {
     key: "grayscale",
-    name: "Grayscale",
+    nameKey: "photofilter.filter.grayscale",
     apply: (d, w, h) => cloneAndApply(d, applyGrayscale, w, h),
   },
   {
     key: "sepia",
-    name: "Sepia",
+    nameKey: "photofilter.filter.sepia",
     apply: (d, w, h) => cloneAndApply(d, applySepia, w, h),
   },
   {
     key: "vintage",
-    name: "Vintage",
+    nameKey: "photofilter.filter.vintage",
     apply: (d, w, h) => {
       const c = new Uint8ClampedArray(d);
       applyVintage(c, w, h);
@@ -173,42 +175,42 @@ const FILTERS: FilterPreset[] = [
   },
   {
     key: "bright",
-    name: "Bright",
+    nameKey: "photofilter.filter.bright",
     apply: (d, w, h) => cloneAndApply(d, applyBright, w, h),
   },
   {
     key: "contrast",
-    name: "Contrast",
+    nameKey: "photofilter.filter.contrast",
     apply: (d, w, h) => cloneAndApply(d, applyContrast, w, h),
   },
   {
     key: "invert",
-    name: "Invert",
+    nameKey: "photofilter.filter.invert",
     apply: (d, w, h) => cloneAndApply(d, applyInvert, w, h),
   },
   {
     key: "warm",
-    name: "Warm",
+    nameKey: "photofilter.filter.warm",
     apply: (d, w, h) => cloneAndApply(d, applyWarm, w, h),
   },
   {
     key: "cold",
-    name: "Cold",
+    nameKey: "photofilter.filter.cold",
     apply: (d, w, h) => cloneAndApply(d, applyCold, w, h),
   },
   {
     key: "fade",
-    name: "Fade",
+    nameKey: "photofilter.filter.fade",
     apply: (d, w, h) => cloneAndApply(d, applyFade, w, h),
   },
   {
     key: "saturate",
-    name: "Saturate",
+    nameKey: "photofilter.filter.saturate",
     apply: (d, w, h) => cloneAndApply(d, applySaturate, w, h),
   },
   {
     key: "blur",
-    name: "Blur",
+    nameKey: "photofilter.filter.blur",
     apply: (d) => new Uint8ClampedArray(d), // handled via CSS filter separately
   },
 ];
@@ -216,11 +218,14 @@ const FILTERS: FilterPreset[] = [
 // ─── Component ────────────────────────────────────────────────────
 
 export default function PhotoFilterPage() {
+  const { t } = useI18n();
   const [file, setFile] = useState<File | null>(null);
   const [imgUrl, setImgUrl] = useState<string | null>(null);
   const [selectedFilter, setSelectedFilter] = useState<FilterKey>("original");
   const [intensity, setIntensity] = useState(100);
   const [showOriginal, setShowOriginal] = useState(false);
+  const [previewMode, setPreviewMode] = useState<"tabs" | "slider">("tabs");
+  const [sliderAfterUrl, setSliderAfterUrl] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
 
   const imgRef = useRef<HTMLImageElement>(null);
@@ -236,6 +241,8 @@ export default function PhotoFilterPage() {
     setSelectedFilter("original");
     setIntensity(100);
     setShowOriginal(false);
+    setPreviewMode("tabs");
+    setSliderAfterUrl(null);
     origPixelsRef.current = null;
     thumbCanvasesRef.current.clear();
   }, []);
@@ -257,11 +264,25 @@ export default function PhotoFilterPage() {
     };
   }, []);
 
-  // Re-render preview canvas when filter/intensity changes
+  // Re-render preview canvas when filter/intensity/mode changes; sync slider strip
   useEffect(() => {
     const orig = origPixelsRef.current;
     const canvas = previewCanvasRef.current;
     if (!orig || !canvas) return;
+
+    const syncSliderStrip = () => {
+      if (previewMode !== "slider" || selectedFilter === "original") {
+        setSliderAfterUrl(null);
+        return;
+      }
+      requestAnimationFrame(() => {
+        try {
+          setSliderAfterUrl(canvas.toDataURL("image/jpeg", 0.88));
+        } catch {
+          setSliderAfterUrl(null);
+        }
+      });
+    };
 
     const { data, w, h } = orig;
     canvas.width = w;
@@ -271,6 +292,7 @@ export default function PhotoFilterPage() {
     if (selectedFilter === "original") {
       const imgData = new ImageData(new Uint8ClampedArray(data), w, h);
       ctx.putImageData(imgData, 0, 0);
+      setSliderAfterUrl(null);
       return;
     }
 
@@ -281,15 +303,17 @@ export default function PhotoFilterPage() {
       ctx.filter = blurPx > 0 ? `blur(${blurPx}px)` : "none";
       ctx.drawImage(img, 0, 0);
       ctx.filter = "none";
+      syncSliderStrip();
       return;
     }
 
     const preset = FILTERS.find((f) => f.key === selectedFilter)!;
     const filtered = preset.apply(data, w, h);
-    const t = intensity / 100;
-    const blended = t >= 1 ? filtered : blendPixels(data, filtered, t);
+    const int01 = intensity / 100;
+    const blended = int01 >= 1 ? filtered : blendPixels(data, filtered, int01);
     ctx.putImageData(new ImageData(blended.slice() as unknown as Uint8ClampedArray<ArrayBuffer>, w, h), 0, 0);
-  }, [selectedFilter, intensity]);
+    syncSliderStrip();
+  }, [selectedFilter, intensity, previewMode]);
 
   // Render a thumbnail for a given filter into a small canvas
   const renderThumb = useCallback(
@@ -345,9 +369,9 @@ export default function PhotoFilterPage() {
         (blob) => {
           if (blob) {
             downloadBlob(blob, `${getFileNameWithoutExtension(file.name)}-filtered.png`);
-            toast.success("Downloaded!");
+            toast.success(t("photofilter.downloaded"));
           } else {
-            toast.error("Export failed");
+            toast.error(t("photofilter.exportFail"));
           }
           setDownloading(false);
         },
@@ -355,15 +379,15 @@ export default function PhotoFilterPage() {
       );
     } catch (err) {
       console.error(err);
-      toast.error("Export failed");
+      toast.error(t("photofilter.exportFail"));
       setDownloading(false);
     }
-  }, [file]);
+  }, [file, t]);
 
   return (
     <ToolLayout
-      toolName="Photo Filter"
-      toolDescription="Apply filters to photos with live preview and intensity control. Download the result as PNG."
+      toolName={t("tool.photo-filter.name")}
+      toolDescription={t("tool.photo-filter.desc")}
     >
       <div className="space-y-6">
         {!file && (
@@ -375,7 +399,7 @@ export default function PhotoFilterPage() {
               "image/webp": [".webp"],
             }}
             multiple={false}
-            label="Drop your photo here or click to browse"
+            label={t("tool.dropLabel")}
             formats={["jpg", "png", "webp"]}
           />
         )}
@@ -387,7 +411,7 @@ export default function PhotoFilterPage() {
             <img
               ref={imgRef}
               src={imgUrl}
-              alt="Source"
+              alt={t("photofilter.altSource")}
               crossOrigin="anonymous"
               className="hidden"
               onLoad={handleImageLoad}
@@ -398,67 +422,130 @@ export default function PhotoFilterPage() {
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium text-t-primary">
-                    Filter: <span className="text-indigo-400">{FILTERS.find((f) => f.key === selectedFilter)?.name}</span>
+                    {t("photofilter.filterLabel")}:{" "}
+                    <span className="text-indigo-400">
+                      {t(FILTERS.find((f) => f.key === selectedFilter)!.nameKey)}
+                    </span>
                   </span>
                   {selectedFilter !== "original" && (
                     <span className="text-xs text-t-secondary">{intensity}%</span>
                   )}
                 </div>
                 <button
+                  type="button"
                   onClick={() => { setFile(null); setImgUrl(null); }}
                   className="text-xs text-t-secondary hover:text-t-primary transition-colors border border-border px-3 py-1 rounded-lg"
                 >
-                  Change Image
+                  {t("photofilter.changeImage")}
                 </button>
               </div>
 
-              {/* Before/after toggle */}
-              <div className="flex gap-2 mb-3">
+              <div className="flex flex-wrap gap-2 mb-3">
+                <span className="text-[11px] text-t-tertiary self-center me-1">{t("ui.preview")}</span>
                 <button
-                  onClick={() => setShowOriginal(false)}
+                  type="button"
+                  onClick={() => setPreviewMode("tabs")}
                   className={`text-[12px] px-3 py-1.5 rounded-lg font-medium transition-all ${
-                    !showOriginal
+                    previewMode === "tabs"
                       ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white"
                       : "bg-white/5 text-t-secondary hover:text-t-primary"
                   }`}
                 >
-                  Filtered
+                  {t("photofilter.previewTabs")}
                 </button>
                 <button
-                  onClick={() => setShowOriginal(true)}
+                  type="button"
+                  onClick={() => setPreviewMode("slider")}
+                  disabled={selectedFilter === "original"}
                   className={`text-[12px] px-3 py-1.5 rounded-lg font-medium transition-all ${
-                    showOriginal
+                    previewMode === "slider"
                       ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white"
-                      : "bg-white/5 text-t-secondary hover:text-t-primary"
+                      : selectedFilter === "original"
+                        ? "bg-white/5 text-t-secondary/40 cursor-not-allowed"
+                        : "bg-white/5 text-t-secondary hover:text-t-primary"
                   }`}
                 >
-                  Original
+                  {t("photofilter.previewSlider")}
                 </button>
               </div>
 
-              {/* Preview canvas (filtered) */}
-              <div className={showOriginal ? "hidden" : "block"}>
-                <canvas
-                  ref={previewCanvasRef}
-                  className="w-full max-h-80 object-contain rounded-xl mx-auto block"
-                  style={{ imageRendering: "auto" }}
-                />
-              </div>
+              {previewMode === "slider" &&
+                selectedFilter !== "original" &&
+                imgUrl &&
+                sliderAfterUrl && (
+                  <div className="mb-4">
+                    <ImageCompareSlider
+                      beforeSrc={imgUrl}
+                      afterSrc={sliderAfterUrl}
+                      beforeLabel={t("ui.original")}
+                      afterLabel={t("photofilter.filtered")}
+                      frameClassName="w-full max-h-[min(28rem,72vh)] aspect-[4/3]"
+                      dragHandleAriaLabel={t("photofilter.compareDrag")}
+                      rangeAriaLabel={t("photofilter.compareRange")}
+                    />
+                  </div>
+                )}
 
-              {/* Original image for comparison */}
-              {showOriginal && (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img
-                  src={imgUrl}
-                  alt="Original"
-                  className="w-full max-h-80 object-contain rounded-xl mx-auto block"
-                />
+              {previewMode === "tabs" && (
+                <>
+                  <div className="flex gap-2 mb-3">
+                    <button
+                      type="button"
+                      onClick={() => setShowOriginal(false)}
+                      className={`text-[12px] px-3 py-1.5 rounded-lg font-medium transition-all ${
+                        !showOriginal
+                          ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white"
+                          : "bg-white/5 text-t-secondary hover:text-t-primary"
+                      }`}
+                    >
+                      {t("photofilter.filtered")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowOriginal(true)}
+                      className={`text-[12px] px-3 py-1.5 rounded-lg font-medium transition-all ${
+                        showOriginal
+                          ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white"
+                          : "bg-white/5 text-t-secondary hover:text-t-primary"
+                      }`}
+                    >
+                      {t("ui.original")}
+                    </button>
+                  </div>
+
+                  <div className={showOriginal ? "hidden" : "block"}>
+                    <canvas
+                      ref={previewCanvasRef}
+                      className="w-full max-h-80 object-contain rounded-xl mx-auto block"
+                      style={{ imageRendering: "auto" }}
+                    />
+                  </div>
+
+                  {showOriginal && (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={imgUrl}
+                      alt={t("photofilter.altOriginalPreview")}
+                      className="w-full max-h-80 object-contain rounded-xl mx-auto block"
+                    />
+                  )}
+                </>
+              )}
+
+              {previewMode === "slider" && (
+                <div className={selectedFilter === "original" ? "block" : "sr-only"} aria-hidden={selectedFilter !== "original"}>
+                  <canvas
+                    ref={previewCanvasRef}
+                    className="w-full max-h-80 object-contain rounded-xl mx-auto block"
+                    style={{ imageRendering: "auto" }}
+                  />
+                </div>
               )}
             </div>
 
             {/* Filter Presets Grid */}
             <div className="glass rounded-xl p-6 space-y-3">
-              <h3 className="text-sm font-medium text-t-primary">Filters</h3>
+              <h3 className="text-sm font-medium text-t-primary">{t("photofilter.filtersHeading")}</h3>
               <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
                 {FILTERS.map((preset) => (
                   <button
@@ -486,7 +573,7 @@ export default function PhotoFilterPage() {
                     />
                     <div className="absolute inset-x-0 bottom-0 bg-black/60 py-1 px-1">
                       <p className="text-[9px] text-white text-center font-medium truncate">
-                        {preset.name}
+                        {t(preset.nameKey)}
                       </p>
                     </div>
                   </button>
@@ -498,7 +585,7 @@ export default function PhotoFilterPage() {
             {selectedFilter !== "original" && (
               <div className="glass rounded-xl p-6 space-y-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-medium text-t-primary">Intensity</h3>
+                  <h3 className="text-sm font-medium text-t-primary">{t("photofilter.intensity")}</h3>
                   <span className="text-xs font-mono px-2.5 py-1 rounded-lg bg-white/5 text-t-secondary border border-border">
                     {intensity}%
                   </span>
@@ -512,19 +599,20 @@ export default function PhotoFilterPage() {
                   className="w-full h-2 rounded-full appearance-none cursor-pointer bg-white/10 accent-indigo-500"
                 />
                 <div className="flex justify-between text-[10px] text-t-secondary">
-                  <span>Original</span>
-                  <span>Full effect</span>
+                  <span>{t("photofilter.intensityMin")}</span>
+                  <span>{t("photofilter.intensityMax")}</span>
                 </div>
               </div>
             )}
 
             {/* Download */}
             <button
+              type="button"
               onClick={handleDownload}
               disabled={downloading}
               className="w-full px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:opacity-90 transition-all disabled:opacity-50"
             >
-              {downloading ? "Exporting..." : "Download PNG"}
+              {downloading ? t("photofilter.exporting") : t("photofilter.downloadPng")}
             </button>
           </>
         )}

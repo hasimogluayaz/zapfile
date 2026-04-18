@@ -13,6 +13,7 @@ export default function DiffCheckerPage() {
   const [modifiedText, setModifiedText] = useState("");
   const [diffResult, setDiffResult] = useState<DiffLine[] | null>(null);
   const [isComparing, setIsComparing] = useState(false);
+  const [diffView, setDiffView] = useState<"unified" | "split">("unified");
 
   useEffect(() => {
     workerRef.current = new Worker(
@@ -182,9 +183,35 @@ export default function DiffCheckerPage() {
 
             {/* Diff output */}
             <div className="glass rounded-xl p-6">
-              <h3 className="text-sm font-medium text-t-secondary mb-4">
-                {t("diff.output")}
-              </h3>
+              <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                <h3 className="text-sm font-medium text-t-secondary">
+                  {t("diff.output")}
+                </h3>
+                <div className="flex rounded-lg border border-border overflow-hidden text-[12px] font-medium">
+                  <button
+                    type="button"
+                    onClick={() => setDiffView("unified")}
+                    className={`px-3 py-1.5 transition-colors ${
+                      diffView === "unified"
+                        ? "bg-accent text-white"
+                        : "bg-bg-secondary text-t-secondary hover:text-t-primary"
+                    }`}
+                  >
+                    {t("diff.viewUnified")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDiffView("split")}
+                    className={`px-3 py-1.5 transition-colors border-l border-border ${
+                      diffView === "split"
+                        ? "bg-accent text-white"
+                        : "bg-bg-secondary text-t-secondary hover:text-t-primary"
+                    }`}
+                  >
+                    {t("diff.viewSplit")}
+                  </button>
+                </div>
+              </div>
               <div className="rounded-lg overflow-hidden border border-border">
                 {diffResult.length === 0 ? (
                   <div className="px-4 py-8 text-center text-t-secondary text-sm">
@@ -194,7 +221,7 @@ export default function DiffCheckerPage() {
                   <div className="px-4 py-8 text-center text-t-secondary text-sm">
                     {t("diff.identical")}
                   </div>
-                ) : (
+                ) : diffView === "unified" ? (
                   <div className="divide-y divide-border text-sm font-mono overflow-x-auto">
                     {diffResult.map((line, idx) => (
                       <div
@@ -238,6 +265,57 @@ export default function DiffCheckerPage() {
                         </div>
                       </div>
                     ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-border text-sm font-mono max-h-[min(70vh,520px)] overflow-auto">
+                    <div>
+                      <div className="sticky top-0 z-[1] bg-bg-secondary/95 backdrop-blur px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-t-tertiary border-b border-border">
+                        {t("diff.columnOriginal")}
+                      </div>
+                      {diffResult.map((line, idx) => (
+                        <div
+                          key={`L-${idx}`}
+                          className={`flex min-h-[1.75rem] ${
+                            line.type === "removed"
+                              ? "bg-red-500/10 border-l-2 border-red-500"
+                              : line.type === "added"
+                                ? "bg-bg-secondary/30 text-t-tertiary/50 border-l-2 border-transparent"
+                                : "bg-bg-secondary/50 border-l-2 border-transparent"
+                          }`}
+                        >
+                          <div className="w-9 shrink-0 text-right pr-2 py-1 text-t-tertiary text-xs select-none">
+                            {line.type === "added" ? "" : (line.oldLineNum ?? "")}
+                          </div>
+                          <div className="flex-1 py-1 pr-3 text-t-primary leading-6 whitespace-pre">
+                            {line.type === "added" ? "\u00a0" : line.text}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div>
+                      <div className="sticky top-0 z-[1] bg-bg-secondary/95 backdrop-blur px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-t-tertiary border-b border-border">
+                        {t("diff.columnModified")}
+                      </div>
+                      {diffResult.map((line, idx) => (
+                        <div
+                          key={`R-${idx}`}
+                          className={`flex min-h-[1.75rem] ${
+                            line.type === "added"
+                              ? "bg-green-500/10 border-l-2 border-green-500"
+                              : line.type === "removed"
+                                ? "bg-bg-secondary/30 text-t-tertiary/50 border-l-2 border-transparent"
+                                : "bg-bg-secondary/50 border-l-2 border-transparent"
+                          }`}
+                        >
+                          <div className="w-9 shrink-0 text-right pr-2 py-1 text-t-tertiary text-xs select-none">
+                            {line.type === "removed" ? "" : (line.newLineNum ?? "")}
+                          </div>
+                          <div className="flex-1 py-1 pr-3 text-t-primary leading-6 whitespace-pre">
+                            {line.type === "removed" ? "\u00a0" : line.text}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>

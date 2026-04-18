@@ -8,6 +8,21 @@ import { useI18n } from "@/lib/i18n";
 type TimerState = "work" | "short-break" | "long-break";
 type PlayState = "idle" | "running" | "paused";
 
+const POMO_STORAGE_KEY = "zapfile-pomodoro-v1";
+
+interface PomodoroPersist {
+  workDuration: number;
+  shortBreakDuration: number;
+  longBreakDuration: number;
+  sessionsBeforeLong: number;
+  timerState: TimerState;
+  playState: PlayState;
+  timeLeft: number;
+  currentSession: number;
+  /** When running: wall-clock ms when current phase should reach 0 */
+  wallEndAt: number | null;
+}
+
 function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
@@ -47,6 +62,7 @@ export default function PomodoroTimerPage() {
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const originalTitle = useRef("");
+  const [storageReady, setStorageReady] = useState(false);
 
   const getTotalSeconds = useCallback(
     (state: TimerState): number => {
@@ -69,6 +85,73 @@ export default function PomodoroTimerPage() {
       document.title = originalTitle.current;
     };
   }, []);
+
+  // Restore from localStorage (once)
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(POMO_STORAGE_KEY);
+      if (!raw) return;
+      const p = JSON.parse(raw) as PomodoroPersist;
+      if (typeof p.workDuration === "number") setWorkDuration(p.workDuration);
+      if (typeof p.shortBreakDuration === "number") setShortBreakDuration(p.shortBreakDuration);
+      if (typeof p.longBreakDuration === "number") setLongBreakDuration(p.longBreakDuration);
+      if (typeof p.sessionsBeforeLong === "number") setSessionsBeforeLong(p.sessionsBeforeLong);
+      if (p.timerState === "work" || p.timerState === "short-break" || p.timerState === "long-break") {
+        setTimerState(p.timerState);
+      }
+      if (typeof p.currentSession === "number") setCurrentSession(p.currentSession);
+      if (p.playState === "running" && p.wallEndAt && typeof p.wallEndAt === "number") {
+        const tl = Math.max(0, Math.ceil((p.wallEndAt - Date.now()) / 1000));
+        setTimeLeft(tl);
+        setPlayState(tl > 0 ? "running" : "idle");
+        if (tl === 0) {
+          setTimerState("work");
+          setTimeLeft(p.workDuration * 60);
+          setCurrentSession(1);
+        }
+      } else if (p.playState === "paused" || p.playState === "idle") {
+        setPlayState(p.playState);
+        if (typeof p.timeLeft === "number") setTimeLeft(p.timeLeft);
+      }
+    } catch {
+      /* ignore corrupt storage */
+    } finally {
+      setStorageReady(true);
+    }
+  }, []);
+
+  // Persist settings + timer state
+  useEffect(() => {
+    if (!storageReady) return;
+    try {
+      const wallEndAt =
+        playState === "running" ? Date.now() + timeLeft * 1000 : null;
+      const payload: PomodoroPersist = {
+        workDuration,
+        shortBreakDuration,
+        longBreakDuration,
+        sessionsBeforeLong,
+        timerState,
+        playState,
+        timeLeft,
+        currentSession,
+        wallEndAt,
+      };
+      localStorage.setItem(POMO_STORAGE_KEY, JSON.stringify(payload));
+    } catch {
+      /* quota / private mode */
+    }
+  }, [
+    workDuration,
+    shortBreakDuration,
+    longBreakDuration,
+    sessionsBeforeLong,
+    timerState,
+    playState,
+    timeLeft,
+    currentSession,
+    storageReady,
+  ]);
 
   // Update document title
   useEffect(() => {
@@ -207,8 +290,8 @@ export default function PomodoroTimerPage() {
 
   return (
     <ToolLayout
-      toolName="Pomodoro Timer"
-      toolDescription="Focus timer with work and break intervals"
+      toolName={t("tool.pomodoro-timer.name")}
+      toolDescription={t("tool.pomodoro-timer.desc")}
     >
       <div className="space-y-6">
         {/* Timer Display */}

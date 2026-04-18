@@ -6,18 +6,22 @@ import Header from "./Header";
 import Footer from "./Footer";
 import AdPlaceholder from "./AdPlaceholder";
 import ToolShareBar from "./ToolShareBar";
+import TrustPanel from "./TrustPanel";
 import { useI18n } from "@/lib/i18n";
 import { usePathname } from "next/navigation";
 import { tools, getToolBySlug } from "@/lib/tools";
 import { toolField } from "@/lib/tool-i18n";
 import { useRecentTools } from "@/hooks/useRecentTools";
 import { useFavoriteTools } from "@/hooks/useFavoriteTools";
+import { toolSlugFromPathname } from "@/lib/tool-slug";
 
 interface ToolLayoutProps {
   children: React.ReactNode;
   toolName: string;
   toolDescription: string;
   faq?: { q: string; a: string }[];
+  /** Show privacy / local-processing explainer (default: true) */
+  showTrustPanel?: boolean;
 }
 
 export default function ToolLayout({
@@ -25,10 +29,11 @@ export default function ToolLayout({
   toolName,
   toolDescription,
   faq,
+  showTrustPanel = true,
 }: ToolLayoutProps) {
   const { t } = useI18n();
   const pathname = usePathname();
-  const slug = pathname?.split("/").pop() || "";
+  const slug = toolSlugFromPathname(pathname);
   const { trackTool } = useRecentTools();
   const { isFavorite, toggleFavorite, ready: favReady } = useFavoriteTools();
   const [openFaqIndices, setOpenFaqIndices] = useState<Set<number>>(new Set());
@@ -150,6 +155,8 @@ export default function ToolLayout({
           <AdPlaceholder position="top" />
 
           <ToolShareBar />
+
+          {showTrustPanel && <TrustPanel />}
 
           {/* Tool header */}
           <div className="mb-8 flex items-start justify-between gap-4">

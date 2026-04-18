@@ -94,8 +94,8 @@ export default function StopwatchPage() {
 
   return (
     <ToolLayout
-      toolName="Stopwatch"
-      toolDescription="Online stopwatch with lap times. Press Space to start/stop, L for lap, R to reset."
+      toolName={t("tool.stopwatch.name")}
+      toolDescription={t("tool.stopwatch.desc")}
     >
       <div className="space-y-6">
         {/* Main Display */}

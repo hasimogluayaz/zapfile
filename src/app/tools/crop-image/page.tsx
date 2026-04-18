@@ -60,6 +60,7 @@ export default function CropImagePage() {
   const [resultPreview, setResultPreview] = useState<string | null>(null);
   const [manualW, setManualW] = useState("");
   const [manualH, setManualH] = useState("");
+  const [showThirds, setShowThirds] = useState(true);
 
   const imgRef = useRef<HTMLImageElement>(null);
   const dragRef = useRef<DragState | null>(null);
@@ -345,7 +346,16 @@ export default function CropImagePage() {
         ) : !result ? (
           <>
             {/* Aspect ratio presets */}
-            <div className="glass rounded-2xl p-4">
+            <div className="glass rounded-2xl p-4 space-y-3">
+              <label className="flex items-center gap-2 cursor-pointer text-sm text-t-secondary">
+                <input
+                  type="checkbox"
+                  checked={showThirds}
+                  onChange={(e) => setShowThirds(e.target.checked)}
+                  className="rounded border-border accent-accent"
+                />
+                {t("crop.showThirds")}
+              </label>
               <div className="flex flex-wrap gap-2">
                 {PRESETS.map((p) => (
                   <button
@@ -405,11 +415,16 @@ export default function CropImagePage() {
                         onPointerMove={onPointerMove}
                         onPointerUp={onPointerUp}
                       >
-                        {/* Rule of thirds grid */}
-                        <div className="absolute inset-0 pointer-events-none opacity-30" style={{
-                          backgroundImage: "linear-gradient(rgba(255,255,255,0.6) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.6) 1px,transparent 1px)",
-                          backgroundSize: "33.33% 33.33%",
-                        }} />
+                        {showThirds && (
+                          <div
+                            className="absolute inset-0 pointer-events-none opacity-30"
+                            style={{
+                              backgroundImage:
+                                "linear-gradient(rgba(255,255,255,0.6) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.6) 1px,transparent 1px)",
+                              backgroundSize: "33.33% 33.33%",
+                            }}
+                          />
+                        )}
 
                         {/* 8 resize handles */}
                         {HANDLES.map(({ id, cursor, posStyle }) => (

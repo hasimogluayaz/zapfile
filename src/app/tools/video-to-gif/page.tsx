@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import ToolLayout from "@/components/ToolLayout";
 import FileDropzone from "@/components/FileDropzone";
 import ProgressBar from "@/components/ProgressBar";
+import { useI18n } from "@/lib/i18n";
 
 // ---------------------------------------------------------------------------
 // Utility helpers
@@ -288,7 +289,9 @@ function writeGIF(
   width: number,
   height: number,
   delayCs: number,        // hundredths of a second per frame
-  colorCount: number
+  colorCount: number,
+  /** 0 = infinite loop (GIF convention); otherwise repeat count */
+  netscapeLoopCount: number,
 ): Uint8Array {
   const colorBits = Math.ceil(Math.log2(colorCount)) - 1; // packed field bits
 
@@ -316,12 +319,14 @@ function writeGIF(
     push(new Uint8Array((declaredColors - colorCount) * 3));
   }
 
-  // --- Netscape looping extension (loop forever) ---
+  // --- Netscape looping extension ---
+  const lc = Math.max(0, Math.min(65535, netscapeLoopCount));
   push([
     0x21, 0xff, 0x0b,
     0x4e, 0x45, 0x54, 0x53, 0x43, 0x41, 0x50, 0x45, 0x32, 0x2e, 0x30, // "NETSCAPE2.0"
     0x03, 0x01,
-    0x00, 0x00, // loop count = 0 (infinite)
+    lc & 0xff,
+    (lc >> 8) & 0xff,
     0x00,
   ]);
 
@@ -385,6 +390,7 @@ async function framesToGIF(
   height: number,
   fps: number,
   colorCount: number,
+  netscapeLoopCount: number,
   onProgress: (pct: number) => void
 ): Promise<Uint8Array> {
   const delayCs = Math.round(100 / fps); // centiseconds per frame
@@ -403,7 +409,7 @@ async function framesToGIF(
     onProgress(Math.round(((i + 1) / frames.length) * 100));
   }
 
-  return writeGIF(encodedFrames, width, height, delayCs, colorCount);
+  return writeGIF(encodedFrames, width, height, delayCs, colorCount, netscapeLoopCount);
 }
 
 // ---------------------------------------------------------------------------
@@ -439,6 +445,7 @@ type WidthValue = (typeof WIDTH_OPTIONS)[number];
 // ---------------------------------------------------------------------------
 
 export default function VideoToGifPage() {
+  const { t } = useI18n();
   const [file, setFile] = useState<File | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [videoDuration, setVideoDuration] = useState(0);
@@ -449,6 +456,7 @@ export default function VideoToGifPage() {
   const [fps, setFps] = useState<FpsValue>(10);
   const [outputWidth, setOutputWidth] = useState<WidthValue>(320);
   const [colorCount, setColorCount] = useState(128);
+  const [gifLoop, setGifLoop] = useState<"forever" | "once" | "three">("forever");
 
   // Processing state
   const [processing, setProcessing] = useState(false);
@@ -621,12 +629,15 @@ export default function VideoToGifPage() {
 
       // ---- Phase 2: Encode GIF ----
       setProgressLabel("Encoding GIF…");
+      const netscapeLoopCount =
+        gifLoop === "forever" ? 0 : gifLoop === "once" ? 1 : 3;
       const gifBytes = await framesToGIF(
         frames,
         outW,
         outH,
         fps,
         colorCount,
+        netscapeLoopCount,
         (pct) => setEncodeProgress(pct)
       );
 
@@ -645,7 +656,7 @@ export default function VideoToGifPage() {
       setProcessing(false);
       setProgressLabel("");
     }
-  }, [file, startTime, endTime, fps, outputWidth, colorCount, clipDuration]);
+  }, [file, startTime, endTime, fps, outputWidth, colorCount, clipDuration, gifLoop]);
 
   const handleDownload = useCallback(() => {
     if (!outputUrl || !file) return;
@@ -663,8 +674,8 @@ export default function VideoToGifPage() {
 
   return (
     <ToolLayout
-      toolName="Video to GIF"
-      toolDescription="Convert short video clips into real animated GIF files — 100% in your browser, no upload needed."
+      toolName={t("tool.video-to-gif.name")}
+      toolDescription={t("tool.video-to-gif.desc")}
     >
       <div className="space-y-6">
         {!file ? (
@@ -677,7 +688,7 @@ export default function VideoToGifPage() {
               "video/x-msvideo": [".avi"],
             }}
             multiple={false}
-            label="Drop a video file here or click to upload"
+            label={t("vid2gif.dropLabel")}
             formats={["mp4", "webm", "mov", "avi"]}
           />
         ) : (
@@ -830,6 +841,35 @@ export default function VideoToGifPage() {
                       }`}
                     >
                       {f} fps
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Loop count */}
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-t-secondary block">
+                  {t("vid2gif.loop")}
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {(
+                    [
+                      { key: "forever" as const, label: t("vid2gif.loopForever") },
+                      { key: "once" as const, label: t("vid2gif.loopOnce") },
+                      { key: "three" as const, label: t("vid2gif.loopNTimes", { n: 3 }) },
+                    ]
+                  ).map(({ key, label }) => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setGifLoop(key)}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
+                        gifLoop === key
+                          ? "bg-indigo-500 text-white border-indigo-500"
+                          : "border-border text-t-secondary hover:bg-bg-secondary"
+                      }`}
+                    >
+                      {label}
                     </button>
                   ))}
                 </div>

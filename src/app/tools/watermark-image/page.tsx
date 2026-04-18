@@ -45,17 +45,20 @@ const GRID_CELLS: { value: GridPosition; label: string }[] = [
   { value: "bottom-right", label: "BR" },
 ];
 
-const FONT_FAMILIES: { value: FontFamily; label: string }[] = [
-  { value: "sans-serif", label: "Sans-serif" },
-  { value: "serif", label: "Serif" },
-  { value: "monospace", label: "Monospace" },
-  { value: "Impact, sans-serif", label: "Impact" },
-  { value: "Georgia, serif", label: "Georgia" },
+const FONT_FAMILIES: { value: FontFamily; labelKey: string }[] = [
+  { value: "sans-serif", labelKey: "wm.fontSans" },
+  { value: "serif", labelKey: "wm.fontSerif" },
+  { value: "monospace", labelKey: "wm.fontMono" },
+  { value: "Impact, sans-serif", labelKey: "wm.fontImpact" },
+  { value: "Georgia, serif", labelKey: "wm.fontGeorgia" },
 ];
 
 // ─── Draw helper ──────────────────────────────────────────────────────────────
 
+type WatermarkMode = "text" | "image" | "both";
+
 interface DrawOptions {
+  mode: WatermarkMode;
   text: string;
   fontSize: number;
   opacity: number;
@@ -72,6 +75,35 @@ interface DrawOptions {
   strokeWidth: number;
   tileEnabled: boolean;
   textBgEnabled: boolean;
+  imageScale: number; // % of base image width
+}
+
+type WmHistorySnapshot = DrawOptions & {
+  markDataUrl: string | null;
+  wmFileName: string | null;
+};
+
+function snapshotToDrawOptions(s: WmHistorySnapshot): DrawOptions {
+  return {
+    mode: s.mode,
+    text: s.text,
+    fontSize: s.fontSize,
+    opacity: s.opacity,
+    gridPosition: s.gridPosition,
+    customX: s.customX,
+    customY: s.customY,
+    color: s.color,
+    fontFamily: s.fontFamily,
+    bold: s.bold,
+    italic: s.italic,
+    rotation: s.rotation,
+    strokeEnabled: s.strokeEnabled,
+    strokeColor: s.strokeColor,
+    strokeWidth: s.strokeWidth,
+    tileEnabled: s.tileEnabled,
+    textBgEnabled: s.textBgEnabled,
+    imageScale: s.imageScale,
+  };
 }
 
 function resolveAlignment(pos: GridPosition): {
@@ -104,10 +136,91 @@ function resolveAlignment(pos: GridPosition): {
   }
 }
 
+function computeWatermarkPoint(
+  canvas: HTMLCanvasElement,
+  opts: DrawOptions,
+): { x: number; y: number; padding: number } {
+  const padding = Math.max(16, canvas.width * 0.02);
+  const { textAlign, textBaseline, xFraction, yFraction } =
+    opts.gridPosition === "custom"
+      ? {
+          textAlign: "center" as CanvasTextAlign,
+          textBaseline: "middle" as CanvasTextBaseline,
+          xFraction: opts.customX / 100,
+          yFraction: opts.customY / 100,
+        }
+      : resolveAlignment(opts.gridPosition);
+
+  let x: number;
+  let y: number;
+
+  if (opts.gridPosition === "custom") {
+    x = canvas.width * (opts.customX / 100);
+    y = canvas.height * (opts.customY / 100);
+  } else {
+    const xEdge =
+      xFraction === 0 ? padding : xFraction === 1 ? canvas.width - padding : canvas.width / 2;
+    const yEdge =
+      yFraction === 0
+        ? padding
+        : yFraction === 1
+          ? canvas.height - padding
+          : canvas.height / 2;
+    x = xEdge;
+    y = yEdge;
+  }
+  void textAlign;
+  void textBaseline;
+  return { x, y, padding };
+}
+
+function drawImageWatermark(
+  ctx: CanvasRenderingContext2D,
+  canvas: HTMLCanvasElement,
+  mark: HTMLImageElement,
+  opts: DrawOptions,
+): void {
+  const iw = mark.naturalWidth;
+  const ih = mark.naturalHeight;
+  if (!iw || !ih) return;
+
+  const targetW = canvas.width * (opts.imageScale / 100);
+  const targetH = (ih / iw) * targetW;
+
+  if (opts.tileEnabled) {
+    ctx.save();
+    ctx.globalAlpha = opts.opacity / 100;
+    const stepX = targetW * 1.25;
+    const stepY = targetH * 1.25;
+    for (let row = -2; row * stepY < canvas.height + stepY * 2; row++) {
+      for (let col = -2; col * stepX < canvas.width + stepX * 2; col++) {
+        const cx = col * stepX + (row % 2 === 0 ? 0 : stepX / 2);
+        const cy = row * stepY;
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate((-35 * Math.PI) / 180);
+        ctx.drawImage(mark, -targetW / 2, -targetH / 2, targetW, targetH);
+        ctx.restore();
+      }
+    }
+    ctx.restore();
+    return;
+  }
+
+  const { x, y } = computeWatermarkPoint(canvas, opts);
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate((opts.rotation * Math.PI) / 180);
+  ctx.globalAlpha = opts.opacity / 100;
+  ctx.drawImage(mark, -targetW / 2, -targetH / 2, targetW, targetH);
+  ctx.restore();
+}
+
 function drawWatermarkToCanvas(
   canvas: HTMLCanvasElement,
   img: HTMLImageElement,
   opts: DrawOptions,
+  markImg: HTMLImageElement | null,
 ): void {
   canvas.width = img.naturalWidth;
   canvas.height = img.naturalHeight;
@@ -118,9 +231,19 @@ function drawWatermarkToCanvas(
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(img, 0, 0);
 
-  if (!opts.text.trim()) return;
+  const showText =
+    (opts.mode === "text" || opts.mode === "both") && opts.text.trim().length > 0;
+  const showImg =
+    (opts.mode === "image" || opts.mode === "both") &&
+    markImg != null &&
+    markImg.naturalWidth > 0;
 
-  const padding = Math.max(16, canvas.width * 0.02);
+  if (showImg && markImg) {
+    drawImageWatermark(ctx, canvas, markImg, opts);
+  }
+
+  if (!showText) return;
+
   const fontStyle = `${opts.italic ? "italic " : ""}${opts.bold ? "bold " : ""}${opts.fontSize}px ${opts.fontFamily}`;
 
   if (opts.tileEnabled) {
@@ -164,35 +287,16 @@ function drawWatermarkToCanvas(
     return;
   }
 
-  // Single-position watermark
-  const { textAlign, textBaseline, xFraction, yFraction } =
+  // Single-position text watermark
+  const { textAlign, textBaseline } =
     opts.gridPosition === "custom"
       ? {
           textAlign: "center" as CanvasTextAlign,
           textBaseline: "middle" as CanvasTextBaseline,
-          xFraction: opts.customX / 100,
-          yFraction: opts.customY / 100,
         }
       : resolveAlignment(opts.gridPosition);
 
-  let x: number;
-  let y: number;
-
-  if (opts.gridPosition === "custom") {
-    x = canvas.width * (opts.customX / 100);
-    y = canvas.height * (opts.customY / 100);
-  } else {
-    // Use xFraction/yFraction to determine base point, then offset by padding
-    const xEdge = xFraction === 0 ? padding : xFraction === 1 ? canvas.width - padding : canvas.width / 2;
-    const yEdge =
-      yFraction === 0
-        ? padding
-        : yFraction === 1
-          ? canvas.height - padding
-          : canvas.height / 2;
-    x = xEdge;
-    y = yEdge;
-  }
+  const { x, y } = computeWatermarkPoint(canvas, opts);
 
   ctx.save();
   ctx.translate(x, y);
@@ -252,6 +356,10 @@ export default function WatermarkImagePage() {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
+  const [watermarkMode, setWatermarkMode] = useState<WatermarkMode>("text");
+  const [imageScale, setImageScale] = useState(22);
+  const [wmImageFile, setWmImageFile] = useState<File | null>(null);
+  const [markReady, setMarkReady] = useState(false);
 
   // Text
   const [watermarkText, setWatermarkText] = useState("ZapFile");
@@ -285,9 +393,16 @@ export default function WatermarkImagePage() {
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
+  const markImgRef = useRef<HTMLImageElement | null>(null);
+  const markUrlRef = useRef<string | null>(null);
+  const restoringHistoryRef = useRef(false);
+  const lastHistorySerializedRef = useRef<string | null>(null);
+  const [historyUndo, setHistoryUndo] = useState<string[]>([]);
+  const [historyRedo, setHistoryRedo] = useState<string[]>([]);
 
   // ── Collect all drawing options into one object ──────────────────────────
   const drawOpts: DrawOptions = {
+    mode: watermarkMode,
     text: watermarkText,
     fontSize,
     opacity,
@@ -304,6 +419,7 @@ export default function WatermarkImagePage() {
     strokeWidth,
     tileEnabled,
     textBgEnabled,
+    imageScale,
   };
 
   // Keep a stable ref to the latest drawOpts so the file-load callback always
@@ -311,17 +427,192 @@ export default function WatermarkImagePage() {
   const drawOptsRef = useRef<DrawOptions>(drawOpts);
   drawOptsRef.current = drawOpts;
 
-  // ── Redraw live preview whenever any setting changes ─────────────────────
-  const redraw = useCallback((img: HTMLImageElement, opts: DrawOptions) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    drawWatermarkToCanvas(canvas, img, opts);
-    setPreview(canvas.toDataURL("image/png"));
+  const serializeSnapshot = useCallback((): string => {
+    const snap: WmHistorySnapshot = {
+      mode: watermarkMode,
+      text: watermarkText,
+      fontSize,
+      opacity,
+      gridPosition,
+      customX,
+      customY,
+      color,
+      fontFamily,
+      bold,
+      italic,
+      rotation,
+      strokeEnabled,
+      strokeColor,
+      strokeWidth,
+      tileEnabled,
+      textBgEnabled,
+      imageScale,
+      markDataUrl: markUrlRef.current,
+      wmFileName: wmImageFile?.name ?? null,
+    };
+    return JSON.stringify(snap);
+  }, [
+    watermarkMode,
+    watermarkText,
+    fontSize,
+    opacity,
+    gridPosition,
+    customX,
+    customY,
+    color,
+    fontFamily,
+    bold,
+    italic,
+    rotation,
+    strokeEnabled,
+    strokeColor,
+    strokeWidth,
+    tileEnabled,
+    textBgEnabled,
+    imageScale,
+    wmImageFile?.name,
+  ]);
+
+  const applyHistorySnapshot = useCallback((json: string) => {
+    restoringHistoryRef.current = true;
+    let parsed: WmHistorySnapshot;
+    try {
+      parsed = JSON.parse(json) as WmHistorySnapshot;
+    } catch {
+      restoringHistoryRef.current = false;
+      return;
+    }
+
+    setWatermarkMode(parsed.mode);
+    setWatermarkText(parsed.text);
+    setFontSize(parsed.fontSize);
+    setOpacity(parsed.opacity);
+    setGridPosition(parsed.gridPosition);
+    setCustomX(parsed.customX);
+    setCustomY(parsed.customY);
+    setColor(parsed.color);
+    setFontFamily(parsed.fontFamily);
+    setBold(parsed.bold);
+    setItalic(parsed.italic);
+    setRotation(parsed.rotation);
+    setStrokeEnabled(parsed.strokeEnabled);
+    setStrokeColor(parsed.strokeColor);
+    setStrokeWidth(parsed.strokeWidth);
+    setTileEnabled(parsed.tileEnabled);
+    setTextBgEnabled(parsed.textBgEnabled);
+    setImageScale(parsed.imageScale);
+
+    const finishDraw = (mark: HTMLImageElement | null) => {
+      const canvas = canvasRef.current;
+      const base = imgRef.current;
+      if (!canvas || !base) {
+        restoringHistoryRef.current = false;
+        lastHistorySerializedRef.current = json;
+        return;
+      }
+      const opts = snapshotToDrawOptions(parsed);
+      drawWatermarkToCanvas(canvas, base, opts, mark);
+      setPreview(canvas.toDataURL("image/png"));
+      restoringHistoryRef.current = false;
+      lastHistorySerializedRef.current = json;
+    };
+
+    if (parsed.markDataUrl) {
+      markUrlRef.current = parsed.markDataUrl;
+      const im = new window.Image();
+      im.onload = () => {
+        markImgRef.current = im;
+        setMarkReady(true);
+        void fetch(parsed.markDataUrl!)
+          .then((r) => r.blob())
+          .then((blob) => {
+            setWmImageFile(
+              new File([blob], parsed.wmFileName || "watermark.png", {
+                type: blob.type || "image/png",
+              }),
+            );
+          })
+          .finally(() => {
+            finishDraw(im);
+          });
+      };
+      im.onerror = () => {
+        markUrlRef.current = null;
+        markImgRef.current = null;
+        setWmImageFile(null);
+        setMarkReady(false);
+        finishDraw(null);
+      };
+      im.src = parsed.markDataUrl;
+    } else {
+      markUrlRef.current = null;
+      markImgRef.current = null;
+      setWmImageFile(null);
+      setMarkReady(false);
+      queueMicrotask(() => finishDraw(null));
+    }
   }, []);
 
+  const handleHistoryUndo = useCallback(() => {
+    setHistoryUndo((u) => {
+      if (u.length === 0) {
+        queueMicrotask(() => toast.error(t("wm.historyNothingUndo")));
+        return u;
+      }
+      const prev = u[u.length - 1]!;
+      const current = serializeSnapshot();
+      setHistoryRedo((r) => [...r, current]);
+      queueMicrotask(() => applyHistorySnapshot(prev));
+      return u.slice(0, -1);
+    });
+  }, [applyHistorySnapshot, t, serializeSnapshot]);
+
+  const handleHistoryRedo = useCallback(() => {
+    setHistoryRedo((r) => {
+      if (r.length === 0) {
+        queueMicrotask(() => toast.error(t("wm.historyNothingRedo")));
+        return r;
+      }
+      const next = r[r.length - 1]!;
+      const current = serializeSnapshot();
+      setHistoryUndo((u) => [...u.slice(-49), current]);
+      queueMicrotask(() => applyHistorySnapshot(next));
+      return r.slice(0, -1);
+    });
+  }, [applyHistorySnapshot, t, serializeSnapshot]);
+
   useEffect(() => {
+    if (!file || restoringHistoryRef.current) return;
+    const id = window.setTimeout(() => {
+      if (restoringHistoryRef.current) return;
+      const next = serializeSnapshot();
+      if (lastHistorySerializedRef.current === null) {
+        lastHistorySerializedRef.current = next;
+        return;
+      }
+      if (next === lastHistorySerializedRef.current) return;
+      setHistoryUndo((u) => [...u.slice(-49), lastHistorySerializedRef.current!]);
+      setHistoryRedo([]);
+      lastHistorySerializedRef.current = next;
+    }, 480);
+    return () => clearTimeout(id);
+  }, [file, serializeSnapshot]);
+
+  // ── Redraw live preview whenever any setting changes ─────────────────────
+  const redraw = useCallback(
+    (img: HTMLImageElement, opts: DrawOptions, mark: HTMLImageElement | null) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      drawWatermarkToCanvas(canvas, img, opts, mark);
+      setPreview(canvas.toDataURL("image/png"));
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (restoringHistoryRef.current) return;
     if (imgRef.current) {
-      redraw(imgRef.current, drawOpts);
+      redraw(imgRef.current, drawOpts, markImgRef.current);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -330,6 +621,7 @@ export default function WatermarkImagePage() {
     strokeEnabled, strokeColor, strokeWidth,
     gridPosition, customX, customY,
     tileEnabled, textBgEnabled,
+    watermarkMode, imageScale, markReady,
   ]);
 
   const handleFilesSelected = useCallback(
@@ -338,26 +630,91 @@ export default function WatermarkImagePage() {
       setFile(f);
       setResultBlob(null);
       setResultPreview(null);
+      setHistoryUndo([]);
+      setHistoryRedo([]);
+      lastHistorySerializedRef.current = null;
 
       const img = new window.Image();
       img.onload = () => {
         imgRef.current = img;
         const canvas = canvasRef.current;
         if (canvas) {
-          drawWatermarkToCanvas(canvas, img, drawOptsRef.current);
+          drawWatermarkToCanvas(canvas, img, drawOptsRef.current, markImgRef.current);
           setPreview(canvas.toDataURL("image/png"));
         }
       };
       img.onerror = () => toast.error(t("ui.failedLoad"));
       img.src = URL.createObjectURL(f);
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    [t],
   );
+
+  const loadWatermarkImage = useCallback(
+    (files: File[]) => {
+      const f = files[0];
+      if (!f) return;
+      setWmImageFile(f);
+      const im = new window.Image();
+      im.onload = () => {
+        markImgRef.current = im;
+        try {
+          const c = document.createElement("canvas");
+          c.width = im.naturalWidth;
+          c.height = im.naturalHeight;
+          c.getContext("2d")!.drawImage(im, 0, 0);
+          markUrlRef.current = c.toDataURL("image/jpeg", 0.88);
+        } catch {
+          markUrlRef.current = null;
+        }
+        setMarkReady(true);
+        if (imgRef.current) {
+          redraw(imgRef.current, drawOptsRef.current, im);
+        }
+      };
+      im.onerror = () => {
+        toast.error(t("ui.failedLoad"));
+        setWmImageFile(null);
+        markImgRef.current = null;
+        markUrlRef.current = null;
+        setMarkReady(false);
+      };
+      im.src = URL.createObjectURL(f);
+    },
+    [redraw, t],
+  );
+
+  const clearWatermarkImage = useCallback(() => {
+    setWmImageFile(null);
+    markImgRef.current = null;
+    markUrlRef.current = null;
+    setMarkReady(false);
+    if (imgRef.current) {
+      redraw(imgRef.current, drawOptsRef.current, null);
+    }
+  }, [redraw]);
 
   const handleApplyAndDownload = () => {
     const canvas = canvasRef.current;
     if (!canvas || !file) return;
+    const base = imgRef.current;
+    if (base) {
+      drawWatermarkToCanvas(canvas, base, drawOptsRef.current, markImgRef.current);
+    }
+    if (watermarkMode === "text" && !watermarkText.trim()) {
+      toast.error(t("wm.needText"));
+      return;
+    }
+    if (watermarkMode === "image" && !markImgRef.current?.naturalWidth) {
+      toast.error(t("wm.needImage"));
+      return;
+    }
+    if (
+      watermarkMode === "both" &&
+      (!watermarkText.trim() || !markImgRef.current?.naturalWidth)
+    ) {
+      toast.error(t("wm.needBoth"));
+      return;
+    }
     setProcessing(true);
     canvas.toBlob((blob) => {
       setProcessing(false);
@@ -380,7 +737,23 @@ export default function WatermarkImagePage() {
     setResultBlob(null);
     setResultPreview(null);
     imgRef.current = null;
+    setWmImageFile(null);
+    markImgRef.current = null;
+    markUrlRef.current = null;
+    setMarkReady(false);
+    setHistoryUndo([]);
+    setHistoryRedo([]);
+    lastHistorySerializedRef.current = null;
   };
+
+  const canApply =
+    watermarkMode === "text"
+      ? watermarkText.trim().length > 0
+      : watermarkMode === "image"
+        ? markReady && (markImgRef.current?.naturalWidth ?? 0) > 0
+        : watermarkText.trim().length > 0 &&
+          markReady &&
+          (markImgRef.current?.naturalWidth ?? 0) > 0;
 
   // ── Shared label style ───────────────────────────────────────────────────
   const labelCls = "block text-[12px] text-t-secondary mb-1.5";
@@ -392,8 +765,8 @@ export default function WatermarkImagePage() {
 
   return (
     <ToolLayout
-      toolName="Add Watermark"
-      toolDescription="Add custom text watermarks to images with full control over position, style, and opacity."
+      toolName={t("tool.watermark-image.name")}
+      toolDescription={t("tool.watermark-image.desc")}
     >
       {/* Hidden processing canvas */}
       <canvas ref={canvasRef} className="hidden" />
@@ -406,34 +779,53 @@ export default function WatermarkImagePage() {
               "image/*": [".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp"],
             }}
             formats={["JPG", "PNG", "WEBP"]}
-            label="Drop your image here or click to browse"
+            label={t("wm.dropMainImage")}
           />
         ) : (
           <>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
               {/* ── Left: Live preview ── */}
               <div className="glass rounded-xl p-5 space-y-3">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
                   <p className="text-[12px] font-semibold text-t-secondary uppercase tracking-wider">
                     {t("ui.livePreview")}
                   </p>
-                  <button
-                    onClick={reset}
-                    className="text-[11px] text-t-secondary hover:text-red-400 transition-colors"
-                  >
-                    {t("ui.remove")}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleHistoryUndo}
+                      disabled={historyUndo.length === 0}
+                      className="text-[11px] px-2.5 py-1 rounded-lg border border-border bg-bg-secondary text-t-secondary hover:text-t-primary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    >
+                      {t("wm.undo")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleHistoryRedo}
+                      disabled={historyRedo.length === 0}
+                      className="text-[11px] px-2.5 py-1 rounded-lg border border-border bg-bg-secondary text-t-secondary hover:text-t-primary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    >
+                      {t("wm.redo")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={reset}
+                      className="text-[11px] text-t-secondary hover:text-red-400 transition-colors"
+                    >
+                      {t("ui.remove")}
+                    </button>
+                  </div>
                 </div>
                 {preview ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={preview}
-                    alt="Watermark preview"
+                    alt={t("wm.previewAlt")}
                     className="w-full rounded-lg border border-border object-contain"
                   />
                 ) : (
                   <div className="h-48 flex items-center justify-center rounded-lg border border-border text-[12px] text-t-secondary">
-                    Loading…
+                    {t("wm.loadingPreview")}
                   </div>
                 )}
                 <p className="text-[11px] text-t-secondary truncate">
@@ -443,10 +835,119 @@ export default function WatermarkImagePage() {
 
               {/* ── Right: Controls ── */}
               <div className="space-y-4">
+                <div className="glass rounded-xl p-5 space-y-3">
+                  <h3 className="text-[13px] font-semibold text-t-primary">
+                    {t("wm.watermarkType")}
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {(
+                      [
+                        ["text", "wm.typeText"],
+                        ["image", "wm.typeImage"],
+                        ["both", "wm.typeBoth"],
+                      ] as const
+                    ).map(([mode, key]) => (
+                      <button
+                        key={mode}
+                        type="button"
+                        onClick={() => setWatermarkMode(mode)}
+                        className={`px-3 py-2 rounded-xl text-[12px] font-medium border transition-all ${
+                          watermarkMode === mode
+                            ? "border-accent bg-accent/20 text-t-primary"
+                            : "border-border bg-bg-secondary text-t-secondary hover:border-accent/50"
+                        }`}
+                      >
+                        {t(key)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-                {/* Text settings card */}
+                {(watermarkMode === "image" || watermarkMode === "both") && (
+                  <div className="glass rounded-xl p-5 space-y-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <h3 className="text-[13px] font-semibold text-t-primary">
+                        {t("wm.uploadImage")}
+                      </h3>
+                      {wmImageFile && (
+                        <button
+                          type="button"
+                          onClick={clearWatermarkImage}
+                          className="text-[11px] text-t-secondary hover:text-red-400"
+                        >
+                          {t("ui.remove")}
+                        </button>
+                      )}
+                    </div>
+                    {!wmImageFile ? (
+                      <FileDropzone
+                        onFilesSelected={loadWatermarkImage}
+                        accept={{
+                          "image/*": [".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg"],
+                        }}
+                        formats={["PNG", "JPG", "WEBP"]}
+                        label={t("wm.uploadImage")}
+                      />
+                    ) : (
+                      <p className="text-[11px] text-t-secondary truncate">{wmImageFile.name}</p>
+                    )}
+                    <p className="text-[11px] text-t-secondary">{t("wm.imageHint")}</p>
+                    <div>
+                      <div className={rangeRow}>
+                        <label className={rangeLabelCls}>{t("wm.imageScale")}</label>
+                        <span className={rangeValCls}>{imageScale}%</span>
+                      </div>
+                      <input
+                        type="range"
+                        min={5}
+                        max={80}
+                        step={1}
+                        value={imageScale}
+                        onChange={(e) => setImageScale(Number(e.target.value))}
+                        className="w-full accent-accent"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {watermarkMode === "image" && (
+                  <div className="glass rounded-xl p-5 space-y-4">
+                    <div>
+                      <div className={rangeRow}>
+                        <label className={rangeLabelCls}>{t("wm.opacity")}</label>
+                        <span className={rangeValCls}>{opacity}%</span>
+                      </div>
+                      <input
+                        type="range"
+                        min={10}
+                        max={100}
+                        step={1}
+                        value={opacity}
+                        onChange={(e) => setOpacity(Number(e.target.value))}
+                        className="w-full accent-accent"
+                      />
+                    </div>
+                    <div>
+                      <div className={rangeRow}>
+                        <label className={rangeLabelCls}>{t("wm.rotation")}</label>
+                        <span className={rangeValCls}>{rotation}°</span>
+                      </div>
+                      <input
+                        type="range"
+                        min={-180}
+                        max={180}
+                        step={1}
+                        value={rotation}
+                        onChange={(e) => setRotation(Number(e.target.value))}
+                        className="w-full accent-accent"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {(watermarkMode === "text" || watermarkMode === "both") && (
                 <div className="glass rounded-xl p-5 space-y-4">
-                  <h3 className="text-[13px] font-semibold text-t-primary">Text</h3>
+                  <h3 className="text-[13px] font-semibold text-t-primary">{t("wm.textSection")}</h3>
 
                   {/* Watermark text */}
                   <div>
@@ -462,7 +963,7 @@ export default function WatermarkImagePage() {
 
                   {/* Font family */}
                   <div>
-                    <label className={labelCls}>Font Family</label>
+                    <label className={labelCls}>{t("wm.fontFamily")}</label>
                     <select
                       value={fontFamily}
                       onChange={(e) => setFontFamily(e.target.value as FontFamily)}
@@ -470,7 +971,7 @@ export default function WatermarkImagePage() {
                     >
                       {FONT_FAMILIES.map((f) => (
                         <option key={f.value} value={f.value} className="bg-bg-secondary text-t-primary">
-                          {f.label}
+                          {t(f.labelKey)}
                         </option>
                       ))}
                     </select>
@@ -545,7 +1046,7 @@ export default function WatermarkImagePage() {
                   {/* Rotation */}
                   <div>
                     <div className={rangeRow}>
-                      <label className={rangeLabelCls}>Rotation</label>
+                      <label className={rangeLabelCls}>{t("wm.rotation")}</label>
                       <span className={rangeValCls}>{rotation}°</span>
                     </div>
                     <input
@@ -565,7 +1066,7 @@ export default function WatermarkImagePage() {
 
                   {/* Color */}
                   <div>
-                    <label className={labelCls}>Color</label>
+                    <label className={labelCls}>{t("wm.color")}</label>
                     <div className="flex items-center gap-3">
                       <input
                         type="color"
@@ -577,11 +1078,12 @@ export default function WatermarkImagePage() {
                     </div>
                   </div>
                 </div>
+                )}
 
-                {/* Stroke card */}
+                {(watermarkMode === "text" || watermarkMode === "both") && (
                 <div className="glass rounded-xl p-5 space-y-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-[13px] font-semibold text-t-primary">Stroke / Outline</h3>
+                    <h3 className="text-[13px] font-semibold text-t-primary">{t("wm.strokeOutline")}</h3>
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input
                         type="checkbox"
@@ -589,13 +1091,13 @@ export default function WatermarkImagePage() {
                         onChange={(e) => setStrokeEnabled(e.target.checked)}
                         className="accent-accent"
                       />
-                      <span className="text-[12px] text-t-secondary">Enable</span>
+                      <span className="text-[12px] text-t-secondary">{t("wm.enableOutline")}</span>
                     </label>
                   </div>
                   {strokeEnabled && (
                     <>
                       <div>
-                        <label className={labelCls}>Stroke Color</label>
+                        <label className={labelCls}>{t("wm.strokeColor")}</label>
                         <div className="flex items-center gap-3">
                           <input
                             type="color"
@@ -608,7 +1110,7 @@ export default function WatermarkImagePage() {
                       </div>
                       <div>
                         <div className={rangeRow}>
-                          <label className={rangeLabelCls}>Stroke Width</label>
+                          <label className={rangeLabelCls}>{t("wm.strokeWidth")}</label>
                           <span className={rangeValCls}>{strokeWidth}px</span>
                         </div>
                         <input
@@ -628,14 +1130,15 @@ export default function WatermarkImagePage() {
                     </>
                   )}
                 </div>
+                )}
 
                 {/* Position card */}
                 <div className="glass rounded-xl p-5 space-y-4">
-                  <h3 className="text-[13px] font-semibold text-t-primary">Position</h3>
+                  <h3 className="text-[13px] font-semibold text-t-primary">{t("wm.position")}</h3>
 
                   {/* 3×3 grid picker */}
                   <div>
-                    <label className={labelCls}>Grid Position</label>
+                    <label className={labelCls}>{t("wm.gridPosition")}</label>
                     <div className="grid grid-cols-3 gap-1.5 w-fit">
                       {GRID_CELLS.map((cell) => (
                         <button
@@ -664,7 +1167,7 @@ export default function WatermarkImagePage() {
                           : "border-border bg-bg-secondary text-t-secondary hover:border-accent/50"
                       }`}
                     >
-                      Custom X/Y
+                      {t("wm.customXY")}
                     </button>
                   </div>
 
@@ -672,7 +1175,7 @@ export default function WatermarkImagePage() {
                     <div className="space-y-3">
                       <div>
                         <div className={rangeRow}>
-                          <label className={rangeLabelCls}>X Position</label>
+                          <label className={rangeLabelCls}>{t("wm.xPosition")}</label>
                           <span className={rangeValCls}>{customX}%</span>
                         </div>
                         <input
@@ -687,7 +1190,7 @@ export default function WatermarkImagePage() {
                       </div>
                       <div>
                         <div className={rangeRow}>
-                          <label className={rangeLabelCls}>Y Position</label>
+                          <label className={rangeLabelCls}>{t("wm.yPosition")}</label>
                           <span className={rangeValCls}>{customY}%</span>
                         </div>
                         <input
@@ -706,7 +1209,7 @@ export default function WatermarkImagePage() {
 
                 {/* Extra options card */}
                 <div className="glass rounded-xl p-5 space-y-3">
-                  <h3 className="text-[13px] font-semibold text-t-primary">Extra Options</h3>
+                  <h3 className="text-[13px] font-semibold text-t-primary">{t("wm.extraOptions")}</h3>
 
                   {/* Tile */}
                   <label className="flex items-start gap-3 cursor-pointer group">
@@ -718,15 +1221,16 @@ export default function WatermarkImagePage() {
                     />
                     <div>
                       <span className="text-[13px] text-t-primary group-hover:text-accent transition-colors">
-                        Tile across entire image
+                        {t("wm.tileLabel")}
                       </span>
                       <p className="text-[11px] text-t-secondary mt-0.5">
-                        Repeat watermark in a diagonal grid pattern
+                        {t("wm.tileDesc")}
                       </p>
                     </div>
                   </label>
 
                   {/* Text background */}
+                  {(watermarkMode === "text" || watermarkMode === "both") && (
                   <label className="flex items-start gap-3 cursor-pointer group">
                     <input
                       type="checkbox"
@@ -736,26 +1240,27 @@ export default function WatermarkImagePage() {
                     />
                     <div>
                       <span className="text-[13px] text-t-primary group-hover:text-accent transition-colors">
-                        Text background
+                        {t("wm.textBgLabel")}
                       </span>
                       <p className="text-[11px] text-t-secondary mt-0.5">
-                        Semi-transparent dark fill behind the watermark
+                        {t("wm.textBgDesc")}
                       </p>
                     </div>
                   </label>
+                  )}
                 </div>
 
                 {/* Apply & Download */}
                 <button
                   onClick={handleApplyAndDownload}
-                  disabled={processing || !watermarkText.trim()}
+                  disabled={processing || !canApply}
                   className={`w-full px-6 py-3 rounded-xl font-semibold text-white transition-all ${
-                    processing || !watermarkText.trim()
+                    processing || !canApply
                       ? "bg-bg-secondary border border-border cursor-not-allowed text-t-secondary"
                       : "bg-gradient-to-r from-indigo-500 to-purple-500 hover:shadow-lg hover:shadow-indigo-500/25 hover:scale-[1.02] active:scale-[0.98]"
                   }`}
                 >
-                  {processing ? "Applying…" : "Apply & Download"}
+                  {processing ? t("wm.applying") : t("wm.apply")}
                 </button>
               </div>
             </div>
@@ -763,11 +1268,11 @@ export default function WatermarkImagePage() {
             {/* Result section */}
             {resultBlob && resultPreview && (
               <div className="glass rounded-xl p-5 space-y-3">
-                <p className="text-[13px] font-semibold text-t-primary">Last Export</p>
+                <p className="text-[13px] font-semibold text-t-primary">{t("wm.lastExport")}</p>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={resultPreview}
-                  alt="Watermarked result"
+                  alt={t("wm.resultAlt")}
                   className="max-h-48 rounded-lg border border-border mx-auto block object-contain"
                 />
                 <div className="flex flex-wrap gap-3 justify-center">

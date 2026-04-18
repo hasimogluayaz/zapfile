@@ -17,6 +17,7 @@ const toolSlugs = [
 
 const resourceLinks = [
   { key: "footer.allTools", href: "/tools" },
+  { key: "nav.workflows", href: "/workflows" },
   { key: "nav.about", href: "/about" },
   { key: "nav.blog", href: "/blog" },
   { key: "footer.privacy", href: "/privacy" },

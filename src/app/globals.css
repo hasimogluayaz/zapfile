@@ -3,6 +3,7 @@
 @tailwind utilities;
 
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;500;600;700;800&display=swap");
 
 /* ========== Theme Colors — Light First ========== */
 :root {
@@ -63,6 +64,15 @@ body {
   font-family: var(--font-inter, "Inter", system-ui, -apple-system, sans-serif);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+html:lang(ar) body {
+  font-family:
+    "Noto Sans Arabic",
+    "Segoe UI",
+    Tahoma,
+    Arial,
+    sans-serif;
 }
 
 /* Reduce 300ms tap delay on mobile; keep pinch-zoom on inputs that need it */

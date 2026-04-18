@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { I18nProvider } from "@/lib/i18n";
+import type { Locale } from "@/lib/locales";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 // ─── Theme Context ─────────────────────────────────────────────
@@ -23,8 +24,10 @@ export function useTheme() {
 
 export default function ClientProviders({
   children,
+  initialLocale = "en",
 }: {
   children: React.ReactNode;
+  initialLocale?: Locale;
 }) {
   const [theme, setTheme] = useState<Theme>("light");
   const [mounted, setMounted] = useState(false);
@@ -62,7 +65,7 @@ export default function ClientProviders({
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
-      <I18nProvider>
+      <I18nProvider initialLocale={initialLocale}>
         <ErrorBoundary>{children}</ErrorBoundary>
       </I18nProvider>
     </ThemeContext.Provider>

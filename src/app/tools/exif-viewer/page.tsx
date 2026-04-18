@@ -5,7 +5,7 @@ import toast from "react-hot-toast";
 import ToolLayout from "@/components/ToolLayout";
 import FileDropzone from "@/components/FileDropzone";
 import DownloadButton from "@/components/DownloadButton";
-import { formatFileSize, getFileNameWithoutExtension } from "@/lib/utils";
+import { formatFileSize, getFileNameWithoutExtension, downloadBlob } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n";
 
 interface ExifTag {
@@ -282,6 +282,31 @@ function parseExif(buffer: ArrayBuffer): ExifTag[] {
   return tags;
 }
 
+function jpegToCleanPngBlob(file: File): Promise<Blob | null> {
+  return new Promise((resolve) => {
+    const img = new window.Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const canvas = document.createElement("canvas");
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        resolve(null);
+        return;
+      }
+      ctx.drawImage(img, 0, 0);
+      canvas.toBlob((b) => resolve(b), "image/png");
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve(null);
+    };
+    img.src = url;
+  });
+}
+
 export default function ExifViewerPage() {
   const { t } = useI18n();
   const [file, setFile] = useState<File | null>(null);
@@ -292,6 +317,8 @@ export default function ExifViewerPage() {
   const [cleanedBlob, setCleanedBlob] = useState<Blob | null>(null);
   const [processing, setProcessing] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [batchFiles, setBatchFiles] = useState<File[]>([]);
+  const [batchBusy, setBatchBusy] = useState(false);
 
   const handleFilesSelected = useCallback((files: File[]) => {
     const f = files[0];
@@ -327,7 +354,7 @@ export default function ExifViewerPage() {
     };
     img.onerror = () => toast.error(t("ui.failedLoad"));
     img.src = URL.createObjectURL(f);
-  }, []);
+  }, [t]);
 
   const handleRemoveExif = useCallback(() => {
     if (!file) return;
@@ -366,7 +393,7 @@ export default function ExifViewerPage() {
       toast.error(t("ui.failedLoad"));
     };
     img.src = URL.createObjectURL(file);
-  }, [file]);
+  }, [file, t]);
 
   const reset = () => {
     setFile(null);
@@ -377,14 +404,102 @@ export default function ExifViewerPage() {
     setCleanedBlob(null);
   };
 
+  const handleBatchSelected = useCallback((files: File[]) => {
+    const jpegs = files.filter(
+      (f) =>
+        f.type === "image/jpeg" ||
+        f.name.toLowerCase().endsWith(".jpg") ||
+        f.name.toLowerCase().endsWith(".jpeg"),
+    );
+    setBatchFiles(jpegs);
+    if (files.length > 0 && jpegs.length === 0) {
+      toast.error(t("exif.jpegOnly"));
+    }
+  }, [t]);
+
+  const runBatchStrip = useCallback(async () => {
+    if (batchFiles.length === 0) {
+      toast.error(t("exif.batchEmpty"));
+      return;
+    }
+    setBatchBusy(true);
+    try {
+      const JSZip = (await import("jszip")).default;
+      const zip = new JSZip();
+      let ok = 0;
+      for (const f of batchFiles) {
+        const blob = await jpegToCleanPngBlob(f);
+        if (!blob) continue;
+        const base = getFileNameWithoutExtension(f.name);
+        zip.file(`${base}-no-exif.png`, blob);
+        ok++;
+      }
+      if (ok === 0) {
+        toast.error(t("exif.batchFail"));
+        return;
+      }
+      const out = await zip.generateAsync({
+        type: "blob",
+        compression: "DEFLATE",
+        compressionOptions: { level: 6 },
+      });
+      downloadBlob(out, t("exif.batchZipName"));
+      toast.success(t("exif.batchDone", { count: ok }));
+      setBatchFiles([]);
+    } catch (e) {
+      console.error(e);
+      toast.error(t("exif.batchFail"));
+    } finally {
+      setBatchBusy(false);
+    }
+  }, [batchFiles, t]);
+
   return (
     <ToolLayout
-      toolName="EXIF Viewer"
-      toolDescription="View and remove image metadata (EXIF data)"
+      toolName={t("tool.exif-viewer.name")}
+      toolDescription={t("tool.exif-viewer.desc")}
     >
       <canvas ref={canvasRef} className="hidden" />
 
       <div className="space-y-6">
+        <div className="glass rounded-xl p-5 space-y-3">
+          <h3 className="text-[13px] font-semibold text-t-primary">{t("exif.batchTitle")}</h3>
+          <p className="text-[12px] text-t-secondary">{t("exif.batchHint")}</p>
+          <FileDropzone
+            onFilesSelected={handleBatchSelected}
+            accept={{ "image/jpeg": [".jpg", ".jpeg"] }}
+            multiple={true}
+            label={t("exif.dropText")}
+            formats={["JPG", "JPEG"]}
+          />
+          {batchFiles.length > 0 && (
+            <div className="flex flex-wrap items-center gap-3">
+              <p className="text-[12px] text-t-secondary">
+                {t("exif.batchCount", { count: batchFiles.length })}
+              </p>
+              <button
+                type="button"
+                onClick={runBatchStrip}
+                disabled={batchBusy}
+                className={`px-5 py-2.5 rounded-xl text-[13px] font-semibold text-white transition-all ${
+                  batchBusy
+                    ? "bg-bg-secondary text-t-secondary cursor-not-allowed"
+                    : "bg-gradient-to-r from-indigo-500 to-purple-500 hover:opacity-90"
+                }`}
+              >
+                {batchBusy ? t("exif.removingExif") : t("exif.stripZip")}
+              </button>
+              <button
+                type="button"
+                onClick={() => setBatchFiles([])}
+                className="text-[12px] text-t-secondary hover:text-red-400"
+              >
+                {t("ui.remove")}
+              </button>
+            </div>
+          )}
+        </div>
+
         {!file ? (
           <FileDropzone
             onFilesSelected={handleFilesSelected}
@@ -400,12 +515,13 @@ export default function ExifViewerPage() {
               {/* Left: Image preview */}
               <div className="glass rounded-xl p-3 space-y-2">
                 <div className="flex items-center justify-between">
-                  <p className="text-[12px] font-medium text-brand-muted">
+                  <p className="text-[12px] font-medium text-t-secondary">
                     {t("exif.imagePreview")}
                   </p>
                   <button
+                    type="button"
                     onClick={reset}
-                    className="text-[11px] text-brand-muted hover:text-red-400 transition-colors"
+                    className="text-[11px] text-t-secondary hover:text-red-400 transition-colors"
                   >
                     {t("ui.remove")}
                   </button>
@@ -415,42 +531,42 @@ export default function ExifViewerPage() {
                   <img
                     src={preview}
                     alt="Preview"
-                    className="w-full rounded-lg border border-white/10 object-contain max-h-72"
+                    className="w-full rounded-lg border border-border object-contain max-h-72"
                   />
                 ) : (
-                  <div className="h-40 flex items-center justify-center rounded-lg border border-white/10 text-[12px] text-brand-muted">
-                    Loading...
+                  <div className="h-40 flex items-center justify-center rounded-lg border border-border text-[12px] text-t-secondary">
+                    {t("wm.loadingPreview")}
                   </div>
                 )}
-                <p className="text-[11px] text-brand-muted truncate">
+                <p className="text-[11px] text-t-secondary truncate">
                   {file.name} &middot; {formatFileSize(file.size)}
                 </p>
               </div>
 
               {/* Right: Basic info */}
               <div className="glass rounded-xl p-4 space-y-4">
-                <h3 className="text-[13px] font-semibold text-brand-text">
+                <h3 className="text-[13px] font-semibold text-t-primary">
                   {t("exif.fileInfo")}
                 </h3>
                 <div className="space-y-2 text-[12px]">
                   <div className="flex justify-between">
-                    <span className="text-brand-muted">{t("exif.fileName")}</span>
-                    <span className="text-brand-text truncate ml-2 max-w-[160px]">
+                    <span className="text-t-secondary">{t("exif.fileName")}</span>
+                    <span className="text-t-primary truncate ml-2 max-w-[160px]">
                       {file.name}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-brand-muted">{t("exif.fileSize")}</span>
-                    <span className="text-brand-text">{formatFileSize(file.size)}</span>
+                    <span className="text-t-secondary">{t("exif.fileSize")}</span>
+                    <span className="text-t-primary">{formatFileSize(file.size)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-brand-muted">{t("exif.fileType")}</span>
-                    <span className="text-brand-text">{file.type || "Unknown"}</span>
+                    <span className="text-t-secondary">{t("exif.fileType")}</span>
+                    <span className="text-t-primary">{file.type || "Unknown"}</span>
                   </div>
                   {imageInfo && (
                     <div className="flex justify-between">
-                      <span className="text-brand-muted">{t("exif.dimensions")}</span>
-                      <span className="text-brand-text">
+                      <span className="text-t-secondary">{t("exif.dimensions")}</span>
+                      <span className="text-t-primary">
                         {imageInfo.width} x {imageInfo.height}
                       </span>
                     </div>
@@ -461,11 +577,12 @@ export default function ExifViewerPage() {
                 <div className="space-y-2 pt-2">
                   {isJpeg && exifTags.length > 0 && (
                     <button
+                      type="button"
                       onClick={handleRemoveExif}
                       disabled={processing}
                       className={`w-full py-3 rounded-xl font-semibold text-[14px] text-white transition-all ${
                         processing
-                          ? "bg-white/10 cursor-not-allowed text-brand-muted"
+                          ? "bg-bg-secondary cursor-not-allowed text-t-secondary"
                           : "bg-gradient-to-r from-indigo-500 to-purple-500 hover:shadow-lg hover:shadow-indigo-500/25 hover:scale-[1.02] active:scale-[0.98]"
                       }`}
                     >
@@ -489,17 +606,17 @@ export default function ExifViewerPage() {
             {/* EXIF Data Table */}
             {isJpeg && exifTags.length > 0 && (
               <div className="glass rounded-xl p-4 space-y-3">
-                <h3 className="text-[13px] font-semibold text-brand-text">
+                <h3 className="text-[13px] font-semibold text-t-primary">
                   {t("exif.metadata")} ({exifTags.length} {t("exif.tags")})
                 </h3>
-                <div className="overflow-hidden rounded-lg border border-white/10">
+                <div className="overflow-hidden rounded-lg border border-border">
                   <table className="w-full text-[12px]">
                     <thead>
-                      <tr className="bg-white/5">
-                        <th className="text-left px-3 py-2 text-brand-muted font-medium">
+                      <tr className="bg-bg-secondary/80">
+                        <th className="text-left px-3 py-2 text-t-secondary font-medium">
                           {t("exif.tag")}
                         </th>
-                        <th className="text-left px-3 py-2 text-brand-muted font-medium">
+                        <th className="text-left px-3 py-2 text-t-secondary font-medium">
                           {t("ui.value")}
                         </th>
                       </tr>
@@ -508,12 +625,12 @@ export default function ExifViewerPage() {
                       {exifTags.map((tag, i) => (
                         <tr
                           key={i}
-                          className="border-t border-white/5 hover:bg-white/5 transition-colors"
+                          className="border-t border-border hover:bg-bg-secondary/50 transition-colors"
                         >
-                          <td className="px-3 py-2 text-brand-muted whitespace-nowrap">
+                          <td className="px-3 py-2 text-t-secondary whitespace-nowrap">
                             {tag.name}
                           </td>
-                          <td className="px-3 py-2 text-brand-text break-all">
+                          <td className="px-3 py-2 text-t-primary break-all">
                             {tag.value}
                           </td>
                         </tr>
@@ -527,7 +644,7 @@ export default function ExifViewerPage() {
             {/* No EXIF info */}
             {isJpeg && exifTags.length === 0 && (
               <div className="glass rounded-xl p-6 text-center">
-                <p className="text-[13px] text-brand-muted">
+                <p className="text-[13px] text-t-secondary">
                   {t("exif.noExif")}
                 </p>
               </div>
@@ -535,7 +652,7 @@ export default function ExifViewerPage() {
 
             {!isJpeg && (
               <div className="glass rounded-xl p-6 text-center">
-                <p className="text-[13px] text-brand-muted">
+                <p className="text-[13px] text-t-secondary">
                   {t("exif.jpegOnly")}
                 </p>
               </div>

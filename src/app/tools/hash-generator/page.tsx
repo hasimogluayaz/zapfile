@@ -13,6 +13,7 @@ interface HashResult {
 }
 
 const ALGORITHMS = ["SHA-1", "SHA-256", "SHA-384", "SHA-512"] as const;
+const LARGE_FILE_THRESHOLD = 20 * 1024 * 1024; // warn: hashing huge files can OOM the tab
 
 async function computeHash(
   algorithm: string,
@@ -32,6 +33,8 @@ export default function HashGeneratorPage() {
   const [fileBuffer, setFileBuffer] = useState<ArrayBuffer | null>(null);
   const [results, setResults] = useState<HashResult[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [largeFileWarning, setLargeFileWarning] = useState(false);
+  const [fileSize, setFileSize] = useState<number>(0);
 
   useEffect(() => {
     workerRef.current = new Worker(
@@ -51,6 +54,12 @@ export default function HashGeneratorPage() {
       return;
     }
     setFileName(file.name);
+    setFileSize(file.size);
+    if (file.size > LARGE_FILE_THRESHOLD) {
+      setLargeFileWarning(true);
+    } else {
+      setLargeFileWarning(false);
+    }
     const reader = new FileReader();
     reader.onload = () => {
       setFileBuffer(reader.result as ArrayBuffer);
@@ -59,6 +68,7 @@ export default function HashGeneratorPage() {
       toast.error("Failed to read file");
       setFileName(null);
       setFileBuffer(null);
+      setFileSize(0);
     };
     reader.readAsArrayBuffer(file);
   };
@@ -173,7 +183,9 @@ export default function HashGeneratorPage() {
     setTextInput("");
     setFileName(null);
     setFileBuffer(null);
+    setFileSize(0);
     setResults([]);
+    setLargeFileWarning(false);
   };
 
   return (
@@ -235,7 +247,16 @@ export default function HashGeneratorPage() {
                     />
                   </svg>
                   <span className="text-brand-muted text-sm">
-                    {fileName ? fileName : t("hash.selectFile")}
+                    {fileName ? (
+                      <>
+                        {fileName}
+                        {fileSize > 0 && (
+                          <span className="ml-2 text-xs opacity-70">
+                            ({fileSize > 1024 * 1024 ? `${(fileSize / (1024 * 1024)).toFixed(1)} MB` : `${(fileSize / 1024).toFixed(1)} KB`})
+                          </span>
+                        )}
+                      </>
+                    ) : t("hash.selectFile")}
                   </span>
                 </div>
                 <input
@@ -244,6 +265,29 @@ export default function HashGeneratorPage() {
                   className="hidden"
                 />
               </label>
+
+              {/* Large file warning */}
+              {largeFileWarning && (
+                <div className="rounded-xl p-4 border border-amber-500/30 bg-amber-500/10">
+                  <div className="flex items-start gap-3">
+                    <span className="text-amber-400 text-lg mt-0.5">⚠️</span>
+                    <div>
+                      <p className="text-xs text-amber-400/90 leading-relaxed">
+                        {t("hash.largeFileWarn", {
+                          size: `${(fileSize / (1024 * 1024)).toFixed(1)} MB`,
+                        })}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setLargeFileWarning(false)}
+                        className="mt-2 px-4 py-1.5 rounded-lg text-xs font-medium bg-amber-500/20 border border-amber-500/40 text-amber-300 hover:bg-amber-500/30 transition-all"
+                      >
+                        {t("hash.ackLargeFile")}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

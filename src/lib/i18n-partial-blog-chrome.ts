@@ -1,6 +1,6 @@
 /** Blog article chrome (breadcrumb, related, read time) for merge locales. */
 export const partialBlogChromeLocales: Record<
-  "es" | "pt" | "it" | "ja",
+  "es" | "pt" | "it" | "ja" | "ar",
   Record<string, string>
 > = {
   es: {
@@ -30,5 +30,12 @@ export const partialBlogChromeLocales: Record<
     "blog.relatedPosts": "関連記事",
     "blog.backToBlog": "ブログ一覧へ",
     "blog.readMinutes": "読了 {count} 分",
+  },
+  ar: {
+    "blog.breadcrumbHome": "الرئيسية",
+    "blog.breadcrumbBlog": "المدونة",
+    "blog.relatedPosts": "مقالات ذات صلة",
+    "blog.backToBlog": "العودة إلى المدونة",
+    "blog.readMinutes": "{count} دقيقة قراءة",
   },
 };

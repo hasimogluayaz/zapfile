@@ -3,7 +3,7 @@
  * Layered on top of `localeOverrides` so UI matches the selected language, not English.
  */
 export const partialStaticPageLocales: Record<
-  "es" | "pt" | "it" | "ja",
+  "es" | "pt" | "it" | "ja" | "ar",
   Record<string, string>
 > = {
   es: {
@@ -260,5 +260,69 @@ export const partialStaticPageLocales: Record<
     "privacy.contactTitle": "お問い合わせ",
     "privacy.contactBody":
       "本ポリシーに関するご質問は privacy@zapfile.xyz までご連絡ください。",
+  },
+
+  ar: {
+    "about.title": "عن ZapFile",
+    "about.intro":
+      "ZapFile مجموعة من أدوات الملفات المجانية والسريعة والخاصة التي تعمل بالكامل في متصفحك. بلا رفع إلى خوادم وبلا حسابات. افتح أداة وابدأ.",
+    "about.missionTitle": "مهمتنا",
+    "about.missionBody":
+      "نؤمن بأن الجميع يستحق أدواتاً قوية دون التنازل عن الخصوصية أو دفع اشتراكات. يقدّم ZapFile مجموعة كاملة لملفات PDF والصور والصوت وأكثر — مجاناً بالكامل ومتاح للجميع.",
+    "about.howTitle": "كيف يعمل",
+    "about.howBody":
+      "يُعالَج كل شيء في متصفحك بتقنيات الويب الحديثة. عند ضغط صورة أو دمج ملفات PDF، تبقى ملفاتك على جهازك. لا يُرفع شيء إلى خوادم بعيدة. تبقى ملفاتك خاصة؛ وبعد تحميل الصفحة تعمل كثير من الأدوات حتى دون اتصال.",
+    "about.privacyTitle": "الخصوصية أولاً",
+    "about.privacyBody":
+      "الخصوصية ليست مجرد ميزة — إنها أساس ZapFile. لا نجمع بياناتك، ولا نعالج ملفاتك على خوادمنا، ولا نطلب حساباً. ملفاتك ملكك وتبقى على جهازك.",
+    "about.builtTitle": "التقنيات",
+    "about.builtBody":
+      "يُبنى ZapFile باستخدام Next.js ويستفيد من واجهات المتصفح: Canvas وWeb Audio وWebAssembly. هكذا ننفّذ عمليات معقدة — من الصور إلى PDF — بالكامل على جهازك.",
+    "about.opensourceTitle": "مفتوح المصدر",
+    "about.opensourceBody":
+      "ZapFile مشروع مفتوح المصدر. نؤمن بالشفافية والتطوير المجتمعي. يمكنك مراجعة الشفرة أو اقتراح تحسينات أو المساهمة. التطوير المفتوح يجعل وعود الخصوصية قابلة للتحقق.",
+
+    "blog.subtitle":
+      "أدلة ومقارنات ونصائح للعمل مع الملفات عبر الإنترنت — من ضغط الصور إلى دمج PDF والخصوصية على الويب.",
+    "blog.backHome": "العودة إلى الرئيسية",
+
+    "terms.title": "شروط الخدمة",
+    "terms.updated": "آخر تحديث: يناير 2025",
+    "terms.acceptanceTitle": "قبول الشروط",
+    "terms.acceptanceBody":
+      "باستخدامك ZapFile (zapfile.xyz) فإنك توافق على شروط الخدمة هذه.",
+    "terms.serviceTitle": "وصف الخدمة",
+    "terms.serviceBody":
+      "يقدّم ZapFile أدوات معالجة ملفات مجانية داخل المتصفح. تتم كل المعالجة محلياً في متصفحك. لا تُرفع ملفاتك إلى خوادمنا.",
+    "terms.disclaimerTitle": "إخلاء المسؤولية",
+    "terms.disclaimerBody":
+      "تُقدَّم الخدمة «كما هي» دون أي ضمانات. لا نضمن دقة النتائج. احتفظ دائماً بنسخ احتياطية من ملفاتك الأصلية.",
+    "terms.liabilityTitle": "تحديد المسؤولية",
+    "terms.liabilityBody":
+      "لا يتحمل ZapFile المسؤولية عن أي أضرار ناتجة عن استخدام الخدمة، بما في ذلك فقدان البيانات أو تلفها.",
+    "terms.changesTitle": "التغييرات",
+    "terms.changesBody":
+      "نحتفظ بالحق في تعديل هذه الشروط في أي وقت. الاستمرار في الاستخدام يعني قبول الشروط المحدثة.",
+
+    "privacy.title": "سياسة الخصوصية",
+    "privacy.updated": "آخر تحديث: يناير 2025",
+    "privacy.mattersTitle": "خصوصيتك تهمنا",
+    "privacy.mattersBody":
+      "صُمم ZapFile ليكون الخصوصية في صميمه. تتم كل المعالجة في متصفحك. لا تُرفع ملفاتك إلى أي خادم.",
+    "privacy.noCollectTitle": "بيانات لا نجمعها",
+    "privacy.noCollect1": "لا نرفع ملفاتك ولا نخزنها ولا نصل إليها",
+    "privacy.noCollect2": "لا نتتبع محتوى الملفات التي تعالجها",
+    "privacy.noCollect3": "لا نطلب إنشاء حساب أو معلومات شخصية",
+    "privacy.mayCollectTitle": "بيانات قد نجمعها",
+    "privacy.mayCollect1":
+      "إحصاءات استخدام مجهولة (مشاهدات الصفحات، استخدام الأدوات) لتحسين الخدمة",
+    "privacy.mayCollect2":
+      "سجلات خادم ويب قياسية (عنوان IP، نوع المتصفح) لأغراض أمنية",
+    "privacy.thirdPartyTitle": "خدمات الطرف الثالث",
+    "privacy.thirdPartyBody":
+      "قد نستخدم Google AdSense للإعلانات، مع ملفات تعريف لعرض إعلانات مناسبة. يمكنك إدارة التفضيلات في إعدادات إعلانات Google.",
+    "privacy.contactTitle": "تواصل",
+    "privacy.contactBody":
+      "للأسئلة حول هذه السياسة: privacy@zapfile.xyz.",
   },
 };

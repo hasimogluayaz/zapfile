@@ -4,6 +4,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import toast from "react-hot-toast";
 import ToolLayout from "@/components/ToolLayout";
 import { useI18n } from "@/lib/i18n";
+import { encodeAudioBufferToMp3 } from "@/lib/mp3-encode";
 
 type RecordingState = "idle" | "recording" | "paused" | "stopped";
 
@@ -84,6 +85,7 @@ export default function AudioRecorderPage() {
   const [bars, setBars] = useState<number[]>(Array(BAR_COUNT).fill(0));
   const [mimeType, setMimeType] = useState("audio/webm");
   const [encoding, setEncoding] = useState(false);
+  const [encodingMp3, setEncodingMp3] = useState(false);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -256,15 +258,22 @@ export default function AudioRecorderPage() {
     a.click();
   }, [audioUrl, mimeType]);
 
+  const decodeBlobToBuffer = useCallback(async (blob: Blob) => {
+    const arrayBuffer = await blob.arrayBuffer();
+    const ctx = new AudioContext();
+    try {
+      return await ctx.decodeAudioData(arrayBuffer.slice(0));
+    } finally {
+      await ctx.close();
+    }
+  }, []);
+
   const handleDownloadWav = useCallback(async () => {
     if (!audioBlob) return;
     setEncoding(true);
     try {
-      const arrayBuffer = await audioBlob.arrayBuffer();
-      const ctx = new AudioContext();
-      const decoded = await ctx.decodeAudioData(arrayBuffer.slice(0));
+      const decoded = await decodeBlobToBuffer(audioBlob);
       const wavBlob = encodeWav(decoded);
-      await ctx.close();
 
       const url = URL.createObjectURL(wavBlob);
       const a = document.createElement("a");
@@ -278,7 +287,27 @@ export default function AudioRecorderPage() {
     } finally {
       setEncoding(false);
     }
-  }, [audioBlob, t]);
+  }, [audioBlob, decodeBlobToBuffer, t]);
+
+  const handleDownloadMp3 = useCallback(async () => {
+    if (!audioBlob) return;
+    setEncodingMp3(true);
+    try {
+      const decoded = await decodeBlobToBuffer(audioBlob);
+      const mp3Blob = await encodeAudioBufferToMp3(decoded);
+      const url = URL.createObjectURL(mp3Blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `recording-${Date.now()}.mp3`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+    } catch (err) {
+      console.error(err);
+      toast.error(t("ui.copyFailed"));
+    } finally {
+      setEncodingMp3(false);
+    }
+  }, [audioBlob, decodeBlobToBuffer, t]);
 
   const isRecording = recordingState === "recording";
   const isPaused = recordingState === "paused";
@@ -287,8 +316,8 @@ export default function AudioRecorderPage() {
 
   return (
     <ToolLayout
-      toolName="Audio Recorder"
-      toolDescription="Record audio from your microphone directly in the browser. No uploads, no accounts — fully private."
+      toolName={t("tool.audio-recorder.name")}
+      toolDescription={t("tool.audio-recorder.desc")}
     >
       <div className="space-y-6">
         {/* Timer & Visualizer */}
@@ -408,15 +437,23 @@ export default function AudioRecorderPage() {
               <button
                 type="button"
                 onClick={handleDownload}
-                className="flex-1 min-w-[180px] px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:opacity-90 transition-opacity"
+                className="flex-1 min-w-[160px] px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:opacity-90 transition-opacity"
               >
                 {t("ar.download")}
               </button>
               <button
                 type="button"
+                onClick={handleDownloadMp3}
+                disabled={encodingMp3}
+                className="flex-1 min-w-[160px] px-6 py-3 rounded-xl font-semibold text-t-secondary bg-bg-secondary border border-border hover:text-t-primary transition-colors disabled:opacity-50"
+              >
+                {encodingMp3 ? t("ar.encodingMp3") : t("ar.downloadMp3")}
+              </button>
+              <button
+                type="button"
                 onClick={handleDownloadWav}
                 disabled={encoding}
-                className="flex-1 min-w-[180px] px-6 py-3 rounded-xl font-semibold text-t-secondary bg-bg-secondary border border-border hover:text-t-primary transition-colors disabled:opacity-50"
+                className="flex-1 min-w-[160px] px-6 py-3 rounded-xl font-semibold text-t-secondary bg-bg-secondary border border-border hover:text-t-primary transition-colors disabled:opacity-50"
               >
                 {encoding ? t("ar.encodingWav") : t("ar.downloadWav")}
               </button>

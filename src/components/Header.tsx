@@ -8,7 +8,15 @@ import { tools, categoryEmojis, type ToolCategory } from "@/lib/tools";
 import { useI18n } from "@/lib/i18n";
 import { toolField } from "@/lib/tool-i18n";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import KeyboardShortcutsModal from "@/components/KeyboardShortcutsModal";
 import { useTheme } from "@/components/ClientProviders";
+
+function isTypingElement(target: EventTarget | null): boolean {
+  if (!target || !(target instanceof HTMLElement)) return false;
+  const tag = target.tagName;
+  if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return true;
+  return target.isContentEditable;
+}
 
 const categories: ToolCategory[] = ["pdf", "image", "video", "utility"];
 const catKeys: Record<ToolCategory, string> = {
@@ -145,7 +153,7 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
         <button
           onClick={onClose}
           className="p-2 rounded-lg text-t-secondary hover:text-t-primary hover:bg-bg-secondary transition-colors"
-          aria-label="Close menu"
+          aria-label={t("a11y.closeMenu")}
         >
           <svg
             className="w-6 h-6"
@@ -246,6 +254,7 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
 
         {/* Extra links */}
         {[
+          { href: "/workflows", key: "nav.workflows" },
           { href: "/about", key: "nav.about" },
           { href: "/blog", key: "nav.blog" },
           { href: "/changelog", key: "nav.changelog" },
@@ -269,16 +278,30 @@ export default function Header() {
   const pathname = usePathname();
   const [showDropdown, setShowDropdown] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const [showShortcuts, setShowShortcuts] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const { t } = useI18n();
   const { theme, toggleTheme } = useTheme();
+  const searchModKey = useMemo(() => {
+    if (typeof navigator === "undefined") return "Ctrl";
+    const ua = navigator.userAgent || "";
+    const p = navigator.platform || "";
+    if (/Mac|iPhone|iPod|iPad/i.test(p) || ua.includes("Mac OS")) return "⌘";
+    return "Ctrl";
+  }, []);
 
-  // Ctrl+K / Cmd+K to open search
+  // Ctrl+K / Cmd+K → search; ? → shortcuts (when not typing)
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
         setShowSearch(true);
+        return;
+      }
+      if (e.key === "?" || (e.key === "/" && e.shiftKey)) {
+        if (isTypingElement(e.target)) return;
+        e.preventDefault();
+        setShowShortcuts(true);
       }
     }
     document.addEventListener("keydown", handleKey);
@@ -317,7 +340,7 @@ export default function Header() {
               <button
                 onClick={() => setShowSearch(true)}
                 className="flex items-center gap-2 text-[13px] font-medium px-3 py-2 rounded-lg text-t-secondary hover:text-t-primary hover:bg-bg-secondary transition-colors"
-                aria-label="Search tools"
+                aria-label={t("a11y.searchTools")}
               >
                 <svg
                   className="w-4 h-4"
@@ -333,8 +356,21 @@ export default function Header() {
                   />
                 </svg>
                 <kbd className="hidden lg:inline-flex items-center px-1.5 py-0.5 text-[11px] font-medium text-t-tertiary bg-bg-secondary border border-border rounded">
-                  Ctrl K
+                  {searchModKey} K
                 </kbd>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowShortcuts(true)}
+                className="flex items-center gap-1.5 text-[13px] font-medium px-3 py-2 rounded-lg text-t-secondary hover:text-t-primary hover:bg-bg-secondary transition-colors"
+                aria-label={t("nav.shortcuts")}
+                title={t("nav.shortcuts")}
+              >
+                <kbd className="hidden lg:inline-flex items-center px-1.5 py-0.5 text-[11px] font-medium text-t-tertiary bg-bg-secondary border border-border rounded">
+                  ?
+                </kbd>
+                <span className="lg:hidden text-lg leading-none">?</span>
               </button>
 
               {/* Tools Dropdown */}
@@ -442,6 +478,17 @@ export default function Header() {
                 {t("nav.browseAll")}
               </Link>
 
+              <Link
+                href="/workflows"
+                className={`text-[13px] font-medium px-3.5 py-2 rounded-lg transition-colors ${
+                  pathname === "/workflows"
+                    ? "bg-accent-light text-accent"
+                    : "text-t-secondary hover:text-t-primary hover:bg-bg-secondary"
+                }`}
+              >
+                {t("nav.workflows")}
+              </Link>
+
               {/* Blog & Changelog */}
               {[
                 { href: "/blog", key: "nav.blog" },
@@ -464,7 +511,7 @@ export default function Header() {
               <button
                 onClick={toggleTheme}
                 className="p-2 rounded-lg text-t-secondary hover:text-t-primary hover:bg-bg-secondary transition-colors ml-1"
-                aria-label="Toggle theme"
+                aria-label={t("a11y.toggleTheme")}
               >
                 {theme === "dark" ? (
                   <svg
@@ -504,7 +551,7 @@ export default function Header() {
               <button
                 onClick={() => setShowSearch(true)}
                 className="p-2 rounded-lg text-t-secondary hover:text-t-primary hover:bg-bg-secondary transition-colors"
-                aria-label="Search tools"
+                aria-label={t("a11y.searchTools")}
               >
                 <svg
                   className="w-5 h-5"
@@ -525,7 +572,7 @@ export default function Header() {
               <button
                 onClick={toggleTheme}
                 className="p-2 rounded-lg text-t-secondary hover:text-t-primary hover:bg-bg-secondary transition-colors"
-                aria-label="Toggle theme"
+                aria-label={t("a11y.toggleTheme")}
               >
                 {theme === "dark" ? (
                   <svg
@@ -562,7 +609,7 @@ export default function Header() {
               <button
                 onClick={() => setShowMobileMenu(true)}
                 className="p-2 rounded-lg text-t-secondary hover:text-t-primary hover:bg-bg-secondary transition-colors"
-                aria-label="Open menu"
+                aria-label={t("a11y.openMenu")}
               >
                 <svg
                   className="w-6 h-6"
@@ -585,6 +632,11 @@ export default function Header() {
 
       {/* Search Modal */}
       {showSearch && <SearchModal onClose={() => setShowSearch(false)} />}
+
+      <KeyboardShortcutsModal
+        open={showShortcuts}
+        onClose={() => setShowShortcuts(false)}
+      />
 
       {/* Mobile Menu */}
       {showMobileMenu && (
