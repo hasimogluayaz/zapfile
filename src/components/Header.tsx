@@ -7,6 +7,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { tools, categoryEmojis, type ToolCategory } from "@/lib/tools";
 import { useI18n } from "@/lib/i18n";
 import { toolField } from "@/lib/tool-i18n";
+import { useFavoriteTools } from "@/hooks/useFavoriteTools";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import KeyboardShortcutsModal from "@/components/KeyboardShortcutsModal";
 import { useTheme } from "@/components/ClientProviders";
@@ -282,6 +283,8 @@ export default function Header() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const { t } = useI18n();
   const { theme, toggleTheme } = useTheme();
+  const { favorites, ready: favReady } = useFavoriteTools();
+  const favoriteTools = tools.filter((tool) => favorites.includes(tool.slug));
   const searchModKey = useMemo(() => {
     if (typeof navigator === "undefined") return "Ctrl";
     const ua = navigator.userAgent || "";
@@ -409,6 +412,27 @@ export default function Header() {
                     className="absolute ltr:right-0 rtl:left-0 top-full pt-2 animate-fade-in"
                   >
                     <div className="bg-surface border border-border rounded-2xl shadow-lg p-5 min-w-[560px] max-h-[70vh] overflow-y-auto">
+                      {favReady && favoriteTools.length > 0 && (
+                        <div className="mb-5 pb-4 border-b border-border">
+                          <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-500 mb-2.5 flex items-center gap-1.5">
+                            <span>★</span>
+                            {t("nav.favorites")}
+                          </p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {favoriteTools.map((tool) => (
+                              <Link
+                                key={tool.slug}
+                                href={`/tools/${tool.slug}`}
+                                onClick={() => setShowDropdown(false)}
+                                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] text-t-secondary hover:text-accent hover:bg-accent-light transition-colors border border-border bg-bg-secondary"
+                              >
+                                <span>{tool.emoji}</span>
+                                {toolField(t, tool.slug, tool, "name")}
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                       <div className="grid grid-cols-2 gap-6">
                         {categories.map((cat) => {
                           const catTools = tools.filter(

@@ -41,13 +41,13 @@ const FONT_FAMILIES = [
 ];
 
 type PresetTemplate = {
-  label: string;
+  labelKey: string;
   items: Omit<TextItem, "id">[];
 };
 
 const PRESETS: PresetTemplate[] = [
   {
-    label: "Classic Top/Bottom",
+    labelKey: "meme.preset.classic",
     items: [
       {
         text: "TOP TEXT",
@@ -80,7 +80,7 @@ const PRESETS: PresetTemplate[] = [
     ],
   },
   {
-    label: "Bottom Caption",
+    labelKey: "meme.preset.bottomCaption",
     items: [
       {
         text: "Caption here",
@@ -99,7 +99,7 @@ const PRESETS: PresetTemplate[] = [
     ],
   },
   {
-    label: "Reaction",
+    labelKey: "meme.preset.reaction",
     items: [
       {
         text: "Me:",
@@ -132,7 +132,7 @@ const PRESETS: PresetTemplate[] = [
     ],
   },
   {
-    label: "Distracted Boyfriend",
+    labelKey: "meme.preset.distractedBoyfriend",
     items: [
       {
         text: "New thing",
@@ -498,22 +498,22 @@ export default function MemeGeneratorPage() {
                 "image/*": [".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp"],
               }}
               formats={["JPG", "PNG", "WEBP", "GIF"]}
-              label="Drop your image here to start making memes"
+              label={t("meme.dropLabel")}
             />
 
             {/* Presets preview */}
             <div className="glass rounded-xl p-5 space-y-3">
-              <p className="text-[13px] font-semibold text-t-primary">Meme Templates</p>
+              <p className="text-[13px] font-semibold text-t-primary">{t("meme.templates")}</p>
               <p className="text-[12px] text-t-secondary">
-                Upload an image first, then apply a template to quickly set up text layers.
+                {t("meme.templatesHint")}
               </p>
               <div className="flex flex-wrap gap-2">
                 {PRESETS.map((p) => (
                   <span
-                    key={p.label}
+                    key={p.labelKey}
                     className="text-[11px] px-3 py-1.5 rounded-lg border border-border bg-bg-secondary text-t-secondary"
                   >
-                    {p.label}
+                    {t(p.labelKey)}
                   </span>
                 ))}
               </div>
@@ -524,7 +524,7 @@ export default function MemeGeneratorPage() {
             {/* Canvas area */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <p className="text-[13px] font-semibold text-t-primary">Preview</p>
+                <p className="text-[13px] font-semibold text-t-primary">{t("meme.preview")}</p>
                 <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
@@ -547,14 +547,14 @@ export default function MemeGeneratorPage() {
                     onClick={addText}
                     className="px-3 py-1.5 rounded-lg text-[12px] font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:shadow-lg hover:shadow-indigo-500/25 transition-all"
                   >
-                    + Add Text
+                    {t("meme.addText")}
                   </button>
                   <button
                     type="button"
                     onClick={reset}
                     className="px-3 py-1.5 rounded-lg text-[12px] font-semibold text-t-secondary bg-bg-secondary border border-border hover:bg-white/10 transition-colors"
                   >
-                    New Image
+                    {t("meme.newImage")}
                   </button>
                 </div>
               </div>
@@ -618,15 +618,15 @@ export default function MemeGeneratorPage() {
 
               {/* Presets */}
               <div className="glass rounded-xl p-4 space-y-2">
-                <p className="text-[12px] font-semibold text-t-primary">Quick Templates</p>
+                <p className="text-[12px] font-semibold text-t-primary">{t("meme.quickTemplates")}</p>
                 <div className="flex flex-wrap gap-2">
                   {PRESETS.map((p) => (
                     <button
-                      key={p.label}
+                      key={p.labelKey}
                       onClick={() => applyPreset(p)}
                       className="px-3 py-1.5 rounded-lg text-[11px] font-medium text-t-secondary bg-bg-secondary border border-border hover:border-indigo-500/50 hover:text-t-primary transition-colors"
                     >
-                      {p.label}
+                      {t(p.labelKey)}
                     </button>
                   ))}
                 </div>
@@ -637,7 +637,7 @@ export default function MemeGeneratorPage() {
                 onClick={handleDownload}
                 className="w-full py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:shadow-lg hover:shadow-indigo-500/25 hover:scale-[1.01] active:scale-[0.99] transition-all text-[14px]"
               >
-                Download Meme
+                {t("meme.downloadMeme")}
               </button>
             </div>
 
@@ -646,12 +646,12 @@ export default function MemeGeneratorPage() {
               {/* Text layers list */}
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <p className="text-[13px] font-semibold text-t-primary">Text Layers</p>
+                  <p className="text-[13px] font-semibold text-t-primary">{t("meme.textLayers")}</p>
                   <button
                     onClick={addText}
                     className="text-[11px] px-2.5 py-1 rounded-lg text-indigo-400 bg-indigo-500/10 hover:bg-indigo-500/20 transition-colors"
                   >
-                    + Add
+                    {t("meme.addLayer")}
                   </button>
                 </div>
                 <div className="space-y-1.5">
@@ -666,7 +666,7 @@ export default function MemeGeneratorPage() {
                       }`}
                     >
                       <span className="flex-1 text-[12px] text-t-primary truncate">
-                        {item.text || "(empty)"}
+                        {item.text || t("meme.emptyText")}
                       </span>
                       <button
                         onClick={(e) => {
@@ -674,7 +674,7 @@ export default function MemeGeneratorPage() {
                           deleteItem(item.id);
                         }}
                         className="text-[14px] text-t-secondary hover:text-red-400 transition-colors leading-none"
-                        title="Delete layer"
+                        title={t("meme.deleteLayerTitle")}
                       >
                         &times;
                       </button>
@@ -687,24 +687,24 @@ export default function MemeGeneratorPage() {
               {selectedItem ? (
                 <div className="space-y-4 border-t border-border pt-4">
                   <p className="text-[12px] font-semibold text-t-secondary uppercase tracking-wide">
-                    Edit Selected
+                    {t("meme.editSelected")}
                   </p>
 
                   {/* Text */}
                   <div>
-                    <label className="block text-[11px] text-t-secondary mb-1">Text</label>
+                    <label className="block text-[11px] text-t-secondary mb-1">{t("meme.textLabel")}</label>
                     <textarea
                       value={selectedItem.text}
                       onChange={(e) => updateItem(selectedItem.id, { text: e.target.value })}
                       rows={2}
                       className="w-full px-3 py-2 rounded-lg bg-bg-secondary border border-border text-[13px] text-t-primary placeholder:text-t-secondary/50 focus:outline-none focus:border-indigo-500/50 transition-colors resize-none"
-                      placeholder="Enter text..."
+                      placeholder={t("meme.enterText")}
                     />
                   </div>
 
                   {/* Font Family */}
                   <div>
-                    <label className="block text-[11px] text-t-secondary mb-1">Font Family</label>
+                    <label className="block text-[11px] text-t-secondary mb-1">{t("meme.fontFamily")}</label>
                     <select
                       value={selectedItem.fontFamily}
                       onChange={(e) => updateItem(selectedItem.id, { fontFamily: e.target.value })}
@@ -745,7 +745,7 @@ export default function MemeGeneratorPage() {
                   {/* Font Size */}
                   <div>
                     <div className="flex justify-between mb-1">
-                      <label className="text-[11px] text-t-secondary">Font Size</label>
+                      <label className="text-[11px] text-t-secondary">{t("meme.fontSize")}</label>
                       <span className="text-[11px] font-mono text-t-secondary">{selectedItem.fontSize}px</span>
                     </div>
                     <input
@@ -762,7 +762,7 @@ export default function MemeGeneratorPage() {
                   {/* Rotation */}
                   <div>
                     <div className="flex justify-between mb-1">
-                      <label className="text-[11px] text-t-secondary">Rotation</label>
+                      <label className="text-[11px] text-t-secondary">{t("meme.rotation")}</label>
                       <span className="text-[11px] font-mono text-t-secondary">{selectedItem.rotation}&deg;</span>
                     </div>
                     <input
@@ -779,7 +779,7 @@ export default function MemeGeneratorPage() {
                   {/* Stroke Width */}
                   <div>
                     <div className="flex justify-between mb-1">
-                      <label className="text-[11px] text-t-secondary">Stroke Width</label>
+                      <label className="text-[11px] text-t-secondary">{t("meme.strokeWidth")}</label>
                       <span className="text-[11px] font-mono text-t-secondary">{selectedItem.strokeWidth}px</span>
                     </div>
                     <input
@@ -796,7 +796,7 @@ export default function MemeGeneratorPage() {
                   {/* Colors */}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-[11px] text-t-secondary mb-1">Text Color</label>
+                      <label className="block text-[11px] text-t-secondary mb-1">{t("meme.textColor")}</label>
                       <div className="flex items-center gap-2">
                         <input
                           type="color"
@@ -808,7 +808,7 @@ export default function MemeGeneratorPage() {
                       </div>
                     </div>
                     <div>
-                      <label className="block text-[11px] text-t-secondary mb-1">Stroke Color</label>
+                      <label className="block text-[11px] text-t-secondary mb-1">{t("meme.strokeColor")}</label>
                       <div className="flex items-center gap-2">
                         <input
                           type="color"
@@ -823,7 +823,7 @@ export default function MemeGeneratorPage() {
 
                   {/* Alignment */}
                   <div>
-                    <label className="block text-[11px] text-t-secondary mb-1">Alignment</label>
+                    <label className="block text-[11px] text-t-secondary mb-1">{t("meme.alignment")}</label>
                     <div className="flex gap-1">
                       {(["left", "center", "right"] as const).map((a) => (
                         <button
@@ -846,13 +846,13 @@ export default function MemeGeneratorPage() {
                     onClick={() => deleteItem(selectedItem.id)}
                     className="w-full py-2 rounded-lg text-[12px] font-semibold text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors"
                   >
-                    Delete This Layer
+                    {t("meme.deleteThisLayer")}
                   </button>
                 </div>
               ) : (
                 <div className="border-t border-border pt-4">
                   <p className="text-[12px] text-t-secondary text-center py-4">
-                    Click a text layer above or click text on the preview to edit it.
+                    {t("meme.selectHint")}
                   </p>
                 </div>
               )}
