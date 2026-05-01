@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { Toaster } from "react-hot-toast";
 import ClientProviders from "@/components/ClientProviders";
 import type { Locale } from "@/lib/locales";
-import { SUPPORTED_LOCALES } from "@/lib/locales";
+import { SUPPORTED_LOCALES, isRtlLocale } from "@/lib/locales";
 import { LOCALE_COOKIE } from "@/lib/locale-cookies";
 import SkipToContent from "@/components/SkipToContent";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
@@ -168,7 +168,7 @@ export default async function RootLayout({
     raw && SUPPORTED_LOCALES.includes(raw as Locale) ? (raw as Locale) : "en";
 
   return (
-    <html lang={initialLocale} suppressHydrationWarning translate="no">
+    <html lang={initialLocale} dir={isRtlLocale(initialLocale) ? "rtl" : "ltr"} suppressHydrationWarning translate="no">
       <head>
         <meta name="google" content="notranslate" />
         {process.env.NEXT_PUBLIC_GA_ID && (

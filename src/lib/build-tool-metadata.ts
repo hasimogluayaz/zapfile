@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getToolBySlug } from "@/lib/tools";
 import { SITE_URL } from "@/lib/site-url";
+import { getToolFaqs } from "@/lib/tool-faqs";
 
 const BASE = SITE_URL;
 
@@ -23,6 +24,38 @@ function toolLanguages(path: string): Record<string, string> {
   }
   out["x-default"] = `${BASE}${path}`;
   return out;
+}
+
+export function buildToolJsonLd(slug: string): object | null {
+  const tool = getToolBySlug(slug);
+  if (!tool) return null;
+
+  const faqs = getToolFaqs(slug);
+  const graphs: object[] = [
+    {
+      "@type": "SoftwareApplication",
+      name: tool.name,
+      url: `${BASE}/tools/${slug}`,
+      applicationCategory: "UtilityApplication",
+      operatingSystem: "Any",
+      description: tool.metaDescription,
+      offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+      browserRequirements: "Requires a modern web browser with JavaScript enabled",
+    },
+  ];
+
+  if (faqs && faqs.length > 0) {
+    graphs.push({
+      "@type": "FAQPage",
+      mainEntity: faqs.map((faq) => ({
+        "@type": "Question",
+        name: faq.question,
+        acceptedAnswer: { "@type": "Answer", text: faq.answer },
+      })),
+    });
+  }
+
+  return { "@context": "https://schema.org", "@graph": graphs };
 }
 
 export function buildToolMetadata(slug: string): Metadata {

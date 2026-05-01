@@ -243,6 +243,8 @@ textarea,
   pointer-events: none;
 }
 .shine-btn:hover::after { transform: translateX(100%); }
+[dir="rtl"] .shine-btn::after { transform: translateX(100%); }
+[dir="rtl"] .shine-btn:hover::after { transform: translateX(-100%); }
 
 /* Premium elevated glass card */
 .glass-elevated {
@@ -312,13 +314,16 @@ textarea,
   );
   animation: shimmer 1.5s infinite;
 }
+[dir="rtl"] .shimmer::after {
+  animation-name: shimmer-rtl;
+}
 @keyframes shimmer {
-  from {
-    transform: translateX(-100%);
-  }
-  to {
-    transform: translateX(100%);
-  }
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+@keyframes shimmer-rtl {
+  from { transform: translateX(100%); }
+  to { transform: translateX(-100%); }
 }
 
 /* ========== Focus ========== */
@@ -340,7 +345,7 @@ summary:focus-visible {
 /* Skip to main content (accessibility) */
 .skip-link {
   position: absolute;
-  left: -9999px;
+  inset-inline-start: -9999px;
   top: 0;
   z-index: 100;
   padding: 0.75rem 1rem;
@@ -352,7 +357,7 @@ summary:focus-visible {
   text-decoration: none;
 }
 .skip-link:focus {
-  left: 0;
+  inset-inline-start: 0;
   outline: 2px solid var(--text-primary);
   outline-offset: 2px;
 }
