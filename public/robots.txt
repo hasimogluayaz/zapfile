@@ -1,9 +1,0 @@
-User-agent: *
-Allow: /
-
-# Sitemaps
-Sitemap: https://zapfile.io/sitemap.xml
-
-# Block common bot traps
-Disallow: /api/
-Disallow: /_next/
