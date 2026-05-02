@@ -14,19 +14,25 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.8,
   }));
 
-  const imageConversionPages = getImageConversions().map((c) => ({
-    url: `${baseUrl}/tools/convert-image/${c.slug}`,
-    lastModified: new Date(),
-    changeFrequency: "monthly" as const,
-    priority: 0.7,
-  }));
+  let imageConversionPages: MetadataRoute.Sitemap = [];
+  try {
+    imageConversionPages = getImageConversions().map((c) => ({
+      url: `${baseUrl}/tools/convert-image/${c.slug}`,
+      lastModified: new Date(),
+      changeFrequency: "monthly" as const,
+      priority: 0.7,
+    }));
+  } catch {}
 
-  const blogPostPages = getAllPosts().map((post) => ({
-    url: `${baseUrl}/blog/${post.slug}`,
-    lastModified: new Date(post.date),
-    changeFrequency: "weekly" as const,
-    priority: 0.6,
-  }));
+  let blogPostPages: MetadataRoute.Sitemap = [];
+  try {
+    blogPostPages = getAllPosts().map((post) => ({
+      url: `${baseUrl}/blog/${post.slug}`,
+      lastModified: new Date(post.date),
+      changeFrequency: "weekly" as const,
+      priority: 0.6,
+    }));
+  } catch {}
 
   return [
     {

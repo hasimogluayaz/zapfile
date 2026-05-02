@@ -77,18 +77,6 @@ export const metadata: Metadata = {
   },
   alternates: {
     canonical: SITE_URL,
-    languages: {
-      en: `${SITE_URL}/?lang=en`,
-      tr: `${SITE_URL}/?lang=tr`,
-      de: `${SITE_URL}/?lang=de`,
-      fr: `${SITE_URL}/?lang=fr`,
-      es: `${SITE_URL}/?lang=es`,
-      pt: `${SITE_URL}/?lang=pt`,
-      it: `${SITE_URL}/?lang=it`,
-      ja: `${SITE_URL}/?lang=ja`,
-      ar: `${SITE_URL}/?lang=ar`,
-      "x-default": SITE_URL,
-    },
   },
   verification: {
     google: "4k5LW57dXwNJkEYKplc4-IM_6uM5vskgXOZKLZRtGto",

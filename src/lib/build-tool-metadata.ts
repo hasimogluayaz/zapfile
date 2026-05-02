@@ -5,27 +5,6 @@ import { getToolFaqs } from "@/lib/tool-faqs";
 
 const BASE = SITE_URL;
 
-const HREFLANG_LANGS = [
-  "en",
-  "tr",
-  "de",
-  "fr",
-  "es",
-  "pt",
-  "it",
-  "ja",
-  "ar",
-] as const;
-
-function toolLanguages(path: string): Record<string, string> {
-  const out: Record<string, string> = {};
-  for (const lang of HREFLANG_LANGS) {
-    out[lang] = `${BASE}${path}?lang=${lang}`;
-  }
-  out["x-default"] = `${BASE}${path}`;
-  return out;
-}
-
 export function buildToolJsonLd(slug: string): object | null {
   const tool = getToolBySlug(slug);
   if (!tool) return null;
@@ -95,7 +74,6 @@ export function buildToolMetadata(slug: string): Metadata {
     },
     alternates: {
       canonical: `${BASE}/tools/${slug}`,
-      languages: toolLanguages(`/tools/${slug}`),
     },
   };
 }
