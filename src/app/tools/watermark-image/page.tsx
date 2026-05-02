@@ -849,9 +849,9 @@ export default function WatermarkImagePage() {
           />
         ) : (
           <>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
+            <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_400px] 2xl:grid-cols-[minmax(0,1fr)_440px] lg:items-start">
               {/* ── Left: Live preview ── */}
-              <div className="glass rounded-xl p-5 space-y-3">
+              <div className="glass rounded-xl p-5 space-y-3 lg:sticky lg:top-20">
                 <div className="flex items-center justify-between gap-2 flex-wrap">
                   <p className="text-[12px] font-semibold text-t-secondary uppercase tracking-wider">
                     {t("ui.livePreview")}
@@ -885,7 +885,7 @@ export default function WatermarkImagePage() {
                 {preview ? (
                   <div
                     ref={previewFrameRef}
-                    className="relative overflow-hidden rounded-lg border border-border bg-bg-secondary/60"
+                    className="relative mx-auto w-fit max-w-full overflow-hidden rounded-lg border border-border bg-bg-secondary/60"
                     onClick={(event) => {
                       if (tileEnabled) return;
                       moveWatermarkFromClientPoint(event.clientX, event.clientY);
@@ -895,7 +895,7 @@ export default function WatermarkImagePage() {
                     <img
                       src={preview}
                       alt={t("wm.previewAlt")}
-                      className="w-full object-contain"
+                      className="block max-h-[calc(100vh-16rem)] max-w-full object-contain"
                     />
 
                     {!tileEnabled && (
@@ -946,7 +946,7 @@ export default function WatermarkImagePage() {
               </div>
 
               {/* ── Right: Controls ── */}
-              <div className="space-y-4">
+              <div className="space-y-4 lg:max-h-[calc(100vh-9rem)] lg:overflow-y-auto lg:pr-1">
                 <div className="glass rounded-xl p-5 space-y-3">
                   <h3 className="text-[13px] font-semibold text-t-primary">
                     {t("wm.watermarkType")}

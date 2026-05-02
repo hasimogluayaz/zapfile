@@ -420,8 +420,8 @@ export default function BackgroundRemoverPage() {
 
         {file && (
           <>
-            <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr] items-start">
-              <div className="glass rounded-2xl p-5 space-y-4">
+            <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_420px] 2xl:grid-cols-[minmax(0,1fr)_460px] lg:items-start">
+              <div className="glass rounded-2xl p-5 space-y-4 lg:sticky lg:top-20">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold text-t-primary">{copy.compare}</p>
@@ -442,7 +442,7 @@ export default function BackgroundRemoverPage() {
                     afterSrc={resultUrl}
                     beforeLabel={copy.original}
                     afterLabel={copy.result}
-                    frameClassName="aspect-[4/3] max-h-[28rem]"
+                    frameClassName="aspect-[4/3] max-h-[calc(100vh-17rem)]"
                   />
                 ) : (
                   <div className="rounded-2xl border border-border bg-bg-secondary/60 p-4">
@@ -452,7 +452,7 @@ export default function BackgroundRemoverPage() {
                         <img
                           src={originalUrl}
                           alt={copy.original}
-                          className="mx-auto max-h-[28rem] rounded-xl object-contain"
+                          className="mx-auto max-h-[calc(100vh-17rem)] rounded-xl object-contain"
                         />
                       </>
                     )}
@@ -489,14 +489,14 @@ export default function BackgroundRemoverPage() {
                       <img
                         src={resultUrl}
                         alt={copy.result}
-                        className="mx-auto max-h-80 rounded-xl object-contain"
+                        className="mx-auto max-h-[calc(100vh-22rem)] rounded-xl object-contain"
                       />
                     </div>
                   </div>
                 )}
               </div>
 
-              <div className="space-y-5">
+              <div className="space-y-5 lg:max-h-[calc(100vh-9rem)] lg:overflow-y-auto lg:pr-1">
                 <div className="glass rounded-2xl p-5 space-y-4">
                   <p className="text-sm font-semibold text-t-primary">{copy.settings}</p>
 

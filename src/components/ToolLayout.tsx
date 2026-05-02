@@ -1,18 +1,22 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Header from "./Header";
 import Footer from "./Footer";
 import AdPlaceholder from "./AdPlaceholder";
-import ToolShareBar from "./ToolShareBar";
 import TrustPanel from "./TrustPanel";
 import { useI18n } from "@/lib/i18n";
 import { usePathname } from "next/navigation";
-import { tools, getToolBySlug } from "@/lib/tools";
+import {
+  categoryEmojis,
+  getToolBySlug,
+  tools,
+  type ToolCategory,
+} from "@/lib/tools";
 import { toolField } from "@/lib/tool-i18n";
-import { useRecentTools } from "@/hooks/useRecentTools";
 import { useFavoriteTools } from "@/hooks/useFavoriteTools";
+import { useRecentTools } from "@/hooks/useRecentTools";
 import { toolSlugFromPathname } from "@/lib/tool-slug";
 
 interface ToolLayoutProps {
@@ -23,6 +27,13 @@ interface ToolLayoutProps {
   /** Show privacy / local-processing explainer (default: true) */
   showTrustPanel?: boolean;
 }
+
+const catKeys: Record<ToolCategory, string> = {
+  pdf: "cat.pdf",
+  image: "cat.image",
+  video: "cat.video",
+  utility: "cat.utility",
+};
 
 export default function ToolLayout({
   children,
@@ -54,12 +65,31 @@ export default function ToolLayout({
   const relatedTools = useMemo(() => {
     if (!currentTool) return [];
     const sameCategory = tools.filter(
-      (t) => t.category === currentTool.category && t.slug !== currentTool.slug
+      (tool) =>
+        tool.category === currentTool.category &&
+        tool.slug !== currentTool.slug,
     );
     const otherCategory = tools.filter(
-      (t) => t.category !== currentTool.category && t.slug !== currentTool.slug
+      (tool) =>
+        tool.category !== currentTool.category &&
+        tool.slug !== currentTool.slug,
     );
-    return [...sameCategory, ...otherCategory].slice(0, 4);
+    return [...sameCategory, ...otherCategory].slice(0, 6);
+  }, [currentTool]);
+
+  const sideRailGroups = useMemo(() => {
+    const categories: ToolCategory[] = ["pdf", "image", "video", "utility"];
+    const ordered = currentTool
+      ? [
+          currentTool.category,
+          ...categories.filter((category) => category !== currentTool.category),
+        ]
+      : categories;
+
+    return ordered.map((category) => ({
+      category,
+      items: tools.filter((tool) => tool.category === category),
+    }));
   }, [currentTool]);
 
   const faqItems = useMemo(() => {
@@ -75,9 +105,7 @@ export default function ToolLayout({
     let categoryFaqs: { q: string; a: string }[] = [];
 
     if (category === "pdf") {
-      categoryFaqs = [
-        { q: t("faq.filesize.q"), a: t("faq.filesize.a") },
-      ];
+      categoryFaqs = [{ q: t("faq.filesize.q"), a: t("faq.filesize.a") }];
     } else if (category === "image") {
       categoryFaqs = [
         { q: t("faq.formats.q"), a: t("faq.formats.a") },
@@ -114,191 +142,224 @@ export default function ToolLayout({
     <>
       <Header />
       <main id="main-content" className="flex-1" tabIndex={-1}>
-        <div className="max-w-2xl mx-auto px-5 py-8">
-          {/* Breadcrumb */}
-          <nav className="flex items-center gap-1.5 text-[12px] text-t-tertiary mb-6">
-            <Link href="/" className="hover:text-accent transition-colors">
-              {t("tool.home")}
-            </Link>
-            <svg
-              className="w-3 h-3 text-t-tertiary/40 rtl:rotate-180"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
+        <div className="mx-auto flex w-full max-w-[1780px] gap-4 px-3 py-3 sm:px-5 lg:px-6">
+          <aside className="hidden w-64 shrink-0 xl:block">
+            <nav
+              aria-label={t("nav.allTools")}
+              className="sticky top-20 max-h-[calc(100vh-5.75rem)] overflow-y-auto rounded-3xl border border-border bg-surface/80 p-3 shadow-card backdrop-blur"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M9 5l7 7-7 7"
-              />
-            </svg>
-            <Link href="/tools" className="hover:text-accent transition-colors">
-              {t("tool.tools")}
-            </Link>
-            <svg
-              className="w-3 h-3 text-t-tertiary/40 rtl:rotate-180"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M9 5l7 7-7 7"
-              />
-            </svg>
-            <span className="text-t-secondary font-medium">{finalName}</span>
-          </nav>
-
-          <AdPlaceholder position="top" />
-
-          <ToolShareBar />
-
-          {showTrustPanel && <TrustPanel />}
-
-          {/* Tool header */}
-          <div className="mb-8 flex items-start gap-4">
-            {currentTool && (
-              <div className="relative shrink-0">
-                <div className="absolute inset-0 -m-1 rounded-2xl bg-gradient-to-br from-indigo-400 to-violet-400 opacity-30 blur-lg" aria-hidden="true" />
-                <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-100 to-violet-100 dark:from-indigo-900/40 dark:to-violet-900/30 flex items-center justify-center border border-white/10">
-                  <span className="text-3xl leading-none drop-shadow-sm">{currentTool.emoji}</span>
-                </div>
-              </div>
-            )}
-            <div className="min-w-0 flex-1">
-              <h1 className="text-3xl sm:text-4xl font-bold text-t-primary tracking-tight leading-[1.1]">
-                {finalName}
-              </h1>
-              <p className="text-[14px] text-t-secondary mt-2 leading-relaxed">
-                {finalDesc}
-              </p>
-            </div>
-            {currentTool && favReady && (
-              <button
-                type="button"
-                onClick={() => toggleFavorite(currentTool.slug)}
-                aria-pressed={isFavorite(currentTool.slug)}
-                aria-label={t("nav.favoriteToggle")}
-                className="shrink-0 mt-0.5 p-2 rounded-xl border border-border text-xl leading-none hover:bg-bg-secondary transition-colors text-amber-500"
+              <Link
+                href="/tools"
+                className="mb-3 flex items-center justify-between rounded-2xl bg-bg-secondary px-3 py-2.5 text-[13px] font-semibold text-t-primary hover:bg-accent-light hover:text-accent"
               >
-                {isFavorite(currentTool.slug) ? "★" : "☆"}
-              </button>
-            )}
-          </div>
+                <span>{t("nav.allTools")}</span>
+                <span className="text-[11px] text-t-tertiary">
+                  {tools.length}
+                </span>
+              </Link>
 
-          {/* Tool content */}
-          <div className="animate-fade-up">{children}</div>
-
-          {/* Related Tools */}
-          {relatedTools.length > 0 && (
-            <section className="mt-16 mb-8">
-              <h2 className="text-xl font-semibold text-t-primary mb-6">
-                {t("related.title")}
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 stagger-in">
-                {relatedTools.map((tool) => (
-                  <Link
-                    key={tool.slug}
-                    href={`/tools/${tool.slug}`}
-                    className="card-premium p-4 group"
-                  >
-                    <span className="text-2xl">{tool.emoji}</span>
-                    <h3 className="font-medium text-t-primary mt-2 group-hover:text-accent transition-colors">
-                      {toolField(t, tool.slug, tool, "name")}
-                    </h3>
-                    <p className="text-xs text-t-tertiary mt-1 line-clamp-2">
-                      {toolField(t, tool.slug, tool, "desc")}
+              <div className="space-y-4">
+                {sideRailGroups.map(({ category, items }) => (
+                  <div key={category}>
+                    <p className="mb-1.5 flex items-center gap-1.5 px-2 text-[11px] font-semibold uppercase tracking-wider text-t-tertiary">
+                      <span>{categoryEmojis[category]}</span>
+                      {t(catKeys[category])}
                     </p>
-                  </Link>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* FAQ */}
-          {faqItems.length > 0 && (
-            <section className="mt-12 mb-8">
-              <h2 className="text-xl font-semibold text-t-primary mb-6">
-                {t("faq.title")}
-              </h2>
-              <div className="space-y-3">
-                {faqItems.map((item, index) => (
-                  <div key={index} className="glass rounded-xl overflow-hidden">
-                    <button
-                      type="button"
-                      onClick={() => toggleFaq(index)}
-                      aria-expanded={openFaqIndices.has(index)}
-                      className="w-full px-6 py-4 flex items-center justify-between text-start"
-                    >
-                      <span className="font-medium text-t-primary">
-                        {item.q}
-                      </span>
-                      <svg
-                        className={`w-4 h-4 text-t-tertiary shrink-0 ms-4 transition-transform duration-200 ${
-                          openFaqIndices.has(index) ? "rotate-180" : ""
-                        }`}
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
-                    </button>
-                    {openFaqIndices.has(index) && (
-                      <div className="px-6 pb-4 text-t-secondary text-sm">
-                        {item.a}
-                      </div>
-                    )}
+                    <div className="space-y-0.5">
+                      {items.map((tool) => {
+                        const active = tool.slug === slug;
+                        return (
+                          <Link
+                            key={tool.slug}
+                            href={`/tools/${tool.slug}`}
+                            className={`flex items-center gap-2 rounded-xl px-2.5 py-1.5 text-[12px] transition-colors ${
+                              active
+                                ? "bg-accent-light text-accent"
+                                : "text-t-secondary hover:bg-bg-secondary hover:text-t-primary"
+                            }`}
+                          >
+                            <span className="shrink-0">{tool.emoji}</span>
+                            <span className="min-w-0 truncate">
+                              {toolField(t, tool.slug, tool, "name")}
+                            </span>
+                          </Link>
+                        );
+                      })}
+                    </div>
                   </div>
                 ))}
               </div>
-              <script
-                type="application/ld+json"
-                dangerouslySetInnerHTML={{
-                  __html: JSON.stringify({
-                    "@context": "https://schema.org",
-                    "@type": "FAQPage",
-                    mainEntity: faqItems.map((item) => ({
-                      "@type": "Question",
-                      name: item.q,
-                      acceptedAnswer: {
-                        "@type": "Answer",
-                        text: item.a,
-                      },
-                    })),
-                  }),
-                }}
-              />
+            </nav>
+          </aside>
+
+          <div className="min-w-0 flex-1">
+            <section className="mb-4 rounded-3xl border border-border bg-surface/80 px-4 py-3 shadow-card backdrop-blur sm:px-5">
+              <div className="mb-2 flex flex-wrap items-center gap-1.5 text-[11px] text-t-tertiary">
+                <Link href="/" className="hover:text-accent transition-colors">
+                  {t("tool.home")}
+                </Link>
+                <span>/</span>
+                <Link
+                  href="/tools"
+                  className="hover:text-accent transition-colors"
+                >
+                  {t("tool.tools")}
+                </Link>
+                <span>/</span>
+                <span className="font-medium text-t-secondary">
+                  {finalName}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-3">
+                {currentTool && (
+                  <div className="relative shrink-0">
+                    <div
+                      className="absolute inset-0 -m-1 rounded-2xl bg-gradient-to-br from-indigo-400 to-violet-400 opacity-25 blur-lg"
+                      aria-hidden="true"
+                    />
+                    <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-gradient-to-br from-indigo-100 to-violet-100 dark:from-indigo-900/40 dark:to-violet-900/30">
+                      <span className="text-2xl leading-none">
+                        {currentTool.emoji}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                <div className="min-w-0 flex-1">
+                  <h1 className="truncate text-2xl font-bold leading-tight tracking-tight text-t-primary sm:text-3xl">
+                    {finalName}
+                  </h1>
+                  <p className="mt-1 line-clamp-2 text-[13px] leading-relaxed text-t-secondary">
+                    {finalDesc}
+                  </p>
+                </div>
+
+                <div className="hidden items-center gap-2 md:flex">
+                  {showTrustPanel && (
+                    <span className="rounded-full border border-emerald-500/25 bg-emerald-500/[0.08] px-3 py-1.5 text-[12px] font-medium text-emerald-600 dark:text-emerald-400">
+                      {t("tool.privacy")}
+                    </span>
+                  )}
+                  {currentTool && favReady && (
+                    <button
+                      type="button"
+                      onClick={() => toggleFavorite(currentTool.slug)}
+                      aria-pressed={isFavorite(currentTool.slug)}
+                      aria-label={t("nav.favoriteToggle")}
+                      className="rounded-xl border border-border px-3 py-2 text-[12px] font-semibold text-t-secondary transition-colors hover:bg-bg-secondary hover:text-t-primary"
+                    >
+                      {isFavorite(currentTool.slug) ? "Pinned" : "Pin"}
+                    </button>
+                  )}
+                </div>
+              </div>
             </section>
-          )}
 
-          {/* Privacy badge */}
-          <div className="mt-12 flex items-center justify-center gap-2 text-[12px] text-t-tertiary">
-            <svg
-              className="w-3.5 h-3.5 text-emerald-500"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-              />
-            </svg>
-            {t("tool.privacy")}
+            <div className="animate-fade-up">{children}</div>
+
+            {showTrustPanel && (
+              <details className="mt-8 rounded-3xl border border-border bg-surface/70 p-4">
+                <summary className="cursor-pointer text-[13px] font-semibold text-t-primary">
+                  {t("trust.panelTitle")}
+                </summary>
+                <div className="mt-4">
+                  <TrustPanel />
+                </div>
+              </details>
+            )}
+
+            {relatedTools.length > 0 && (
+              <details className="mt-8 rounded-3xl border border-border bg-surface/70 p-4">
+                <summary className="cursor-pointer text-[13px] font-semibold text-t-primary">
+                  {t("related.title")}
+                </summary>
+                <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                  {relatedTools.map((tool) => (
+                    <Link
+                      key={tool.slug}
+                      href={`/tools/${tool.slug}`}
+                      className="card-premium p-4 group"
+                    >
+                      <span className="text-2xl">{tool.emoji}</span>
+                      <h3 className="mt-2 font-medium text-t-primary transition-colors group-hover:text-accent">
+                        {toolField(t, tool.slug, tool, "name")}
+                      </h3>
+                      <p className="mt-1 line-clamp-2 text-xs text-t-tertiary">
+                        {toolField(t, tool.slug, tool, "desc")}
+                      </p>
+                    </Link>
+                  ))}
+                </div>
+              </details>
+            )}
+
+            {faqItems.length > 0 && (
+              <section className="mt-8 rounded-3xl border border-border bg-surface/70 p-4">
+                <h2 className="mb-4 text-[13px] font-semibold text-t-primary">
+                  {t("faq.title")}
+                </h2>
+                <div className="space-y-2">
+                  {faqItems.map((item, index) => (
+                    <div
+                      key={index}
+                      className="overflow-hidden rounded-2xl border border-border bg-bg-secondary/60"
+                    >
+                      <button
+                        type="button"
+                        onClick={() => toggleFaq(index)}
+                        aria-expanded={openFaqIndices.has(index)}
+                        className="flex w-full items-center justify-between px-4 py-3 text-start"
+                      >
+                        <span className="text-sm font-medium text-t-primary">
+                          {item.q}
+                        </span>
+                        <svg
+                          className={`ms-4 h-4 w-4 shrink-0 text-t-tertiary transition-transform duration-200 ${
+                            openFaqIndices.has(index) ? "rotate-180" : ""
+                          }`}
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M19 9l-7 7-7-7"
+                          />
+                        </svg>
+                      </button>
+                      {openFaqIndices.has(index) && (
+                        <div className="px-4 pb-3 text-sm text-t-secondary">
+                          {item.a}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <script
+                  type="application/ld+json"
+                  dangerouslySetInnerHTML={{
+                    __html: JSON.stringify({
+                      "@context": "https://schema.org",
+                      "@type": "FAQPage",
+                      mainEntity: faqItems.map((item) => ({
+                        "@type": "Question",
+                        name: item.q,
+                        acceptedAnswer: {
+                          "@type": "Answer",
+                          text: item.a,
+                        },
+                      })),
+                    }),
+                  }}
+                />
+              </section>
+            )}
+
+            <AdPlaceholder position="bottom" />
           </div>
-
-          <AdPlaceholder position="bottom" />
         </div>
       </main>
       <Footer />

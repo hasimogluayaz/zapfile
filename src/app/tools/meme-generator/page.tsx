@@ -689,9 +689,9 @@ export default function MemeGeneratorPage() {
             </div>
           </>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_400px] 2xl:grid-cols-[minmax(0,1fr)_440px] lg:items-start">
             {/* Canvas area */}
-            <div className="space-y-3">
+            <div className="space-y-3 lg:sticky lg:top-20">
               <div className="flex items-center justify-between">
                 <p className="text-[13px] font-semibold text-t-primary">{t("meme.preview")}</p>
                 <div className="flex flex-wrap gap-2">
@@ -731,7 +731,7 @@ export default function MemeGeneratorPage() {
               {/* Interactive preview container */}
               <div
                 ref={containerRef}
-                className="relative select-none rounded-xl overflow-hidden border border-border"
+                className="relative mx-auto w-fit max-w-full select-none overflow-hidden rounded-xl border border-border bg-bg-secondary/60"
                 style={{ cursor: "default" }}
                 onClick={() => setSelectedId(null)}
               >
@@ -739,7 +739,7 @@ export default function MemeGeneratorPage() {
                 <img
                   src={imgSrc!}
                   alt="Meme base"
-                  className="w-full max-w-full block"
+                  className="mx-auto block max-h-[calc(100vh-18rem)] max-w-full object-contain"
                   draggable={false}
                 />
 
@@ -816,7 +816,7 @@ export default function MemeGeneratorPage() {
             </div>
 
             {/* Controls panel */}
-            <div className="glass rounded-xl p-5 space-y-5">
+            <div className="glass rounded-xl p-5 space-y-5 lg:max-h-[calc(100vh-9rem)] lg:overflow-y-auto lg:pr-1">
               {/* Text layers list */}
               <div>
                 <div className="flex items-center justify-between mb-3">
