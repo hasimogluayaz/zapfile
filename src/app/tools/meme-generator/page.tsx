@@ -21,10 +21,33 @@ interface TextItem {
   align: "left" | "center" | "right";
   bold: boolean;
   italic: boolean;
+  opacity: number;
+  backgroundColor: string;
+  backgroundOpacity: number;
 }
 
 function cloneTextItems(items: TextItem[]): TextItem[] {
   return items.map((t) => ({ ...t }));
+}
+
+function hexToRgba(hex: string, alpha: number) {
+  const normalized = hex.replace("#", "");
+  const safe = normalized.length === 3
+    ? normalized
+        .split("")
+        .map((char) => `${char}${char}`)
+        .join("")
+    : normalized.padEnd(6, "0").slice(0, 6);
+
+  const r = Number.parseInt(safe.slice(0, 2), 16);
+  const g = Number.parseInt(safe.slice(2, 4), 16);
+  const b = Number.parseInt(safe.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function getTextLines(text: string) {
+  const lines = text.split(/\r?\n/);
+  return lines.length > 0 ? lines : [""];
 }
 
 const FONT_FAMILIES = [
@@ -62,6 +85,9 @@ const PRESETS: PresetTemplate[] = [
         align: "center",
         bold: false,
         italic: false,
+        opacity: 100,
+        backgroundColor: "#000000",
+        backgroundOpacity: 0,
       },
       {
         text: "BOTTOM TEXT",
@@ -76,6 +102,9 @@ const PRESETS: PresetTemplate[] = [
         align: "center",
         bold: false,
         italic: false,
+        opacity: 100,
+        backgroundColor: "#000000",
+        backgroundOpacity: 0,
       },
     ],
   },
@@ -95,6 +124,9 @@ const PRESETS: PresetTemplate[] = [
         align: "center",
         bold: false,
         italic: false,
+        opacity: 100,
+        backgroundColor: "#000000",
+        backgroundOpacity: 0,
       },
     ],
   },
@@ -114,6 +146,9 @@ const PRESETS: PresetTemplate[] = [
         align: "left",
         bold: true,
         italic: false,
+        opacity: 100,
+        backgroundColor: "#000000",
+        backgroundOpacity: 0,
       },
       {
         text: "Also me:",
@@ -128,6 +163,9 @@ const PRESETS: PresetTemplate[] = [
         align: "left",
         bold: true,
         italic: false,
+        opacity: 100,
+        backgroundColor: "#000000",
+        backgroundOpacity: 0,
       },
     ],
   },
@@ -147,6 +185,9 @@ const PRESETS: PresetTemplate[] = [
         align: "center",
         bold: false,
         italic: false,
+        opacity: 100,
+        backgroundColor: "#000000",
+        backgroundOpacity: 0,
       },
       {
         text: "Old thing",
@@ -161,6 +202,9 @@ const PRESETS: PresetTemplate[] = [
         align: "center",
         bold: false,
         italic: false,
+        opacity: 100,
+        backgroundColor: "#000000",
+        backgroundOpacity: 0,
       },
       {
         text: "Me",
@@ -175,6 +219,9 @@ const PRESETS: PresetTemplate[] = [
         align: "center",
         bold: false,
         italic: false,
+        opacity: 100,
+        backgroundColor: "#000000",
+        backgroundOpacity: 0,
       },
     ],
   },
@@ -200,6 +247,9 @@ function defaultItems(): TextItem[] {
       align: "center",
       bold: false,
       italic: false,
+      opacity: 100,
+      backgroundColor: "#000000",
+      backgroundOpacity: 0,
     },
     {
       id: makeId(),
@@ -215,13 +265,43 @@ function defaultItems(): TextItem[] {
       align: "center",
       bold: false,
       italic: false,
+      opacity: 100,
+      backgroundColor: "#000000",
+      backgroundOpacity: 0,
     },
   ];
 }
 
 
 export default function MemeGeneratorPage() {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
+  const editorCopy = locale === "tr"
+    ? {
+        newText: "Yeni Metin",
+        duplicate: "Kopyala",
+        bringForward: "Öne al",
+        sendBackward: "Arkaya al",
+        xPosition: "X Konumu",
+        yPosition: "Y Konumu",
+        opacity: "Saydamlık",
+        textBackground: "Metin Arka Planı",
+        backgroundOpacity: "Arka plan opaklığı",
+        layerTools: "Katman araçları",
+        quickMove: "İnce hareket",
+      }
+    : {
+        newText: "New Text",
+        duplicate: "Duplicate",
+        bringForward: "Bring forward",
+        sendBackward: "Send backward",
+        xPosition: "X Position",
+        yPosition: "Y Position",
+        opacity: "Opacity",
+        textBackground: "Text background",
+        backgroundOpacity: "Background opacity",
+        layerTools: "Layer tools",
+        quickMove: "Fine move",
+      };
   const [file, setFile] = useState<File | null>(null);
   const [imgSrc, setImgSrc] = useState<string | null>(null);
   const [textItems, setTextItems] = useState<TextItem[]>(defaultItems());
@@ -265,6 +345,11 @@ export default function MemeGeneratorPage() {
 
   const selectedItem = textItems.find((item) => item.id === selectedId) ?? null;
 
+  function pushHistorySnapshot() {
+    setUndoStack((u) => [...u.slice(-49), cloneTextItems(itemsRef.current)]);
+    setRedoStack([]);
+  }
+
   function updateItem(id: string, patch: Partial<TextItem>) {
     setTextItems((prev) =>
       prev.map((t) => (t.id === id ? { ...t, ...patch } : t))
@@ -272,14 +357,13 @@ export default function MemeGeneratorPage() {
   }
 
   function addText() {
-    setUndoStack((u) => [...u.slice(-49), cloneTextItems(itemsRef.current)]);
-    setRedoStack([]);
+    pushHistorySnapshot();
     const id = makeId();
     setTextItems((prev) => [
       ...prev,
       {
         id,
-        text: "New Text",
+        text: editorCopy.newText,
         x: 50,
         y: 50,
         fontSize: 48,
@@ -291,23 +375,69 @@ export default function MemeGeneratorPage() {
         align: "center",
         bold: false,
         italic: false,
+        opacity: 100,
+        backgroundColor: "#000000",
+        backgroundOpacity: 0,
       },
     ]);
     setSelectedId(id);
   }
 
   function deleteItem(id: string) {
-    setUndoStack((u) => [...u.slice(-49), cloneTextItems(itemsRef.current)]);
-    setRedoStack([]);
+    pushHistorySnapshot();
     setTextItems((prev) => prev.filter((t) => t.id !== id));
     if (selectedId === id) setSelectedId(null);
   }
 
   function applyPreset(preset: PresetTemplate) {
-    setUndoStack((u) => [...u.slice(-49), cloneTextItems(itemsRef.current)]);
-    setRedoStack([]);
+    pushHistorySnapshot();
     setTextItems(preset.items.map((item) => ({ ...item, id: makeId() })));
     setSelectedId(null);
+  }
+
+  function duplicateItem(id: string) {
+    const source = itemsRef.current.find((item) => item.id === id);
+    if (!source) return;
+    pushHistorySnapshot();
+    const nextId = makeId();
+    const clone = {
+      ...source,
+      id: nextId,
+      x: Math.min(95, source.x + 4),
+      y: Math.min(95, source.y + 4),
+    };
+    setTextItems((prev) => [...prev, clone]);
+    setSelectedId(nextId);
+  }
+
+  function moveLayer(id: string, direction: "forward" | "backward") {
+    const current = itemsRef.current;
+    const index = current.findIndex((item) => item.id === id);
+    if (index === -1) return;
+    const targetIndex =
+      direction === "forward"
+        ? Math.min(current.length - 1, index + 1)
+        : Math.max(0, index - 1);
+    if (targetIndex === index) return;
+    pushHistorySnapshot();
+    const next = [...current];
+    const [item] = next.splice(index, 1);
+    next.splice(targetIndex, 0, item);
+    setTextItems(next);
+  }
+
+  function nudgeItem(id: string, deltaX: number, deltaY: number) {
+    setTextItems((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              x: Math.max(0, Math.min(100, item.x + deltaX)),
+              y: Math.max(0, Math.min(100, item.y + deltaY)),
+            }
+          : item,
+      ),
+    );
   }
 
   // Drag handlers
@@ -410,6 +540,65 @@ export default function MemeGeneratorPage() {
     setTextItems(cloneTextItems(next));
   }
 
+  function drawCanvasTextItem(
+    ctx: CanvasRenderingContext2D,
+    item: TextItem,
+    cx: number,
+    cy: number,
+    scaledFontSize: number,
+    scaleFactor: number,
+  ) {
+    const lines = getTextLines(item.text);
+    const lineHeight = scaledFontSize * 1.08;
+    const style = item.italic ? "italic " : "";
+    const weight = item.bold ? "bold " : "";
+
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate((item.rotation * Math.PI) / 180);
+    ctx.globalAlpha = item.opacity / 100;
+    ctx.font = `${style}${weight}${scaledFontSize}px ${item.fontFamily}, sans-serif`;
+    ctx.textAlign = item.align;
+    ctx.textBaseline = "middle";
+    ctx.lineJoin = "round";
+    ctx.miterLimit = 2;
+
+    const widths = lines.map((line) => ctx.measureText(line || " ").width);
+    const blockWidth = widths.length > 0 ? Math.max(...widths) : 0;
+    const blockHeight = lineHeight * lines.length;
+    const paddingX = 12 * scaleFactor;
+    const paddingY = 8 * scaleFactor;
+
+    if (item.backgroundOpacity > 0) {
+      let rectX = -blockWidth / 2 - paddingX;
+      if (item.align === "left") rectX = -paddingX;
+      if (item.align === "right") rectX = -blockWidth - paddingX;
+      const rectY = -blockHeight / 2 - paddingY;
+      const rectWidth = blockWidth + paddingX * 2;
+      const rectHeight = blockHeight + paddingY * 2;
+      ctx.fillStyle = hexToRgba(
+        item.backgroundColor,
+        Math.min(1, Math.max(0, item.backgroundOpacity / 100)),
+      );
+      ctx.beginPath();
+      ctx.roundRect(rectX, rectY, rectWidth, rectHeight, 10 * scaleFactor);
+      ctx.fill();
+    }
+
+    lines.forEach((line, index) => {
+      const yOffset = (index - (lines.length - 1) / 2) * lineHeight;
+      if (item.strokeWidth > 0) {
+        ctx.strokeStyle = item.strokeColor;
+        ctx.lineWidth = item.strokeWidth * scaleFactor * 2;
+        ctx.strokeText(line, 0, yOffset);
+      }
+      ctx.fillStyle = item.color;
+      ctx.fillText(line, 0, yOffset);
+    });
+
+    ctx.restore();
+  }
+
   function handleDownload() {
     const img = imgRef.current;
     const canvas = canvasRef.current;
@@ -430,35 +619,15 @@ export default function MemeGeneratorPage() {
     const displayH = container.clientHeight;
     const scaleX = nw / displayW;
     const scaleY = nh / displayH;
+    const scaleFactor = Math.min(scaleX, scaleY);
 
     for (const item of textItems) {
       if (!item.text.trim()) continue;
 
       const cx = (item.x / 100) * nw;
       const cy = (item.y / 100) * nh;
-      const scaledFontSize = item.fontSize * Math.min(scaleX, scaleY);
-
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate((item.rotation * Math.PI) / 180);
-
-      const style = item.italic ? "italic " : "";
-      const weight = item.bold ? "bold " : "";
-      ctx.font = `${style}${weight}${scaledFontSize}px ${item.fontFamily}, sans-serif`;
-      ctx.textAlign = item.align;
-      ctx.textBaseline = "middle";
-      ctx.lineJoin = "round";
-      ctx.miterLimit = 2;
-
-      if (item.strokeWidth > 0) {
-        ctx.strokeStyle = item.strokeColor;
-        ctx.lineWidth = item.strokeWidth * Math.min(scaleX, scaleY) * 2;
-        ctx.strokeText(item.text, 0, 0);
-      }
-
-      ctx.fillStyle = item.color;
-      ctx.fillText(item.text, 0, 0);
-      ctx.restore();
+      const scaledFontSize = item.fontSize * scaleFactor;
+      drawCanvasTextItem(ctx, item, cx, cy, scaledFontSize, scaleFactor);
     }
 
     canvas.toBlob((blob) => {
@@ -595,6 +764,11 @@ export default function MemeGeneratorPage() {
                       fontStyle: item.italic ? "italic" : "normal",
                       color: item.color,
                       textAlign: item.align,
+                      opacity: item.opacity / 100,
+                      backgroundColor:
+                        item.backgroundOpacity > 0
+                          ? hexToRgba(item.backgroundColor, item.backgroundOpacity / 100)
+                          : "transparent",
                       WebkitTextStroke: item.strokeWidth > 0
                         ? `${item.strokeWidth}px ${item.strokeColor}`
                         : undefined,
@@ -841,6 +1015,172 @@ export default function MemeGeneratorPage() {
                     </div>
                   </div>
 
+                  <div className="rounded-xl border border-border bg-bg-secondary/70 p-3 space-y-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-t-secondary">
+                      {editorCopy.layerTools}
+                    </p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => duplicateItem(selectedItem.id)}
+                        className="rounded-lg border border-border bg-bg-primary px-3 py-2 text-[12px] font-medium text-t-primary transition-colors hover:border-indigo-500/40"
+                      >
+                        {editorCopy.duplicate}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => moveLayer(selectedItem.id, "forward")}
+                        className="rounded-lg border border-border bg-bg-primary px-3 py-2 text-[12px] font-medium text-t-primary transition-colors hover:border-indigo-500/40"
+                      >
+                        {editorCopy.bringForward}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => moveLayer(selectedItem.id, "backward")}
+                        className="rounded-lg border border-border bg-bg-primary px-3 py-2 text-[12px] font-medium text-t-primary transition-colors hover:border-indigo-500/40"
+                      >
+                        {editorCopy.sendBackward}
+                      </button>
+                      <div className="rounded-lg border border-border bg-bg-primary px-3 py-2 text-[11px] text-t-secondary">
+                        {editorCopy.quickMove}
+                      </div>
+                    </div>
+                    <div className="mx-auto grid w-28 grid-cols-3 gap-2">
+                      <span />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          pushHistorySnapshot();
+                          nudgeItem(selectedItem.id, 0, -1);
+                        }}
+                        className="rounded-lg border border-border bg-bg-primary px-2 py-2 text-[12px] text-t-primary transition-colors hover:border-indigo-500/40"
+                      >
+                        ↑
+                      </button>
+                      <span />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          pushHistorySnapshot();
+                          nudgeItem(selectedItem.id, -1, 0);
+                        }}
+                        className="rounded-lg border border-border bg-bg-primary px-2 py-2 text-[12px] text-t-primary transition-colors hover:border-indigo-500/40"
+                      >
+                        ←
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          pushHistorySnapshot();
+                          updateItem(selectedItem.id, { x: 50, y: 50 });
+                        }}
+                        className="rounded-lg border border-border bg-bg-primary px-2 py-2 text-[11px] text-t-primary transition-colors hover:border-indigo-500/40"
+                      >
+                        +
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          pushHistorySnapshot();
+                          nudgeItem(selectedItem.id, 1, 0);
+                        }}
+                        className="rounded-lg border border-border bg-bg-primary px-2 py-2 text-[12px] text-t-primary transition-colors hover:border-indigo-500/40"
+                      >
+                        →
+                      </button>
+                      <span />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          pushHistorySnapshot();
+                          nudgeItem(selectedItem.id, 0, 1);
+                        }}
+                        className="rounded-lg border border-border bg-bg-primary px-2 py-2 text-[12px] text-t-primary transition-colors hover:border-indigo-500/40"
+                      >
+                        ↓
+                      </button>
+                      <span />
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between mb-1">
+                      <label className="text-[11px] text-t-secondary">{editorCopy.xPosition}</label>
+                      <span className="text-[11px] font-mono text-t-secondary">{Math.round(selectedItem.x)}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      step={1}
+                      value={selectedItem.x}
+                      onChange={(e) => updateItem(selectedItem.id, { x: Number(e.target.value) })}
+                      className="w-full accent-indigo-500"
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between mb-1">
+                      <label className="text-[11px] text-t-secondary">{editorCopy.yPosition}</label>
+                      <span className="text-[11px] font-mono text-t-secondary">{Math.round(selectedItem.y)}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      step={1}
+                      value={selectedItem.y}
+                      onChange={(e) => updateItem(selectedItem.id, { y: Number(e.target.value) })}
+                      className="w-full accent-indigo-500"
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between mb-1">
+                      <label className="text-[11px] text-t-secondary">{editorCopy.opacity}</label>
+                      <span className="text-[11px] font-mono text-t-secondary">{selectedItem.opacity}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={10}
+                      max={100}
+                      step={1}
+                      value={selectedItem.opacity}
+                      onChange={(e) => updateItem(selectedItem.id, { opacity: Number(e.target.value) })}
+                      className="w-full accent-indigo-500"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] text-t-secondary mb-1">{editorCopy.textBackground}</label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="color"
+                          value={selectedItem.backgroundColor}
+                          onChange={(e) => updateItem(selectedItem.id, { backgroundColor: e.target.value })}
+                          className="w-8 h-8 rounded-lg cursor-pointer border border-border bg-bg-secondary p-0.5"
+                        />
+                        <span className="text-[10px] font-mono text-t-secondary">{selectedItem.backgroundColor}</span>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex justify-between mb-1">
+                        <label className="text-[11px] text-t-secondary">{editorCopy.backgroundOpacity}</label>
+                        <span className="text-[11px] font-mono text-t-secondary">{selectedItem.backgroundOpacity}%</span>
+                      </div>
+                      <input
+                        type="range"
+                        min={0}
+                        max={100}
+                        step={1}
+                        value={selectedItem.backgroundOpacity}
+                        onChange={(e) => updateItem(selectedItem.id, { backgroundOpacity: Number(e.target.value) })}
+                        className="w-full accent-indigo-500"
+                      />
+                    </div>
+                  </div>
+
                   {/* Delete */}
                   <button
                     onClick={() => deleteItem(selectedItem.id)}
@@ -863,4 +1203,3 @@ export default function MemeGeneratorPage() {
     </ToolLayout>
   );
 }
-

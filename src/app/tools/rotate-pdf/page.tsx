@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import toast from "react-hot-toast";
 import ToolLayout from "@/components/ToolLayout";
 import FileDropzone from "@/components/FileDropzone";
@@ -14,17 +14,104 @@ import { useI18n } from "@/lib/i18n";
 type RotationDegrees = 90 | 180 | 270;
 type RotationMode = "all" | "specific";
 
+function parsePageRange(input: string, pageCount: number): Set<number> | null {
+  const selected = new Set<number>();
+  const normalized = input.trim().toLowerCase();
+  if (!normalized) return selected;
+
+  for (const rawToken of normalized.split(/[,;\s]+/)) {
+    const token = rawToken.trim();
+    if (!token) continue;
+
+    if (token === "all") {
+      for (let i = 0; i < pageCount; i++) selected.add(i);
+      continue;
+    }
+
+    if (token === "odd") {
+      for (let i = 0; i < pageCount; i += 2) selected.add(i);
+      continue;
+    }
+
+    if (token === "even") {
+      for (let i = 1; i < pageCount; i += 2) selected.add(i);
+      continue;
+    }
+
+    if (token === "last") {
+      selected.add(pageCount - 1);
+      continue;
+    }
+
+    const rangeMatch = token.match(/^(\d+)-(\d+)$/);
+    if (rangeMatch) {
+      const start = Number(rangeMatch[1]);
+      const end = Number(rangeMatch[2]);
+      if (
+        !Number.isInteger(start) ||
+        !Number.isInteger(end) ||
+        start < 1 ||
+        end < 1 ||
+        start > pageCount ||
+        end > pageCount
+      ) {
+        return null;
+      }
+      const from = Math.min(start, end);
+      const to = Math.max(start, end);
+      for (let page = from; page <= to; page++) selected.add(page - 1);
+      continue;
+    }
+
+    const page = Number(token);
+    if (!Number.isInteger(page) || page < 1 || page > pageCount) return null;
+    selected.add(page - 1);
+  }
+
+  return selected;
+}
+
 export default function RotatePdfPage() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [file, setFile] = useState<File | null>(null);
   const [pageCount, setPageCount] = useState<number>(0);
   const [rotationDegrees, setRotationDegrees] = useState<RotationDegrees>(90);
   const [rotationMode, setRotationMode] = useState<RotationMode>("all");
   const [selectedPages, setSelectedPages] = useState<Set<number>>(new Set());
+  const [rangeInput, setRangeInput] = useState("");
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [resultBlob, setResultBlob] = useState<Blob | null>(null);
   const [resultFilename, setResultFilename] = useState("");
+
+  const copy =
+    locale === "tr"
+      ? {
+          rangeLabel: "Sayfa araligi",
+          rangeHint: "1-3, 5, odd, even veya last yazabilirsiniz.",
+          applyRange: "Araligi uygula",
+          quickAll: "Tumunu sec",
+          quickOdd: "Tek sayfalar",
+          quickEven: "Cift sayfalar",
+          clear: "Temizle",
+          invalidRange: "Sayfa araligi gecersiz.",
+          picked: "Secilen sayfalar",
+          previewMore: "daha",
+          affected: "Etkilenecek sayfa",
+        }
+      : {
+          rangeLabel: "Page range",
+          rangeHint: "Use 1-3, 5, odd, even, or last.",
+          applyRange: "Apply range",
+          quickAll: "Select all",
+          quickOdd: "Odd pages",
+          quickEven: "Even pages",
+          clear: "Clear",
+          invalidRange: "Invalid page range.",
+          picked: "Selected pages",
+          previewMore: "more",
+          affected: "Pages affected",
+        };
 
   const handleFileSelected = useCallback(async (files: File[]) => {
     const selected = files[0];
@@ -44,11 +131,21 @@ export default function RotatePdfPage() {
       setPageCount(count);
       setRotationMode("all");
       setSelectedPages(new Set());
+      setRangeInput("");
     } catch (err) {
       toast.error(t("rotpdf.loadFail"));
       console.error(err);
     }
-  }, []);
+  }, [t]);
+
+  const selectedPagePreview = useMemo(() => {
+    const pages = Array.from(selectedPages)
+      .sort((a, b) => a - b)
+      .map((page) => page + 1);
+    const visible = pages.slice(0, 14).join(", ");
+    const rest = Math.max(0, pages.length - 14);
+    return rest > 0 ? `${visible} +${rest} ${copy.previewMore}` : visible;
+  }, [copy.previewMore, selectedPages]);
 
   const togglePage = (index: number) => {
     setSelectedPages((prev) => {
@@ -60,6 +157,30 @@ export default function RotatePdfPage() {
       }
       return next;
     });
+    setRangeInput("");
+  };
+
+  const applyRangeInput = () => {
+    const parsed = parsePageRange(rangeInput, pageCount);
+    if (!parsed) {
+      toast.error(copy.invalidRange);
+      return;
+    }
+    setSelectedPages(parsed);
+    setRotationMode("specific");
+  };
+
+  const applyQuickSelection = (type: "all" | "odd" | "even" | "clear") => {
+    if (type === "clear") {
+      setSelectedPages(new Set());
+      setRangeInput("");
+      return;
+    }
+
+    const parsed = parsePageRange(type, pageCount);
+    setSelectedPages(parsed ?? new Set());
+    setRangeInput(type === "all" ? `1-${pageCount}` : type);
+    setRotationMode("specific");
   };
 
   const handleProcess = async () => {
@@ -119,9 +240,13 @@ export default function RotatePdfPage() {
     setFile(null);
     setPageCount(0);
     setSelectedPages(new Set());
+    setRangeInput("");
     setResultBlob(null);
     setProgress(0);
   };
+
+  const affectedPageCount =
+    rotationMode === "all" ? pageCount : selectedPages.size;
 
   const rotationOptions: { value: RotationDegrees; label: string }[] = [
     { value: 90, label: t("rotpdf.90cw") },
@@ -227,6 +352,22 @@ export default function RotatePdfPage() {
               <h3 className="text-brand-text font-semibold">
                 {t("rotpdf.pages")}
               </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="rounded-xl bg-white/5 border border-white/10 p-4">
+                  <p className="text-xs text-brand-muted">{copy.affected}</p>
+                  <p className="text-2xl font-semibold text-brand-text">
+                    {affectedPageCount}
+                  </p>
+                </div>
+                <div className="rounded-xl bg-white/5 border border-white/10 p-4 sm:col-span-2">
+                  <p className="text-xs text-brand-muted">{copy.picked}</p>
+                  <p className="text-sm text-brand-text mt-1 min-h-5">
+                    {rotationMode === "all"
+                      ? t("rotpdf.allPages")
+                      : selectedPagePreview || "-"}
+                  </p>
+                </div>
+              </div>
               <div className="flex gap-3">
                 <button
                   onClick={() => setRotationMode("all")}
@@ -258,8 +399,51 @@ export default function RotatePdfPage() {
 
               {/* Page selector for specific mode */}
               {rotationMode === "specific" && pageCount > 0 && (
-                <div className="space-y-3 pt-2">
-                  <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-2">
+                <div className="space-y-4 pt-2">
+                  <div className="rounded-xl bg-white/5 border border-white/10 p-4 space-y-3">
+                    <label className="block text-sm font-medium text-brand-text">
+                      {copy.rangeLabel}
+                    </label>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <input
+                        type="text"
+                        value={rangeInput}
+                        onChange={(event) => setRangeInput(event.target.value)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter") applyRangeInput();
+                        }}
+                        placeholder="1-3, 5, odd, even"
+                        className="flex-1 px-4 py-3 rounded-xl bg-brand-bg border border-white/10 text-brand-text placeholder:text-brand-muted focus:outline-none focus:border-brand-indigo/60"
+                      />
+                      <button
+                        type="button"
+                        onClick={applyRangeInput}
+                        className="px-4 py-3 rounded-xl bg-brand-indigo text-white text-sm font-semibold hover:bg-brand-indigo/90 transition-colors"
+                      >
+                        {copy.applyRange}
+                      </button>
+                    </div>
+                    <p className="text-xs text-brand-muted">{copy.rangeHint}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        { type: "all" as const, label: copy.quickAll },
+                        { type: "odd" as const, label: copy.quickOdd },
+                        { type: "even" as const, label: copy.quickEven },
+                        { type: "clear" as const, label: copy.clear },
+                      ].map((item) => (
+                        <button
+                          key={item.type}
+                          type="button"
+                          onClick={() => applyQuickSelection(item.type)}
+                          className="px-3 py-2 rounded-lg bg-white/5 text-xs font-medium text-brand-muted hover:bg-white/10 hover:text-brand-text transition-colors"
+                        >
+                          {item.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-2 max-h-72 overflow-y-auto pr-1">
                     {Array.from({ length: pageCount }, (_, i) => (
                       <button
                         key={i}

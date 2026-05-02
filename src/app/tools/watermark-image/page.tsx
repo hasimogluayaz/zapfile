@@ -174,6 +174,10 @@ function computeWatermarkPoint(
   return { x, y, padding };
 }
 
+function clampPercent(value: number) {
+  return Math.min(100, Math.max(0, value));
+}
+
 function drawImageWatermark(
   ctx: CanvasRenderingContext2D,
   canvas: HTMLCanvasElement,
@@ -352,7 +356,20 @@ function drawWatermarkToCanvas(
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function WatermarkImagePage() {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
+  const previewCopy = locale === "tr"
+    ? {
+        moveHint: "Önizleme üzerinde tıklayıp sürükleyerek filigranı taşıyın.",
+        directPlacement: "Doğrudan yerleştirme",
+        directPlacementHint: "Önizleme içindeki tutamacı sürükleyin veya görselin istediğiniz yerine tıklayın.",
+        fineNudge: "İnce hareket",
+      }
+    : {
+        moveHint: "Click or drag on the preview to reposition the watermark.",
+        directPlacement: "Direct placement",
+        directPlacementHint: "Drag the handle inside the preview or click anywhere on the image to place it.",
+        fineNudge: "Fine nudge",
+      };
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
@@ -395,6 +412,8 @@ export default function WatermarkImagePage() {
   const imgRef = useRef<HTMLImageElement | null>(null);
   const markImgRef = useRef<HTMLImageElement | null>(null);
   const markUrlRef = useRef<string | null>(null);
+  const previewFrameRef = useRef<HTMLDivElement | null>(null);
+  const previewDragActiveRef = useRef(false);
   const restoringHistoryRef = useRef(false);
   const lastHistorySerializedRef = useRef<string | null>(null);
   const [historyUndo, setHistoryUndo] = useState<string[]>([]);
@@ -624,6 +643,53 @@ export default function WatermarkImagePage() {
     watermarkMode, imageScale, markReady,
   ]);
 
+  const moveWatermarkFromClientPoint = useCallback((clientX: number, clientY: number) => {
+    const frame = previewFrameRef.current;
+    if (!frame) return;
+    const rect = frame.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return;
+
+    const nextX = clampPercent(((clientX - rect.left) / rect.width) * 100);
+    const nextY = clampPercent(((clientY - rect.top) / rect.height) * 100);
+    setGridPosition("custom");
+    setCustomX(Math.round(nextX));
+    setCustomY(Math.round(nextY));
+  }, []);
+
+  const nudgeWatermark = useCallback((deltaX: number, deltaY: number) => {
+    setGridPosition("custom");
+    setCustomX((current) => clampPercent(current + deltaX));
+    setCustomY((current) => clampPercent(current + deltaY));
+  }, []);
+
+  useEffect(() => {
+    const handleMouseMove = (event: MouseEvent) => {
+      if (!previewDragActiveRef.current) return;
+      moveWatermarkFromClientPoint(event.clientX, event.clientY);
+    };
+
+    const handleTouchMove = (event: TouchEvent) => {
+      if (!previewDragActiveRef.current || event.touches.length === 0) return;
+      moveWatermarkFromClientPoint(event.touches[0].clientX, event.touches[0].clientY);
+    };
+
+    const handleDragEnd = () => {
+      previewDragActiveRef.current = false;
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleDragEnd);
+    window.addEventListener("touchmove", handleTouchMove, { passive: true });
+    window.addEventListener("touchend", handleDragEnd);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleDragEnd);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", handleDragEnd);
+    };
+  }, [moveWatermarkFromClientPoint]);
+
   const handleFilesSelected = useCallback(
     (files: File[]) => {
       const f = files[0];
@@ -817,12 +883,58 @@ export default function WatermarkImagePage() {
                   </div>
                 </div>
                 {preview ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={preview}
-                    alt={t("wm.previewAlt")}
-                    className="w-full rounded-lg border border-border object-contain"
-                  />
+                  <div
+                    ref={previewFrameRef}
+                    className="relative overflow-hidden rounded-lg border border-border bg-bg-secondary/60"
+                    onClick={(event) => {
+                      if (tileEnabled) return;
+                      moveWatermarkFromClientPoint(event.clientX, event.clientY);
+                    }}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={preview}
+                      alt={t("wm.previewAlt")}
+                      className="w-full object-contain"
+                    />
+
+                    {!tileEnabled && (
+                      <>
+                        <button
+                          type="button"
+                          onMouseDown={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            previewDragActiveRef.current = true;
+                            moveWatermarkFromClientPoint(event.clientX, event.clientY);
+                          }}
+                          onTouchStart={(event) => {
+                            event.stopPropagation();
+                            if (event.touches.length === 0) return;
+                            previewDragActiveRef.current = true;
+                            moveWatermarkFromClientPoint(
+                              event.touches[0].clientX,
+                              event.touches[0].clientY,
+                            );
+                          }}
+                          style={{
+                            left: `${gridPosition === "custom" ? customX : 50}%`,
+                            top: `${gridPosition === "custom" ? customY : 50}%`,
+                            transform: "translate(-50%, -50%)",
+                          }}
+                          className={`absolute z-10 flex h-9 w-9 items-center justify-center rounded-full border border-white/70 bg-white/90 text-[15px] text-accent shadow-lg shadow-black/20 transition-opacity ${
+                            gridPosition === "custom" ? "cursor-grab opacity-100" : "pointer-events-none opacity-0"
+                          }`}
+                          aria-label={previewCopy.directPlacement}
+                        >
+                          +
+                        </button>
+                        <div className="pointer-events-none absolute inset-x-3 bottom-3 rounded-xl border border-white/10 bg-black/45 px-3 py-2 text-[11px] text-white/90 backdrop-blur-sm">
+                          {previewCopy.moveHint}
+                        </div>
+                      </>
+                    )}
+                  </div>
                 ) : (
                   <div className="h-48 flex items-center justify-center rounded-lg border border-border text-[12px] text-t-secondary">
                     {t("wm.loadingPreview")}
@@ -1173,6 +1285,14 @@ export default function WatermarkImagePage() {
 
                   {gridPosition === "custom" && (
                     <div className="space-y-3">
+                      <div className="rounded-xl border border-border bg-bg-secondary/70 p-3">
+                        <p className="text-[12px] font-medium text-t-primary">
+                          {previewCopy.directPlacement}
+                        </p>
+                        <p className="mt-1 text-[11px] text-t-secondary">
+                          {previewCopy.directPlacementHint}
+                        </p>
+                      </div>
                       <div>
                         <div className={rangeRow}>
                           <label className={rangeLabelCls}>{t("wm.xPosition")}</label>
@@ -1202,6 +1322,58 @@ export default function WatermarkImagePage() {
                           onChange={(e) => setCustomY(Number(e.target.value))}
                           className="w-full accent-accent"
                         />
+                      </div>
+                      <div className="rounded-xl border border-border bg-bg-secondary/70 p-3">
+                        <div className="mb-3 flex items-center justify-between">
+                          <span className="text-[12px] font-medium text-t-primary">
+                            {previewCopy.fineNudge}
+                          </span>
+                          <span className="text-[11px] text-t-secondary">1%</span>
+                        </div>
+                        <div className="mx-auto grid w-28 grid-cols-3 gap-2">
+                          <span />
+                          <button
+                            type="button"
+                            onClick={() => nudgeWatermark(0, -1)}
+                            className="rounded-lg border border-border bg-bg-primary px-2 py-2 text-[12px] text-t-primary transition-colors hover:border-accent/50"
+                          >
+                            ↑
+                          </button>
+                          <span />
+                          <button
+                            type="button"
+                            onClick={() => nudgeWatermark(-1, 0)}
+                            className="rounded-lg border border-border bg-bg-primary px-2 py-2 text-[12px] text-t-primary transition-colors hover:border-accent/50"
+                          >
+                            ←
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCustomX(50);
+                              setCustomY(50);
+                            }}
+                            className="rounded-lg border border-border bg-bg-primary px-2 py-2 text-[11px] text-t-primary transition-colors hover:border-accent/50"
+                          >
+                            +
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => nudgeWatermark(1, 0)}
+                            className="rounded-lg border border-border bg-bg-primary px-2 py-2 text-[12px] text-t-primary transition-colors hover:border-accent/50"
+                          >
+                            →
+                          </button>
+                          <span />
+                          <button
+                            type="button"
+                            onClick={() => nudgeWatermark(0, 1)}
+                            className="rounded-lg border border-border bg-bg-primary px-2 py-2 text-[12px] text-t-primary transition-colors hover:border-accent/50"
+                          >
+                            ↓
+                          </button>
+                          <span />
+                        </div>
                       </div>
                     </div>
                   )}
