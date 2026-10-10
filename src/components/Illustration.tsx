@@ -18,7 +18,6 @@ export default function Illustration({
   const common = {
     width: size,
     height: size,
-    alt: "",
     "aria-hidden": true as const,
     loading: "lazy" as const,
     decoding: "async" as const,
@@ -27,11 +26,13 @@ export default function Illustration({
     <>
       <img
         {...common}
+        alt=""
         src={`/illustrations/${name}.webp`}
         className={`mx-auto select-none dark:hidden ${className}`}
       />
       <img
         {...common}
+        alt=""
         src={`/illustrations/${name}-dark.webp`}
         className={`mx-auto hidden select-none dark:block ${className}`}
       />
