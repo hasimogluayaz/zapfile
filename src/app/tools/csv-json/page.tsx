@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
+import CsvTable from "@/components/CsvTable";
+import { parseCsvSimple } from "@/lib/parse-csv-simple";
 import toast from "react-hot-toast";
 import ToolLayout from "@/components/ToolLayout";
 import { useI18n } from "@/lib/i18n";
@@ -152,6 +154,16 @@ export default function CSVJSONPage() {
     setError("");
   };
 
+  // Table preview of whichever side is CSV (input in CSV→JSON, output in JSON→CSV).
+  const tableRows = useMemo(() => {
+    if (error) return [];
+    const csv = mode === "csv-to-json" ? input : output;
+    if (!csv.trim()) return [];
+    return parseCsvSimple(csv, mode === "csv-to-json" ? delimiter : ",").filter(
+      (row) => row.some((cell) => cell.trim() !== ""),
+    );
+  }, [mode, input, output, delimiter, error]);
+
   return (
     <ToolLayout
       toolName="CSV ↔ JSON"
@@ -296,6 +308,13 @@ export default function CSVJSONPage() {
             <p className="text-xs text-t-tertiary mt-2">
               {output.length.toLocaleString()} {t("ui.characters")}
             </p>
+          </div>
+        )}
+
+        {tableRows.length > 1 && (
+          <div className="glass rounded-xl p-6">
+            <h3 className="mb-3 text-sm font-medium text-t-secondary">{t("csvview.preview")}</h3>
+            <CsvTable rows={tableRows} />
           </div>
         )}
       </div>

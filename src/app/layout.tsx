@@ -141,7 +141,6 @@ const jsonLd = {
     "EXIF Viewer",
     "Image Collage Maker",
     "Meme Generator",
-    "Audio Waveform Visualizer",
     "QR Code Generator",
     "QR Code Scanner",
     "Password Generator",
@@ -154,8 +153,6 @@ const jsonLd = {
     "Hash Generator",
     "Word Counter",
     "Unit Converter",
-    "Pomodoro Timer",
-    "Typing Speed Test",
     "Color Palette Generator",
   ],
 };

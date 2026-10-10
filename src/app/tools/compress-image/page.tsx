@@ -335,7 +335,7 @@ export default function CompressImagePage() {
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="text-sm text-brand-muted">
-                  {t("compimg.format") || "Output Format"}
+                  {t("compimg.format")}
                 </label>
               </div>
               <div className="flex gap-2">
@@ -350,7 +350,7 @@ export default function CompressImagePage() {
                     }`}
                   >
                     {fmt === "original"
-                      ? t("compimg.keepFormat") || "Keep Original"
+                      ? t("compimg.keepFormat")
                       : "WebP"}
                   </button>
                 ))}
@@ -358,8 +358,7 @@ export default function CompressImagePage() {
               {outputFormat === "webp" && (
                 <p className="text-xs text-brand-muted mt-2 flex items-center gap-1.5">
                   <span className="text-emerald-400">✓</span>
-                  {t("compimg.webpHint") ||
-                    "WebP typically offers 25-35% smaller files with same quality"}
+                  {t("compimg.webpHint")}
                 </p>
               )}
             </div>

@@ -1,5 +1,5 @@
 /** Minimal CSV parser for preview (handles quoted fields with commas). */
-export function parseCsvSimple(text: string): string[][] {
+export function parseCsvSimple(text: string, delimiter = ","): string[][] {
   const rows: string[][] = [];
   let row: string[] = [];
   let field = "";
@@ -24,7 +24,7 @@ export function parseCsvSimple(text: string): string[][] {
       inQ = true;
       continue;
     }
-    if (c === ",") {
+    if (c === delimiter) {
       row.push(field);
       field = "";
       continue;

@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import toast from "react-hot-toast";
-import ToolLayout from "@/components/ToolLayout";
+import { useI18n } from "@/lib/i18n";
 
 // ── Common passwords breach list ──────────────────────────────────────────────
 
@@ -174,7 +174,8 @@ function CheckRow({ label, passed }: { label: string; passed: boolean }) {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
-export default function PasswordStrengthPage() {
+export default function PasswordStrengthChecker() {
+  const { t } = useI18n();
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
@@ -194,10 +195,10 @@ export default function PasswordStrengthPage() {
   };
 
   return (
-    <ToolLayout
-      toolName="Password Strength Tester"
-      toolDescription="Analyze your password's strength, entropy, and estimated crack time — all processed locally in your browser."
-    >
+    <section aria-labelledby="pw-check-title">
+      <h2 id="pw-check-title" className="mb-3 text-[17px] font-semibold tracking-[-0.015em] text-t-primary">
+        {t("pw.checkTitle")}
+      </h2>
       <div className="space-y-5">
         {/* Input Card */}
         <div className="glass rounded-xl p-6">
@@ -215,13 +216,13 @@ export default function PasswordStrengthPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Type your password here…"
-              className="w-full px-4 py-3 pr-20 rounded-xl bg-bg-secondary border border-border text-t-primary placeholder:text-t-secondary/40 focus:outline-none focus:border-accent/40 font-mono text-sm"
+              className="w-full px-4 py-3 pe-20 rounded-xl bg-bg-secondary border border-border text-t-primary placeholder:text-t-secondary/40 focus:outline-none focus:border-accent/40 font-mono text-sm"
               autoComplete="off"
               autoCorrect="off"
               autoCapitalize="off"
               spellCheck={false}
             />
-            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1">
+            <div className="absolute end-2 top-1/2 -translate-y-1/2 flex gap-1">
               {password && (
                 <button
                   onClick={copyPassword}
@@ -377,6 +378,6 @@ export default function PasswordStrengthPage() {
           </>
         )}
       </div>
-    </ToolLayout>
+    </section>
   );
 }

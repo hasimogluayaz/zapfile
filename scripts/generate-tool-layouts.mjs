@@ -52,20 +52,13 @@ const slugs = [
   "xml-formatter",
   "yaml-formatter",
   "unit-converter",
-  "pomodoro-timer",
   "qr-scanner",
-  "html-to-pdf",
   "jwt-decoder",
   "uuid-generator",
   "css-minifier",
   "base-converter",
-  "typing-speed-test",
   "color-palette",
-  "ascii-art",
-  "audio-waveform",
-  "image-pipeline",
   "color-contrast",
-  "csv-viewer",
 ];
 
 for (const slug of slugs) {

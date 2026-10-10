@@ -18,7 +18,7 @@ const FLOWS: FlowDef[] = [
   {
     titleKey: "workflow.bundle0.title",
     descKey: "workflow.bundle0.desc",
-    slugs: ["image-pipeline"],
+    slugs: ["compress-image"],
     highlight: true,
   },
   {

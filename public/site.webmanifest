@@ -9,7 +9,10 @@
   "background_color": "#0f0f13",
   "theme_color": "#6366f1",
   "orientation": "any",
-  "categories": ["utilities", "productivity"],
+  "categories": [
+    "utilities",
+    "productivity"
+  ],
   "icons": [
     {
       "src": "/android-chrome-192x192.png",
@@ -100,10 +103,10 @@
       ]
     },
     {
-      "name": "Image Pipeline",
-      "short_name": "Pipeline",
-      "description": "Compress and resize images in one flow",
-      "url": "/tools/image-pipeline",
+      "name": "Compress Image",
+      "short_name": "Compress",
+      "description": "Compress and resize images",
+      "url": "/tools/compress-image",
       "icons": [
         {
           "src": "/android-chrome-192x192.png",

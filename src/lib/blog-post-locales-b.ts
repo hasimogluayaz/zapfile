@@ -6,43 +6,6 @@ export const BLOG_LOCALE_B: Record<
   string,
   Partial<Record<Exclude<Locale, "en">, BlogLocaleEntry>>
 > = {
-  "html-to-pdf-from-url-or-snippet": {
-    tr: {
-      title: "HTML’den PDF: Parçalardan Faturaya",
-      description:
-        "Arşiv, makbuz ve dokümantasyon için HTML veya yapıştırılmış işaretlemeden PDF üretme.",
-    },
-    de: {
-      title: "HTML zu PDF: von Snippets bis Rechnungen",
-      description:
-        "HTML oder eingefügtes Markup zuverlässig als PDF sichern — direkt im Browser.",
-    },
-    fr: {
-      title: "HTML vers PDF : extraits et factures",
-      description:
-        "Convertir du HTML ou du code collé en PDF pour archivage et documentation.",
-    },
-    es: {
-      title: "De HTML a PDF: fragmentos y facturas",
-      description:
-        "Convierte HTML o fragmentos pegados a PDF para archivo y documentación.",
-    },
-    pt: {
-      title: "HTML para PDF: trechos e faturas",
-      description:
-        "Converter HTML ou trechos colados em PDF para arquivo e documentação.",
-    },
-    it: {
-      title: "Da HTML a PDF: snippet e fatture",
-      description:
-        "Convertire HTML o markup incollato in PDF per archiviazione e documentazione.",
-    },
-    ja: {
-      title: "HTML から PDF：スニペットから請求書まで",
-      description:
-        "貼り付けた HTML をブラウザで PDF にし、保存や共有に使う流れを紹介します。",
-    },
-  },
   "qr-code-scanner-vs-generator": {
     tr: {
       title: "QR Okuyucu ve QR Oluşturucu: Ne Zaman Hangisi?",
@@ -228,43 +191,6 @@ export const BLOG_LOCALE_B: Record<
         "改ざん検知・重複検出と、セキュリティ用途で MD5 が不適切な理由を説明します。",
     },
   },
-  "typing-speed-test-wpm-explained": {
-    tr: {
-      title: "Dakikadaki Kelime (WPM): İyi Sonuçlar Ne Anlama Gelir?",
-      description:
-        "Dakika başına kelime, doğruluk ve tarayıcı tabanlı pratik ile geliştirme.",
-    },
-    de: {
-      title: "Tippgeschwindigkeit (WPM): was sind gute Werte?",
-      description:
-        "Wörter pro Minute, Genauigkeit und Training direkt im Browser.",
-    },
-    fr: {
-      title: "Vitesse de frappe (WPM) : bons scores",
-      description:
-        "Mots par minute, précision et entraînement dans le navigateur.",
-    },
-    es: {
-      title: "Velocidad de mecanografía (WPM): qué es un buen resultado",
-      description:
-        "Palabras por minuto, precisión y práctica en el navegador.",
-    },
-    pt: {
-      title: "Velocidade de digitação (WPM): o que é um bom resultado",
-      description:
-        "Palavras por minuto, precisão e prática no navegador.",
-    },
-    it: {
-      title: "Velocità di battitura (WPM): cos’è un buon punteggio",
-      description:
-        "Parole al minuto, precisione e pratica nel browser.",
-    },
-    ja: {
-      title: "タイピング速度（WPM）：目安と練習法",
-      description:
-        "語数・精度の見方と、ブラウザでできる練習のヒントをまとめます。",
-    },
-  },
   "color-palette-from-image": {
     tr: {
       title: "Herhangi Bir Görüntüden Renk Paleti Çıkarma",
@@ -374,80 +300,6 @@ export const BLOG_LOCALE_B: Record<
       title: "高速化のための CSS ミニファイ",
       description:
         "本番向けに余白やコメントを削り、元ファイルはソース管理で管理する考え方です。",
-    },
-  },
-  "audio-waveform-for-podcasts": {
-    tr: {
-      title: "Podcast ve Video İçin Ses Dalgası Görselleri",
-      description:
-        "Küçük resimler, sosyal klipler ve şov notları için PNG dalga formları üretin.",
-    },
-    de: {
-      title: "Audio-Wellenformen für Podcasts und Video",
-      description:
-        "Wellenform-PNGs für Thumbnails, Social Clips und Shownotes erzeugen.",
-    },
-    fr: {
-      title: "Images de forme d’onde pour podcasts et vidéo",
-      description:
-        "Générer des PNG de waveform pour vignettes et réseaux sociaux.",
-    },
-    es: {
-      title: "Imágenes de forma de onda para podcasts y vídeo",
-      description:
-        "Generar PNG de onda para miniaturas y clips sociales.",
-    },
-    pt: {
-      title: "Formas de onda de áudio para podcasts e vídeo",
-      description:
-        "Gerar PNG de waveform para thumbnails e redes sociais.",
-    },
-    it: {
-      title: "Forme d’onda audio per podcast e video",
-      description:
-        "Creare PNG di waveform per miniature e clip social.",
-    },
-    ja: {
-      title: "ポッドキャスト・動画向け波形画像",
-      description:
-        "サムネやSNS用に、音声から波形PNGを作る用途と手順を紹介します。",
-    },
-  },
-  "ascii-art-from-photos": {
-    tr: {
-      title: "Fotoğraflardan ASCII Sanatı: Hafif ve Yaratıcı Grafikler",
-      description:
-        "Parlaklığı karakterlere eşleyerek terminal, README ve yaratıcı projeler için metin sanatı.",
-    },
-    de: {
-      title: "ASCII-Kunst aus Fotos: leicht und kreativ",
-      description:
-        "Helligkeit in Zeichen umsetzen — für Terminal, READMEs und Retro-Optik.",
-    },
-    fr: {
-      title: "ASCII art à partir de photos",
-      description:
-        "Mapper la luminosité vers des caractères pour README et projets créatifs.",
-    },
-    es: {
-      title: "Arte ASCII desde fotos: gráficos ligeros",
-      description:
-        "Convertir brillo en caracteres para terminales, README y estética retro.",
-    },
-    pt: {
-      title: "Arte ASCII a partir de fotos",
-      description:
-        "Mapear brilho para caracteres — README e estética retrô.",
-    },
-    it: {
-      title: "ASCII art dalle foto: grafica leggera",
-      description:
-        "Mappare la luminosità sui caratteri per terminali, README e look retro.",
-    },
-    ja: {
-      title: "写真から ASCII アートを作る",
-      description:
-        "明るさを文字に割り当て、README やターミナ表示向けの表現に使う例です。",
     },
   },
   "password-generator-length-and-symbols": {

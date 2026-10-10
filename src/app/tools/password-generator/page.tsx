@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
 import ToolLayout from "@/components/ToolLayout";
+import PasswordStrengthChecker from "@/components/PasswordStrengthChecker";
 import { useI18n } from "@/lib/i18n";
 
 interface PasswordOptions {
@@ -299,6 +300,10 @@ export default function PasswordGeneratorPage() {
             </div>
           </div>
         )}
+
+        <div className="border-t border-border pt-6">
+          <PasswordStrengthChecker />
+        </div>
       </div>
     </ToolLayout>
   );

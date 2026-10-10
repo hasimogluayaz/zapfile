@@ -25,7 +25,7 @@ src/
 │   ├── terms/page.tsx
 │   └── tools/
 │       ├── page.tsx         # Browse all tools
-│       └── [slug]/page.tsx  # 71 individual tool pages
+│       └── [slug]/page.tsx  # 53 individual tool pages
 ├── components/
 │   ├── Header.tsx           # Sticky header, language switcher, category dropdown
 │   ├── Footer.tsx           # Multi-column footer
@@ -38,7 +38,7 @@ src/
 │   ├── ErrorBoundary.tsx    # Catches render errors, shows refresh button
 │   └── AdPlaceholder.tsx    # Placeholder for future ads
 ├── lib/
-│   ├── tools.ts             # 71 tools registry (slug, name, description, category, acceptedFormats)
+│   ├── tools.ts             # 53 tools registry (slug, name, description, category, acceptedFormats)
 │   ├── tool-i18n.ts         # toolField() helper for localized tool names/descriptions
 │   ├── file-handoff.ts      # Home drop pad → tool page file handoff (in-memory)
 │   ├── search.ts            # searchTools(): diacritic-insensitive ranked tool search (header modal, home, /tools)
@@ -60,7 +60,7 @@ src/
 
 ## Tools
 
-Canonical list: `src/lib/tools.ts` — 71 tools across 4 categories (PDF, Image, Video/Audio, Utility). FFmpeg/AI/browser-fetch tools were removed in v1.4.0; lightweight audio waveform kept.
+Canonical list: `src/lib/tools.ts` — 53 tools across 4 categories (PDF, Image, Video/Audio, Utility). FFmpeg/AI/browser-fetch tools were removed in v1.4.0. v2.0 retired 13 off-brand or third-party-dependent tools and merged 5 duplicates; their URLs 301-redirect via `redirects()` in `next.config.mjs` — add a redirect whenever a tool slug is removed or renamed.
 
 ## Design System ("Voltage")
 

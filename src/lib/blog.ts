@@ -276,10 +276,6 @@ Beyond basic compression, useful image tools include:
 
 ZapFile offers all of these at [zapfile.xyz/tools](/tools).
 
-## Audio visualization
-
-For quick previews without heavy codecs, [Audio Waveform](/tools/audio-waveform) draws a waveform PNG from an audio file entirely in the browser.
-
 ## Utility Tools
 
 Some of the most time-saving tools are the small utilities you reach for occasionally:

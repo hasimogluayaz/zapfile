@@ -5,6 +5,11 @@
 
 export const arLocaleStrings: Record<string, string> = {
   "nav.allTools": "جميع الأدوات",
+  "compimg.format": "صيغة الإخراج",
+  "compimg.keepFormat": "الإبقاء على الأصل",
+  "compimg.webpHint": "عادةً ما يكون WebP أصغر بنسبة 25–35٪ من JPG/PNG بنفس الجودة.",
+  "csvview.preview": "معاينة الجدول",
+  "pw.checkTitle": "اختبر كلمة مرورك",
   "home.hero.title": "اعمل على ملفاتك دون رفعها.",
   "home.hero.subtitle": "{count} أداة مجانية لملفات PDF والصور والصوت والمهام اليومية. كل شيء يعمل داخل متصفحك.",
   "home.drop.title": "أفلت ملفًا لترى ما يمكنك فعله به",
@@ -99,26 +104,12 @@ export const arLocaleStrings: Record<string, string> = {
   "diff.columnOriginal": "الأصل",
   "diff.columnModified": "المعدّل",
 
-  "emoji.recent": "المُنسوخة مؤخراً",
   "emoji.recentEmpty": "تظهر الإيموجي المنسوخة هنا.",
 
   "photofilter.previewTabs": "تبويبات",
   "photofilter.previewSlider": "منزلق قبل / بعد",
   "photofilter.filtered": "بعد الفلتر",
 
-  "imgcompare.keyboardHint":
-    "استخدم مفاتيح الأسهم لتحريك الفاصل (اضغط Shift لخطوات أكبر).",
-  "imgcompare.before": "قبل",
-  "imgcompare.after": "بعد",
-  "imgcompare.dropBefore": "أسقط صورة «قبل»",
-  "imgcompare.dropAfter": "أسقط صورة «بعد»",
-  "imgcompare.compare": "قارن",
-  "imgcompare.swap": "تبديل",
-  "imgcompare.swapped": "تم تبديل الصور",
-  "imgcompare.navigate": "تنقّل",
-  "imgcompare.shiftSteps": "Shift + سهم = ±5",
-  "imgcompare.changeImages": "تغيير الصور",
-  "imgcompare.dragHandle": "اسحب للمقارنة",
 
   "regex.groupN": "المجموعة {n}",
 
@@ -242,7 +233,6 @@ export const arLocaleStrings: Record<string, string> = {
   "ui.clearAll": "مسح الكل",
   "ui.reset": "إعادة ضبط",
   "ui.remove": "إزالة",
-  "ui.cancel": "إلغاء",
   "ui.settings": "الإعدادات",
   "ui.preview": "معاينة",
   "ui.result": "النتيجة",

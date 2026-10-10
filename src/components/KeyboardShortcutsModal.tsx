@@ -77,7 +77,6 @@ export default function KeyboardShortcutsModal({
           <p className="text-[11px] font-semibold uppercase tracking-wider text-t-tertiary mt-4 mb-2">
             {t("shortcuts.toolsHint")}
           </p>
-          <Row keys="Space / L / R" desc={t("shortcuts.stopwatchHint")} />
           <Row keys="← / →" desc={t("shortcuts.compareHint")} />
         </div>
       </div>

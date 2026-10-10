@@ -13,10 +13,22 @@ export const metadata: Metadata = {
 
 const releases = [
   {
-    version: "v1.4.0",
-    date: "April 2026",
+    version: "v2.0.0",
+    date: "October 2026",
     badge: "Latest",
     badgeColor: "bg-accent text-on-accent",
+    items: [
+      { type: "new", text: "New design: calmer layout, light and dark themes, a consistent icon for every tool" },
+      { type: "new", text: "Drop any file on the home page to see which tools can open it; the tool opens with your file already loaded" },
+      { type: "new", text: "Faster search that ignores accents (\"sikistir\" finds \"sıkıştır\"), with keyboard navigation" },
+      { type: "improved", text: "Focused catalog of 53 tools. Merged duplicates: character counter into Word Counter, CSV viewer into CSV ↔ JSON, random colors into Color Picker, password strength test into Password Generator, image pipeline into Compress Image" },
+      { type: "improved", text: "Retired tools that didn't fit a private, file-first toolkit (IP lookup and speed test relied on third-party servers)" },
+      { type: "fixed", text: "Accessibility: WCAG AA contrast across both themes and labeled file inputs" },
+    ],
+  },
+  {
+    version: "v1.4.0",
+    date: "April 2026",
     items: [
       { type: "new", text: "ASCII Art Generator & Audio Waveform tools — full pages and OG metadata" },
       { type: "new", text: "30+ SEO blog articles (guides for PDF, images, dev tools, comparisons)" },
