@@ -191,6 +191,7 @@ export default async function RootLayout({
           href={`${SITE_URL}/feed.xml`}
         />
         <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <link
           rel="icon"
           type="image/png"
