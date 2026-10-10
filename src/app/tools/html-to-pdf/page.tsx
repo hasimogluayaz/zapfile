@@ -197,7 +197,7 @@ export default function HtmlToPdfPage() {
             <button
               onClick={convertToPdf}
               disabled={isConverting}
-              className="px-6 py-3 rounded-xl font-semibold text-white bg-accent hover:bg-accent-hover transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              className="px-6 py-3 rounded-xl font-semibold text-on-accent bg-accent hover:bg-accent-hover transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
               {isConverting ? (
                 <span className="flex items-center gap-2">

@@ -155,8 +155,8 @@ export default function CssMinifierPage() {
                   onClick={() => handleModeChange(m)}
                   className={`px-5 py-2.5 rounded-xl text-sm font-medium transition-all capitalize ${
                     mode === m
-                      ? "bg-brand-indigo/20 border border-brand-indigo text-brand-text"
-                      : "bg-white/[0.04] border border-white/[0.08] text-brand-muted hover:border-white/20"
+                      ? "bg-accent/20 border border-accent text-brand-text"
+                      : "bg-bg-secondary border border-border text-brand-muted hover:border-t-primary/20"
                   }`}
                 >
                   {m === "minify" ? t("css.minify") : t("css.beautify")}
@@ -166,7 +166,7 @@ export default function CssMinifierPage() {
 
             {/* File upload */}
             <label className="cursor-pointer">
-              <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-brand-muted bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] hover:text-brand-text transition-all">
+              <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-brand-muted bg-bg-secondary border border-border hover:bg-bg-tertiary hover:text-brand-text transition-all">
                 <svg
                   className="w-4 h-4"
                   fill="none"
@@ -214,7 +214,7 @@ export default function CssMinifierPage() {
               placeholder="/* Paste your CSS here */"
               rows={16}
               spellCheck={false}
-              className="w-full px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-brand-text placeholder:text-brand-muted/50 focus:outline-none focus:border-brand-indigo/40 resize-none font-mono text-xs flex-1"
+              className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border text-brand-text placeholder:text-brand-muted/50 focus:outline-none focus:border-accent/40 resize-none font-mono text-xs flex-1"
             />
           </div>
 
@@ -233,7 +233,7 @@ export default function CssMinifierPage() {
               readOnly
               placeholder="Output will appear here…"
               rows={16}
-              className="w-full px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-brand-muted resize-none font-mono text-xs flex-1 cursor-default select-all"
+              className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border text-brand-muted resize-none font-mono text-xs flex-1 cursor-default select-all"
             />
           </div>
         </div>
@@ -280,7 +280,7 @@ export default function CssMinifierPage() {
           <button
             onClick={handleCopy}
             disabled={!output}
-            className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-brand-text bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-brand-text bg-bg-secondary border border-border hover:bg-bg-tertiary transition-all disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <svg
               className="w-4 h-4"
@@ -299,7 +299,7 @@ export default function CssMinifierPage() {
           </button>
           <button
             onClick={handleClear}
-            className="px-6 py-3 rounded-xl font-semibold text-brand-text bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] transition-all"
+            className="px-6 py-3 rounded-xl font-semibold text-brand-text bg-bg-secondary border border-border hover:bg-bg-tertiary transition-all"
           >
             {t("css.clear")}
           </button>

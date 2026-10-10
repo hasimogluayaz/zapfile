@@ -5,6 +5,16 @@
 
 export const arLocaleStrings: Record<string, string> = {
   "nav.allTools": "جميع الأدوات",
+  "home.hero.title": "اعمل على ملفاتك دون رفعها.",
+  "home.hero.subtitle": "{count} أداة مجانية لملفات PDF والصور والصوت والمهام اليومية. كل شيء يعمل داخل متصفحك.",
+  "home.drop.title": "أفلت ملفًا لترى ما يمكنك فعله به",
+  "home.drop.browse": "اختر ملفًا",
+  "home.drop.matches": "افتحه في",
+  "home.drop.multi": "{count} ملفات",
+  "home.drop.none": "لا توجد أداة تفتح ملفات {ext} بعد. جرّب البحث بالأسفل.",
+  "home.drop.reset": "استخدم ملفًا آخر",
+  "home.yourTools": "أدواتك",
+  "nav.searchShort": "ابحث عن أداة",
   "search.placeholder": "ابحث عن أداة… (مثل ضغط، pdf، qr)",
   "search.heroPlaceholder": "ابحث في {count} أداة — مثل «ضغط pdf»",
   "search.quickAccess": "المفضلة والأخيرة",

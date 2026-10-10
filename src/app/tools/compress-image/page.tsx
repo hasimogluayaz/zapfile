@@ -240,7 +240,7 @@ export default function CompressImagePage() {
               </h3>
               <button
                 onClick={handleReset}
-                className="text-brand-muted hover:text-brand-text transition-colors p-2 rounded-lg hover:bg-white/5"
+                className="text-brand-muted hover:text-brand-text transition-colors p-2 rounded-lg hover:bg-bg-secondary"
                 title={t("compimg.removeAll")}
               >
                 <svg
@@ -262,7 +262,7 @@ export default function CompressImagePage() {
               {files.map((file, i) => (
                 <div
                   key={i}
-                  className="flex items-center justify-between py-2 border-b border-white/5 last:border-0"
+                  className="flex items-center justify-between py-2 border-b border-border last:border-0"
                 >
                   <span className="text-sm text-brand-text truncate max-w-[70%]">
                     {file.name}
@@ -298,7 +298,7 @@ export default function CompressImagePage() {
                 step="0.05"
                 value={quality}
                 onChange={(e) => setQuality(parseFloat(e.target.value))}
-                className="w-full h-2 rounded-full appearance-none cursor-pointer bg-white/10 accent-brand-indigo"
+                className="w-full h-2 rounded-full appearance-none cursor-pointer bg-bg-tertiary accent-brand-indigo"
               />
               <div className="flex justify-between text-xs text-brand-muted mt-1">
                 <span>{t("compimg.smaller")}</span>
@@ -323,7 +323,7 @@ export default function CompressImagePage() {
                 step="64"
                 value={maxDimension}
                 onChange={(e) => setMaxDimension(parseInt(e.target.value))}
-                className="w-full h-2 rounded-full appearance-none cursor-pointer bg-white/10 accent-brand-indigo"
+                className="w-full h-2 rounded-full appearance-none cursor-pointer bg-bg-tertiary accent-brand-indigo"
               />
               <div className="flex justify-between text-xs text-brand-muted mt-1">
                 <span>320px</span>
@@ -345,8 +345,8 @@ export default function CompressImagePage() {
                     onClick={() => setOutputFormat(fmt)}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                       outputFormat === fmt
-                        ? "bg-brand-indigo/20 border border-brand-indigo text-brand-text"
-                        : "bg-white/[0.04] border border-white/[0.08] text-brand-muted hover:border-white/20"
+                        ? "bg-accent/20 border border-accent text-brand-text"
+                        : "bg-bg-secondary border border-border text-brand-muted hover:border-t-primary/20"
                     }`}
                   >
                     {fmt === "original"
@@ -409,7 +409,7 @@ export default function CompressImagePage() {
                   return (
                     <div
                       key={i}
-                      className="flex items-center justify-between py-3 border-b border-white/5 last:border-0 gap-4"
+                      className="flex items-center justify-between py-3 border-b border-border last:border-0 gap-4"
                     >
                       <span className="text-sm text-brand-text truncate min-w-0 flex-1">
                         {result.original.name}
@@ -439,7 +439,7 @@ export default function CompressImagePage() {
                               `${baseName}-compressed.${ext}`,
                             );
                           }}
-                          className="text-sm text-brand-indigo hover:text-brand-purple transition-colors whitespace-nowrap"
+                          className="text-sm text-accent hover:text-brand-purple transition-colors whitespace-nowrap"
                         >
                           {t("compimg.download")}
                         </button>
@@ -484,7 +484,7 @@ export default function CompressImagePage() {
               </button>
               <button
                 onClick={handleReset}
-                className="px-6 py-3 rounded-xl font-semibold text-brand-muted border border-white/10 hover:text-brand-text hover:border-white/20 transition-all duration-300"
+                className="px-6 py-3 rounded-xl font-semibold text-brand-muted border border-border hover:text-brand-text hover:border-t-primary/20 transition-all duration-300"
               >
                 {t("compimg.more")}
               </button>
@@ -500,7 +500,7 @@ export default function CompressImagePage() {
               />
               <button
                 onClick={handleReset}
-                className="px-6 py-3 rounded-xl font-semibold text-brand-muted border border-white/10 hover:text-brand-text hover:border-white/20 transition-all duration-300"
+                className="px-6 py-3 rounded-xl font-semibold text-brand-muted border border-border hover:text-brand-text hover:border-t-primary/20 transition-all duration-300"
               >
                 {t("compimg.more")}
               </button>

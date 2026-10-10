@@ -244,10 +244,10 @@ export default function MarkdownEditorPage() {
     "[&_.md-h2]:text-xl [&_.md-h2]:font-bold [&_.md-h2]:text-t-primary [&_.md-h2]:mb-2 [&_.md-h2]:mt-3",
     "[&_.md-h3]:text-lg [&_.md-h3]:font-semibold [&_.md-h3]:text-t-primary [&_.md-h3]:mb-2 [&_.md-h3]:mt-3",
     "[&_.md-p]:text-t-primary [&_.md-p]:leading-relaxed [&_.md-p]:mb-3",
-    "[&_.md-link]:text-indigo-400 [&_.md-link]:underline [&_.md-link]:hover:text-indigo-300",
+    "[&_.md-link]:text-accent [&_.md-link]:underline [&_.md-link]:hover:text-accent",
     "[&_.md-code-block]:block [&_.md-code-block]:bg-bg-secondary [&_.md-code-block]:rounded-lg [&_.md-code-block]:p-4 [&_.md-code-block]:my-3 [&_.md-code-block]:text-sm [&_.md-code-block]:font-mono [&_.md-code-block]:text-t-primary [&_.md-code-block]:overflow-x-auto [&_.md-code-block]:whitespace-pre",
-    "[&_.md-inline-code]:bg-bg-secondary [&_.md-inline-code]:rounded [&_.md-inline-code]:px-1.5 [&_.md-inline-code]:py-0.5 [&_.md-inline-code]:text-sm [&_.md-inline-code]:font-mono [&_.md-inline-code]:text-indigo-300",
-    "[&_.md-blockquote]:border-l-4 [&_.md-blockquote]:border-indigo-500 [&_.md-blockquote]:pl-4 [&_.md-blockquote]:my-3 [&_.md-blockquote]:text-t-secondary [&_.md-blockquote]:italic",
+    "[&_.md-inline-code]:bg-bg-secondary [&_.md-inline-code]:rounded [&_.md-inline-code]:px-1.5 [&_.md-inline-code]:py-0.5 [&_.md-inline-code]:text-sm [&_.md-inline-code]:font-mono [&_.md-inline-code]:text-accent",
+    "[&_.md-blockquote]:border-l-4 [&_.md-blockquote]:border-accent [&_.md-blockquote]:pl-4 [&_.md-blockquote]:my-3 [&_.md-blockquote]:text-t-secondary [&_.md-blockquote]:italic",
     "[&_.md-ul]:list-disc [&_.md-ul]:pl-6 [&_.md-ul]:my-3 [&_.md-ul]:text-t-primary [&_.md-ul]:space-y-1",
     "[&_.md-ol]:list-decimal [&_.md-ol]:pl-6 [&_.md-ol]:my-3 [&_.md-ol]:text-t-primary [&_.md-ol]:space-y-1",
     "[&_.md-hr]:border-border [&_.md-hr]:my-4",
@@ -306,7 +306,7 @@ export default function MarkdownEditorPage() {
               onClick={() => setMobileTab(tab)}
               className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all capitalize ${
                 mobileTab === tab
-                  ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white"
+                  ? "bg-accent text-on-accent"
                   : "bg-bg-secondary border border-border text-t-secondary hover:text-t-primary"
               }`}
             >

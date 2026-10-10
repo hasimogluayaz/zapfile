@@ -495,7 +495,7 @@ export default function CropImagePage() {
               <button
                 onClick={handleCrop}
                 disabled={!hasCrop}
-                className={`flex-1 sm:flex-none px-8 py-3 rounded-xl font-semibold text-white transition-all ${
+                className={`flex-1 sm:flex-none px-8 py-3 rounded-xl font-semibold text-on-accent transition-all ${
                   hasCrop
                     ? "bg-accent hover:bg-accent-hover hover:scale-[1.02] active:scale-[0.98]"
                     : "bg-bg-secondary text-t-tertiary cursor-not-allowed border border-border"

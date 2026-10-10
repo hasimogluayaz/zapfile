@@ -227,7 +227,7 @@ export default function UnitConverterPage() {
                 onClick={() => handleCategoryChange(cat.key)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                   category === cat.key
-                    ? "bg-accent text-white"
+                    ? "bg-accent text-on-accent"
                     : "text-t-secondary hover:text-t-primary bg-bg-secondary border border-border"
                 }`}
               >

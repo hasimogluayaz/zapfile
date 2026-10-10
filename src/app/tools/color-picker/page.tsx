@@ -165,7 +165,7 @@ export default function ColorPickerPage() {
                   key={c}
                   onClick={() => updateFromHex(c)}
                   className={`w-9 h-9 rounded-lg border-2 transition-transform hover:scale-110 ${
-                    hex.toLowerCase() === c.toLowerCase() ? "border-white scale-110" : "border-white/10"
+                    hex.toLowerCase() === c.toLowerCase() ? "border-white scale-110" : "border-border"
                   }`}
                   style={{ backgroundColor: c }}
                   title={c}

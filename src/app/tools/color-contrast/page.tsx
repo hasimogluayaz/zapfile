@@ -122,7 +122,7 @@ export default function ColorContrastPage() {
                   <li
                     key={key}
                     className={`flex justify-between gap-4 ${
-                      pass ? "text-emerald-500" : "text-red-400"
+                      pass ? "text-emerald-700 dark:text-emerald-400" : "text-red-400"
                     }`}
                   >
                     <span>{t(key as "contrast.aaNormal")}</span>

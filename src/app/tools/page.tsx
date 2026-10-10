@@ -4,7 +4,9 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ToolCard from "@/components/ToolCard";
-import { tools, categoryEmojis, type ToolCategory } from "@/lib/tools";
+import { Search, SearchX, Star } from "lucide-react";
+import { tools, type ToolCategory } from "@/lib/tools";
+import { CategoryIcon } from "@/components/ToolIcon";
 import { useI18n } from "@/lib/i18n";
 import { searchTools } from "@/lib/search";
 import { useFavoriteTools } from "@/hooks/useFavoriteTools";
@@ -93,42 +95,40 @@ export default function ToolsPage() {
   ];
 
   const filterLabel = (f: Filter) =>
-    f === "all"
-      ? t("tools.all")
-      : f === "favorites"
-        ? `★ ${t("nav.favorites")}`
-        : `${categoryEmojis[f]} ${t(catKeys[f])}`;
+    f === "all" ? (
+      t("tools.all")
+    ) : f === "favorites" ? (
+      <>
+        <Star className="h-3.5 w-3.5 fill-volt text-volt-ink" aria-hidden="true" />
+        {t("nav.favorites")}
+      </>
+    ) : (
+      <>
+        <CategoryIcon category={f} className="h-3.5 w-3.5" />
+        {t(catKeys[f])}
+      </>
+    );
+
+  const panel =
+    "grid grid-cols-1 gap-1 rounded-[24px] border border-border bg-surface p-2 shadow-card sm:grid-cols-2 lg:grid-cols-3";
 
   return (
     <>
       <Header />
       <main id="main-content" className="flex-1" tabIndex={-1}>
-        <div className="max-w-6xl mx-auto px-5 py-10">
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-t-primary">
+        <div className="mx-auto max-w-6xl px-4 pb-20 pt-12 sm:px-6 sm:pt-16">
+          <h1 className="text-[40px] font-semibold leading-none tracking-[-0.04em] text-t-primary sm:text-[52px]">
             {t("tools.title")}
           </h1>
-          <p className="text-[14px] text-t-secondary mt-2 mb-7">
+          <p className="mb-8 mt-4 text-[16px] text-t-secondary">
             {t("tools.subtitle", { count: tools.length })}
           </p>
 
           {/* Search + Filters */}
-          <div className="sticky top-16 z-20 -mx-5 px-5 py-3 mb-6 bg-bg/85 backdrop-blur-xl">
+          <div className="sticky top-14 z-20 -mx-4 mb-8 bg-bg/85 px-4 py-3 backdrop-blur-xl sm:-mx-6 sm:px-6">
             <div className="flex flex-col lg:flex-row lg:items-center gap-3">
               <div className="relative w-full lg:max-w-sm">
-                <svg
-                  className="absolute start-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-t-tertiary"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                  aria-hidden="true"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
+                <Search className="absolute start-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-t-tertiary" strokeWidth={2} aria-hidden="true" />
                 <input
                   ref={inputRef}
                   type="search"
@@ -139,11 +139,11 @@ export default function ToolsPage() {
                   onKeyDown={(e) => {
                     if (e.key === "Escape") setSearch("");
                   }}
-                  className="w-full ps-10 pe-3 py-2.5 rounded-xl text-[14px] bg-surface border border-border text-t-primary placeholder:text-t-tertiary shadow-card focus:outline-none focus-visible:outline-none focus:border-accent focus:ring-4 focus:ring-accent/10 transition"
+                  className="w-full rounded-full border border-border bg-surface py-2.5 pe-4 ps-10 text-[15px] text-t-primary shadow-sm transition placeholder:text-t-tertiary focus:border-t-primary/40 focus:outline-none focus-visible:outline-none focus-visible:shadow-none"
                 />
               </div>
               <div
-                className="flex gap-1.5 overflow-x-auto scrollbar-hide"
+                className="segmented max-w-full overflow-x-auto scrollbar-hide"
                 role="tablist"
                 aria-label={t("tools.title")}
               >
@@ -156,16 +156,16 @@ export default function ToolsPage() {
                       role="tab"
                       aria-selected={selected}
                       onClick={() => setActiveCategory(cat)}
-                      className={`shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[12.5px] font-medium transition-colors ${
+                      className={`inline-flex shrink-0 items-center gap-1.5 rounded-[9px] px-3 py-1.5 text-[13px] font-medium transition-colors ${
                         selected
-                          ? "bg-accent text-white shadow-md shadow-accent/25"
-                          : "bg-surface text-t-secondary hover:text-t-primary border border-border"
+                          ? "bg-surface text-t-primary shadow-sm"
+                          : "text-t-secondary hover:text-t-primary"
                       }`}
                     >
                       {filterLabel(cat)}
                       <span
                         className={`text-[11px] tabular-nums ${
-                          selected ? "text-white/80" : "text-t-tertiary"
+                          "text-t-tertiary"
                         }`}
                       >
                         {counts[cat]}
@@ -185,10 +185,8 @@ export default function ToolsPage() {
 
           {/* Results */}
           {filteredTools.length === 0 ? (
-            <div className="text-center py-16">
-              <p className="text-4xl mb-3" aria-hidden="true">
-                🔍
-              </p>
+            <div className="rounded-[24px] border border-border bg-surface px-6 py-16 text-center">
+              <SearchX className="mx-auto mb-4 h-8 w-8 text-t-tertiary" strokeWidth={1.5} aria-hidden="true" />
               <p className="text-t-secondary text-[14px]">
                 {search.trim()
                   ? t("tools.noResults", { query: search })
@@ -201,22 +199,22 @@ export default function ToolsPage() {
                   setActiveCategory("all");
                   inputRef.current?.focus();
                 }}
-                className="mt-4 text-[13px] font-medium text-accent hover:underline"
+                className="mt-5 rounded-full bg-t-primary px-4 py-2 text-[13px] font-semibold text-bg"
               >
                 {t("search.clear")}
               </button>
             </div>
           ) : grouped ? (
             grouped.map((g) => (
-              <section key={g.category} className="mb-10" id={g.category}>
-                <h2 className="flex items-center gap-2 text-[13px] font-semibold text-t-tertiary uppercase tracking-wider mb-3">
-                  <span>{categoryEmojis[g.category]}</span>
+              <section key={g.category} className="mb-12 scroll-mt-32" id={g.category}>
+                <h2 className="mb-3 flex items-center gap-2.5 px-1 text-[17px] font-semibold tracking-[-0.015em] text-t-primary">
+                  <CategoryIcon category={g.category} className="h-[18px] w-[18px]" />
                   {t(catKeys[g.category])}
-                  <span className="text-[11px] font-medium normal-case tracking-normal bg-bg-secondary px-2 py-0.5 rounded-full">
+                  <span className="text-[13px] font-normal tabular-nums text-t-tertiary">
                     {g.tools.length}
                   </span>
                 </h2>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                <div className={panel}>
                   {g.tools.map((tool) => (
                     <ToolCard key={tool.slug} tool={tool} />
                   ))}
@@ -224,7 +222,7 @@ export default function ToolsPage() {
               </section>
             ))
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+            <div className={panel}>
               {filteredTools.map((tool) => (
                 <ToolCard key={tool.slug} tool={tool} />
               ))}

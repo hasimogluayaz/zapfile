@@ -44,7 +44,7 @@ function InfoCard({
         {onCopy && (
           <button
             onClick={onCopy}
-            className="text-xs text-t-secondary hover:text-t-primary transition-colors px-2 py-1 rounded-lg hover:bg-white/[0.06]"
+            className="text-xs text-t-secondary hover:text-t-primary transition-colors px-2 py-1 rounded-lg hover:bg-bg-secondary"
             aria-label={`Copy ${label}`}
           >
             <svg
@@ -132,7 +132,7 @@ export default function ScreenResolutionPage() {
       >
         <div className="glass rounded-xl p-6 flex items-center justify-center h-40">
           <svg
-            className="w-8 h-8 animate-spin text-indigo-400"
+            className="w-8 h-8 animate-spin text-accent"
             fill="none"
             viewBox="0 0 24 24"
           >
@@ -213,7 +213,7 @@ export default function ScreenResolutionPage() {
         <div className="flex justify-center">
           <button
             onClick={copyAll}
-            className="px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:opacity-90 transition-all"
+            className="px-6 py-3 rounded-xl font-semibold text-on-accent bg-accent hover:opacity-90 transition-all"
           >
             Copy All Info
           </button>

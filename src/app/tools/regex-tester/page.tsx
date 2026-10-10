@@ -27,10 +27,10 @@ const COMMON_PATTERN_DEFS = [
 
 const GROUP_COLORS = [
   {
-    bg: "bg-indigo-500/30",
-    text: "text-indigo-300",
-    border: "border-indigo-400",
-    dot: "bg-indigo-400",
+    bg: "bg-accent/30",
+    text: "text-accent",
+    border: "border-accent",
+    dot: "bg-accent",
   },
   {
     bg: "bg-emerald-500/30",
@@ -57,10 +57,10 @@ const GROUP_COLORS = [
     dot: "bg-cyan-400",
   },
   {
-    bg: "bg-purple-500/30",
-    text: "text-purple-300",
-    border: "border-purple-400",
-    dot: "bg-purple-400",
+    bg: "bg-accent/30",
+    text: "text-accent",
+    border: "border-accent",
+    dot: "bg-accent",
   },
 ];
 
@@ -251,7 +251,7 @@ export default function RegexTesterPage() {
                 <span
                   className={`px-3 py-1 rounded-lg text-sm font-mono font-medium transition-all ${
                     flags[flag]
-                      ? "bg-accent text-white"
+                      ? "bg-accent text-on-accent"
                       : "text-t-secondary hover:text-t-primary bg-bg-secondary border border-border"
                   }`}
                 >
@@ -384,7 +384,7 @@ export default function RegexTesterPage() {
                     return (
                       <span
                         key={i}
-                        className="bg-indigo-500/30 text-indigo-300 border-b-2 border-indigo-400 rounded-sm px-0.5"
+                        className="bg-accent/30 text-accent border-b-2 border-accent rounded-sm px-0.5"
                       >
                         {part.text}
                       </span>

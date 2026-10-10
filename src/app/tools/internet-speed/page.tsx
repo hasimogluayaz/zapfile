@@ -50,7 +50,7 @@ function SpeedGauge({ value, max, unit }: { value: number | null; max: number; u
 
   return (
     <div className="w-full">
-      <div className="h-3 rounded-full bg-white/[0.08] overflow-hidden">
+      <div className="h-3 rounded-full bg-bg-tertiary overflow-hidden">
         <div
           className={`h-full rounded-full bg-gradient-to-r ${color} transition-all duration-700`}
           style={{ width: `${pct}%` }}
@@ -180,9 +180,9 @@ export default function InternetSpeedPage() {
               </span>
               <span className="text-sm font-semibold text-t-primary">{progress}%</span>
             </div>
-            <div className="h-2 rounded-full bg-white/[0.08] overflow-hidden">
+            <div className="h-2 rounded-full bg-bg-tertiary overflow-hidden">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500"
+                className="h-full rounded-full bg-accent transition-all duration-500"
                 style={{ width: `${progress}%` }}
               />
             </div>
@@ -194,7 +194,7 @@ export default function InternetSpeedPage() {
           <button
             onClick={runTest}
             disabled={isTesting}
-            className="px-8 py-4 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-lg"
+            className="px-8 py-4 rounded-xl font-semibold text-on-accent bg-accent hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-lg"
           >
             {isTesting ? (
               <span className="flex items-center gap-2">

@@ -188,7 +188,7 @@ export default function ImagePipelinePage() {
                 type="button"
                 disabled={processing}
                 onClick={() => runCompress(false)}
-                className="px-4 py-2 rounded-lg bg-accent text-white font-medium hover:bg-accent-hover disabled:opacity-50"
+                className="px-4 py-2 rounded-lg bg-accent text-on-accent font-medium hover:bg-accent-hover disabled:opacity-50"
               >
                 {t("pipeline.step2")} →
               </button>
@@ -251,7 +251,7 @@ export default function ImagePipelinePage() {
                 type="button"
                 disabled={processing}
                 onClick={() => downloadFinal(false)}
-                className="px-4 py-2 rounded-lg bg-accent text-white font-medium hover:bg-accent-hover disabled:opacity-50"
+                className="px-4 py-2 rounded-lg bg-accent text-on-accent font-medium hover:bg-accent-hover disabled:opacity-50"
               >
                 {t("pipeline.download")}
               </button>

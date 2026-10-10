@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import localFont from "next/font/local";
 import { cookies } from "next/headers";
 import { Toaster } from "react-hot-toast";
 import ClientProviders from "@/components/ClientProviders";
@@ -11,6 +12,20 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 import { SITE_URL } from "@/lib/site-url";
 import "./globals.css";
+
+const geistSans = localFont({
+  src: "./fonts/GeistVF.woff",
+  variable: "--font-sans",
+  weight: "100 900",
+  display: "swap",
+});
+
+const geistMono = localFont({
+  src: "./fonts/GeistMonoVF.woff",
+  variable: "--font-mono",
+  weight: "100 900",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -94,8 +109,8 @@ export const viewport: Viewport = {
   maximumScale: 5,
   viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#6366f1" },
-    { media: "(prefers-color-scheme: dark)", color: "#1a1c25" },
+    { media: "(prefers-color-scheme: light)", color: "#f6f7f9" },
+    { media: "(prefers-color-scheme: dark)", color: "#101114" },
   ],
   colorScheme: "light dark",
 };
@@ -156,7 +171,7 @@ export default async function RootLayout({
     raw && SUPPORTED_LOCALES.includes(raw as Locale) ? (raw as Locale) : "en";
 
   return (
-    <html lang={initialLocale} dir={isRtlLocale(initialLocale) ? "rtl" : "ltr"} suppressHydrationWarning translate="no">
+    <html className={`${geistSans.variable} ${geistMono.variable}`} lang={initialLocale} dir={isRtlLocale(initialLocale) ? "rtl" : "ltr"} suppressHydrationWarning translate="no">
       <head>
         <meta name="google" content="notranslate" />
         {/* Apply saved/system theme before first paint to avoid a light flash */}
@@ -196,7 +211,9 @@ export default async function RootLayout({
           sizes="180x180"
           href="/apple-touch-icon.png"
         />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        {initialLocale === "ar" && (
+          <link rel="preconnect" href="https://fonts.googleapis.com" />
+        )}
         <link
           rel="preconnect"
           href="https://fonts.gstatic.com"
@@ -218,8 +235,9 @@ export default async function RootLayout({
                 background: "var(--surface)",
                 color: "var(--text-primary)",
                 border: "1px solid var(--border)",
-                borderRadius: "8px",
+                borderRadius: "14px",
                 fontSize: "13px",
+                boxShadow: "var(--shadow-lg)",
               },
               success: {
                 iconTheme: {

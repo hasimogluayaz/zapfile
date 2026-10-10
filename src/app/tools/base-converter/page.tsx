@@ -113,7 +113,7 @@ export default function BaseConverterPage() {
                     onChange={(e) => handleChange(key, e.target.value)}
                     placeholder={placeholder}
                     spellCheck={false}
-                    className="w-full px-4 py-3 pr-10 rounded-xl bg-white/[0.04] border border-white/[0.08] text-brand-text placeholder:text-brand-muted/40 focus:outline-none focus:border-brand-indigo/40 font-mono text-sm transition-colors"
+                    className="w-full px-4 py-3 pr-10 rounded-xl bg-bg-secondary border border-border text-brand-text placeholder:text-brand-muted/40 focus:outline-none focus:border-accent/40 font-mono text-sm transition-colors"
                   />
                   {values[key] && values[key] !== "—" && (
                     <button
@@ -146,7 +146,7 @@ export default function BaseConverterPage() {
               {baseConfig.map(({ key, label }) => (
                 <div
                   key={key}
-                  className="flex items-center justify-between gap-4 px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08]"
+                  className="flex items-center justify-between gap-4 px-4 py-3 rounded-xl bg-bg-secondary border border-border"
                 >
                   <span className="text-xs font-semibold text-brand-muted w-24 shrink-0">
                     {label}

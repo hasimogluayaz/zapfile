@@ -108,10 +108,10 @@ export default function StopwatchPage() {
           <div className="flex gap-3 flex-wrap justify-center">
             <button
               onClick={handleStartStop}
-              className={`px-8 py-3 rounded-xl font-semibold text-white transition-all hover:opacity-90 active:scale-95 ${
+              className={`px-8 py-3 rounded-xl font-semibold transition-all hover:opacity-90 active:scale-95 ${
                 running
-                  ? "bg-gradient-to-r from-red-500 to-rose-500"
-                  : "bg-gradient-to-r from-indigo-500 to-purple-500"
+                  ? "bg-red-600 text-white hover:bg-red-700"
+                  : "bg-accent text-on-accent"
               }`}
             >
               {running ? t("sw.stop") : elapsed > 0 ? t("sw.resume") : t("sw.start")}

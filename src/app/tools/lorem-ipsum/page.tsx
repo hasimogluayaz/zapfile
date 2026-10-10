@@ -192,8 +192,8 @@ export default function LoremIpsumPage() {
                   onClick={() => handleTypeChange(value)}
                   className={`px-5 py-2.5 rounded-xl text-sm font-medium transition-all ${
                     type === value
-                      ? "bg-indigo-500/20 border border-indigo-500 text-t-primary"
-                      : "bg-white/[0.04] border border-white/[0.08] text-t-secondary hover:border-white/20"
+                      ? "bg-accent/20 border border-accent text-t-primary"
+                      : "bg-bg-secondary border border-border text-t-secondary hover:border-t-primary/20"
                   }`}
                 >
                   {label}
@@ -216,7 +216,7 @@ export default function LoremIpsumPage() {
               max={50}
               value={count}
               onChange={(e) => setCount(Number(e.target.value))}
-              className="w-full accent-indigo-500"
+              className="w-full accent-accent"
             />
             <div className="flex justify-between text-xs text-t-tertiary mt-1">
               <span>1</span>
@@ -229,8 +229,8 @@ export default function LoremIpsumPage() {
             <div
               className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${
                 startWithLorem
-                  ? "bg-indigo-500 border-indigo-500"
-                  : "border-white/20 bg-transparent group-hover:border-white/40"
+                  ? "bg-accent border-accent"
+                  : "border-t-primary/20 bg-transparent group-hover:border-t-primary/40"
               }`}
               onClick={(e) => {
                 e.preventDefault();
@@ -274,14 +274,14 @@ export default function LoremIpsumPage() {
             <div className="flex gap-2">
               <button
                 onClick={generate}
-                className="px-4 py-2 rounded-xl text-sm font-medium text-t-secondary bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] hover:text-t-primary transition-all"
+                className="px-4 py-2 rounded-xl text-sm font-medium text-t-secondary bg-bg-secondary border border-border hover:bg-bg-tertiary hover:text-t-primary transition-all"
               >
                 {t("ui.regenerate")}
               </button>
               <button
                 onClick={copyToClipboard}
                 disabled={!text}
-                className="px-6 py-2 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:opacity-90 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 text-sm"
+                className="px-6 py-2 rounded-xl font-semibold text-on-accent bg-accent hover:opacity-90 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 text-sm"
               >
                 {t("ui.copy")}
               </button>

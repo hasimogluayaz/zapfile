@@ -166,7 +166,7 @@ export default function CSVJSONPage() {
                 onClick={() => { setMode("csv-to-json"); setOutput(""); setError(""); }}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                   mode === "csv-to-json"
-                    ? "bg-accent text-white"
+                    ? "bg-accent text-on-accent"
                     : "text-t-secondary hover:text-t-primary bg-bg-secondary border border-border"
                 }`}
               >
@@ -176,7 +176,7 @@ export default function CSVJSONPage() {
                 onClick={() => { setMode("json-to-csv"); setOutput(""); setError(""); }}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                   mode === "json-to-csv"
-                    ? "bg-accent text-white"
+                    ? "bg-accent text-on-accent"
                     : "text-t-secondary hover:text-t-primary bg-bg-secondary border border-border"
                 }`}
               >
@@ -216,7 +216,7 @@ export default function CSVJSONPage() {
                       onClick={() => setDelimiter(d.value)}
                       className={`px-3 py-1 text-xs rounded-lg font-medium transition-all ${
                         delimiter === d.value
-                          ? "bg-accent text-white"
+                          ? "bg-accent text-on-accent"
                           : "text-t-secondary hover:text-t-primary bg-bg-secondary border border-border"
                       }`}
                     >

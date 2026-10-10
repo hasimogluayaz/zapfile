@@ -9,7 +9,7 @@ export default function NotFound() {
     <>
       <Header />
       <div className="min-h-[70vh] flex flex-col items-center justify-center px-5 py-16">
-        <p className="text-8xl font-bold bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent mb-4">
+        <p className="text-8xl font-semibold tracking-[-0.05em] text-t-primary mb-4">
           404
         </p>
         <h1 className="text-2xl font-bold text-t-primary mb-2">
@@ -21,7 +21,7 @@ export default function NotFound() {
         <div className="flex items-center gap-3">
           <Link
             href="/"
-            className="px-5 py-2.5 rounded-lg text-[13px] font-medium text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:opacity-90 transition-opacity"
+            className="px-5 py-2.5 rounded-lg text-[13px] font-medium text-on-accent bg-accent hover:opacity-90 transition-opacity"
           >
             Go Home
           </Link>

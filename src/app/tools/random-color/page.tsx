@@ -141,8 +141,9 @@ function getHarmonyColors(base: ColorData, mode: HarmonyMode): ColorData[] {
 
 export default function RandomColorPage() {
   const { t } = useI18n();
+  // Deterministic first render (server and client must match); randomized on mount.
   const [color, setColor] = useState<ColorData>(() =>
-    buildColorData(randomHex()),
+    buildColorData("#FFD60A"),
   );
   const [locked, setLocked] = useState(false);
   const [history, setHistory] = useState<ColorData[]>([]);
@@ -158,8 +159,9 @@ export default function RandomColorPage() {
   }, [locked]);
 
   useEffect(() => {
-    setHistory([color]);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const first = buildColorData(randomHex());
+    setColor(first);
+    setHistory([first]);
   }, []);
 
   useEffect(() => {
@@ -215,7 +217,7 @@ export default function RandomColorPage() {
           <button
             onClick={generateNew}
             disabled={locked}
-            className="px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:opacity-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-6 py-3 rounded-xl font-semibold text-on-accent bg-accent hover:opacity-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {t("rc.generateNew")}
             <span className="ml-2 text-xs opacity-70 font-normal">{t("rc.spaceKey")}</span>
@@ -299,7 +301,7 @@ export default function RandomColorPage() {
                 onClick={() => setHarmonyMode(mode.value)}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                   harmonyMode === mode.value
-                    ? "bg-indigo-500/20 border border-indigo-500/50 text-indigo-400"
+                    ? "bg-accent/20 border border-accent/50 text-accent"
                     : "text-t-secondary bg-bg-secondary border border-border hover:text-t-primary"
                 }`}
               >
@@ -320,7 +322,7 @@ export default function RandomColorPage() {
                   <button
                     onClick={() => copy(color.hex)}
                     title={`Base: ${color.hex}`}
-                    className="w-14 h-14 rounded-xl border-2 border-white/30 transition-all hover:scale-110 shadow-lg"
+                    className="w-14 h-14 rounded-xl border-2 border-t-primary/30 transition-all hover:scale-110 shadow-lg"
                     style={{ backgroundColor: color.hex }}
                   >
                     <span
@@ -341,7 +343,7 @@ export default function RandomColorPage() {
                       <button
                         onClick={() => copy(hc.hex)}
                         title={hc.hex}
-                        className="w-14 h-14 rounded-xl border-2 border-transparent transition-all hover:scale-110 hover:border-white/30 shadow-lg"
+                        className="w-14 h-14 rounded-xl border-2 border-transparent transition-all hover:scale-110 hover:border-t-primary/30 shadow-lg"
                         style={{ backgroundColor: hc.hex }}
                       >
                         <span

@@ -17,7 +17,7 @@ interface GeoInfo {
 function Spinner() {
   return (
     <svg
-      className="w-8 h-8 animate-spin text-indigo-400"
+      className="w-8 h-8 animate-spin text-accent"
       fill="none"
       viewBox="0 0 24 24"
     >
@@ -46,7 +46,7 @@ function InfoRow({
   value: string | undefined;
 }) {
   return (
-    <div className="flex items-start justify-between gap-4 py-3 border-b border-white/[0.06] last:border-0">
+    <div className="flex items-start justify-between gap-4 py-3 border-b border-border last:border-0">
       <span className="text-sm text-t-secondary shrink-0">{label}</span>
       <span className="text-sm font-semibold text-t-primary text-right">
         {value || "—"}
@@ -119,7 +119,7 @@ export default function IpAddressPage() {
               <p className="text-sm text-t-secondary max-w-xs">{error}</p>
               <button
                 onClick={fetchInfo}
-                className="px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:opacity-90 transition-all"
+                className="px-6 py-3 rounded-xl font-semibold text-on-accent bg-accent hover:opacity-90 transition-all"
               >
                 Try Again
               </button>
@@ -134,7 +134,7 @@ export default function IpAddressPage() {
               </p>
               <button
                 onClick={copyIp}
-                className="px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:opacity-90 transition-all"
+                className="px-6 py-3 rounded-xl font-semibold text-on-accent bg-accent hover:opacity-90 transition-all"
               >
                 Copy IP
               </button>
@@ -148,7 +148,7 @@ export default function IpAddressPage() {
             <h2 className="text-sm font-medium text-t-secondary mb-4">
               Location &amp; Network Details
             </h2>
-            <div className="divide-y divide-white/[0.06]">
+            <div className="divide-y divide-border">
               <InfoRow label="Country" value={`${geo.country_name} (${geo.country_code})`} />
               <InfoRow label="City" value={geo.city} />
               <InfoRow label="Region" value={geo.region} />

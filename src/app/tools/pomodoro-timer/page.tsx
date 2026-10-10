@@ -409,7 +409,7 @@ export default function PomodoroTimerPage() {
   const strokeDashoffset = circumference * (1 - progress);
 
   const isWork = timerState === "work";
-  const ringColor = isWork ? "stroke-indigo-500" : "stroke-emerald-500";
+  const ringColor = isWork ? "stroke-accent" : "stroke-emerald-500";
   const stateLabel =
     timerState === "work"
       ? t("pomo.focus")
@@ -433,7 +433,7 @@ export default function PomodoroTimerPage() {
             value={taskName}
             onChange={(e) => setTaskName(e.target.value)}
             placeholder={t("pomo.taskPlaceholder")}
-            className="w-full px-3 py-2 rounded-lg bg-bg-secondary border border-border text-t-primary text-sm focus:outline-none focus:border-indigo-500/50"
+            className="w-full px-3 py-2 rounded-lg bg-bg-secondary border border-border text-t-primary text-sm focus:outline-none focus:border-accent/50"
           />
         </div>
 
@@ -444,7 +444,7 @@ export default function PomodoroTimerPage() {
             <span
               className={`px-4 py-1.5 rounded-full text-sm font-semibold ${
                 isWork
-                  ? "bg-indigo-500/20 text-indigo-400"
+                  ? "bg-accent/20 text-accent"
                   : "bg-emerald-500/20 text-emerald-400"
               }`}
             >
@@ -453,7 +453,7 @@ export default function PomodoroTimerPage() {
             <span className="text-sm text-t-tertiary ml-3">
               {t("pomo.session")} {currentSession}/{sessionsBeforeLong}
             </span>
-            <span className="text-sm text-amber-400 ml-3" title={t("pomo.completedToday")}>
+            <span className="text-sm text-amber-600 dark:text-amber-400 ml-3" title={t("pomo.completedToday")}>
               🍅 {completedToday}
             </span>
           </div>
@@ -508,14 +508,14 @@ export default function PomodoroTimerPage() {
             {playState === "running" ? (
               <button
                 onClick={handlePause}
-                className="px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:shadow-lg transition-all"
+                className="px-6 py-3 rounded-xl font-semibold text-on-accent bg-accent hover:shadow-lg transition-all"
               >
                 {t("pomo.pause")}
               </button>
             ) : (
               <button
                 onClick={handleStart}
-                className="px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:shadow-lg transition-all"
+                className="px-6 py-3 rounded-xl font-semibold text-on-accent bg-accent hover:shadow-lg transition-all"
               >
                 {playState === "paused" ? t("pomo.resume") : t("pomo.start")}
               </button>
@@ -555,7 +555,7 @@ export default function PomodoroTimerPage() {
               type="button"
               onClick={() => setSoundEnabled((v) => !v)}
               className={`relative w-11 h-6 rounded-full transition-colors ${
-                soundEnabled ? "bg-indigo-500" : "bg-bg-secondary border border-border"
+                soundEnabled ? "bg-accent" : "bg-bg-secondary border border-border"
               }`}
               aria-label={soundEnabled ? t("pomo.soundOn") : t("pomo.soundOff")}
             >
@@ -582,7 +582,7 @@ export default function PomodoroTimerPage() {
               <button
                 type="button"
                 onClick={requestNotif}
-                className="px-3 py-1 rounded-lg text-xs font-medium text-indigo-400 bg-indigo-500/10 hover:bg-indigo-500/20 transition-colors"
+                className="px-3 py-1 rounded-lg text-xs font-medium text-accent bg-accent/10 hover:bg-accent/20 transition-colors"
               >
                 {t("pomo.enableNotif")}
               </button>
@@ -614,7 +614,7 @@ export default function PomodoroTimerPage() {
               type="button"
               onClick={() => setAutoStartWork((v) => !v)}
               className={`relative w-11 h-6 rounded-full transition-colors ${
-                autoStartWork ? "bg-indigo-500" : "bg-bg-secondary border border-border"
+                autoStartWork ? "bg-accent" : "bg-bg-secondary border border-border"
               }`}
             >
               <span
@@ -644,7 +644,7 @@ export default function PomodoroTimerPage() {
                 max="60"
                 value={workDuration}
                 onChange={(e) => setWorkDuration(parseInt(e.target.value))}
-                className="w-full h-2 bg-bg-secondary rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                className="w-full h-2 bg-bg-secondary rounded-lg appearance-none cursor-pointer accent-accent"
               />
             </div>
 
@@ -692,7 +692,7 @@ export default function PomodoroTimerPage() {
                 max="8"
                 value={sessionsBeforeLong}
                 onChange={(e) => setSessionsBeforeLong(parseInt(e.target.value))}
-                className="w-full h-2 bg-bg-secondary rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                className="w-full h-2 bg-bg-secondary rounded-lg appearance-none cursor-pointer accent-accent"
               />
             </div>
           </div>

@@ -444,8 +444,8 @@ export default function BlurImagePage() {
                   onClick={() => setShowComparison(false)}
                   className={`text-[12px] px-3 py-1.5 rounded-lg font-medium transition-all ${
                     !showComparison
-                      ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white"
-                      : "bg-white/5 text-t-secondary hover:text-t-primary"
+                      ? "bg-accent text-on-accent"
+                      : "bg-bg-secondary text-t-secondary hover:text-t-primary"
                   }`}
                 >
                   {t("blur.edited")}
@@ -455,10 +455,10 @@ export default function BlurImagePage() {
                   disabled={blurAreas.length === 0}
                   className={`text-[12px] px-3 py-1.5 rounded-lg font-medium transition-all ${
                     showComparison
-                      ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white"
+                      ? "bg-accent text-on-accent"
                       : blurAreas.length === 0
-                      ? "bg-white/5 text-t-secondary/40 cursor-not-allowed"
-                      : "bg-white/5 text-t-secondary hover:text-t-primary"
+                      ? "bg-bg-secondary text-t-secondary/40 cursor-not-allowed"
+                      : "bg-bg-secondary text-t-secondary hover:text-t-primary"
                   }`}
                 >
                   {t("blur.viewOriginalBtn")}
@@ -521,8 +521,8 @@ export default function BlurImagePage() {
                       }}
                       className={`flex-1 py-2.5 rounded-xl text-[12px] font-medium transition-all ${
                         blurMode === key
-                          ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white"
-                          : "bg-white/5 hover:bg-white/10 text-t-secondary hover:text-t-primary"
+                          ? "bg-accent text-on-accent"
+                          : "bg-bg-secondary hover:bg-bg-tertiary text-t-secondary hover:text-t-primary"
                       }`}
                     >
                       {label}
@@ -538,7 +538,7 @@ export default function BlurImagePage() {
                     <span className="text-[13px] text-t-secondary font-medium">
                       {blurMode === "gaussian" ? t("blur.radius") : t("blur.blockSize")}
                     </span>
-                    <span className="text-[12px] font-mono px-2.5 py-1 rounded-lg bg-white/5 text-t-secondary border border-border">
+                    <span className="text-[12px] font-mono px-2.5 py-1 rounded-lg bg-bg-secondary text-t-secondary border border-border">
                       {intensity}px
                     </span>
                   </div>
@@ -548,7 +548,7 @@ export default function BlurImagePage() {
                     max={blurMode === "gaussian" ? 20 : 50}
                     value={intensity}
                     onChange={(e) => setIntensity(Number(e.target.value))}
-                    className="w-full accent-indigo-500"
+                    className="w-full accent-accent"
                   />
                 </div>
               )}
@@ -559,7 +559,7 @@ export default function BlurImagePage() {
                     <span className="text-[13px] text-t-secondary font-medium">
                       {t("blur.feather")}
                     </span>
-                    <span className="text-[12px] font-mono px-2.5 py-1 rounded-lg bg-white/5 text-t-secondary border border-border">
+                    <span className="text-[12px] font-mono px-2.5 py-1 rounded-lg bg-bg-secondary text-t-secondary border border-border">
                       {feather}px
                     </span>
                   </div>
@@ -569,7 +569,7 @@ export default function BlurImagePage() {
                     max={48}
                     value={feather}
                     onChange={(e) => setFeather(Number(e.target.value))}
-                    className="w-full accent-indigo-500"
+                    className="w-full accent-accent"
                   />
                   <p className="text-[11px] text-t-tertiary mt-1.5">{t("blur.featherHint")}</p>
                 </div>
@@ -583,8 +583,8 @@ export default function BlurImagePage() {
                   disabled={blurAreas.length === 0}
                   className={`flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl text-[12px] font-medium transition-all ${
                     blurAreas.length === 0
-                      ? "bg-white/5 text-t-secondary/50 cursor-not-allowed"
-                      : "bg-white/5 hover:bg-white/10 text-t-secondary hover:text-t-primary"
+                      ? "bg-bg-secondary text-t-secondary/50 cursor-not-allowed"
+                      : "bg-bg-secondary hover:bg-bg-tertiary text-t-secondary hover:text-t-primary"
                   }`}
                 >
                   <span className="text-lg leading-none">&#x21A9;</span>
@@ -596,8 +596,8 @@ export default function BlurImagePage() {
                   disabled={redoAreas.length === 0}
                   className={`flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl text-[12px] font-medium transition-all ${
                     redoAreas.length === 0
-                      ? "bg-white/5 text-t-secondary/50 cursor-not-allowed"
-                      : "bg-white/5 hover:bg-white/10 text-t-secondary hover:text-t-primary"
+                      ? "bg-bg-secondary text-t-secondary/50 cursor-not-allowed"
+                      : "bg-bg-secondary hover:bg-bg-tertiary text-t-secondary hover:text-t-primary"
                   }`}
                 >
                   <span className="text-lg leading-none">&#x21AA;</span>
@@ -606,7 +606,7 @@ export default function BlurImagePage() {
                 <button
                   type="button"
                   onClick={handleBlurEntire}
-                  className="flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-t-secondary hover:text-t-primary transition-all text-[12px] font-medium"
+                  className="flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl bg-bg-secondary hover:bg-bg-tertiary text-t-secondary hover:text-t-primary transition-all text-[12px] font-medium"
                 >
                   <span className="text-lg leading-none">&#x25A3;</span>
                   <span>{t("blur.blurEntire")}</span>
@@ -617,8 +617,8 @@ export default function BlurImagePage() {
                   disabled={blurAreas.length === 0}
                   className={`flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl text-[12px] font-medium transition-all ${
                     blurAreas.length === 0
-                      ? "bg-white/5 text-t-secondary/50 cursor-not-allowed"
-                      : "bg-white/5 hover:bg-white/10 text-t-secondary hover:text-t-primary"
+                      ? "bg-bg-secondary text-t-secondary/50 cursor-not-allowed"
+                      : "bg-bg-secondary hover:bg-bg-tertiary text-t-secondary hover:text-t-primary"
                   }`}
                 >
                   <span className="text-lg leading-none">&#x21BA;</span>
@@ -631,10 +631,10 @@ export default function BlurImagePage() {
             <button
               onClick={handleDownload}
               disabled={processing || blurAreas.length === 0}
-              className={`w-full py-3 rounded-xl font-semibold text-[14px] text-white transition-all ${
+              className={`w-full py-3 rounded-xl font-semibold text-[14px] text-on-accent transition-all ${
                 processing || blurAreas.length === 0
-                  ? "bg-white/10 cursor-not-allowed text-t-secondary"
-                  : "bg-gradient-to-r from-indigo-500 to-purple-500 hover:shadow-lg hover:shadow-indigo-500/25 hover:scale-[1.02] active:scale-[0.98]"
+                  ? "bg-bg-tertiary cursor-not-allowed text-t-secondary"
+                  : "bg-accent hover:shadow-lg hover:shadow-sm hover:scale-[1.02] active:scale-[0.98]"
               }`}
             >
               {processing ? t("ui.processing") : t("ui.downloadPNG")}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import toast from "react-hot-toast";
 import ToolLayout from "@/components/ToolLayout";
 import { useI18n } from "@/lib/i18n";
@@ -328,7 +328,7 @@ function FieldRow({
   };
 
   return (
-    <div className="flex items-start justify-between gap-3 py-2.5 border-b border-white/[0.06] last:border-0 group">
+    <div className="flex items-start justify-between gap-3 py-2.5 border-b border-border last:border-0 group">
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <p className="text-xs text-t-secondary">{label}</p>
@@ -372,10 +372,31 @@ const COUNTRIES: { code: Country; flag: string }[] = [
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
+/** Run fn with a fixed-seed Math.random so server and client render the same first identity. */
+function withSeed<T>(fn: () => T): T {
+  const original = Math.random;
+  let seed = 20240607;
+  Math.random = () => {
+    seed = (seed * 16807) % 2147483647;
+    return (seed - 1) / 2147483646;
+  };
+  try {
+    return fn();
+  } finally {
+    Math.random = original;
+  }
+}
+
 export default function FakeIdentityPage() {
   const { t } = useI18n();
   const [country, setCountry] = useState<Country>("US");
-  const [identity, setIdentity] = useState<Identity>(() => generateIdentity("US"));
+  const [identity, setIdentity] = useState<Identity>(() =>
+    withSeed(() => generateIdentity("US")),
+  );
+
+  useEffect(() => {
+    setIdentity(generateIdentity("US"));
+  }, []);
 
   const generate = useCallback((c?: Country) => {
     const target = c ?? country;
@@ -463,7 +484,7 @@ export default function FakeIdentityPage() {
               onClick={() => handleCountryChange(c.code)}
               className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium border transition-all ${
                 country === c.code
-                  ? "bg-indigo-500/20 border-indigo-500/50 text-indigo-300"
+                  ? "bg-accent/20 border-accent/50 text-accent"
                   : "bg-bg-secondary border-border text-t-secondary hover:text-t-primary"
               }`}
             >
@@ -478,7 +499,7 @@ export default function FakeIdentityPage() {
           <button
             type="button"
             onClick={() => generate()}
-            className="px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:opacity-90 transition-all"
+            className="px-6 py-3 rounded-xl font-semibold text-on-accent bg-accent hover:opacity-90 transition-all"
           >
             {t("fake.generateNew")}
           </button>
@@ -507,7 +528,7 @@ export default function FakeIdentityPage() {
 
         {/* Profile Header */}
         <div className="glass rounded-xl p-5 flex items-center gap-4">
-          <div className="w-14 h-14 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-2xl font-bold shrink-0">
+          <div className="w-14 h-14 rounded-full bg-accent flex items-center justify-center text-on-accent text-2xl font-bold shrink-0">
             {identity.fullName.charAt(0)}
           </div>
           <div>

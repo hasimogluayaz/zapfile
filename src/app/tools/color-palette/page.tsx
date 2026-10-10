@@ -241,8 +241,8 @@ export default function ColorPalettePage() {
                 onClick={() => handleCountChange(n)}
                 className={`px-5 py-2 rounded-xl text-sm font-medium transition-all ${
                   colorCount === n
-                    ? "bg-brand-indigo/20 border border-brand-indigo text-brand-text"
-                    : "bg-white/[0.04] border border-white/[0.08] text-brand-muted hover:border-white/20"
+                    ? "bg-accent/20 border border-accent text-brand-text"
+                    : "bg-bg-secondary border border-border text-brand-muted hover:border-t-primary/20"
                 }`}
               >
                 {n}
@@ -255,7 +255,7 @@ export default function ColorPalettePage() {
         {isExtracting && (
           <div className="glass rounded-2xl p-8 flex items-center justify-center gap-3">
             <svg
-              className="w-5 h-5 animate-spin text-brand-indigo"
+              className="w-5 h-5 animate-spin text-accent"
               fill="none"
               viewBox="0 0 24 24"
             >
@@ -288,7 +288,7 @@ export default function ColorPalettePage() {
               </h3>
               <button
                 onClick={handleDownload}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-brand-text bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] transition-all"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-brand-text bg-bg-secondary border border-border hover:bg-bg-tertiary transition-all"
               >
                 <svg
                   className="w-4 h-4"
@@ -320,7 +320,7 @@ export default function ColorPalettePage() {
                     key={i}
                     onClick={() => handleCopyHex(hex)}
                     title={t("palette.copy")}
-                    className="group flex flex-col items-center rounded-2xl overflow-hidden border border-white/[0.08] hover:border-white/20 transition-all hover:scale-[1.04] active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-indigo"
+                    className="group flex flex-col items-center rounded-2xl overflow-hidden border border-border hover:border-t-primary/20 transition-all hover:scale-[1.04] active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                   >
                     {/* Swatch */}
                     <div
@@ -344,7 +344,7 @@ export default function ColorPalettePage() {
                       </svg>
                     </div>
                     {/* HEX label */}
-                    <div className="w-full bg-white/[0.04] px-2 py-2 text-center">
+                    <div className="w-full bg-bg-secondary px-2 py-2 text-center">
                       <span className="font-mono text-xs font-semibold text-brand-text tracking-wide">
                         {hex}
                       </span>
@@ -367,7 +367,7 @@ export default function ColorPalettePage() {
             <img
               src={imageSrc}
               alt="Uploaded preview"
-              className="w-16 h-16 object-cover rounded-xl border border-white/[0.08]"
+              className="w-16 h-16 object-cover rounded-xl border border-border"
             />
             <div>
               <p className="text-sm font-medium text-brand-text">

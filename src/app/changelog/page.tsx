@@ -16,7 +16,7 @@ const releases = [
     version: "v1.4.0",
     date: "April 2026",
     badge: "Latest",
-    badgeColor: "bg-accent text-white",
+    badgeColor: "bg-accent text-on-accent",
     items: [
       { type: "new", text: "ASCII Art Generator & Audio Waveform tools — full pages and OG metadata" },
       { type: "new", text: "30+ SEO blog articles (guides for PDF, images, dev tools, comparisons)" },
@@ -87,9 +87,9 @@ const releases = [
 ];
 
 const typeConfig: Record<string, { label: string; color: string }> = {
-  new:      { label: "New",      color: "bg-green-500/10 text-green-600 dark:text-green-400" },
-  improved: { label: "Improved", color: "bg-blue-500/10 text-blue-600 dark:text-blue-400" },
-  fixed:    { label: "Fixed",    color: "bg-orange-500/10 text-orange-600 dark:text-orange-400" },
+  new:      { label: "New",      color: "bg-green-500/10 text-green-700 dark:text-green-400" },
+  improved: { label: "Improved", color: "bg-blue-500/10 text-blue-700 dark:text-blue-400" },
+  fixed:    { label: "Fixed",    color: "bg-orange-500/10 text-orange-800 dark:text-orange-400" },
 };
 
 export default function ChangelogPage() {

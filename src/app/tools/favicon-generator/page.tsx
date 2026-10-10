@@ -330,14 +330,14 @@ export default function FaviconGeneratorPage() {
                 <div className="flex gap-2">
                   <button
                     onClick={selectAll}
-                    className="text-[11px] text-indigo-400 hover:text-indigo-300 transition-colors"
+                    className="text-[11px] text-accent hover:text-accent transition-colors"
                   >
                     {t("ui.selectAll")}
                   </button>
                   <span className="text-t-secondary text-[11px]">|</span>
                   <button
                     onClick={selectNone}
-                    className="text-[11px] text-indigo-400 hover:text-indigo-300 transition-colors"
+                    className="text-[11px] text-accent hover:text-accent transition-colors"
                   >
                     {t("ui.none")}
                   </button>
@@ -350,15 +350,15 @@ export default function FaviconGeneratorPage() {
                     key={s.size}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all ${
                       s.checked
-                        ? "bg-white/10 border border-indigo-500/30"
-                        : "bg-white/5 border border-border hover:bg-white/10"
+                        ? "bg-bg-tertiary border border-accent/30"
+                        : "bg-bg-secondary border border-border hover:bg-bg-tertiary"
                     }`}
                   >
                     <input
                       type="checkbox"
                       checked={s.checked}
                       onChange={() => toggleSize(i)}
-                      className="w-4 h-4 rounded accent-indigo-500"
+                      className="w-4 h-4 rounded accent-accent"
                     />
                     <div className="flex-1 min-w-0">
                       <p className="text-[13px] text-t-primary font-medium">
@@ -374,7 +374,7 @@ export default function FaviconGeneratorPage() {
                           e.preventDefault();
                           handleDownloadIndividual(s);
                         }}
-                        className="text-[11px] text-indigo-400 hover:text-indigo-300 transition-colors flex-shrink-0"
+                        className="text-[11px] text-accent hover:text-accent transition-colors flex-shrink-0"
                         title={`Download ${s.filename}`}
                       >
                         <svg
@@ -416,7 +416,7 @@ export default function FaviconGeneratorPage() {
                           className="flex flex-col items-center gap-2"
                         >
                           <div
-                            className="rounded-lg border border-border overflow-hidden bg-white/5 flex items-center justify-center"
+                            className="rounded-lg border border-border overflow-hidden bg-bg-secondary flex items-center justify-center"
                             style={{
                               width: displaySize,
                               height: displaySize,
@@ -458,7 +458,7 @@ export default function FaviconGeneratorPage() {
                     type="text"
                     value={appName}
                     onChange={(e) => setAppName(e.target.value)}
-                    className="mt-1 w-full px-3 py-2 rounded-lg bg-bg-secondary border border-border text-t-primary text-sm focus:outline-none focus:border-indigo-500/50"
+                    className="mt-1 w-full px-3 py-2 rounded-lg bg-bg-secondary border border-border text-t-primary text-sm focus:outline-none focus:border-accent/50"
                   />
                 </label>
                 <label className="block">
@@ -474,7 +474,7 @@ export default function FaviconGeneratorPage() {
                       type="text"
                       value={themeColor}
                       onChange={(e) => setThemeColor(e.target.value)}
-                      className="flex-1 px-3 py-2 rounded-lg bg-bg-secondary border border-border text-t-primary text-sm font-mono focus:outline-none focus:border-indigo-500/50"
+                      className="flex-1 px-3 py-2 rounded-lg bg-bg-secondary border border-border text-t-primary text-sm font-mono focus:outline-none focus:border-accent/50"
                     />
                   </div>
                 </label>
@@ -491,7 +491,7 @@ export default function FaviconGeneratorPage() {
                       type="text"
                       value={bgColor}
                       onChange={(e) => setBgColor(e.target.value)}
-                      className="flex-1 px-3 py-2 rounded-lg bg-bg-secondary border border-border text-t-primary text-sm font-mono focus:outline-none focus:border-indigo-500/50"
+                      className="flex-1 px-3 py-2 rounded-lg bg-bg-secondary border border-border text-t-primary text-sm font-mono focus:outline-none focus:border-accent/50"
                     />
                   </div>
                 </label>
@@ -503,7 +503,7 @@ export default function FaviconGeneratorPage() {
                 </pre>
                 <button
                   onClick={() => copyText(manifestJson)}
-                  className="absolute top-2 right-2 px-2 py-1 rounded-md bg-white/10 hover:bg-white/20 text-[11px] text-t-primary transition-colors"
+                  className="absolute top-2 right-2 px-2 py-1 rounded-md bg-bg-tertiary hover:bg-bg-tertiary text-[11px] text-t-primary transition-colors"
                 >
                   {t("fav.copySnippet")}
                 </button>
@@ -518,7 +518,7 @@ export default function FaviconGeneratorPage() {
                 </span>
                 <button
                   onClick={() => copyText(htmlSnippet)}
-                  className="px-3 py-1.5 rounded-lg bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/30 transition-colors text-[11px]"
+                  className="px-3 py-1.5 rounded-lg bg-accent/20 text-accent hover:bg-accent/30 transition-colors text-[11px]"
                 >
                   {t("fav.copySnippet")}
                 </button>
@@ -541,10 +541,10 @@ export default function FaviconGeneratorPage() {
             <button
               onClick={handleDownloadAll}
               disabled={processing || checkedCount === 0}
-              className={`w-full py-3 rounded-xl font-semibold text-[14px] text-white transition-all ${
+              className={`w-full py-3 rounded-xl font-semibold text-[14px] text-on-accent transition-all ${
                 processing || checkedCount === 0
-                  ? "bg-white/10 cursor-not-allowed text-t-secondary"
-                  : "bg-gradient-to-r from-indigo-500 to-purple-500 hover:shadow-lg hover:shadow-indigo-500/25 hover:scale-[1.02] active:scale-[0.98]"
+                  ? "bg-bg-tertiary cursor-not-allowed text-t-secondary"
+                  : "bg-accent hover:shadow-lg hover:shadow-sm hover:scale-[1.02] active:scale-[0.98]"
               }`}
             >
               {processing

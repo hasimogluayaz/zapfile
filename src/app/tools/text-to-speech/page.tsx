@@ -198,7 +198,7 @@ export default function TextToSpeechPage() {
                   <input
                     type="range" min={min} max={max} step={step} value={value}
                     onChange={(e) => setter(parseFloat(e.target.value))}
-                    className="w-full accent-indigo-500"
+                    className="w-full accent-accent"
                   />
                 </div>
               ))}
@@ -210,18 +210,18 @@ export default function TextToSpeechPage() {
                 <button
                   onClick={handlePlay}
                   disabled={!text.trim() || voices.length === 0}
-                  className="px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-6 py-3 rounded-xl font-semibold text-on-accent bg-accent hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   ▶ Speak
                 </button>
               )}
               {playing && !paused && (
-                <button onClick={handlePause} className="px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-yellow-500 to-orange-500 hover:opacity-90 transition-all">
+                <button onClick={handlePause} className="px-6 py-3 rounded-xl font-semibold text-t-primary bg-bg-tertiary hover:bg-border transition-all">
                   ⏸ Pause
                 </button>
               )}
               {playing && paused && (
-                <button onClick={handleResume} className="px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:opacity-90 transition-all">
+                <button onClick={handleResume} className="px-6 py-3 rounded-xl font-semibold text-on-accent bg-accent hover:opacity-90 transition-all">
                   ▶ Resume
                 </button>
               )}

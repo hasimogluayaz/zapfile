@@ -1131,12 +1131,12 @@ export default function EmojiPickerPage() {
                   onClick={() => setActiveCategory(cat)}
                   className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                     activeCategory === cat
-                      ? "bg-indigo-500/20 border border-indigo-500/50 text-indigo-400"
+                      ? "bg-accent/20 border border-accent/50 text-accent"
                       : "bg-bg-secondary border border-border text-t-secondary hover:text-t-primary hover:border-border"
                   }`}
                 >
                   {cat}
-                  <span className="ml-1.5 text-xs opacity-60">{count}</span>
+                  <span className="ms-1.5 text-xs tabular-nums">{count}</span>
                 </button>
               );
             })}

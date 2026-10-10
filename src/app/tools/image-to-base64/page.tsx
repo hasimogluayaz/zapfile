@@ -109,8 +109,8 @@ export default function ImageToBase64Page() {
             onClick={() => setShowReverse(false)}
             className={`px-4 py-2 rounded-xl text-[13px] font-medium transition-all ${
               !showReverse
-                ? "bg-brand-indigo/20 border border-brand-indigo text-brand-text"
-                : "bg-white/5 border border-white/10 text-brand-muted hover:border-white/20"
+                ? "bg-accent/20 border border-accent text-brand-text"
+                : "bg-bg-secondary border border-border text-brand-muted hover:border-t-primary/20"
             }`}
           >
             {t("imgb64.imageToBase64")}
@@ -119,8 +119,8 @@ export default function ImageToBase64Page() {
             onClick={() => setShowReverse(true)}
             className={`px-4 py-2 rounded-xl text-[13px] font-medium transition-all ${
               showReverse
-                ? "bg-brand-indigo/20 border border-brand-indigo text-brand-text"
-                : "bg-white/5 border border-white/10 text-brand-muted hover:border-white/20"
+                ? "bg-accent/20 border border-accent text-brand-text"
+                : "bg-bg-secondary border border-border text-brand-muted hover:border-t-primary/20"
             }`}
           >
             {t("imgb64.base64ToImage")}
@@ -161,7 +161,7 @@ export default function ImageToBase64Page() {
                       <img
                         src={preview}
                         alt="Preview"
-                        className="w-full rounded-lg border border-white/10 object-contain max-h-48"
+                        className="w-full rounded-lg border border-border object-contain max-h-48"
                       />
                     )}
                     <p className="text-[11px] text-brand-muted truncate">
@@ -210,8 +210,8 @@ export default function ImageToBase64Page() {
                         onClick={() => setActiveFormat(fmt)}
                         className={`px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all ${
                           activeFormat === fmt
-                            ? "bg-brand-indigo/20 border border-brand-indigo text-brand-text"
-                            : "bg-white/5 border border-white/10 text-brand-muted hover:border-white/20"
+                            ? "bg-accent/20 border border-accent text-brand-text"
+                            : "bg-bg-secondary border border-border text-brand-muted hover:border-t-primary/20"
                         }`}
                       >
                         {t(FORMAT_LABEL_KEYS[fmt] as Parameters<typeof t>[0])}
@@ -223,13 +223,13 @@ export default function ImageToBase64Page() {
                   <textarea
                     readOnly
                     value={getOutput()}
-                    className="w-full h-40 px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-[11px] font-mono text-brand-text resize-none focus:outline-none focus:border-brand-indigo/50 transition-colors"
+                    className="w-full h-40 px-3 py-2.5 rounded-xl bg-bg-secondary border border-border text-[11px] font-mono text-brand-text resize-none focus:outline-none focus:border-accent/50 transition-colors"
                   />
 
                   {/* Copy button */}
                   <button
                     onClick={handleCopy}
-                    className="px-6 py-3 rounded-xl font-semibold text-[14px] text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:shadow-lg hover:shadow-indigo-500/25 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                    className="px-6 py-3 rounded-xl font-semibold text-[14px] text-on-accent bg-accent hover:shadow-lg hover:shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all"
                   >
                     {t("ui.copy")} {t(FORMAT_LABEL_KEYS[activeFormat] as Parameters<typeof t>[0])}
                   </button>
@@ -248,15 +248,15 @@ export default function ImageToBase64Page() {
                 value={pastedBase64}
                 onChange={(e) => setPastedBase64(e.target.value)}
                 placeholder={t("imgb64.pasteHere")}
-                className="w-full h-32 px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-[11px] font-mono text-brand-text placeholder:text-brand-muted/50 resize-none focus:outline-none focus:border-brand-indigo/50 transition-colors"
+                className="w-full h-32 px-3 py-2.5 rounded-xl bg-bg-secondary border border-border text-[11px] font-mono text-brand-text placeholder:text-brand-muted/50 resize-none focus:outline-none focus:border-accent/50 transition-colors"
               />
               <button
                 onClick={handlePastedBase64}
                 disabled={!pastedBase64.trim()}
-                className={`px-6 py-3 rounded-xl font-semibold text-[14px] text-white transition-all ${
+                className={`px-6 py-3 rounded-xl font-semibold text-[14px] text-on-accent transition-all ${
                   !pastedBase64.trim()
-                    ? "bg-white/10 cursor-not-allowed text-brand-muted"
-                    : "bg-gradient-to-r from-indigo-500 to-purple-500 hover:shadow-lg hover:shadow-indigo-500/25 hover:scale-[1.02] active:scale-[0.98]"
+                    ? "bg-bg-tertiary cursor-not-allowed text-brand-muted"
+                    : "bg-accent hover:shadow-lg hover:shadow-sm hover:scale-[1.02] active:scale-[0.98]"
                 }`}
               >
                 {t("imgb64.decodeImage")}
@@ -272,7 +272,7 @@ export default function ImageToBase64Page() {
                 <img
                   src={decodedPreview}
                   alt="Decoded from Base64"
-                  className="max-h-64 rounded-lg border border-white/10 mx-auto block"
+                  className="max-h-64 rounded-lg border border-border mx-auto block"
                   onError={() => {
                     toast.error(t("imgb64.invalidBase64"));
                     setDecodedPreview(null);

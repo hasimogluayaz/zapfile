@@ -355,7 +355,7 @@ export default function TypingSpeedTestPage() {
 
   const DIFF_BUTTONS: { key: Difficulty; label: string; color: string }[] = [
     { key: "easy",   label: t("typing.easy"),   color: "text-emerald-400" },
-    { key: "medium", label: t("typing.medium"),  color: "text-amber-400" },
+    { key: "medium", label: t("typing.medium"),  color: "text-amber-600 dark:text-amber-400" },
     { key: "hard",   label: t("typing.hard"),    color: "text-red-400" },
   ];
 
@@ -507,7 +507,7 @@ export default function TypingSpeedTestPage() {
 
           <div className="flex flex-wrap gap-3 mt-4">
             <button type="button" onClick={handleReset}
-              className="px-6 py-2.5 rounded-xl font-semibold text-white bg-accent hover:bg-accent-hover transition-all hover:scale-[1.02] active:scale-[0.98] text-sm">
+              className="px-6 py-2.5 rounded-xl font-semibold text-on-accent bg-accent hover:bg-accent-hover transition-all hover:scale-[1.02] active:scale-[0.98] text-sm">
               {isFinished ? t("typing.tryAgain") : t("typing.reset")}
             </button>
             {isStarted && !isFinished && !isPaused && (
@@ -518,7 +518,7 @@ export default function TypingSpeedTestPage() {
             )}
             {isStarted && !isFinished && isPaused && (
               <button type="button" onClick={handleResume}
-                className="px-6 py-2.5 rounded-xl text-sm font-medium text-white bg-accent hover:bg-accent-hover transition-all">
+                className="px-6 py-2.5 rounded-xl text-sm font-medium text-on-accent bg-accent hover:bg-accent-hover transition-all">
                 {t("typing.resume")}
               </button>
             )}
@@ -556,7 +556,7 @@ export default function TypingSpeedTestPage() {
             <div>
               <p className="text-xs font-semibold text-t-tertiary uppercase tracking-wider mb-0.5">{t("typing.bestWpm")}</p>
               <p className="text-t-primary">
-                <span className="text-xl font-bold text-amber-400">{bestRecord.wpm}</span>
+                <span className="text-xl font-bold text-amber-600 dark:text-amber-400">{bestRecord.wpm}</span>
                 <span className="text-sm text-t-tertiary ml-1">WPM</span>
                 <span className="text-sm text-t-tertiary ml-3">{bestRecord.accuracy}% acc</span>
                 <span className="text-xs text-t-tertiary ml-2">{bestRecord.date}</span>
@@ -570,9 +570,9 @@ export default function TypingSpeedTestPage() {
         {isFinished && (
           <div className={`glass rounded-2xl p-6 text-center border ${isNewRecord ? "border-amber-500/40 bg-amber-500/5" : "border-emerald-500/30"}`}>
             {isNewRecord && (
-              <p className="text-amber-400 font-bold text-sm mb-1 animate-pulse">🏆 {t("typing.newRecord")}</p>
+              <p className="text-amber-600 dark:text-amber-400 font-bold text-sm mb-1 animate-pulse">🏆 {t("typing.newRecord")}</p>
             )}
-            <p className={`text-lg font-semibold mb-1 ${isNewRecord ? "text-amber-400" : "text-emerald-400"}`}>
+            <p className={`text-lg font-semibold mb-1 ${isNewRecord ? "text-amber-600 dark:text-amber-400" : "text-emerald-400"}`}>
               {t("typing.done")}
             </p>
             <div className="flex items-center justify-center gap-6 flex-wrap text-sm text-t-secondary">
@@ -583,7 +583,7 @@ export default function TypingSpeedTestPage() {
             </div>
             <div className="flex gap-3 justify-center mt-4">
               <button onClick={handleReset}
-                className="px-6 py-2.5 rounded-xl font-semibold text-white bg-accent hover:bg-accent-hover transition-all hover:scale-[1.02] active:scale-[0.98] text-sm">
+                className="px-6 py-2.5 rounded-xl font-semibold text-on-accent bg-accent hover:bg-accent-hover transition-all hover:scale-[1.02] active:scale-[0.98] text-sm">
                 {t("typing.tryAgain")}
               </button>
             </div>

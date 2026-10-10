@@ -23,7 +23,7 @@ export default function ProcessButton({
         px-5 py-2.5 rounded-lg text-[13px] font-medium transition-colors
         ${disabled || loading
           ? "bg-border text-t-tertiary cursor-not-allowed"
-          : "bg-accent text-white hover:bg-accent-hover"
+          : "bg-accent text-on-accent hover:bg-accent-hover"
         }
       `}
     >

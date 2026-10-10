@@ -186,7 +186,7 @@ export default function TimestampConverterPage() {
               onClick={() =>
                 setUnixInput(Math.floor(Date.now() / 1000).toString())
               }
-              className="px-4 py-3 rounded-xl text-sm font-medium text-t-secondary bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] hover:text-t-primary transition-all whitespace-nowrap"
+              className="px-4 py-3 rounded-xl text-sm font-medium text-t-secondary bg-bg-secondary border border-border hover:bg-bg-tertiary hover:text-t-primary transition-all whitespace-nowrap"
             >
               {t("ts.now")}
             </button>
@@ -211,7 +211,7 @@ export default function TimestampConverterPage() {
                   </div>
                   <button
                     onClick={() => copyToClipboard(value, label)}
-                    className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-t-secondary bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] hover:text-t-primary transition-all"
+                    className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-t-secondary bg-bg-secondary border border-border hover:bg-bg-tertiary hover:text-t-primary transition-all"
                   >
                     <svg
                       className="w-3.5 h-3.5"
@@ -264,7 +264,7 @@ export default function TimestampConverterPage() {
                       "Unix timestamp (seconds)"
                     )
                   }
-                  className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-t-secondary bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] hover:text-t-primary transition-all"
+                  className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-t-secondary bg-bg-secondary border border-border hover:bg-bg-tertiary hover:text-t-primary transition-all"
                 >
                   <svg
                     className="w-3.5 h-3.5"
@@ -298,7 +298,7 @@ export default function TimestampConverterPage() {
                       "Unix timestamp (milliseconds)"
                     )
                   }
-                  className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-t-secondary bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] hover:text-t-primary transition-all"
+                  className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-t-secondary bg-bg-secondary border border-border hover:bg-bg-tertiary hover:text-t-primary transition-all"
                 >
                   <svg
                     className="w-3.5 h-3.5"
