@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import { openPdf } from "@/lib/pdfjs";
 import ToolLayout from "@/components/ToolLayout";
 import FileDropzone from "@/components/FileDropzone";
 import ProgressBar from "@/components/ProgressBar";
@@ -161,15 +162,10 @@ export default function PdfCompressPage() {
   }, [objectStreams, removeMetadata]);
 
   const compressRaster = useCallback(async (sourceFile: File) => {
-    const [{ PDFDocument }, pdfjsLib] = await Promise.all([
-      import("pdf-lib"),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      import("pdfjs-dist" as any),
-    ]);
-    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+    const { PDFDocument } = await import("pdf-lib");
 
     const arrayBuffer = await sourceFile.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    const pdf = await openPdf(arrayBuffer);
     const outDoc = await PDFDocument.create();
 
     for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
@@ -183,7 +179,7 @@ export default function PdfCompressPage() {
       if (!ctx) throw new Error("Canvas unavailable");
       ctx.fillStyle = "#ffffff";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-      await page.render({ canvasContext: ctx, viewport: renderViewport }).promise;
+      await page.render({ canvas, canvasContext: ctx, viewport: renderViewport }).promise;
 
       const jpegBlob = await new Promise<Blob>((resolve, reject) => {
         canvas.toBlob(

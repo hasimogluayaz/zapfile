@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { PDFDocument } from "pdf-lib";
+import { openPdf } from "@/lib/pdfjs";
 import ToolLayout from "@/components/ToolLayout";
 import FileDropzone from "@/components/FileDropzone";
 import ProgressBar from "@/components/ProgressBar";
@@ -291,11 +292,9 @@ export default function PdfTextExtractorPage() {
       const arrayBuffer = await file.arrayBuffer();
       setProgress(16);
 
-      const pdfjsLib = await import("pdfjs-dist");
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
       setProgress(30);
 
-      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const pdf = await openPdf(arrayBuffer);
       const maxPages = pdf.numPages;
       const from = Math.min(maxPages, Math.max(1, rangeStart || 1));
       const to = Math.min(maxPages, Math.max(from, rangeEnd || maxPages));

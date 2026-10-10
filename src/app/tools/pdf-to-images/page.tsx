@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import { openPdf } from "@/lib/pdfjs";
 import ToolLayout from "@/components/ToolLayout";
 import FileDropzone from "@/components/FileDropzone";
 import ProgressBar from "@/components/ProgressBar";
@@ -163,13 +164,10 @@ export default function PdfToImagesPage() {
     setImages([]);
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const pdfjsLib = await import("pdfjs-dist" as any);
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
       setProgress(12);
 
       const arrayBuffer = await file.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const pdf = await openPdf(arrayBuffer);
       const from = clamp(normalizedRange.from, 1, pdf.numPages);
       const to = clamp(normalizedRange.to, from, pdf.numPages);
       const total = to - from + 1;
@@ -190,7 +188,7 @@ export default function PdfToImagesPage() {
           ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
 
-        await page.render({ canvasContext: ctx, viewport }).promise;
+        await page.render({ canvas, canvasContext: ctx, viewport }).promise;
         const mimeType = mimeFor(format);
         const qualityParam = format === "png" ? undefined : quality / 100;
         const blob = await new Promise<Blob>((resolve, reject) => {
