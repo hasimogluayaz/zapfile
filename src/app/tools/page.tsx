@@ -4,7 +4,8 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ToolCard from "@/components/ToolCard";
-import { Search, SearchX, Star } from "lucide-react";
+import { Search, Star } from "lucide-react";
+import Illustration from "@/components/Illustration";
 import { tools, type ToolCategory } from "@/lib/tools";
 import { CategoryIcon } from "@/components/ToolIcon";
 import { useI18n } from "@/lib/i18n";
@@ -186,12 +187,22 @@ export default function ToolsPage() {
           {/* Results */}
           {filteredTools.length === 0 ? (
             <div className="rounded-[24px] border border-border bg-surface px-6 py-16 text-center">
-              <SearchX className="mx-auto mb-4 h-8 w-8 text-t-tertiary" strokeWidth={1.5} aria-hidden="true" />
-              <p className="text-t-secondary text-[14px]">
-                {search.trim()
-                  ? t("tools.noResults", { query: search })
-                  : t("nav.noResults")}
-              </p>
+              {activeCategory === "favorites" && !search.trim() ? (
+                <>
+                  <Illustration name="favorites-empty" size={150} className="mb-5" />
+                  <p className="text-[15px] font-medium text-t-primary">{t("fav.emptyTitle")}</p>
+                  <p className="mt-1 text-[14px] text-t-secondary">{t("fav.emptyHint")}</p>
+                </>
+              ) : (
+                <>
+                  <Illustration name="no-results" size={150} className="mb-5" />
+                  <p className="text-[14px] text-t-secondary">
+                    {search.trim()
+                      ? t("tools.noResults", { query: search })
+                      : t("nav.noResults")}
+                  </p>
+                </>
+              )}
               <button
                 type="button"
                 onClick={() => {

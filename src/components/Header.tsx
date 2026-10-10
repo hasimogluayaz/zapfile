@@ -23,6 +23,7 @@ import { searchTools } from "@/lib/search";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import KeyboardShortcutsModal from "@/components/KeyboardShortcutsModal";
 import ToolIcon, { CategoryIcon } from "@/components/ToolIcon";
+import Illustration from "@/components/Illustration";
 import { useTheme } from "@/components/ClientProviders";
 
 function isTypingElement(target: EventTarget | null): boolean {
@@ -226,9 +227,12 @@ function SearchModal({ onClose }: { onClose: () => void }) {
               );
             })
           ) : (
-            <p className="px-3 py-10 text-center text-[13px] text-t-tertiary">
-              {hasQuery ? t("nav.noResults") : t("search.emptyHint")}
-            </p>
+            <div className="px-3 py-8 text-center">
+              {hasQuery && <Illustration name="no-results" size={96} className="mb-3" />}
+              <p className="text-[13px] text-t-tertiary">
+                {hasQuery ? t("nav.noResults") : t("search.emptyHint")}
+              </p>
+            </div>
           )}
         </div>
 

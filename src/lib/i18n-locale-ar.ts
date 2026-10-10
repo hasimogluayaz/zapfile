@@ -5,6 +5,8 @@
 
 export const arLocaleStrings: Record<string, string> = {
   "nav.allTools": "جميع الأدوات",
+  "fav.emptyTitle": "لا توجد مفضلة بعد",
+  "fav.emptyHint": "اضغط على النجمة بجانب أي أداة لإبقائها هنا.",
   "compimg.format": "صيغة الإخراج",
   "compimg.keepFormat": "الإبقاء على الأصل",
   "compimg.webpHint": "عادةً ما يكون WebP أصغر بنسبة 25–35٪ من JPG/PNG بنفس الجودة.",

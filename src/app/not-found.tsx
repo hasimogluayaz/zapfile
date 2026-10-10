@@ -3,16 +3,16 @@
 import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import Illustration from "@/components/Illustration";
 
 export default function NotFound() {
   return (
     <>
       <Header />
       <div className="min-h-[70vh] flex flex-col items-center justify-center px-5 py-16">
-        <p className="text-8xl font-semibold tracking-[-0.05em] text-t-primary mb-4">
-          404
-        </p>
-        <h1 className="text-2xl font-bold text-t-primary mb-2">
+        <Illustration name="not-found" size={200} className="mb-4" />
+        <p className="mb-2 text-[13px] font-semibold tabular-nums text-t-tertiary">404</p>
+        <h1 className="text-[28px] font-semibold tracking-[-0.03em] text-t-primary mb-2">
           Page Not Found
         </h1>
         <p className="text-t-secondary text-[15px] mb-8 text-center max-w-md">

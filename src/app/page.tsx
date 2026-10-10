@@ -9,6 +9,7 @@ import ToolCard from "@/components/ToolCard";
 import DropPad from "@/components/DropPad";
 import SuggestToolForm from "@/components/SuggestToolForm";
 import ToolIcon, { CategoryIcon } from "@/components/ToolIcon";
+import Illustration from "@/components/Illustration";
 import { tools, getToolBySlug, type Tool, type ToolCategory } from "@/lib/tools";
 import { toolField } from "@/lib/tool-i18n";
 import { useI18n } from "@/lib/i18n";
@@ -135,9 +136,10 @@ export default function Home() {
                 ))}
               </div>
             ) : (
-              <p className="rounded-[24px] border border-border bg-surface px-6 py-14 text-center text-[14px] text-t-secondary">
-                {t("tools.noResults", { query })}
-              </p>
+              <div className="rounded-[24px] border border-border bg-surface px-6 py-12 text-center">
+                <Illustration name="no-results" size={150} className="mb-5" />
+                <p className="text-[14px] text-t-secondary">{t("tools.noResults", { query })}</p>
+              </div>
             )}
           </section>
         )}
