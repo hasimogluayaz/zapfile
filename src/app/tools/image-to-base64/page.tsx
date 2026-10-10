@@ -52,7 +52,7 @@ export default function ImageToBase64Page() {
     };
     reader.onerror = () => toast.error(t("imgb64.readFail"));
     reader.readAsDataURL(f);
-  }, []);
+  }, [t]);
 
   const getOutput = (): string => {
     switch (activeFormat) {

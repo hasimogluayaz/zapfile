@@ -69,7 +69,9 @@ export default function KeyboardShortcutsModal({
         </div>
         <div className="px-5 py-3 overflow-y-auto text-sm">
           <p className="text-[12px] text-t-tertiary mb-3">{t("shortcuts.intro")}</p>
-          <Row keys={`${mod} + K`} desc={t("shortcuts.search")} />
+          <Row keys={`${mod} + K  /  /`} desc={t("shortcuts.search")} />
+          <Row keys="↑ ↓ ↵" desc={t("search.navigate")} />
+          <Row keys={`${mod} + V`} desc={t("shortcuts.paste")} />
           <Row keys="?" desc={t("shortcuts.thisHelp")} />
           <Row keys="Esc" desc={t("shortcuts.closeModal")} />
           <p className="text-[11px] font-semibold uppercase tracking-wider text-t-tertiary mt-4 mb-2">

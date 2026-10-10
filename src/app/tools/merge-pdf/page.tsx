@@ -64,7 +64,7 @@ export default function MergePdfPage() {
     newEntries.forEach((e) => {
       void attachThumbnail(e);
     });
-  }, [attachThumbnail]);
+  }, [attachThumbnail, t]);
 
   const handleRemoveFile = useCallback((id: string) => {
     setFiles((prev) => prev.filter((f) => f.id !== id));
@@ -173,7 +173,7 @@ export default function MergePdfPage() {
     } finally {
       setProcessing(false);
     }
-  }, [files]);
+  }, [files, t]);
 
   const handleReset = useCallback(() => {
     setFiles([]);

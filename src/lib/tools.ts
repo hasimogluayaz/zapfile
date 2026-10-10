@@ -589,9 +589,9 @@ export const tools: Tool[] = [
     emoji: "🌐",
     category: "utility",
     acceptedFormats: [],
-    metaTitle: "IP Adresim - Konum ve ISP Bilgisi | ZapFile",
+    metaTitle: "What Is My IP Address - Location & ISP Lookup | ZapFile",
     metaDescription:
-      "Genel IP adresinizi, şehir/ülke konumunuzu ve ISP bilgilerinizi anında görün. Gizli, sunucusuz araç.",
+      "See your public IP address, approximate city/country location and ISP instantly. Free, private and no sign-up required.",
   },
   {
     slug: "screen-resolution",
@@ -600,9 +600,9 @@ export const tools: Tool[] = [
     emoji: "🖥️",
     category: "utility",
     acceptedFormats: [],
-    metaTitle: "Ekran Çözünürlüğüm - Ekran Bilgileri | ZapFile",
+    metaTitle: "What Is My Screen Resolution - Display Info | ZapFile",
     metaDescription:
-      "Ekran çözünürlüğünüzü, DPI değerinizi, cihaz piksel oranını ve tarayıcı pencere boyutunu görün.",
+      "Check your screen resolution, DPI, device pixel ratio and browser viewport size instantly. Free online tool.",
   },
   {
     slug: "internet-speed",
@@ -611,9 +611,9 @@ export const tools: Tool[] = [
     emoji: "⚡",
     category: "utility",
     acceptedFormats: [],
-    metaTitle: "İnternet Hızı Testi - Ping ve İndirme Hızı | ZapFile",
+    metaTitle: "Internet Speed Test - Ping & Download Speed | ZapFile",
     metaDescription:
-      "Bağlantı gecikmesi (ping) ve indirme hızınızı tarayıcınızda ücretsiz ölçün. Kayıt gerekmez.",
+      "Measure your connection latency (ping) and download speed right in your browser. Free, fast, no sign-up.",
   },
   {
     slug: "fake-identity",
@@ -622,9 +622,9 @@ export const tools: Tool[] = [
     emoji: "🪪",
     category: "utility",
     acceptedFormats: [],
-    metaTitle: "Sahte Kimlik Oluşturucu - Test Verisi | ZapFile",
+    metaTitle: "Fake Identity Generator - Random Test Data | ZapFile",
     metaDescription:
-      "Yazılım geliştirme ve test amacıyla rastgele kişi bilgisi üretin: ad, adres, e-posta, telefon ve daha fazlası.",
+      "Generate random test identities for development and QA: names, addresses, emails, phone numbers and more.",
   },
   {
     slug: "password-strength",
@@ -633,9 +633,9 @@ export const tools: Tool[] = [
     emoji: "🔐",
     category: "utility",
     acceptedFormats: [],
-    metaTitle: "Şifre Güçlülük Testi - Güvenlik Analizi | ZapFile",
+    metaTitle: "Password Strength Checker - Security Analysis | ZapFile",
     metaDescription:
-      "Şifrenizin ne kadar güçlü olduğunu analiz edin. Güvenlik puanı, kaba kuvvet tahmini ve iyileştirme önerileri.",
+      "Check how strong your password is. Get a security score, brute-force time estimate and tips. Runs locally in your browser.",
   },
   {
     slug: "emoji-picker",
@@ -644,9 +644,9 @@ export const tools: Tool[] = [
     emoji: "😀",
     category: "utility",
     acceptedFormats: [],
-    metaTitle: "Emoji Kopyalayıcı - Kategorili Emoji Arama | ZapFile",
+    metaTitle: "Emoji Picker - Search & Copy Emojis | ZapFile",
     metaDescription:
-      "Kategorilere göre emoji arayın ve tek tıkla kopyalayın. Twitter, WhatsApp ve tüm platformlar için.",
+      "Search emojis by name or category and copy them with one click. Works for X, WhatsApp, Instagram and every platform.",
   },
   {
     slug: "character-counter",
@@ -655,9 +655,9 @@ export const tools: Tool[] = [
     emoji: "🔢",
     category: "utility",
     acceptedFormats: [],
-    metaTitle: "Karakter Sayacı - Twitter ve Instagram Limiti | ZapFile",
+    metaTitle: "Character Counter - X & Instagram Limits | ZapFile",
     metaDescription:
-      "Metninizin karakter sayısını sayın. Twitter (280), Instagram (2200) ve diğer platformlar için limit göstergesi.",
+      "Count characters, words and lines with live limits for X/Twitter (280), Instagram (2,200) and other platforms.",
   },
   {
     slug: "text-case",
@@ -666,9 +666,9 @@ export const tools: Tool[] = [
     emoji: "🔠",
     category: "utility",
     acceptedFormats: [],
-    metaTitle: "Metin Büyük/Küçük Dönüştürücü | ZapFile",
+    metaTitle: "Text Case Converter - UPPER, lower, Title, camelCase | ZapFile",
     metaDescription:
-      "Metni BÜYÜK HARF, küçük harf, Başlık Harfi veya camelCase formatına dönüştürün. Anında, ücretsiz.",
+      "Convert text to UPPERCASE, lowercase, Title Case, camelCase, snake_case and more. Instant and free.",
   },
   {
     slug: "random-color",
@@ -677,9 +677,9 @@ export const tools: Tool[] = [
     emoji: "🎨",
     category: "utility",
     acceptedFormats: [],
-    metaTitle: "Rastgele Renk Üretici - HEX RGB HSL | ZapFile",
+    metaTitle: "Random Color Generator - HEX, RGB & HSL | ZapFile",
     metaDescription:
-      "Her tıkta yeni bir renk üretin. HEX, RGB ve HSL kodlarını kopyalayın. Tasarımcılar için ücretsiz araç.",
+      "Generate random colors with one click and copy HEX, RGB and HSL codes. A free tool for designers and developers.",
   },
   {
     slug: "stopwatch",
@@ -688,9 +688,9 @@ export const tools: Tool[] = [
     emoji: "⏱️",
     category: "utility",
     acceptedFormats: [],
-    metaTitle: "Kronometre - Online Kronometre + Tur | ZapFile",
+    metaTitle: "Online Stopwatch with Lap Times | ZapFile",
     metaDescription:
-      "Basit ve hızlı online kronometre. Tur sürelerini kaydedin, sıfırlayın ve durdurun. Reklamsız ve ücretsiz.",
+      "A simple, accurate online stopwatch. Record lap times, pause and reset with keyboard shortcuts. Free and ad-free.",
   },
   {
     slug: "world-clock",
@@ -699,9 +699,9 @@ export const tools: Tool[] = [
     emoji: "🕐",
     category: "utility",
     acceptedFormats: [],
-    metaTitle: "Dünya Saati - Şehirlerin Güncel Saati | ZapFile",
+    metaTitle: "World Clock - Current Time in Cities Worldwide | ZapFile",
     metaDescription:
-      "Dünyanın farklı şehirlerinin güncel saat ve tarihini görün. Zaman dilimi farklarını karşılaştırın.",
+      "See the current time and date in cities around the world and compare time zone differences at a glance.",
   },
   // ── New Image Tools ──
   {
@@ -711,9 +711,9 @@ export const tools: Tool[] = [
     emoji: "✂️",
     category: "image",
     acceptedFormats: [".jpg", ".jpeg", ".png", ".webp"],
-    metaTitle: "Arka Plan Sil - Ücretsiz Online Araç | ZapFile",
+    metaTitle: "Background Remover - Remove Image Background Free | ZapFile",
     metaDescription:
-      "Resminizin arka planını otomatik olarak silin. Tamamen tarayıcıda çalışır, sunucuya dosya gitmez. Ücretsiz.",
+      "Remove image backgrounds automatically with AI that runs entirely in your browser. No uploads, free, transparent PNG output.",
   },
   {
     slug: "color-dropper",
@@ -722,9 +722,9 @@ export const tools: Tool[] = [
     emoji: "💧",
     category: "image",
     acceptedFormats: [".jpg", ".jpeg", ".png", ".webp", ".gif"],
-    metaTitle: "Renk Damlalığı - Resimden Renk Kodu Al | ZapFile",
+    metaTitle: "Color Dropper - Pick Colors from Any Image | ZapFile",
     metaDescription:
-      "Herhangi bir görüntüdeki pikselin renk kodunu alın. HEX, RGB ve HSL formatlarında kopyalayın.",
+      "Pick any pixel color from an image and copy it as HEX, RGB or HSL. Free, private, browser-based eyedropper.",
   },
   {
     slug: "photo-filter",
@@ -733,9 +733,9 @@ export const tools: Tool[] = [
     emoji: "🌈",
     category: "image",
     acceptedFormats: [".jpg", ".jpeg", ".png", ".webp"],
-    metaTitle: "Fotoğraf Filtresi - Vintage Siyah Beyaz | ZapFile",
+    metaTitle: "Photo Filter - Vintage, Grayscale & Sepia Effects | ZapFile",
     metaDescription:
-      "Fotoğraflarınıza vintage, siyah-beyaz, sepia ve diğer filtreler uygulayın. Tarayıcıda ücretsiz.",
+      "Apply vintage, black & white, sepia and other filters to your photos. Free and private, right in your browser.",
   },
   {
     slug: "image-compare",
@@ -744,9 +744,9 @@ export const tools: Tool[] = [
     emoji: "↔️",
     category: "image",
     acceptedFormats: [".jpg", ".jpeg", ".png", ".webp"],
-    metaTitle: "Görüntü Karşılaştırıcı - Yan Yana Karşılaştır | ZapFile",
+    metaTitle: "Image Comparison Slider - Before/After | ZapFile",
     metaDescription:
-      "İki fotoğrafı yan yana karşılaştırın. Kaydırıcıyla before/after etkisi oluşturun. Ücretsiz online araç.",
+      "Compare two images side by side with an interactive before/after slider. Free online tool, no uploads.",
   },
   // ── New PDF Tools ──
   {
@@ -756,9 +756,9 @@ export const tools: Tool[] = [
     emoji: "🔒",
     category: "pdf",
     acceptedFormats: [".pdf"],
-    metaTitle: "PDF Şifreleme - PDF'e Şifre Ekle | ZapFile",
+    metaTitle: "Encrypt PDF - Add Password Protection | ZapFile",
     metaDescription:
-      "PDF dosyalarınızı şifreleyin ve parola koruması ekleyin. Tamamen tarayıcıda, dosyanız sunucuya gitmez.",
+      "Password-protect your PDF files securely. Encryption happens entirely in your browser, your file never leaves your device.",
   },
   {
     slug: "pdf-text-extractor",
@@ -767,9 +767,9 @@ export const tools: Tool[] = [
     emoji: "📝",
     category: "pdf",
     acceptedFormats: [".pdf"],
-    metaTitle: "PDF Metin Çıkarıcı - PDF'den Metin Kopyala | ZapFile",
+    metaTitle: "PDF Text Extractor - Copy Text from PDF | ZapFile",
     metaDescription:
-      "PDF dosyalarındaki tüm metni çıkarın ve kopyalayın. Ücretsiz, tarayıcıda çalışır, sunucuya dosya gitmez.",
+      "Extract and copy all text from PDF files, with OCR for scanned pages. Free, browser-based, no uploads.",
   },
   {
     slug: "pdf-compress",
@@ -778,9 +778,9 @@ export const tools: Tool[] = [
     emoji: "🗜️",
     category: "pdf",
     acceptedFormats: [".pdf"],
-    metaTitle: "PDF Küçültücü - PDF Dosya Boyutu Azalt | ZapFile",
+    metaTitle: "Compress PDF - Reduce PDF File Size | ZapFile",
     metaDescription:
-      "PDF dosyalarınızın boyutunu küçültün. Gömülü görselleri sıkıştırarak dosya boyutunu azaltın. Ücretsiz.",
+      "Reduce PDF file size by recompressing embedded images. Free, private and fully browser-based.",
   },
   // ── New Video & Audio Tools ──
   {
@@ -790,9 +790,9 @@ export const tools: Tool[] = [
     emoji: "🎞️",
     category: "video",
     acceptedFormats: [".mp4", ".webm", ".mov"],
-    metaTitle: "Video GIF'e Çevir - Ücretsiz Online | ZapFile",
+    metaTitle: "Video to GIF Converter - Free Online | ZapFile",
     metaDescription:
-      "Kısa video kliplerinizi animasyonlu GIF'e dönüştürün. MP4, WebM ve MOV destekli. Tarayıcıda ücretsiz.",
+      "Convert short video clips to animated GIFs. Supports MP4, WebM and MOV. Free and runs in your browser.",
   },
   {
     slug: "audio-recorder",
@@ -801,9 +801,9 @@ export const tools: Tool[] = [
     emoji: "🎙️",
     category: "video",
     acceptedFormats: [],
-    metaTitle: "Ses Kaydedici - Tarayıcıdan Ses Kaydet | ZapFile",
+    metaTitle: "Online Audio Recorder - Record & Download MP3/WAV | ZapFile",
     metaDescription:
-      "Mikrofonunuzdan ses kaydedin ve MP3/WAV olarak indirin. Kayıt gerekmez, tarayıcıda ücretsiz çalışır.",
+      "Record audio from your microphone and download it as MP3 or WAV. No sign-up, runs free in your browser.",
   },
   {
     slug: "text-to-speech",
@@ -812,9 +812,9 @@ export const tools: Tool[] = [
     emoji: "🔊",
     category: "video",
     acceptedFormats: [],
-    metaTitle: "Metinden Ses - Türkçe İngilizce TTS | ZapFile",
+    metaTitle: "Text to Speech - Free Online TTS | ZapFile",
     metaDescription:
-      "Metni sese dönüştürün. Türkçe ve İngilizce dahil birçok dil desteklenir. Tarayıcıda ücretsiz TTS.",
+      "Convert text to natural-sounding speech in many languages including English and Turkish. Free browser-based TTS.",
   },
 ];
 

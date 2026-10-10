@@ -6,6 +6,7 @@ import Header from "./Header";
 import Footer from "./Footer";
 import AdPlaceholder from "./AdPlaceholder";
 import TrustPanel from "./TrustPanel";
+import ToolShareBar from "./ToolShareBar";
 import { useI18n } from "@/lib/i18n";
 import { usePathname } from "next/navigation";
 import {
@@ -18,6 +19,7 @@ import { toolField } from "@/lib/tool-i18n";
 import { useFavoriteTools } from "@/hooks/useFavoriteTools";
 import { useRecentTools } from "@/hooks/useRecentTools";
 import { toolSlugFromPathname } from "@/lib/tool-slug";
+import { getToolFaqs } from "@/lib/tool-faqs";
 
 interface ToolLayoutProps {
   children: React.ReactNode;
@@ -42,7 +44,7 @@ export default function ToolLayout({
   faq,
   showTrustPanel = true,
 }: ToolLayoutProps) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const pathname = usePathname();
   const slug = toolSlugFromPathname(pathname);
   const { trackTool } = useRecentTools();
@@ -92,6 +94,10 @@ export default function ToolLayout({
     }));
   }, [currentTool]);
 
+  // Tool-specific FAQs are already emitted as FAQPage JSON-LD by each tool's
+  // server layout; emitting a second FAQPage here would duplicate it.
+  const toolFaqs = useMemo(() => getToolFaqs(slug), [slug]);
+
   const faqItems = useMemo(() => {
     if (faq) return faq;
 
@@ -123,8 +129,18 @@ export default function ToolLayout({
       ];
     }
 
-    return [...commonFaqs, ...categoryFaqs];
-  }, [faq, currentTool, t]);
+    // The curated per-tool FAQs are English-only; show them (so the visible
+    // content matches the structured data) when browsing in English.
+    const specific =
+      locale === "en" && toolFaqs
+        ? toolFaqs.map((f) => ({ q: f.question, a: f.answer }))
+        : [];
+    const seen = new Set(specific.map((f) => f.q));
+    return [
+      ...specific,
+      ...[...commonFaqs, ...categoryFaqs].filter((f) => !seen.has(f.q)),
+    ];
+  }, [faq, currentTool, t, locale, toolFaqs]);
 
   const toggleFaq = (index: number) => {
     setOpenFaqIndices((prev) => {
@@ -227,7 +243,7 @@ export default function ToolLayout({
                 )}
 
                 <div className="min-w-0 flex-1">
-                  <h1 className="truncate text-2xl font-bold leading-tight tracking-tight text-t-primary sm:text-3xl">
+                  <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold leading-tight tracking-tight text-t-primary">
                     {finalName}
                   </h1>
                   <p className="mt-1 line-clamp-2 text-[13px] leading-relaxed text-t-secondary">
@@ -235,9 +251,9 @@ export default function ToolLayout({
                   </p>
                 </div>
 
-                <div className="hidden items-center gap-2 md:flex">
+                <div className="flex shrink-0 items-center gap-2">
                   {showTrustPanel && (
-                    <span className="rounded-full border border-emerald-500/25 bg-emerald-500/[0.08] px-3 py-1.5 text-[12px] font-medium text-emerald-600 dark:text-emerald-400">
+                    <span className="hidden lg:inline-flex rounded-full border border-emerald-500/25 bg-emerald-500/[0.08] px-3 py-1.5 text-[12px] font-medium text-emerald-600 dark:text-emerald-400">
                       {t("tool.privacy")}
                     </span>
                   )}
@@ -247,9 +263,21 @@ export default function ToolLayout({
                       onClick={() => toggleFavorite(currentTool.slug)}
                       aria-pressed={isFavorite(currentTool.slug)}
                       aria-label={t("nav.favoriteToggle")}
-                      className="rounded-xl border border-border px-3 py-2 text-[12px] font-semibold text-t-secondary transition-colors hover:bg-bg-secondary hover:text-t-primary"
+                      title={t("nav.favoriteToggle")}
+                      className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-[12px] font-semibold transition-colors ${
+                        isFavorite(currentTool.slug)
+                          ? "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                          : "border-border text-t-secondary hover:bg-bg-secondary hover:text-t-primary"
+                      }`}
                     >
-                      {isFavorite(currentTool.slug) ? "Pinned" : "Pin"}
+                      <span aria-hidden="true">
+                        {isFavorite(currentTool.slug) ? "★" : "☆"}
+                      </span>
+                      <span className="hidden sm:inline">
+                        {isFavorite(currentTool.slug)
+                          ? t("fav.remove")
+                          : t("fav.add")}
+                      </span>
                     </button>
                   )}
                 </div>
@@ -257,6 +285,10 @@ export default function ToolLayout({
             </section>
 
             <div className="animate-fade-up">{children}</div>
+
+            <div className="mt-8">
+              <ToolShareBar />
+            </div>
 
             {showTrustPanel && (
               <details className="mt-8 rounded-3xl border border-border bg-surface/70 p-4">
@@ -338,6 +370,7 @@ export default function ToolLayout({
                     </div>
                   ))}
                 </div>
+                {!toolFaqs && (
                 <script
                   type="application/ld+json"
                   dangerouslySetInnerHTML={{
@@ -355,6 +388,7 @@ export default function ToolLayout({
                     }),
                   }}
                 />
+                )}
               </section>
             )}
 

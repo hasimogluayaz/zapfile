@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useI18n } from "@/lib/i18n";
 
@@ -9,6 +9,11 @@ export default function ToolShareBar() {
   const pathname = usePathname();
   const { t } = useI18n();
   const [busy, setBusy] = useState(false);
+  const [canShare, setCanShare] = useState(false);
+
+  useEffect(() => {
+    setCanShare(typeof navigator !== "undefined" && "share" in navigator);
+  }, []);
 
   const url =
     typeof window !== "undefined"
@@ -39,10 +44,27 @@ export default function ToolShareBar() {
     );
   }, [url]);
 
+  const nativeShare = useCallback(async () => {
+    try {
+      await navigator.share({ title: document.title, url });
+    } catch {
+      /* user cancelled */
+    }
+  }, [url]);
+
   if (!pathname?.startsWith("/tools/")) return null;
 
   return (
-    <div className="flex flex-wrap gap-2 mb-6">
+    <div className="flex flex-wrap items-center gap-2">
+      {canShare && (
+        <button
+          type="button"
+          onClick={nativeShare}
+          className="text-[12px] font-medium px-3 py-1.5 rounded-lg bg-accent text-white hover:bg-accent-hover transition-colors"
+        >
+          {t("share.native")}
+        </button>
+      )}
       <button
         type="button"
         onClick={copyLink}

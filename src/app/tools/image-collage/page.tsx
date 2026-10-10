@@ -57,7 +57,7 @@ export default function ImageCollagePage() {
         toast.error(t("collage.loadFail"));
       }
     },
-    []
+    [t]
   );
 
   const handleAddMore = useCallback(
@@ -71,7 +71,7 @@ export default function ImageCollagePage() {
         toast.error(t("collage.loadFail"));
       }
     },
-    []
+    [t]
   );
 
   const clearAll = () => {

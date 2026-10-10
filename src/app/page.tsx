@@ -9,7 +9,10 @@ import { tools, categoryEmojis, getToolBySlug, type ToolCategory } from "@/lib/t
 import { toolField } from "@/lib/tool-i18n";
 import { useI18n } from "@/lib/i18n";
 import { useRecentTools } from "@/hooks/useRecentTools";
+import { useFavoriteTools } from "@/hooks/useFavoriteTools";
+import { searchTools } from "@/lib/search";
 import Link from "next/link";
+import { useMemo, useState } from "react";
 
 const categories: ToolCategory[] = ["pdf", "image", "video", "utility"];
 const catKeys: Record<ToolCategory, string> = {
@@ -25,6 +28,16 @@ export default function Home() {
   const recentTools = recentSlugs
     .map((slug) => getToolBySlug(slug))
     .filter(Boolean) as NonNullable<ReturnType<typeof getToolBySlug>>[];
+  const { favorites, ready: favReady } = useFavoriteTools();
+  const favoriteTools = favorites
+    .map((slug) => getToolBySlug(slug))
+    .filter(Boolean) as NonNullable<ReturnType<typeof getToolBySlug>>[];
+  const [query, setQuery] = useState("");
+  const searching = query.trim().length > 0;
+  const searchResults = useMemo(
+    () => (searching ? searchTools(tools, query, t) : []),
+    [searching, query, t],
+  );
 
   return (
     <>
@@ -54,7 +67,59 @@ export default function Home() {
               {t("hero.subtitle")}
             </p>
 
-            <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
+            <form
+              role="search"
+              className="mt-9 mx-auto max-w-xl"
+              onSubmit={(e) => {
+                e.preventDefault();
+                document
+                  .getElementById("all-tools")
+                  ?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
+            >
+              <label htmlFor="hero-search" className="sr-only">
+                {t("a11y.searchTools")}
+              </label>
+              <div className="group relative">
+                <div
+                  className="absolute -inset-0.5 rounded-2xl bg-gradient-to-r from-indigo-500 via-violet-500 to-fuchsia-500 opacity-25 blur transition-opacity group-focus-within:opacity-60"
+                  aria-hidden="true"
+                />
+                <div className="relative flex items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-3.5 shadow-lg transition-colors group-focus-within:border-accent">
+                  <svg
+                    className="w-5 h-5 shrink-0 text-t-tertiary"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z"
+                    />
+                  </svg>
+                  <input
+                    id="hero-search"
+                    type="search"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Escape") setQuery("");
+                    }}
+                    placeholder={t("search.heroPlaceholder", { count: tools.length })}
+                    autoComplete="off"
+                    className="min-w-0 flex-1 bg-transparent text-[15px] text-t-primary placeholder:text-t-tertiary outline-none focus-visible:outline-none"
+                  />
+                  <kbd className="hidden sm:inline-flex items-center rounded border border-border bg-bg-secondary px-1.5 py-0.5 text-[11px] font-medium text-t-tertiary">
+                    /
+                  </kbd>
+                </div>
+              </div>
+            </form>
+
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
               <Link
                 href="/tools"
                 className="shine-btn inline-flex items-center gap-2 px-7 py-3.5 rounded-xl text-[14px] font-semibold bg-gradient-to-r from-indigo-500 via-violet-500 to-fuchsia-500 text-white hover:shadow-xl hover:shadow-accent/30 transition-all hover:scale-[1.03] active:scale-[0.98]"
@@ -140,10 +205,32 @@ export default function Home() {
         </section>
 
         {/* Tool of the Day */}
-        <ToolOfTheDay />
+        {!searching && <ToolOfTheDay />}
+
+        {/* Favorites */}
+        {!searching && favReady && favoriteTools.length > 0 && (
+          <section className="max-w-6xl mx-auto px-5 pb-8">
+            <div className="flex items-center gap-2.5 mb-4">
+              <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-500">
+                ★
+              </div>
+              <h2 className="text-[16px] font-bold text-t-primary">
+                {t("nav.favorites")}
+              </h2>
+              <span className="text-[11px] text-t-tertiary bg-bg-secondary px-2 py-0.5 rounded-full font-medium">
+                {favoriteTools.length}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
+              {favoriteTools.map((tool) => (
+                <ToolCard key={tool.slug} tool={tool} />
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Recent Tools */}
-        {recentReady && recentTools.length > 0 && (
+        {!searching && recentReady && recentTools.length > 0 && (
           <section className="max-w-6xl mx-auto px-5 pb-8">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2.5">
@@ -195,8 +282,44 @@ export default function Home() {
           </section>
         )}
 
+        {/* Search results */}
+        {searching && (
+          <section
+            id="all-tools"
+            className="max-w-6xl mx-auto px-5 pb-20 scroll-mt-24"
+            aria-live="polite"
+          >
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-[18px] font-bold text-t-primary">
+                {t("search.resultCount", { count: searchResults.length })}
+              </h2>
+              <button
+                type="button"
+                onClick={() => setQuery("")}
+                className="text-[13px] font-medium text-accent hover:underline"
+              >
+                {t("search.clear")}
+              </button>
+            </div>
+            {searchResults.length > 0 ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                {searchResults.map((tool) => (
+                  <ToolCard key={tool.slug} tool={tool} />
+                ))}
+              </div>
+            ) : (
+              <p className="py-12 text-center text-[14px] text-t-tertiary">
+                {t("tools.noResults", { query })}
+              </p>
+            )}
+          </section>
+        )}
+
         {/* Category Nav Tabs */}
-        <section className="max-w-6xl mx-auto px-5 pb-6">
+        <section
+          id={searching ? undefined : "all-tools"}
+          className={`max-w-6xl mx-auto px-5 pb-6 scroll-mt-24 ${searching ? "hidden" : ""}`}
+        >
           <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
             {categories.map((category) => (
               <a
@@ -212,13 +335,15 @@ export default function Home() {
         </section>
 
         {/* Tools */}
-        <section className="max-w-6xl mx-auto px-5 pb-20">
+        <section
+          className={`max-w-6xl mx-auto px-5 pb-20 ${searching ? "hidden" : ""}`}
+        >
           {categories.map((category) => {
             const categoryTools = tools.filter(
               (tool) => tool.category === category,
             );
             return (
-              <div key={category} className="mb-12" id={category}>
+              <div key={category} className="mb-12 scroll-mt-24" id={category}>
                 <div className="flex items-center gap-3 mb-5">
                   <span className="text-xl">{categoryEmojis[category]}</span>
                   <h2 className="text-[20px] font-bold text-t-primary">

@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect, useRef, useMemo } from "react";
-import { tools, categoryEmojis, type ToolCategory } from "@/lib/tools";
+import { tools, categoryEmojis, type Tool, type ToolCategory } from "@/lib/tools";
 import { useI18n } from "@/lib/i18n";
 import { toolField } from "@/lib/tool-i18n";
 import { useFavoriteTools } from "@/hooks/useFavoriteTools";
+import { useRecentTools } from "@/hooks/useRecentTools";
+import { searchTools } from "@/lib/search";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import KeyboardShortcutsModal from "@/components/KeyboardShortcutsModal";
 import { useTheme } from "@/components/ClientProviders";
@@ -30,55 +32,94 @@ const catKeys: Record<ToolCategory, string> = {
 // ─── Search Modal ──────────────────────────────────────────────
 function SearchModal({ onClose }: { onClose: () => void }) {
   const [query, setQuery] = useState("");
+  const [active, setActive] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
   const backdropRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
   const { t } = useI18n();
+  const { recentSlugs } = useRecentTools();
+  const { favorites } = useFavoriteTools();
 
+  const hasQuery = query.trim().length > 0;
+
+  // Empty query → favorites first, then recently used (deduped).
   const results = useMemo(() => {
-    if (!query.trim()) return [];
-    const q = query.toLowerCase();
-    return tools.filter((tool) => {
-      const tn = toolField(t, tool.slug, tool, "name").toLowerCase();
-      const td = toolField(t, tool.slug, tool, "desc").toLowerCase();
-      return (
-        tn.includes(q) ||
-        td.includes(q) ||
-        tool.slug.toLowerCase().includes(q) ||
-        tool.name.toLowerCase().includes(q) ||
-        tool.description.toLowerCase().includes(q)
-      );
-    });
-  }, [query, t]);
+    if (hasQuery) return searchTools(tools, query, t).slice(0, 30);
+    const slugs = Array.from(new Set([...favorites, ...recentSlugs]));
+    return slugs
+      .map((slug) => tools.find((tool) => tool.slug === slug))
+      .filter((tool): tool is Tool => Boolean(tool))
+      .slice(0, 8);
+  }, [hasQuery, query, t, favorites, recentSlugs]);
 
   useEffect(() => {
     inputRef.current?.focus();
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
   }, []);
 
   useEffect(() => {
-    function handleKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
+    setActive(0);
+  }, [query]);
+
+  useEffect(() => {
+    listRef.current
+      ?.querySelector<HTMLElement>(`[data-index="${active}"]`)
+      ?.scrollIntoView({ block: "nearest" });
+  }, [active]);
+
+  const go = (slug: string) => {
+    onClose();
+    router.push(`/tools/${slug}`);
+  };
+
+  const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      onClose();
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      if (results.length) setActive((i) => (i + 1) % results.length);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      if (results.length)
+        setActive((i) => (i - 1 + results.length) % results.length);
+    } else if (e.key === "Enter") {
+      const tool = results[active];
+      if (tool) {
+        e.preventDefault();
+        go(tool.slug);
+      }
     }
-    document.addEventListener("keydown", handleKey);
-    return () => document.removeEventListener("keydown", handleKey);
-  }, [onClose]);
+  };
 
   return (
     <div
       ref={backdropRef}
-      className="fixed inset-0 z-50 flex items-start justify-center pt-[20vh] bg-bg/80 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-start justify-center pt-[12vh] sm:pt-[18vh] bg-bg/80 backdrop-blur-sm"
       onClick={(e) => {
         if (e.target === backdropRef.current) onClose();
       }}
     >
-      <div className="w-full max-w-lg mx-4 bg-surface border border-border rounded-2xl shadow-lg overflow-hidden animate-fade-in">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={t("a11y.searchTools")}
+        className="w-full max-w-xl mx-4 bg-surface border border-border rounded-2xl shadow-2xl overflow-hidden animate-pop-in"
+      >
         {/* Search input */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
+        <div className="flex items-center gap-3 px-4 py-3.5 border-b border-border">
           <svg
             className="w-5 h-5 text-t-tertiary shrink-0"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
             strokeWidth={2}
+            aria-hidden="true"
           >
             <path
               strokeLinecap="round"
@@ -91,8 +132,17 @@ function SearchModal({ onClose }: { onClose: () => void }) {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder={t("tools.search")}
-            className="flex-1 bg-transparent text-t-primary text-[15px] placeholder:text-t-tertiary outline-none"
+            onKeyDown={onKeyDown}
+            placeholder={t("search.placeholder")}
+            role="combobox"
+            aria-expanded={results.length > 0}
+            aria-controls="search-results"
+            aria-activedescendant={
+              results[active] ? `search-opt-${results[active].slug}` : undefined
+            }
+            autoComplete="off"
+            spellCheck={false}
+            className="flex-1 bg-transparent text-t-primary text-[15px] placeholder:text-t-tertiary outline-none focus-visible:outline-none"
           />
           <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[11px] font-medium text-t-tertiary bg-bg-secondary border border-border rounded">
             ESC
@@ -100,34 +150,72 @@ function SearchModal({ onClose }: { onClose: () => void }) {
         </div>
 
         {/* Results */}
-        {query.trim() && (
-          <div className="max-h-[300px] overflow-y-auto p-2">
-            {results.length > 0 ? (
-              results.map((tool) => (
-                <Link
-                  key={tool.slug}
-                  href={`/tools/${tool.slug}`}
-                  onClick={onClose}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-t-secondary hover:text-accent hover:bg-accent-light transition-colors"
-                >
-                  <span className="text-lg shrink-0">{tool.emoji}</span>
-                  <div className="min-w-0">
-                    <p className="text-[14px] font-medium text-t-primary truncate">
-                      {toolField(t, tool.slug, tool, "name")}
-                    </p>
-                    <p className="text-[12px] text-t-tertiary truncate">
-                      {toolField(t, tool.slug, tool, "desc")}
-                    </p>
-                  </div>
-                </Link>
-              ))
-            ) : (
-              <p className="px-3 py-6 text-center text-[13px] text-t-tertiary">
-                {t("nav.noResults")}
-              </p>
-            )}
-          </div>
-        )}
+        <div
+          ref={listRef}
+          id="search-results"
+          role="listbox"
+          className="max-h-[min(420px,55vh)] overflow-y-auto p-2"
+        >
+          {!hasQuery && results.length > 0 && (
+            <p className="px-3 pt-1 pb-2 text-[11px] font-semibold uppercase tracking-wider text-t-tertiary">
+              {t("search.quickAccess")}
+            </p>
+          )}
+          {results.length > 0 ? (
+            results.map((tool, index) => (
+              <Link
+                key={tool.slug}
+                id={`search-opt-${tool.slug}`}
+                data-index={index}
+                role="option"
+                aria-selected={index === active}
+                href={`/tools/${tool.slug}`}
+                onClick={onClose}
+                onMouseMove={() => setActive(index)}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors ${
+                  index === active
+                    ? "bg-accent-light text-accent"
+                    : "text-t-secondary"
+                }`}
+              >
+                <span className="w-9 h-9 shrink-0 rounded-lg bg-bg-secondary flex items-center justify-center text-lg">
+                  {tool.emoji}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[14px] font-medium text-t-primary truncate">
+                    {toolField(t, tool.slug, tool, "name")}
+                  </p>
+                  <p className="text-[12px] text-t-tertiary truncate">
+                    {toolField(t, tool.slug, tool, "desc")}
+                  </p>
+                </div>
+                <span className="hidden sm:inline text-[10px] font-medium uppercase tracking-wide text-t-tertiary">
+                  {t(catKeys[tool.category])}
+                </span>
+              </Link>
+            ))
+          ) : hasQuery ? (
+            <p className="px-3 py-8 text-center text-[13px] text-t-tertiary">
+              {t("nav.noResults")}
+            </p>
+          ) : (
+            <p className="px-3 py-6 text-center text-[13px] text-t-tertiary">
+              {t("search.emptyHint")}
+            </p>
+          )}
+        </div>
+
+        <div className="hidden sm:flex items-center gap-4 px-4 py-2.5 border-t border-border bg-bg-secondary/50 text-[11px] text-t-tertiary">
+          <span className="flex items-center gap-1.5">
+            <kbd className="px-1.5 py-0.5 rounded border border-border bg-surface font-mono">↑</kbd>
+            <kbd className="px-1.5 py-0.5 rounded border border-border bg-surface font-mono">↓</kbd>
+            {t("search.navigate")}
+          </span>
+          <span className="flex items-center gap-1.5">
+            <kbd className="px-1.5 py-0.5 rounded border border-border bg-surface font-mono">↵</kbd>
+            {t("search.open")}
+          </span>
+        </div>
       </div>
     </div>
   );
@@ -297,6 +385,17 @@ export default function Header() {
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setShowSearch(true);
+        return;
+      }
+      if (
+        e.key === "/" &&
+        !e.shiftKey &&
+        !e.metaKey &&
+        !e.ctrlKey &&
+        !isTypingElement(e.target)
+      ) {
         e.preventDefault();
         setShowSearch(true);
         return;

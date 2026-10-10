@@ -266,7 +266,7 @@ export default function PomodoroTimerPage() {
     } else {
       document.title = originalTitle.current;
     }
-  }, [timeLeft, timerState, playState]);
+  }, [timeLeft, timerState, playState, t]);
 
   // Timer tick
   useEffect(() => {

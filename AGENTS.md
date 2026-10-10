@@ -25,7 +25,7 @@ src/
 │   ├── terms/page.tsx
 │   └── tools/
 │       ├── page.tsx         # Browse all tools
-│       └── [slug]/page.tsx  # 50 individual tool pages
+│       └── [slug]/page.tsx  # 71 individual tool pages
 ├── components/
 │   ├── Header.tsx           # Sticky header, language switcher, category dropdown
 │   ├── Footer.tsx           # Multi-column footer
@@ -36,8 +36,9 @@ src/
 │   ├── ErrorBoundary.tsx    # Catches render errors, shows refresh button
 │   └── AdPlaceholder.tsx    # Placeholder for future ads
 ├── lib/
-│   ├── tools.ts             # 50 tools registry (slug, name, description, category, acceptedFormats)
+│   ├── tools.ts             # 71 tools registry (slug, name, description, category, acceptedFormats)
 │   ├── tool-i18n.ts         # toolField() helper for localized tool names/descriptions
+│   ├── search.ts            # searchTools(): diacritic-insensitive ranked tool search (header modal, home, /tools)
 │   ├── i18n.tsx             # Full dictionaries (EN/TR/DE/FR) + context/hooks
 │   ├── i18n-overrides.ts    # Partial translations for ES/PT/IT/JA
 │   └── locales.ts           # Locale type, SUPPORTED_LOCALES, LOCALE_LABELS, isRtlLocale
@@ -56,13 +57,15 @@ src/
 
 ## Tools
 
-Canonical list: `src/lib/tools.ts` — 50 tools across 4 categories (PDF, Image, Video/Audio, Utility). FFmpeg/AI/browser-fetch tools were removed in v1.4.0; lightweight audio waveform kept.
+Canonical list: `src/lib/tools.ts` — 71 tools across 4 categories (PDF, Image, Video/Audio, Utility). FFmpeg/AI/browser-fetch tools were removed in v1.4.0; lightweight audio waveform kept.
 
 ## Design Tokens (globals.css :root)
 
 - `--bg: #f7f8fc` (warm off-white), `--surface: #ffffff`, `--accent: #6366f1` (indigo)
 - Dark theme via `[data-theme="dark"]` selector
 - Theme-aware classes: `text-t-primary`, `text-t-secondary`, `bg-bg-secondary`, `border-border`
+- Tailwind `dark:` variants follow `[data-theme="dark"]` (`darkMode` selector in tailwind.config.ts), not the OS setting; an inline script in layout.tsx sets the theme before first paint
+- `metaTitle` / `metaDescription` in tools.ts must be English (canonical pages are English)
 
 ## Canonical URL (`src/lib/site-url.ts`)
 

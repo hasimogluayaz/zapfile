@@ -168,7 +168,7 @@ export default function FaviconGeneratorPage() {
       img.onerror = () => toast.error(t("ui.failedLoad"));
       img.src = URL.createObjectURL(f);
     },
-    [generateFavicons],
+    [generateFavicons, t],
   );
 
   const toggleSize = (index: number) => {

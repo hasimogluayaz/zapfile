@@ -1,6 +1,8 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
+  // Follow the app's theme toggle (data-theme on <html>), not the OS setting.
+  darkMode: ["selector", '[data-theme="dark"]'],
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -44,6 +46,7 @@ const config: Config = {
       animation: {
         "fade-in": "fade-in 0.4s ease-out",
         "fade-up": "fade-up 0.5s ease-out",
+        "pop-in": "pop-in 0.18s cubic-bezier(0.22, 1, 0.36, 1)",
       },
       keyframes: {
         "fade-in": {
@@ -53,6 +56,10 @@ const config: Config = {
         "fade-up": {
           from: { opacity: "0", transform: "translateY(12px)" },
           to: { opacity: "1", transform: "translateY(0)" },
+        },
+        "pop-in": {
+          from: { opacity: "0", transform: "translateY(-6px) scale(0.98)" },
+          to: { opacity: "1", transform: "translateY(0) scale(1)" },
         },
       },
     },

@@ -38,7 +38,7 @@ export default function ConvertImagePage() {
     setFiles(imageFiles);
     setResults([]);
     setZipBlob(null);
-  }, []);
+  }, [t]);
 
   const handleProcess = async () => {
     if (files.length === 0) return;

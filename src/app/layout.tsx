@@ -159,6 +159,12 @@ export default async function RootLayout({
     <html lang={initialLocale} dir={isRtlLocale(initialLocale) ? "rtl" : "ltr"} suppressHydrationWarning translate="no">
       <head>
         <meta name="google" content="notranslate" />
+        {/* Apply saved/system theme before first paint to avoid a light flash */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem("zapfile-theme");if(t!=="light"&&t!=="dark"){t=window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}document.documentElement.setAttribute("data-theme",t)}catch(e){}})();`,
+          }}
+        />
         {process.env.NEXT_PUBLIC_GA_ID && (
           <>
             <script async src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`} />
