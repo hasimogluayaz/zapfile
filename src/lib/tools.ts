@@ -553,14 +553,14 @@ export const tools: Tool[] = [
   // ── New PDF Tools ──
   {
     slug: "pdf-encrypt",
-    name: "PDF Encrypt",
-    description: "Add password protection to your PDF files",
+    name: "Protect PDF",
+    description: "Add or remove a PDF password with AES-256 encryption",
     emoji: "🔒",
     category: "pdf",
     acceptedFormats: [".pdf"],
-    metaTitle: "Encrypt PDF - Add Password Protection | ZapFile",
+    metaTitle: "Protect PDF with Password & Unlock PDF - Free AES-256 | ZapFile",
     metaDescription:
-      "Password-protect your PDF files securely. Encryption happens entirely in your browser, your file never leaves your device.",
+      "Password-protect a PDF with AES-256, restrict printing and copying, or remove a password you know. Runs in your browser; your file is never uploaded.",
   },
   {
     slug: "pdf-text-extractor",

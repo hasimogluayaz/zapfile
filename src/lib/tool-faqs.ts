@@ -4,6 +4,24 @@ export interface FaqItem {
 }
 
 const toolFaqs: Record<string, FaqItem[]> = {
+  "pdf-encrypt": [
+    {
+      question: "How do I password-protect a PDF for free?",
+      answer: "Drop your PDF into ZapFile's Protect PDF tool, enter a password twice and click Protect PDF. The file is encrypted with AES-256 in your browser and is never uploaded.",
+    },
+    {
+      question: "Will the protected PDF open in Adobe Reader and on phones?",
+      answer: "Yes. ZapFile uses the standard PDF encryption built into the PDF format (AES-256, revision 6), which opens in Adobe Acrobat and Reader X or newer, Chrome, Edge, Firefox, macOS Preview, iOS and Android. Choose AES-128 only for very old readers.",
+    },
+    {
+      question: "Can I remove a password from a PDF?",
+      answer: "Yes, if you know the password. Switch to Remove password, enter it, and download an unlocked copy. ZapFile cannot recover or bypass passwords you don't know.",
+    },
+    {
+      question: "Can I stop people from printing or copying my PDF?",
+      answer: "Yes. Turn on Restrict printing, copying and editing to choose what readers may do. Keep the permissions password so you can lift the restrictions later.",
+    },
+  ],
   "merge-pdf": [
     {
       question: "Is this PDF merge tool free?",
