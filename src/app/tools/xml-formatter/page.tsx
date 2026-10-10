@@ -214,7 +214,7 @@ export default function XMLFormatterPage() {
                     onClick={() => setIndentSize(size)}
                     className={`px-3 py-1.5 text-xs rounded-lg font-medium transition-all ${
                       indentSize === size
-                        ? "bg-accent text-white"
+                        ? "bg-accent text-on-accent"
                         : "text-t-secondary hover:text-t-primary bg-bg-secondary border border-border"
                     }`}
                   >
@@ -254,13 +254,13 @@ export default function XMLFormatterPage() {
         <div className="grid grid-cols-3 gap-3">
           <button
             onClick={handleFormat}
-            className="px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:shadow-lg transition-all"
+            className="px-6 py-3 rounded-xl font-semibold text-on-accent bg-accent hover:shadow-lg transition-all"
           >
             {t("ui.format")}
           </button>
           <button
             onClick={handleMinify}
-            className="px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:shadow-lg transition-all"
+            className="px-6 py-3 rounded-xl font-semibold text-on-accent bg-accent hover:shadow-lg transition-all"
           >
             {t("ui.minify")}
           </button>

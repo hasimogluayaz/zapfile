@@ -750,7 +750,7 @@ export default function VideoToGifPage() {
                           setEndTime(clampEndTime(v + 1));
                         }
                       }}
-                      className="w-full accent-indigo-500"
+                      className="w-full accent-accent"
                     />
                   </div>
 
@@ -771,7 +771,7 @@ export default function VideoToGifPage() {
                       onChange={(e) =>
                         setEndTime(clampEndTime(parseFloat(e.target.value)))
                       }
-                      className="w-full accent-indigo-500"
+                      className="w-full accent-accent"
                     />
                   </div>
 
@@ -795,7 +795,7 @@ export default function VideoToGifPage() {
                           setStartTime(v);
                           if (endTime <= v + 0.1) setEndTime(clampEndTime(v + 1));
                         }}
-                        className="w-full px-3 py-2 rounded-lg border border-border bg-bg-secondary text-t-primary text-sm focus:outline-none focus:border-indigo-500"
+                        className="w-full px-3 py-2 rounded-lg border border-border bg-bg-secondary text-t-primary text-sm focus:outline-none focus:border-accent"
                       />
                     </div>
                     <div className="space-y-1">
@@ -811,7 +811,7 @@ export default function VideoToGifPage() {
                         onChange={(e) =>
                           setEndTime(clampEndTime(parseFloat(e.target.value) || startTime + 1))
                         }
-                        className="w-full px-3 py-2 rounded-lg border border-border bg-bg-secondary text-t-primary text-sm focus:outline-none focus:border-indigo-500"
+                        className="w-full px-3 py-2 rounded-lg border border-border bg-bg-secondary text-t-primary text-sm focus:outline-none focus:border-accent"
                       />
                     </div>
                   </div>
@@ -836,7 +836,7 @@ export default function VideoToGifPage() {
                       onClick={() => setFps(f)}
                       className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
                         fps === f
-                          ? "bg-indigo-500 text-white border-indigo-500"
+                          ? "bg-accent text-on-accent border-accent"
                           : "border-border text-t-secondary hover:bg-bg-secondary"
                       }`}
                     >
@@ -865,7 +865,7 @@ export default function VideoToGifPage() {
                       onClick={() => setGifLoop(key)}
                       className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
                         gifLoop === key
-                          ? "bg-indigo-500 text-white border-indigo-500"
+                          ? "bg-accent text-on-accent border-accent"
                           : "border-border text-t-secondary hover:bg-bg-secondary"
                       }`}
                     >
@@ -888,7 +888,7 @@ export default function VideoToGifPage() {
                       onClick={() => setOutputWidth(w)}
                       className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
                         outputWidth === w
-                          ? "bg-indigo-500 text-white border-indigo-500"
+                          ? "bg-accent text-on-accent border-accent"
                           : "border-border text-t-secondary hover:bg-bg-secondary"
                       }`}
                     >
@@ -911,7 +911,7 @@ export default function VideoToGifPage() {
                       onClick={() => setColorCount(value)}
                       className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
                         colorCount === value
-                          ? "bg-indigo-500 text-white border-indigo-500"
+                          ? "bg-accent text-on-accent border-accent"
                           : "border-border text-t-secondary hover:bg-bg-secondary"
                       }`}
                     >
@@ -953,7 +953,7 @@ export default function VideoToGifPage() {
                   type="button"
                   onClick={convert}
                   disabled={processing || clipDuration <= 0}
-                  className="px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:opacity-90 disabled:opacity-60 transition-opacity"
+                  className="px-6 py-3 rounded-xl font-semibold text-on-accent bg-accent hover:opacity-90 disabled:opacity-60 transition-opacity"
                 >
                   {processing ? "Creating GIF…" : "Create GIF"}
                 </button>
@@ -1019,7 +1019,7 @@ export default function VideoToGifPage() {
                 <button
                   type="button"
                   onClick={handleDownload}
-                  className="w-full px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:opacity-90 transition-opacity"
+                  className="w-full px-6 py-3 rounded-xl font-semibold text-on-accent bg-accent hover:opacity-90 transition-opacity"
                 >
                   Download .gif
                 </button>

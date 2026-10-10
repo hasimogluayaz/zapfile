@@ -139,7 +139,7 @@ export default function DiffCheckerPage() {
             type="button"
             onClick={handleCompare}
             disabled={isComparing}
-            className="px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-3 rounded-xl font-semibold text-on-accent bg-accent hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isComparing ? t("diff.comparing") : t("ui.compare")}
           </button>
@@ -193,7 +193,7 @@ export default function DiffCheckerPage() {
                     onClick={() => setDiffView("unified")}
                     className={`px-3 py-1.5 transition-colors ${
                       diffView === "unified"
-                        ? "bg-accent text-white"
+                        ? "bg-accent text-on-accent"
                         : "bg-bg-secondary text-t-secondary hover:text-t-primary"
                     }`}
                   >
@@ -204,7 +204,7 @@ export default function DiffCheckerPage() {
                     onClick={() => setDiffView("split")}
                     className={`px-3 py-1.5 transition-colors border-l border-border ${
                       diffView === "split"
-                        ? "bg-accent text-white"
+                        ? "bg-accent text-on-accent"
                         : "bg-bg-secondary text-t-secondary hover:text-t-primary"
                     }`}
                   >

@@ -1,15 +1,21 @@
 "use client";
 
+import Link from "next/link";
+import { useMemo, useState } from "react";
+import { EyeOff, HardDrive, ServerOff, UserX } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ToolCard from "@/components/ToolCard";
-import ToolOfTheDay from "@/components/ToolOfTheDay";
+import DropPad from "@/components/DropPad";
 import SuggestToolForm from "@/components/SuggestToolForm";
-import { tools, categoryEmojis, getToolBySlug, type ToolCategory } from "@/lib/tools";
+import ToolIcon, { CategoryIcon } from "@/components/ToolIcon";
+import Illustration from "@/components/Illustration";
+import { tools, getToolBySlug, type Tool, type ToolCategory } from "@/lib/tools";
 import { toolField } from "@/lib/tool-i18n";
 import { useI18n } from "@/lib/i18n";
 import { useRecentTools } from "@/hooks/useRecentTools";
-import Link from "next/link";
+import { useFavoriteTools } from "@/hooks/useFavoriteTools";
+import { searchTools } from "@/lib/search";
 
 const categories: ToolCategory[] = ["pdf", "image", "video", "utility"];
 const catKeys: Record<ToolCategory, string> = {
@@ -19,386 +25,206 @@ const catKeys: Record<ToolCategory, string> = {
   utility: "cat.utility",
 };
 
+function bySlugs(slugs: string[]): Tool[] {
+  return slugs
+    .map((slug) => getToolBySlug(slug))
+    .filter((tool): tool is Tool => Boolean(tool));
+}
+
 export default function Home() {
   const { t } = useI18n();
   const { recentSlugs, ready: recentReady } = useRecentTools();
-  const recentTools = recentSlugs
-    .map((slug) => getToolBySlug(slug))
-    .filter(Boolean) as NonNullable<ReturnType<typeof getToolBySlug>>[];
+  const { favorites, ready: favReady } = useFavoriteTools();
+  const [query, setQuery] = useState("");
+
+  const searching = query.trim().length > 0;
+  const searchResults = useMemo(
+    () => (searching ? searchTools(tools, query, t) : []),
+    [searching, query, t],
+  );
+
+  // Favorites first, then recently used, without duplicates.
+  const yourTools = useMemo(() => {
+    if (!favReady || !recentReady) return [];
+    const favSet = new Set(favorites);
+    return [
+      ...bySlugs(favorites).map((tool) => ({ tool, fav: true })),
+      ...bySlugs(recentSlugs.filter((s) => !favSet.has(s))).map((tool) => ({
+        tool,
+        fav: false,
+      })),
+    ].slice(0, 10);
+  }, [favorites, recentSlugs, favReady, recentReady]);
 
   return (
     <>
       <Header />
       <main id="main-content" className="flex-1" tabIndex={-1}>
         {/* Hero */}
-        <section className="relative overflow-hidden">
-          <div className="aurora-bg" />
-          <div className="absolute inset-0 grid-pattern pointer-events-none" />
-
-          <div className="max-w-6xl mx-auto px-5 pt-24 pb-20 text-center relative z-[1]">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent-light border border-accent/20 text-accent text-[12px] font-medium mb-7 backdrop-blur-sm">
-              <span className="relative flex w-2 h-2">
-                <span className="absolute inline-flex w-full h-full rounded-full bg-emerald-500 opacity-75 animate-ping" />
-                <span className="relative inline-flex w-2 h-2 rounded-full bg-emerald-500" />
-              </span>
-              {t("hero.badge")}
-            </div>
-
-            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tighter text-t-primary leading-[1.05]">
-              {t("hero.title1")} <br className="hidden sm:block" />
-              <span className="gradient-text">{t("hero.title2")}</span>
-              {t("hero.title3") ? ` ${t("hero.title3")}` : ""}
+        <section className="mx-auto grid max-w-6xl items-center gap-10 px-4 pb-14 pt-12 sm:px-6 sm:pt-20 lg:grid-cols-[1fr_minmax(0,500px)] lg:gap-16 lg:pb-20 lg:pt-24">
+          <div className="animate-fade-up">
+            <h1 className="max-w-[13ch] text-[42px] font-semibold leading-[1.02] tracking-[-0.045em] text-t-primary sm:text-[60px] lg:text-[68px]">
+              {t("home.hero.title")}
             </h1>
-
-            <p className="mt-6 text-[17px] sm:text-[18px] text-t-secondary max-w-xl mx-auto leading-relaxed">
-              {t("hero.subtitle")}
+            <p className="mt-6 max-w-[46ch] text-[17px] leading-relaxed text-t-secondary sm:text-[18px]">
+              {t("home.hero.subtitle", { count: tools.length })}
             </p>
-
-            <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-              <Link
-                href="/tools"
-                className="shine-btn inline-flex items-center gap-2 px-7 py-3.5 rounded-xl text-[14px] font-semibold bg-gradient-to-r from-indigo-500 via-violet-500 to-fuchsia-500 text-white hover:shadow-xl hover:shadow-accent/30 transition-all hover:scale-[1.03] active:scale-[0.98]"
-              >
-                {t("hero.cta")}
-                <svg
-                  className="w-4 h-4 rtl:rotate-180"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M13 7l5 5m0 0l-5 5m5-5H6"
-                  />
-                </svg>
-              </Link>
-              <Link
-                href="/workflows"
-                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl text-[14px] font-semibold border border-border bg-surface/60 backdrop-blur-sm text-t-primary hover:bg-bg-secondary transition-all hover:scale-[1.03] active:scale-[0.98]"
-              >
-                {t("nav.workflows")}
-              </Link>
-              <span className="text-[13px] text-t-tertiary w-full sm:w-auto text-center sm:text-start basis-full sm:basis-auto">
-                {t("hero.toolCount", { count: tools.length })}
-              </span>
-            </div>
-
-            {/* Trust badges */}
-            <div className="mt-10 flex flex-wrap items-center justify-center gap-6 text-[12px] text-t-tertiary">
-              <span className="flex items-center gap-2">
-                <svg
-                  className="w-4 h-4 text-emerald-500"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                  />
-                </svg>
+            <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-[13.5px] text-t-secondary">
+              <li className="flex items-center gap-2">
+                <HardDrive className="h-4 w-4 text-t-primary" strokeWidth={1.75} aria-hidden="true" />
                 {t("hero.trust1")}
-              </span>
-              <span className="flex items-center gap-2">
-                <svg
-                  className="w-4 h-4 text-accent"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M13 10V3L4 14h7v7l9-11h-7z"
-                  />
-                </svg>
-                {t("hero.trust2")}
-              </span>
-              <span className="flex items-center gap-2">
-                <svg
-                  className="w-4 h-4 text-amber-500"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                  />
-                </svg>
-                {t("hero.trust3")}
-              </span>
-            </div>
+              </li>
+              <li className="flex items-center gap-2">
+                <UserX className="h-4 w-4 text-t-primary" strokeWidth={1.75} aria-hidden="true" />
+                {t("home.privacy.noAccount.title")}
+              </li>
+            </ul>
           </div>
+          <DropPad query={query} onQueryChange={setQuery} />
         </section>
 
-        {/* Tool of the Day */}
-        <ToolOfTheDay />
-
-        {/* Recent Tools */}
-        {recentReady && recentTools.length > 0 && (
-          <section className="max-w-6xl mx-auto px-5 pb-8">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
-                  <svg
-                    className="w-4 h-4 text-accent"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                </div>
-                <h2 className="text-[16px] font-bold text-t-primary">
-                  {t("recently.title")}
-                </h2>
-                <span className="text-[11px] text-t-tertiary bg-bg-secondary px-2 py-0.5 rounded-full font-medium">
-                  {recentTools.length}
-                </span>
-              </div>
-              <Link href="/tools" className="text-[12px] text-accent hover:underline font-medium">
-                {t("hero.cta")} →
-              </Link>
-            </div>
-            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-              {recentTools.map((tool) => (
+        {/* Your tools: favorites + recent */}
+        {!searching && yourTools.length > 0 && (
+          <section className="mx-auto max-w-6xl px-4 pb-10 sm:px-6" aria-labelledby="your-tools">
+            <h2 id="your-tools" className="mb-3 text-[15px] font-semibold text-t-primary">
+              {t("home.yourTools")}
+            </h2>
+            <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 scrollbar-hide sm:mx-0 sm:flex-wrap sm:px-0">
+              {yourTools.map(({ tool, fav }) => (
                 <Link
                   key={tool.slug}
                   href={`/tools/${tool.slug}`}
-                  className="flex-shrink-0 flex items-center gap-3 px-4 py-3 rounded-xl bg-surface border border-border hover:border-accent/30 hover:shadow-card-hover hover:bg-accent/5 transition-all duration-200 min-w-[200px] max-w-[260px] group"
+                  className="flex shrink-0 items-center gap-2 rounded-full border border-border bg-surface py-1.5 pe-3.5 ps-1.5 text-[13.5px] font-medium text-t-primary shadow-sm transition-colors hover:border-t-primary/25"
                 >
-                  <span className="text-xl group-hover:scale-110 transition-transform duration-200">{tool.emoji}</span>
-                  <div className="min-w-0">
-                    <p className="text-[13px] font-semibold text-t-primary truncate group-hover:text-accent transition-colors">
-                      {toolField(t, tool.slug, tool, "name")}
-                    </p>
-                    <p className="text-[11px] text-t-tertiary truncate">
-                      {toolField(t, tool.slug, tool, "desc")}
-                    </p>
-                  </div>
+                  <span
+                    className={`flex h-7 w-7 items-center justify-center rounded-full ${
+                      fav ? "volt-mark" : "bg-bg-secondary"
+                    }`}
+                  >
+                    <ToolIcon slug={tool.slug} className="h-3.5 w-3.5" />
+                  </span>
+                  {toolField(t, tool.slug, tool, "name")}
                 </Link>
               ))}
             </div>
           </section>
         )}
 
-        {/* Category Nav Tabs */}
-        <section className="max-w-6xl mx-auto px-5 pb-6">
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
-            {categories.map((category) => (
-              <a
-                key={category}
-                href={`#${category}`}
-                className="flex-shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-bg-secondary border border-border text-[13px] font-medium text-t-secondary hover:bg-accent hover:text-white hover:border-accent transition-all duration-150"
+        {/* Search results */}
+        {searching && (
+          <section
+            id="all-tools"
+            className="mx-auto max-w-6xl scroll-mt-20 px-4 pb-20 sm:px-6"
+            aria-live="polite"
+          >
+            <div className="mb-4 flex items-baseline justify-between gap-4">
+              <h2 className="text-[22px] font-semibold tracking-[-0.02em] text-t-primary">
+                {t("search.resultCount", { count: searchResults.length })}
+              </h2>
+              <button
+                type="button"
+                onClick={() => setQuery("")}
+                className="text-[13.5px] font-medium text-t-secondary underline-offset-4 hover:text-t-primary hover:underline"
               >
-                <span>{categoryEmojis[category]}</span>
-                <span>{t(catKeys[category])}</span>
-              </a>
-            ))}
-          </div>
-        </section>
-
-        {/* Tools */}
-        <section className="max-w-6xl mx-auto px-5 pb-20">
-          {categories.map((category) => {
-            const categoryTools = tools.filter(
-              (tool) => tool.category === category,
-            );
-            return (
-              <div key={category} className="mb-12" id={category}>
-                <div className="flex items-center gap-3 mb-5">
-                  <span className="text-xl">{categoryEmojis[category]}</span>
-                  <h2 className="text-[20px] font-bold text-t-primary">
-                    {t(catKeys[category])}
-                  </h2>
-                  <span className="text-[12px] text-t-tertiary bg-bg-secondary px-2 py-0.5 rounded-full font-medium">
-                    {categoryTools.length}
-                  </span>
-                </div>
-                <div className="stagger-in grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                  {categoryTools.map((tool) => (
-                    <ToolCard key={tool.slug} tool={tool} />
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </section>
-
-        {/* Privacy & Trust */}
-        <section className="max-w-6xl mx-auto px-5 pb-20">
-          {/* Privacy Hero Block */}
-          <div className="glass-elevated rounded-3xl p-8 sm:p-12 text-center mb-8">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 text-emerald-500 text-[12px] font-medium mb-6">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
-              {t("home.privacy.badge")}
+                {t("search.clear")}
+              </button>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-t-primary mb-10">
-              {t("home.privacy.heading")}
+            {searchResults.length > 0 ? (
+              <div className="grid grid-cols-1 gap-1 rounded-[24px] border border-border bg-surface p-2 shadow-card sm:grid-cols-2 lg:grid-cols-3">
+                {searchResults.map((tool) => (
+                  <ToolCard key={tool.slug} tool={tool} />
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-[24px] border border-border bg-surface px-6 py-12 text-center">
+                <Illustration name="no-results" size={150} className="mb-5" />
+                <p className="text-[14px] text-t-secondary">{t("tools.noResults", { query })}</p>
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* Directory */}
+        <section
+          id={searching ? undefined : "all-tools"}
+          className={`mx-auto max-w-6xl scroll-mt-20 px-4 pb-20 sm:px-6 ${searching ? "hidden" : ""}`}
+        >
+          <div className="mb-8 flex flex-wrap items-end justify-between gap-4 border-t border-border pt-10">
+            <h2 className="text-[28px] font-semibold tracking-[-0.03em] text-t-primary sm:text-[34px]">
+              {t("nav.allTools")}
             </h2>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 stagger-in">
-              {/* Zero Uploads */}
-              <div className="card-premium flex flex-col items-center gap-3 p-6 text-center">
-                <div className="relative">
-                  <div className="absolute inset-0 -m-1 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-400 opacity-30 blur-lg" aria-hidden="true" />
-                  <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/30">
-                    <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 11v4m-2-2h4" />
-                    </svg>
-                  </div>
-                </div>
-                <h3 className="text-[15px] font-bold text-t-primary mt-2">
-                  {t("home.privacy.zeroUploads.title")}
-                </h3>
-                <p className="text-[13px] text-t-secondary leading-relaxed">
-                  {t("home.privacy.zeroUploads.desc")}
-                </p>
-              </div>
-
-              {/* No Server Storage */}
-              <div className="card-premium flex flex-col items-center gap-3 p-6 text-center">
-                <div className="relative">
-                  <div className="absolute inset-0 -m-1 rounded-2xl bg-gradient-to-br from-indigo-400 to-violet-400 opacity-30 blur-lg" aria-hidden="true" />
-                  <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
-                    <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2" />
-                      <line x1="4" y1="4" x2="20" y2="20" strokeLinecap="round" strokeWidth={1.75} />
-                    </svg>
-                  </div>
-                </div>
-                <h3 className="text-[15px] font-bold text-t-primary mt-2">
-                  {t("home.privacy.noServer.title")}
-                </h3>
-                <p className="text-[13px] text-t-secondary leading-relaxed">
-                  {t("home.privacy.noServer.desc")}
-                </p>
-              </div>
-
-              {/* No Account Required */}
-              <div className="card-premium flex flex-col items-center gap-3 p-6 text-center">
-                <div className="relative">
-                  <div className="absolute inset-0 -m-1 rounded-2xl bg-gradient-to-br from-fuchsia-400 to-pink-400 opacity-30 blur-lg" aria-hidden="true" />
-                  <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-fuchsia-500 to-pink-500 flex items-center justify-center shadow-lg shadow-fuchsia-500/30">
-                    <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M18 12l4-4m0 0l-4-4m4 4H14" />
-                    </svg>
-                  </div>
-                </div>
-                <h3 className="text-[15px] font-bold text-t-primary mt-2">
-                  {t("home.privacy.noAccount.title")}
-                </h3>
-                <p className="text-[13px] text-t-secondary leading-relaxed">
-                  {t("home.privacy.noAccount.desc")}
-                </p>
-              </div>
-            </div>
+            <nav className="segmented" aria-label={t("nav.allTools")}>
+              {categories.map((category) => (
+                <a
+                  key={category}
+                  href={`#${category}`}
+                  aria-label={t(catKeys[category])}
+                  className="flex items-center gap-1.5 rounded-[9px] px-3 py-1.5 text-[13px] font-medium text-t-secondary transition-colors hover:bg-surface hover:text-t-primary hover:shadow-sm"
+                >
+                  <CategoryIcon category={category} className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">{t(catKeys[category])}</span>
+                </a>
+              ))}
+            </nav>
           </div>
 
-          {/* How It Works */}
-          <div className="glass-elevated rounded-3xl p-8 sm:p-10 mb-8">
-            <h3 className="text-[18px] font-bold text-t-primary text-center mb-8">
-              {t("home.privacy.howTitle")}
-            </h3>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6">
-              {/* Step 1 */}
-              <div className="flex items-center gap-3 px-5 py-3 rounded-xl bg-gradient-to-r from-indigo-500/10 to-violet-500/10 border border-indigo-500/20">
-                <span className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 text-white text-[13px] font-bold flex items-center justify-center shadow-md shadow-indigo-500/40">1</span>
-                <span className="text-[14px] font-semibold text-t-primary">{t("home.privacy.step1")}</span>
-              </div>
-              {/* Arrow */}
-              <svg className="w-5 h-5 text-t-tertiary hidden sm:block rtl:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
-              <svg className="w-5 h-5 text-t-tertiary sm:hidden rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
-              {/* Step 2 */}
-              <div className="flex items-center gap-3 px-5 py-3 rounded-xl bg-gradient-to-r from-violet-500/10 to-fuchsia-500/10 border border-violet-500/20">
-                <span className="w-7 h-7 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white text-[13px] font-bold flex items-center justify-center shadow-md shadow-violet-500/40">2</span>
-                <span className="text-[14px] font-semibold text-t-primary">{t("home.privacy.step2")}</span>
-              </div>
-              {/* Arrow */}
-              <svg className="w-5 h-5 text-t-tertiary hidden sm:block rtl:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
-              <svg className="w-5 h-5 text-t-tertiary sm:hidden rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
-              {/* Step 3 */}
-              <div className="flex items-center gap-3 px-5 py-3 rounded-xl bg-gradient-to-r from-fuchsia-500/10 to-pink-500/10 border border-fuchsia-500/20">
-                <span className="w-7 h-7 rounded-full bg-gradient-to-br from-fuchsia-500 to-pink-500 text-white text-[13px] font-bold flex items-center justify-center shadow-md shadow-fuchsia-500/40">3</span>
-                <span className="text-[14px] font-semibold text-t-primary">{t("home.privacy.step3")}</span>
-              </div>
-            </div>
-            <p className="text-[13px] text-t-secondary text-center mt-6 max-w-lg mx-auto leading-relaxed">
-              {t("home.privacy.howDesc")}
-            </p>
-          </div>
-
-          {/* Comparison banner */}
-          <div className="glass rounded-2xl px-6 py-5 flex items-center gap-4">
-            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center">
-              <svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              </svg>
-            </div>
-            <p className="text-[14px] text-t-secondary leading-relaxed">
-              {t("home.privacy.comparison")}
-            </p>
+          <div className="space-y-12">
+            {categories.map((category) => {
+              const categoryTools = tools.filter((tool) => tool.category === category);
+              return (
+                <div key={category} id={category} className="scroll-mt-20">
+                  <div className="mb-3 flex items-center gap-2.5 px-1">
+                    <CategoryIcon category={category} className="h-[18px] w-[18px] text-t-primary" />
+                    <h3 className="text-[17px] font-semibold tracking-[-0.015em] text-t-primary">
+                      {t(catKeys[category])}
+                    </h3>
+                    <span className="text-[13px] tabular-nums text-t-tertiary">
+                      {categoryTools.length}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 gap-1 rounded-[24px] border border-border bg-surface p-2 shadow-card sm:grid-cols-2 lg:grid-cols-3">
+                    {categoryTools.map((tool) => (
+                      <ToolCard key={tool.slug} tool={tool} />
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </section>
 
-        {/* Suggest a Tool */}
+        {/* Privacy: the reason ZapFile exists */}
+        <section className="mx-auto max-w-6xl px-4 pb-20 sm:px-6">
+          <div className="overflow-hidden rounded-[32px] bg-ink px-6 py-12 text-white ring-1 ring-white/5 sm:px-12 sm:py-16">
+            <div className="grid gap-12 lg:grid-cols-[1fr_1.4fr] lg:gap-16">
+              <div>
+                <h2 className="max-w-[16ch] text-[30px] font-semibold leading-[1.08] tracking-[-0.035em] sm:text-[40px]">
+                  {t("home.privacy.heading")}
+                </h2>
+                <p className="mt-5 max-w-[44ch] text-[15px] leading-relaxed text-white/65">
+                  {t("home.privacy.howDesc")}
+                </p>
+              </div>
+              <ul className="grid gap-8 sm:grid-cols-3 lg:gap-6">
+                {[
+                  { Icon: EyeOff, title: "home.privacy.zeroUploads.title", desc: "home.privacy.zeroUploads.desc" },
+                  { Icon: ServerOff, title: "home.privacy.noServer.title", desc: "home.privacy.noServer.desc" },
+                  { Icon: UserX, title: "home.privacy.noAccount.title", desc: "home.privacy.noAccount.desc" },
+                ].map(({ Icon, title, desc }) => (
+                  <li key={title}>
+                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-volt text-ink">
+                      <Icon className="h-5 w-5" strokeWidth={1.75} aria-hidden="true" />
+                    </span>
+                    <h3 className="mt-4 text-[15px] font-semibold">{t(title)}</h3>
+                    <p className="mt-1.5 text-[13.5px] leading-relaxed text-white/60">{t(desc)}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </section>
+
         <SuggestToolForm />
-
-        {/* Bottom CTA */}
-        <section className="border-t border-border bg-bg-secondary">
-          <div className="max-w-6xl mx-auto px-5 py-16 text-center">
-            <h3 className="text-2xl font-bold text-t-primary mb-3">
-              {t("cta.title")}
-            </h3>
-            <p className="text-t-secondary text-[14px] mb-6 max-w-md mx-auto">
-              {t("cta.subtitle", { count: tools.length })}
-            </p>
-            <Link
-              href="/tools"
-              className="shine-btn inline-flex items-center gap-2 px-6 py-3 rounded-xl text-[14px] font-semibold text-white bg-gradient-to-r from-indigo-500 via-violet-500 to-fuchsia-500 hover:opacity-90 transition-all hover:scale-[1.02] hover:shadow-xl hover:shadow-violet-500/30"
-            >
-              {t("hero.cta")}
-              <svg
-                className="w-4 h-4 rtl:rotate-180"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M13 7l5 5m0 0l-5 5m5-5H6"
-                />
-              </svg>
-            </Link>
-          </div>
-        </section>
       </main>
       <Footer />
     </>

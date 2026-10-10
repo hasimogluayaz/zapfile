@@ -244,7 +244,7 @@ export default function QrScannerPage() {
                 {!cameraActive ? (
                   <button
                     onClick={startCamera}
-                    className="px-6 py-3 rounded-xl font-semibold text-white bg-accent hover:bg-accent-hover transition-all hover:scale-[1.02] active:scale-[0.98]"
+                    className="px-6 py-3 rounded-xl font-semibold text-on-accent bg-accent hover:bg-accent-hover transition-all hover:scale-[1.02] active:scale-[0.98]"
                   >
                     {t("qrscan.scan")}
                   </button>
@@ -252,7 +252,7 @@ export default function QrScannerPage() {
                   <>
                     <button
                       onClick={captureFrame}
-                      className="px-6 py-3 rounded-xl font-semibold text-white bg-accent hover:bg-accent-hover transition-all hover:scale-[1.02] active:scale-[0.98]"
+                      className="px-6 py-3 rounded-xl font-semibold text-on-accent bg-accent hover:bg-accent-hover transition-all hover:scale-[1.02] active:scale-[0.98]"
                     >
                       {t("qrscan.scan")}
                     </button>

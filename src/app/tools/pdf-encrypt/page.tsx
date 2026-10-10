@@ -179,7 +179,7 @@ export default function PdfEncryptPage() {
             <button
               onClick={handleEncrypt}
               disabled={processing || !password || password !== confirmPassword}
-              className="w-full px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-6 py-3 rounded-xl font-semibold text-on-accent bg-accent hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {processing ? "Encrypting…" : "🔒 Encrypt & Download"}
             </button>

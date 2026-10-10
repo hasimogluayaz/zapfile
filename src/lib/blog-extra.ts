@@ -272,26 +272,6 @@ Use [UUID Generator](/tools/uuid-generator) for quick random IDs in tests and sc
 Pick UUID for interoperability; Nanoid when you want shorter strings.`,
   },
   {
-    slug: "html-to-pdf-from-url-or-snippet",
-    title: "HTML to PDF: From Snippets to Invoices",
-    description:
-      "Convert HTML or pasted markup to PDF for archiving, receipts, and documentation.",
-    date: "2026-04-01",
-    readTime: "5 min read",
-    tags: ["pdf", "html", "developer"],
-    content: `# HTML to PDF
-
-Rendering HTML to PDF is useful for **invoices**, **reports**, and **saved snapshots**.
-
-## Approach
-
-Paste HTML or use a URL where supported, then export PDF. [HTML to PDF](/tools/html-to-pdf) helps you stay in the browser.
-
-## Summary
-
-Keep layout simple for predictable results.`,
-  },
-  {
     slug: "qr-code-scanner-vs-generator",
     title: "QR Scanner vs QR Generator: When You Need Each",
     description:
@@ -408,26 +388,6 @@ Format locally when responses contain sensitive data.`,
 Use SHA-256 for new projects.`,
   },
   {
-    slug: "typing-speed-test-wpm-explained",
-    title: "Typing Speed (WPM): What Good Scores Look Like",
-    description:
-      "Words per minute, accuracy, and how to practice with a browser-based test.",
-    date: "2026-04-06",
-    readTime: "4 min read",
-    tags: ["productivity", "typing"],
-    content: `# WPM Explained
-
-**WPM** measures typing speed in words per minute. Accuracy matters as much as raw speed.
-
-## Practice
-
-Use [Typing Speed Test](/tools/typing-speed-test) with adjustable difficulty.
-
-## Summary
-
-Consistent practice beats occasional bursts.`,
-  },
-  {
     slug: "color-palette-from-image",
     title: "Extract a Color Palette From Any Image",
     description:
@@ -486,46 +446,6 @@ Keep a converter handy when reading logs and memory dumps.`,
 ## Summary
 
 Pair minification with gzip or Brotli on the server.`,
-  },
-  {
-    slug: "audio-waveform-for-podcasts",
-    title: "Audio Waveform Images for Podcasts and Video",
-    description:
-      "Generate waveform PNGs for thumbnails, social clips, and show notes.",
-    date: "2026-04-01",
-    readTime: "4 min read",
-    tags: ["audio", "podcast", "video"],
-    content: `# Waveform Visuals
-
-Waveform images help **preview** audio content on platforms that show static thumbnails.
-
-## Tool
-
-[Audio Waveform](/tools/audio-waveform) exports PNG from your audio file.
-
-## Summary
-
-Match colors to your brand for a cohesive feed.`,
-  },
-  {
-    slug: "ascii-art-from-photos",
-    title: "ASCII Art From Photos: Fun and Lightweight Graphics",
-    description:
-      "Turn images into text art for terminals, README files, and creative projects.",
-    date: "2026-04-01",
-    readTime: "4 min read",
-    tags: ["ascii", "images", "fun"],
-    content: `# ASCII Art From Images
-
-**ASCII art** maps brightness to characters — great for **README** banners and retro aesthetics.
-
-## Tool
-
-[ASCII Art Generator](/tools/ascii-art) converts uploads in your browser.
-
-## Summary
-
-Adjust width for readability in small text areas.`,
   },
   {
     slug: "password-generator-length-and-symbols",

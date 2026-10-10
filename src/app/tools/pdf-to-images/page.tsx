@@ -466,7 +466,7 @@ export default function PdfToImagesPage() {
               <button
                 type="button"
                 onClick={handleProcess}
-                className="rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-500 px-8 py-3 text-sm font-semibold text-white transition-all hover:shadow-lg hover:shadow-indigo-500/25"
+                className="rounded-2xl bg-accent px-8 py-3 text-sm font-semibold text-on-accent transition-all hover:shadow-lg hover:shadow-sm"
               >
                 {copy.convert}
               </button>

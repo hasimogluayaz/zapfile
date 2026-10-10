@@ -99,7 +99,7 @@ export default function JwtDecoderPage() {
             onChange={(e) => setInput(e.target.value)}
             placeholder={t("jwt.placeholder")}
             rows={5}
-            className="w-full px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-brand-text placeholder:text-brand-muted/50 focus:outline-none focus:border-brand-indigo/40 resize-none font-mono text-sm"
+            className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border text-brand-text placeholder:text-brand-muted/50 focus:outline-none focus:border-accent/40 resize-none font-mono text-sm"
           />
 
           {error && (
@@ -115,7 +115,7 @@ export default function JwtDecoderPage() {
             </button>
             <button
               onClick={() => { setInput(""); setDecoded(null); setError(null); }}
-              className="px-6 py-3 rounded-xl font-semibold text-brand-text bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] transition-all"
+              className="px-6 py-3 rounded-xl font-semibold text-brand-text bg-bg-secondary border border-border hover:bg-bg-tertiary transition-all"
             >
               {t("ui.clear")}
             </button>
@@ -156,13 +156,13 @@ export default function JwtDecoderPage() {
                 <span className="text-sm font-semibold text-brand-text">{t("jwt.header")}</span>
                 <button
                   onClick={() => copyText(JSON.stringify(decoded.header, null, 2), t("jwt.header"))}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-brand-muted bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] hover:text-brand-text transition-all"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-brand-muted bg-bg-secondary border border-border hover:bg-bg-tertiary hover:text-brand-text transition-all"
                 >
                   <CopyIcon />
                   {t("jwt.copy")}
                 </button>
               </div>
-              <pre className="font-mono text-sm text-brand-muted bg-white/[0.04] rounded-xl p-4 overflow-x-auto select-all whitespace-pre-wrap break-all">
+              <pre className="font-mono text-sm text-brand-muted bg-bg-secondary rounded-xl p-4 overflow-x-auto select-all whitespace-pre-wrap break-all">
                 {JSON.stringify(decoded.header, null, 2)}
               </pre>
             </div>
@@ -173,13 +173,13 @@ export default function JwtDecoderPage() {
                 <span className="text-sm font-semibold text-brand-text">{t("jwt.payload")}</span>
                 <button
                   onClick={() => copyText(JSON.stringify(decoded.payload, null, 2), t("jwt.payload"))}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-brand-muted bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] hover:text-brand-text transition-all"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-brand-muted bg-bg-secondary border border-border hover:bg-bg-tertiary hover:text-brand-text transition-all"
                 >
                   <CopyIcon />
                   {t("jwt.copy")}
                 </button>
               </div>
-              <pre className="font-mono text-sm text-brand-muted bg-white/[0.04] rounded-xl p-4 overflow-x-auto select-all whitespace-pre-wrap break-all">
+              <pre className="font-mono text-sm text-brand-muted bg-bg-secondary rounded-xl p-4 overflow-x-auto select-all whitespace-pre-wrap break-all">
                 {JSON.stringify(decoded.payload, null, 2)}
               </pre>
             </div>
@@ -190,13 +190,13 @@ export default function JwtDecoderPage() {
                 <span className="text-sm font-semibold text-brand-text">{t("jwt.signature")}</span>
                 <button
                   onClick={() => copyText(decoded.signature, t("jwt.signature"))}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-brand-muted bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] hover:text-brand-text transition-all"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-brand-muted bg-bg-secondary border border-border hover:bg-bg-tertiary hover:text-brand-text transition-all"
                 >
                   <CopyIcon />
                   {t("jwt.copy")}
                 </button>
               </div>
-              <p className="font-mono text-sm text-brand-muted bg-white/[0.04] rounded-xl p-4 break-all select-all">
+              <p className="font-mono text-sm text-brand-muted bg-bg-secondary rounded-xl p-4 break-all select-all">
                 {decoded.signature}
               </p>
             </div>

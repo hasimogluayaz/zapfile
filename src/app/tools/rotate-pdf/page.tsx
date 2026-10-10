@@ -274,9 +274,9 @@ export default function RotatePdfPage() {
             {/* File info */}
             <div className="glass rounded-xl p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-brand-indigo/20 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-lg bg-accent/20 flex items-center justify-center">
                   <svg
-                    className="w-5 h-5 text-brand-indigo"
+                    className="w-5 h-5 text-accent"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -320,8 +320,8 @@ export default function RotatePdfPage() {
                       flex flex-col items-center gap-2
                       ${
                         rotationDegrees === opt.value
-                          ? "bg-brand-indigo text-white shadow-lg shadow-brand-indigo/25"
-                          : "bg-white/5 text-brand-muted hover:bg-white/10 hover:text-brand-text"
+                          ? "bg-accent text-on-accent shadow-sm"
+                          : "bg-bg-secondary text-brand-muted hover:bg-bg-tertiary hover:text-brand-text"
                       }
                     `}
                   >
@@ -353,13 +353,13 @@ export default function RotatePdfPage() {
                 {t("rotpdf.pages")}
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="rounded-xl bg-white/5 border border-white/10 p-4">
+                <div className="rounded-xl bg-bg-secondary border border-border p-4">
                   <p className="text-xs text-brand-muted">{copy.affected}</p>
                   <p className="text-2xl font-semibold text-brand-text">
                     {affectedPageCount}
                   </p>
                 </div>
-                <div className="rounded-xl bg-white/5 border border-white/10 p-4 sm:col-span-2">
+                <div className="rounded-xl bg-bg-secondary border border-border p-4 sm:col-span-2">
                   <p className="text-xs text-brand-muted">{copy.picked}</p>
                   <p className="text-sm text-brand-text mt-1 min-h-5">
                     {rotationMode === "all"
@@ -375,8 +375,8 @@ export default function RotatePdfPage() {
                     flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all duration-200
                     ${
                       rotationMode === "all"
-                        ? "bg-brand-indigo text-white shadow-lg shadow-brand-indigo/25"
-                        : "bg-white/5 text-brand-muted hover:bg-white/10 hover:text-brand-text"
+                        ? "bg-accent text-on-accent shadow-sm"
+                        : "bg-bg-secondary text-brand-muted hover:bg-bg-tertiary hover:text-brand-text"
                     }
                   `}
                 >
@@ -388,8 +388,8 @@ export default function RotatePdfPage() {
                     flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all duration-200
                     ${
                       rotationMode === "specific"
-                        ? "bg-brand-indigo text-white shadow-lg shadow-brand-indigo/25"
-                        : "bg-white/5 text-brand-muted hover:bg-white/10 hover:text-brand-text"
+                        ? "bg-accent text-on-accent shadow-sm"
+                        : "bg-bg-secondary text-brand-muted hover:bg-bg-tertiary hover:text-brand-text"
                     }
                   `}
                 >
@@ -400,7 +400,7 @@ export default function RotatePdfPage() {
               {/* Page selector for specific mode */}
               {rotationMode === "specific" && pageCount > 0 && (
                 <div className="space-y-4 pt-2">
-                  <div className="rounded-xl bg-white/5 border border-white/10 p-4 space-y-3">
+                  <div className="rounded-xl bg-bg-secondary border border-border p-4 space-y-3">
                     <label className="block text-sm font-medium text-brand-text">
                       {copy.rangeLabel}
                     </label>
@@ -413,12 +413,12 @@ export default function RotatePdfPage() {
                           if (event.key === "Enter") applyRangeInput();
                         }}
                         placeholder="1-3, 5, odd, even"
-                        className="flex-1 px-4 py-3 rounded-xl bg-brand-bg border border-white/10 text-brand-text placeholder:text-brand-muted focus:outline-none focus:border-brand-indigo/60"
+                        className="flex-1 px-4 py-3 rounded-xl bg-brand-bg border border-border text-brand-text placeholder:text-brand-muted focus:outline-none focus:border-accent/60"
                       />
                       <button
                         type="button"
                         onClick={applyRangeInput}
-                        className="px-4 py-3 rounded-xl bg-brand-indigo text-white text-sm font-semibold hover:bg-brand-indigo/90 transition-colors"
+                        className="px-4 py-3 rounded-xl bg-accent text-on-accent text-sm font-semibold hover:bg-accent/90 transition-colors"
                       >
                         {copy.applyRange}
                       </button>
@@ -435,7 +435,7 @@ export default function RotatePdfPage() {
                           key={item.type}
                           type="button"
                           onClick={() => applyQuickSelection(item.type)}
-                          className="px-3 py-2 rounded-lg bg-white/5 text-xs font-medium text-brand-muted hover:bg-white/10 hover:text-brand-text transition-colors"
+                          className="px-3 py-2 rounded-lg bg-bg-secondary text-xs font-medium text-brand-muted hover:bg-bg-tertiary hover:text-brand-text transition-colors"
                         >
                           {item.label}
                         </button>
@@ -452,8 +452,8 @@ export default function RotatePdfPage() {
                           aspect-square rounded-lg text-sm font-medium transition-all duration-200
                           ${
                             selectedPages.has(i)
-                              ? "bg-brand-indigo text-white shadow-lg shadow-brand-indigo/25"
-                              : "bg-white/5 text-brand-muted hover:bg-white/10 hover:text-brand-text"
+                              ? "bg-accent text-on-accent shadow-sm"
+                              : "bg-bg-secondary text-brand-muted hover:bg-bg-tertiary hover:text-brand-text"
                           }
                         `}
                       >

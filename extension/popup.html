@@ -9,8 +9,8 @@
     body {
       width: 320px;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #0f0f13;
-      color: #e2e2e9;
+      background: #101114;
+      color: #f2f3f5;
     }
     .header {
       padding: 16px;
@@ -20,9 +20,11 @@
     .header h1 {
       font-size: 18px;
       font-weight: 700;
-      background: linear-gradient(135deg, #818cf8, #6366f1);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      color: #f2f3f5;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      letter-spacing: -0.02em;
     }
     .header p {
       font-size: 11px;
@@ -43,7 +45,7 @@
       outline: none;
     }
     .search input:focus {
-      border-color: #6366f1;
+      border-color: #FFD60A;
     }
     .search input::placeholder {
       color: #5a5a6e;
@@ -54,9 +56,8 @@
     .category-title {
       font-size: 10px;
       font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: #6366f1;
+      letter-spacing: 0;
+      color: #8a8f9b;
       padding: 8px 0 6px;
     }
     .tools-grid {
@@ -77,7 +78,7 @@
       cursor: pointer;
     }
     .tool-link:hover {
-      background: rgba(99,102,241,0.12);
+      background: rgba(255,255,255,0.06);
     }
     .tool-emoji {
       font-size: 14px;
@@ -96,15 +97,15 @@
     .footer a {
       display: inline-block;
       padding: 8px 20px;
-      background: #6366f1;
-      color: white;
+      background: #FFD60A;
+      color: #16181D;
       text-decoration: none;
       border-radius: 8px;
       font-size: 12px;
       font-weight: 600;
     }
     .footer a:hover {
-      background: #5558e6;
+      background: #ffe252;
     }
     .hidden { display: none !important; }
     .badge {
@@ -120,7 +121,7 @@
 </head>
 <body>
   <div class="header">
-    <h1>ZapFile</h1>
+    <h1><img src="icons/icon-32.png" width="22" height="22" alt="">ZapFile</h1>
     <p>Free, private, browser-based file tools</p>
     <div class="badge">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -164,7 +165,6 @@
         <a class="tool-link" data-name="image collage" href="https://www.zapfile.xyz/tools/image-collage" target="_blank"><span class="tool-emoji">🖼️</span><span class="tool-name">Collage</span></a>
         <a class="tool-link" data-name="meme generator" href="https://www.zapfile.xyz/tools/meme-generator" target="_blank"><span class="tool-emoji">😂</span><span class="tool-name">Meme</span></a>
         <a class="tool-link" data-name="image to base64" href="https://www.zapfile.xyz/tools/image-to-base64" target="_blank"><span class="tool-emoji">🔤</span><span class="tool-name">To Base64</span></a>
-        <a class="tool-link" data-name="image pipeline batch" href="https://www.zapfile.xyz/tools/image-pipeline" target="_blank"><span class="tool-emoji">⚡</span><span class="tool-name">Pipeline</span></a>
         <a class="tool-link" data-name="ocr text recognition" href="https://www.zapfile.xyz/tools/ocr" target="_blank"><span class="tool-emoji">🔍</span><span class="tool-name">OCR</span></a>
       </div>
     </div>
@@ -173,7 +173,6 @@
     <div class="category" data-category="video">
       <div class="category-title">Audio</div>
       <div class="tools-grid">
-        <a class="tool-link" data-name="audio waveform" href="https://www.zapfile.xyz/tools/audio-waveform" target="_blank"><span class="tool-emoji">🎵</span><span class="tool-name">Waveform</span></a>
       </div>
     </div>
 
@@ -183,16 +182,12 @@
       <div class="tools-grid">
         <a class="tool-link" data-name="qr code generator" href="https://www.zapfile.xyz/tools/qr-generator" target="_blank"><span class="tool-emoji">📱</span><span class="tool-name">QR Code</span></a>
         <a class="tool-link" data-name="qr code scanner" href="https://www.zapfile.xyz/tools/qr-scanner" target="_blank"><span class="tool-emoji">📷</span><span class="tool-name">QR Scanner</span></a>
-        <a class="tool-link" data-name="html to pdf" href="https://www.zapfile.xyz/tools/html-to-pdf" target="_blank"><span class="tool-emoji">📄</span><span class="tool-name">HTML to PDF</span></a>
         <a class="tool-link" data-name="jwt decoder token" href="https://www.zapfile.xyz/tools/jwt-decoder" target="_blank"><span class="tool-emoji">🔑</span><span class="tool-name">JWT Decoder</span></a>
         <a class="tool-link" data-name="uuid generator" href="https://www.zapfile.xyz/tools/uuid-generator" target="_blank"><span class="tool-emoji">🆔</span><span class="tool-name">UUID</span></a>
         <a class="tool-link" data-name="css minifier beautify" href="https://www.zapfile.xyz/tools/css-minifier" target="_blank"><span class="tool-emoji">🎨</span><span class="tool-name">CSS Minify</span></a>
         <a class="tool-link" data-name="number base converter" href="https://www.zapfile.xyz/tools/base-converter" target="_blank"><span class="tool-emoji">🔢</span><span class="tool-name">Base Convert</span></a>
-        <a class="tool-link" data-name="typing speed test wpm" href="https://www.zapfile.xyz/tools/typing-speed-test" target="_blank"><span class="tool-emoji">⌨️</span><span class="tool-name">Typing Test</span></a>
         <a class="tool-link" data-name="color palette extract" href="https://www.zapfile.xyz/tools/color-palette" target="_blank"><span class="tool-emoji">🎨</span><span class="tool-name">Palette</span></a>
-        <a class="tool-link" data-name="ascii art text" href="https://www.zapfile.xyz/tools/ascii-art" target="_blank"><span class="tool-emoji">🔤</span><span class="tool-name">ASCII Art</span></a>
         <a class="tool-link" data-name="color contrast checker wcag" href="https://www.zapfile.xyz/tools/color-contrast" target="_blank"><span class="tool-emoji">🔍</span><span class="tool-name">Contrast</span></a>
-        <a class="tool-link" data-name="csv table viewer" href="https://www.zapfile.xyz/tools/csv-viewer" target="_blank"><span class="tool-emoji">📊</span><span class="tool-name">CSV Viewer</span></a>
         <a class="tool-link" data-name="svg to png" href="https://www.zapfile.xyz/tools/svg-to-png" target="_blank"><span class="tool-emoji">🎨</span><span class="tool-name">SVG to PNG</span></a>
         <a class="tool-link" data-name="base64 encode decode" href="https://www.zapfile.xyz/tools/base64-encode" target="_blank"><span class="tool-emoji">🔐</span><span class="tool-name">Base64</span></a>
         <a class="tool-link" data-name="color picker hex rgb" href="https://www.zapfile.xyz/tools/color-picker" target="_blank"><span class="tool-emoji">🎨</span><span class="tool-name">Color Picker</span></a>
@@ -210,7 +205,6 @@
         <a class="tool-link" data-name="xml formatter" href="https://www.zapfile.xyz/tools/xml-formatter" target="_blank"><span class="tool-emoji">📋</span><span class="tool-name">XML</span></a>
         <a class="tool-link" data-name="yaml formatter" href="https://www.zapfile.xyz/tools/yaml-formatter" target="_blank"><span class="tool-emoji">📋</span><span class="tool-name">YAML</span></a>
         <a class="tool-link" data-name="unit converter px rem cm" href="https://www.zapfile.xyz/tools/unit-converter" target="_blank"><span class="tool-emoji">📏</span><span class="tool-name">Units</span></a>
-        <a class="tool-link" data-name="pomodoro timer focus" href="https://www.zapfile.xyz/tools/pomodoro-timer" target="_blank"><span class="tool-emoji">🍅</span><span class="tool-name">Pomodoro</span></a>
       </div>
     </div>
   </div>

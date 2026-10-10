@@ -222,7 +222,7 @@ export default function SuggestToolForm() {
                 <button
                   type="submit"
                   disabled={sending}
-                  className="px-6 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-6 py-2.5 rounded-xl text-sm font-semibold text-on-accent bg-accent hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {sending ? "Sending…" : "Submit Suggestion"}
                 </button>

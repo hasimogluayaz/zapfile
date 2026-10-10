@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { Shuffle } from "lucide-react";
 import toast from "react-hot-toast";
 import ToolLayout from "@/components/ToolLayout";
 import { useI18n } from "@/lib/i18n";
@@ -55,11 +56,45 @@ function hslToRgb(h: number, s: number, l: number): { r: number; g: number; b: n
   return { r: Math.round(r * 255), g: Math.round(g * 255), b: Math.round(b * 255) };
 }
 
+type HarmonyMode =
+  | "complementary"
+  | "analogous"
+  | "triadic"
+  | "split-complementary"
+  | "tetradic";
+
+const HARMONY_MODES: { value: HarmonyMode; labelKey: string; offsets: number[] }[] = [
+  { value: "complementary", labelKey: "rc.harmony.complementary", offsets: [180] },
+  { value: "analogous", labelKey: "rc.harmony.analogous", offsets: [-30, 30] },
+  { value: "triadic", labelKey: "rc.harmony.triadic", offsets: [120, 240] },
+  { value: "split-complementary", labelKey: "rc.harmony.splitComp", offsets: [150, 210] },
+  { value: "tetradic", labelKey: "rc.harmony.tetradic", offsets: [90, 180, 270] },
+];
+
+function randomHex(): string {
+  return "#" + Math.floor(Math.random() * 0x1000000).toString(16).padStart(6, "0");
+}
+
+/** Black or white, whichever reads better on the given color (WCAG luminance). */
+function bestTextColor(r: number, g: number, b: number): "#000000" | "#ffffff" {
+  const lin = (c: number) => {
+    const v = c / 255;
+    return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+  };
+  const L = 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+  return L > 0.179 ? "#000000" : "#ffffff";
+}
+
+function isTypingTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  return ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName) || target.isContentEditable;
+}
+
 export default function ColorPickerPage() {
   const { t } = useI18n();
-  const [hex, setHex] = useState("#6366f1");
-  const [rgb, setRgb] = useState({ r: 99, g: 102, b: 241 });
-  const [hsl, setHsl] = useState({ h: 239, s: 84, l: 67 });
+  const [hex, setHex] = useState("#ffd60a");
+  const [rgb, setRgb] = useState({ r: 255, g: 214, b: 10 });
+  const [hsl, setHsl] = useState({ h: 50, s: 100, l: 52 });
 
   const updateFromHex = (newHex: string) => {
     setHex(newHex);
@@ -88,6 +123,38 @@ export default function ColorPickerPage() {
     setRgb(newRgb);
     setHex(rgbToHex(newRgb.r, newRgb.g, newRgb.b));
   };
+
+  const [harmony, setHarmony] = useState<HarmonyMode>("complementary");
+
+  const randomize = useCallback(() => {
+    const next = randomHex();
+    setHex(next);
+    const parsed = hexToRgb(next);
+    if (parsed) {
+      setRgb(parsed);
+      setHsl(rgbToHsl(parsed.r, parsed.g, parsed.b));
+    }
+  }, []);
+
+  // Space bar generates a random color (when not typing in a field).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.code === "Space" && !isTypingTarget(e.target)) {
+        e.preventDefault();
+        randomize();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [randomize]);
+
+  const harmonyColors = (HARMONY_MODES.find((m) => m.value === harmony)?.offsets ?? []).map(
+    (offset) => {
+      const h = (((hsl.h + offset) % 360) + 360) % 360;
+      const c = hslToRgb(h, hsl.s, hsl.l);
+      return rgbToHex(c.r, c.g, c.b);
+    },
+  );
 
   const copy = async (text: string) => {
     try {
@@ -119,15 +186,27 @@ export default function ColorPickerPage() {
           {/* Large color preview */}
           <div className="glass rounded-xl p-6">
             <div
-              className="w-full h-48 rounded-xl border border-border transition-colors duration-200"
-              style={{ backgroundColor: hex }}
-            />
+              className="relative flex h-48 w-full items-end justify-between rounded-xl border border-border p-4 transition-colors duration-200"
+              style={{ backgroundColor: hex, color: bestTextColor(rgb.r, rgb.g, rgb.b) }}
+            >
+              <span className="font-mono text-2xl font-semibold tracking-tight">{hex.toUpperCase()}</span>
+              <button
+                type="button"
+                onClick={randomize}
+                className="flex items-center gap-2 rounded-full bg-black/15 px-3.5 py-2 text-sm font-semibold backdrop-blur-sm transition hover:bg-black/25"
+                title={`${t("rc.generateNew")} (${t("rc.spaceKey")})`}
+              >
+                <Shuffle className="h-4 w-4" aria-hidden="true" />
+                {t("rc.generateNew")}
+              </button>
+            </div>
 
             {/* Native color input */}
             <div className="mt-4 flex items-center gap-4">
               <input
                 type="color"
                 value={hex}
+                aria-label={t("clr.hex")}
                 onChange={(e) => updateFromHex(e.target.value)}
                 className="w-14 h-14 rounded-xl cursor-pointer bg-transparent border-0"
               />
@@ -165,12 +244,55 @@ export default function ColorPickerPage() {
                   key={c}
                   onClick={() => updateFromHex(c)}
                   className={`w-9 h-9 rounded-lg border-2 transition-transform hover:scale-110 ${
-                    hex.toLowerCase() === c.toLowerCase() ? "border-white scale-110" : "border-white/10"
+                    hex.toLowerCase() === c.toLowerCase() ? "border-t-primary scale-110" : "border-border"
                   }`}
                   style={{ backgroundColor: c }}
                   title={c}
+                  aria-label={c}
                 />
               ))}
+            </div>
+          </div>
+
+          {/* Color harmony */}
+          <div className="glass rounded-xl p-6">
+            <h3 className="mb-3 font-medium text-t-primary">{t("rc.harmonyMode")}</h3>
+            <div className="segmented mb-4 max-w-full overflow-x-auto scrollbar-hide">
+              {HARMONY_MODES.map((m) => (
+                <button
+                  key={m.value}
+                  type="button"
+                  onClick={() => setHarmony(m.value)}
+                  aria-pressed={harmony === m.value}
+                  className={`shrink-0 rounded-[9px] px-3 py-1.5 text-[13px] font-medium transition-colors ${
+                    harmony === m.value
+                      ? "bg-surface text-t-primary shadow-sm"
+                      : "text-t-secondary hover:text-t-primary"
+                  }`}
+                >
+                  {t(m.labelKey)}
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              {[hex, ...harmonyColors].map((c, i) => {
+                const parsed = hexToRgb(c);
+                return (
+                  <button
+                    key={`${c}-${i}`}
+                    type="button"
+                    onClick={() => (i === 0 ? copy(c.toUpperCase()) : updateFromHex(c))}
+                    className="flex h-20 flex-1 items-end rounded-lg border border-border p-2 font-mono text-[11px] font-semibold transition-transform hover:scale-[1.02]"
+                    style={{
+                      backgroundColor: c,
+                      color: parsed ? bestTextColor(parsed.r, parsed.g, parsed.b) : undefined,
+                    }}
+                    title={i === 0 ? t("clr.copy") : c.toUpperCase()}
+                  >
+                    {c.toUpperCase()}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>

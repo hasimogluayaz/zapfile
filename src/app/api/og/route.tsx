@@ -4,13 +4,20 @@ import { getToolBySlug } from "@/lib/tools";
 
 export const runtime = "edge";
 
+// Same geometry as public/logo.svg (Lucide "zap" on a volt tile).
+const ZAP_PATH =
+  "M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z";
+
+const INK = "#16181D";
+const PAPER = "#F6F7F9";
+const VOLT = "#FFD60A";
+
 export async function GET(request: NextRequest) {
   const slug = request.nextUrl.searchParams.get("slug") || "tools";
   const tool = getToolBySlug(slug);
 
-  const title = tool?.name ?? "ZapFile";
+  const title = tool?.name ?? "Work on your files without uploading them.";
   const subtitle = tool?.description ?? "Free browser-based file tools";
-  const emoji = tool?.emoji ?? "⚡";
 
   return new ImageResponse(
     (
@@ -20,72 +27,69 @@ export async function GET(request: NextRequest) {
           width: "100%",
           display: "flex",
           flexDirection: "column",
-          alignItems: "flex-start",
-          justifyContent: "center",
-          background: "linear-gradient(135deg, #0f1117 0%, #1e1b4b 45%, #312e81 100%)",
-          padding: 72,
+          justifyContent: "space-between",
+          background: PAPER,
+          padding: "72px 80px",
           fontFamily: "system-ui, sans-serif",
+          color: INK,
         }}
       >
-        <div
-          style={{
-            fontSize: 96,
-            lineHeight: 1,
-            marginBottom: 24,
-          }}
-        >
-          {emoji}
-        </div>
-        <div
-          style={{
-            fontSize: 56,
-            fontWeight: 800,
-            color: "#f1f2f6",
-            lineHeight: 1.15,
-            maxWidth: 900,
-            letterSpacing: "-0.02em",
-          }}
-        >
-          {title}
-        </div>
-        <div
-          style={{
-            fontSize: 28,
-            color: "#a0a4b8",
-            marginTop: 20,
-            maxWidth: 900,
-            lineHeight: 1.4,
-          }}
-        >
-          {subtitle}
-        </div>
-        <div
-          style={{
-            marginTop: 48,
-            display: "flex",
-            alignItems: "center",
-            gap: 16,
-          }}
-        >
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
           <div
             style={{
               width: 56,
               height: 56,
-              borderRadius: 14,
-              background: "#6366f1",
+              borderRadius: 18,
+              background: VOLT,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              color: "white",
-              fontSize: 28,
-              fontWeight: 700,
             }}
           >
-            Z
+            <svg width="32" height="32" viewBox="0 0 24 24">
+              <path
+                d={ZAP_PATH}
+                fill={INK}
+                stroke={INK}
+                strokeWidth={2.25}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
           </div>
-          <div style={{ color: "#818cf8", fontSize: 26, fontWeight: 600 }}>
-            www.zapfile.xyz
+          <div style={{ fontSize: 34, fontWeight: 600, letterSpacing: "-0.03em" }}>
+            ZapFile
           </div>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          <div
+            style={{
+              fontSize: 76,
+              fontWeight: 700,
+              lineHeight: 1.04,
+              letterSpacing: "-0.04em",
+              maxWidth: 1000,
+            }}
+          >
+            {title}
+          </div>
+          <div
+            style={{
+              fontSize: 32,
+              color: "#525761",
+              marginTop: 20,
+              maxWidth: 1000,
+              lineHeight: 1.35,
+            }}
+          >
+            {subtitle}
+          </div>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 24, color: "#525761" }}>
+          <div style={{ width: 10, height: 10, borderRadius: 5, background: VOLT }} />
+          Free, private, runs in your browser
         </div>
       </div>
     ),

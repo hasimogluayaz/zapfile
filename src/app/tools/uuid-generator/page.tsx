@@ -81,8 +81,8 @@ export default function UuidGeneratorPage() {
                   onClick={() => setIdType(type)}
                   className={`px-5 py-2.5 rounded-xl text-sm font-medium transition-all ${
                     idType === type
-                      ? "bg-brand-indigo/20 border border-brand-indigo text-brand-text"
-                      : "bg-white/[0.04] border border-white/[0.08] text-brand-muted hover:border-white/20"
+                      ? "bg-accent/20 border border-accent text-brand-text"
+                      : "bg-bg-secondary border border-border text-brand-muted hover:border-t-primary/20"
                   }`}
                 >
                   {type === "uuid" ? t("uuid.v4") : t("uuid.nanoid")}
@@ -102,7 +102,7 @@ export default function UuidGeneratorPage() {
               max={100}
               value={count}
               onChange={(e) => setCount(Number(e.target.value))}
-              className="w-32 px-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-brand-text focus:outline-none focus:border-brand-indigo/40 text-sm"
+              className="w-32 px-4 py-2.5 rounded-xl bg-bg-secondary border border-border text-brand-text focus:outline-none focus:border-accent/40 text-sm"
             />
           </div>
 
@@ -117,7 +117,7 @@ export default function UuidGeneratorPage() {
             {ids.length > 0 && (
               <button
                 onClick={() => setIds([])}
-                className="px-6 py-3 rounded-xl font-semibold text-brand-text bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] transition-all"
+                className="px-6 py-3 rounded-xl font-semibold text-brand-text bg-bg-secondary border border-border hover:bg-bg-tertiary transition-all"
               >
                 {t("ui.clear")}
               </button>
@@ -134,7 +134,7 @@ export default function UuidGeneratorPage() {
               </h3>
               <button
                 onClick={copyAll}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium text-brand-muted bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] hover:text-brand-text transition-all"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium text-brand-muted bg-bg-secondary border border-border hover:bg-bg-tertiary hover:text-brand-text transition-all"
               >
                 <CopyIcon />
                 {t("uuid.copyAll")}
@@ -145,7 +145,7 @@ export default function UuidGeneratorPage() {
               {ids.map((id, i) => (
                 <div
                   key={i}
-                  className="flex items-center justify-between gap-3 px-3 py-2 rounded-xl bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] group transition-all"
+                  className="flex items-center justify-between gap-3 px-3 py-2 rounded-xl bg-bg-secondary border border-border hover:bg-bg-tertiary group transition-all"
                 >
                   <span className="font-mono text-sm text-brand-muted select-all flex-1 truncate">
                     {id}

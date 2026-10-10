@@ -106,8 +106,8 @@ export default function UrlEncoderPage() {
                 onClick={() => setMode(value)}
                 className={`px-5 py-2.5 rounded-xl text-sm font-medium transition-all font-mono ${
                   mode === value
-                    ? "bg-indigo-500/20 border border-indigo-500 text-t-primary"
-                    : "bg-white/[0.04] border border-white/[0.08] text-t-secondary hover:border-white/20"
+                    ? "bg-accent/20 border border-accent text-t-primary"
+                    : "bg-bg-secondary border border-border text-t-secondary hover:border-t-primary/20"
                 }`}
               >
                 {label}
@@ -125,7 +125,7 @@ export default function UrlEncoderPage() {
             <button
               onClick={() => copyToClipboard(decoded, "Decoded text")}
               disabled={!decoded}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-t-secondary bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] hover:text-t-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-t-secondary bg-bg-secondary border border-border hover:bg-bg-tertiary hover:text-t-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <svg
                 className="w-3.5 h-3.5"
@@ -159,7 +159,7 @@ export default function UrlEncoderPage() {
           <button
             onClick={swapContent}
             disabled={!decoded && !encoded}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium text-t-secondary bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] hover:text-t-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium text-t-secondary bg-bg-secondary border border-border hover:bg-bg-tertiary hover:text-t-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <svg
               className="w-4 h-4"
@@ -179,7 +179,7 @@ export default function UrlEncoderPage() {
           <button
             onClick={clearAll}
             disabled={!decoded && !encoded}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium text-t-secondary bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] hover:text-t-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium text-t-secondary bg-bg-secondary border border-border hover:bg-bg-tertiary hover:text-t-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {t("ui.clear")}
           </button>
@@ -194,7 +194,7 @@ export default function UrlEncoderPage() {
             <button
               onClick={() => copyToClipboard(encoded, "Encoded text")}
               disabled={!encoded}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-t-secondary bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] hover:text-t-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-t-secondary bg-bg-secondary border border-border hover:bg-bg-tertiary hover:text-t-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <svg
                 className="w-3.5 h-3.5"

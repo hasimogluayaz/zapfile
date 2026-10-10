@@ -365,7 +365,7 @@ export default function AudioRecorderPage() {
               <button
                 type="button"
                 onClick={startRecording}
-                className="px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:opacity-90 transition-opacity flex items-center gap-2"
+                className="px-6 py-3 rounded-xl font-semibold text-on-accent bg-accent hover:opacity-90 transition-opacity flex items-center gap-2"
               >
                 <span className="w-3 h-3 rounded-full bg-red-400 inline-block" />
                 {t("ar.startRec")}
@@ -396,7 +396,7 @@ export default function AudioRecorderPage() {
                 <button
                   type="button"
                   onClick={resumeRecording}
-                  className="px-5 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:opacity-90 transition-opacity"
+                  className="px-5 py-3 rounded-xl font-semibold text-on-accent bg-accent hover:opacity-90 transition-opacity"
                 >
                   {t("ar.resume")}
                 </button>
@@ -437,7 +437,7 @@ export default function AudioRecorderPage() {
               <button
                 type="button"
                 onClick={handleDownload}
-                className="flex-1 min-w-[160px] px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:opacity-90 transition-opacity"
+                className="flex-1 min-w-[160px] px-6 py-3 rounded-xl font-semibold text-on-accent bg-accent hover:opacity-90 transition-opacity"
               >
                 {t("ar.download")}
               </button>

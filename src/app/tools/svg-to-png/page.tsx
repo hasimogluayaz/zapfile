@@ -159,7 +159,7 @@ export default function SvgToPngPage() {
               </button>
             </div>
             {svgContent && (
-              <div className="flex justify-center p-4 bg-white/5 rounded-lg">
+              <div className="flex justify-center p-4 bg-bg-secondary rounded-lg">
                 {/* Safe SVG preview via blob URL — no dangerouslySetInnerHTML */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -189,7 +189,7 @@ export default function SvgToPngPage() {
                   max="8192"
                   value={width}
                   onChange={(e) => handleWidthChange(Number(e.target.value))}
-                  className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-brand-text focus:outline-none focus:border-brand-indigo/50"
+                  className="w-full px-4 py-2 rounded-lg bg-bg-secondary border border-border text-brand-text focus:outline-none focus:border-accent/50"
                 />
               </div>
               <div>
@@ -202,7 +202,7 @@ export default function SvgToPngPage() {
                   max="8192"
                   value={height}
                   onChange={(e) => handleHeightChange(Number(e.target.value))}
-                  className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-brand-text focus:outline-none focus:border-brand-indigo/50"
+                  className="w-full px-4 py-2 rounded-lg bg-bg-secondary border border-border text-brand-text focus:outline-none focus:border-accent/50"
                 />
               </div>
             </div>
@@ -241,7 +241,7 @@ export default function SvgToPngPage() {
               <img
                 src={preview}
                 alt="PNG result"
-                className="max-w-full max-h-72 rounded-lg border border-white/10"
+                className="max-w-full max-h-72 rounded-lg border border-border"
               />
             </div>
           )}
@@ -254,7 +254,7 @@ export default function SvgToPngPage() {
             />
             <button
               onClick={reset}
-              className="px-6 py-3 rounded-xl font-semibold text-brand-text bg-white/5 hover:bg-white/10 transition-colors"
+              className="px-6 py-3 rounded-xl font-semibold text-brand-text bg-bg-secondary hover:bg-bg-tertiary transition-colors"
             >
               {t("svg2png.another")}
             </button>

@@ -699,7 +699,7 @@ export default function MemeGeneratorPage() {
                     type="button"
                     onClick={undoMeme}
                     disabled={undoStack.length === 0}
-                    className="px-3 py-1.5 rounded-lg text-[12px] font-semibold text-t-secondary bg-bg-secondary border border-border hover:bg-white/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="px-3 py-1.5 rounded-lg text-[12px] font-semibold text-t-secondary bg-bg-secondary border border-border hover:bg-bg-tertiary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     {t("meme.undo")}
                   </button>
@@ -707,21 +707,21 @@ export default function MemeGeneratorPage() {
                     type="button"
                     onClick={redoMeme}
                     disabled={redoStack.length === 0}
-                    className="px-3 py-1.5 rounded-lg text-[12px] font-semibold text-t-secondary bg-bg-secondary border border-border hover:bg-white/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="px-3 py-1.5 rounded-lg text-[12px] font-semibold text-t-secondary bg-bg-secondary border border-border hover:bg-bg-tertiary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     {t("meme.redo")}
                   </button>
                   <button
                     type="button"
                     onClick={addText}
-                    className="px-3 py-1.5 rounded-lg text-[12px] font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:shadow-lg hover:shadow-indigo-500/25 transition-all"
+                    className="px-3 py-1.5 rounded-lg text-[12px] font-semibold text-on-accent bg-accent hover:shadow-lg hover:shadow-sm transition-all"
                   >
                     {t("meme.addText")}
                   </button>
                   <button
                     type="button"
                     onClick={reset}
-                    className="px-3 py-1.5 rounded-lg text-[12px] font-semibold text-t-secondary bg-bg-secondary border border-border hover:bg-white/10 transition-colors"
+                    className="px-3 py-1.5 rounded-lg text-[12px] font-semibold text-t-secondary bg-bg-secondary border border-border hover:bg-bg-tertiary transition-colors"
                   >
                     {t("meme.newImage")}
                   </button>
@@ -798,7 +798,7 @@ export default function MemeGeneratorPage() {
                     <button
                       key={p.labelKey}
                       onClick={() => applyPreset(p)}
-                      className="px-3 py-1.5 rounded-lg text-[11px] font-medium text-t-secondary bg-bg-secondary border border-border hover:border-indigo-500/50 hover:text-t-primary transition-colors"
+                      className="px-3 py-1.5 rounded-lg text-[11px] font-medium text-t-secondary bg-bg-secondary border border-border hover:border-accent/50 hover:text-t-primary transition-colors"
                     >
                       {t(p.labelKey)}
                     </button>
@@ -809,7 +809,7 @@ export default function MemeGeneratorPage() {
               {/* Download */}
               <button
                 onClick={handleDownload}
-                className="w-full py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:shadow-lg hover:shadow-indigo-500/25 hover:scale-[1.01] active:scale-[0.99] transition-all text-[14px]"
+                className="w-full py-3 rounded-xl font-semibold text-on-accent bg-accent hover:shadow-lg hover:shadow-sm hover:scale-[1.01] active:scale-[0.99] transition-all text-[14px]"
               >
                 {t("meme.downloadMeme")}
               </button>
@@ -823,7 +823,7 @@ export default function MemeGeneratorPage() {
                   <p className="text-[13px] font-semibold text-t-primary">{t("meme.textLayers")}</p>
                   <button
                     onClick={addText}
-                    className="text-[11px] px-2.5 py-1 rounded-lg text-indigo-400 bg-indigo-500/10 hover:bg-indigo-500/20 transition-colors"
+                    className="text-[11px] px-2.5 py-1 rounded-lg text-accent bg-accent/10 hover:bg-accent/20 transition-colors"
                   >
                     {t("meme.addLayer")}
                   </button>
@@ -835,8 +835,8 @@ export default function MemeGeneratorPage() {
                       onClick={() => setSelectedId(item.id)}
                       className={`flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors ${
                         selectedId === item.id
-                          ? "bg-indigo-500/15 border border-indigo-500/30"
-                          : "bg-bg-secondary border border-border hover:bg-white/5"
+                          ? "bg-accent/15 border border-accent/30"
+                          : "bg-bg-secondary border border-border hover:bg-bg-secondary"
                       }`}
                     >
                       <span className="flex-1 text-[12px] text-t-primary truncate">
@@ -871,7 +871,7 @@ export default function MemeGeneratorPage() {
                       value={selectedItem.text}
                       onChange={(e) => updateItem(selectedItem.id, { text: e.target.value })}
                       rows={2}
-                      className="w-full px-3 py-2 rounded-lg bg-bg-secondary border border-border text-[13px] text-t-primary placeholder:text-t-secondary/50 focus:outline-none focus:border-indigo-500/50 transition-colors resize-none"
+                      className="w-full px-3 py-2 rounded-lg bg-bg-secondary border border-border text-[13px] text-t-primary placeholder:text-t-secondary/50 focus:outline-none focus:border-accent/50 transition-colors resize-none"
                       placeholder={t("meme.enterText")}
                     />
                   </div>
@@ -882,7 +882,7 @@ export default function MemeGeneratorPage() {
                     <select
                       value={selectedItem.fontFamily}
                       onChange={(e) => updateItem(selectedItem.id, { fontFamily: e.target.value })}
-                      className="w-full px-3 py-2 rounded-lg bg-bg-secondary border border-border text-[13px] text-t-primary focus:outline-none focus:border-indigo-500/50 transition-colors"
+                      className="w-full px-3 py-2 rounded-lg bg-bg-secondary border border-border text-[13px] text-t-primary focus:outline-none focus:border-accent/50 transition-colors"
                     >
                       {FONT_FAMILIES.map((f) => (
                         <option key={f} value={f} style={{ fontFamily: f }}>
@@ -898,8 +898,8 @@ export default function MemeGeneratorPage() {
                       onClick={() => updateItem(selectedItem.id, { bold: !selectedItem.bold })}
                       className={`flex-1 py-2 rounded-lg text-[12px] font-bold transition-colors border ${
                         selectedItem.bold
-                          ? "bg-indigo-500/20 border-indigo-500/40 text-indigo-300"
-                          : "bg-bg-secondary border-border text-t-secondary hover:bg-white/5"
+                          ? "bg-accent/20 border-accent/40 text-accent"
+                          : "bg-bg-secondary border-border text-t-secondary hover:bg-bg-secondary"
                       }`}
                     >
                       B
@@ -908,8 +908,8 @@ export default function MemeGeneratorPage() {
                       onClick={() => updateItem(selectedItem.id, { italic: !selectedItem.italic })}
                       className={`flex-1 py-2 rounded-lg text-[12px] font-bold italic transition-colors border ${
                         selectedItem.italic
-                          ? "bg-indigo-500/20 border-indigo-500/40 text-indigo-300"
-                          : "bg-bg-secondary border-border text-t-secondary hover:bg-white/5"
+                          ? "bg-accent/20 border-accent/40 text-accent"
+                          : "bg-bg-secondary border-border text-t-secondary hover:bg-bg-secondary"
                       }`}
                     >
                       I
@@ -929,7 +929,7 @@ export default function MemeGeneratorPage() {
                       step={1}
                       value={selectedItem.fontSize}
                       onChange={(e) => updateItem(selectedItem.id, { fontSize: Number(e.target.value) })}
-                      className="w-full accent-indigo-500"
+                      className="w-full accent-accent"
                     />
                   </div>
 
@@ -946,7 +946,7 @@ export default function MemeGeneratorPage() {
                       step={1}
                       value={selectedItem.rotation}
                       onChange={(e) => updateItem(selectedItem.id, { rotation: Number(e.target.value) })}
-                      className="w-full accent-indigo-500"
+                      className="w-full accent-accent"
                     />
                   </div>
 
@@ -963,7 +963,7 @@ export default function MemeGeneratorPage() {
                       step={1}
                       value={selectedItem.strokeWidth}
                       onChange={(e) => updateItem(selectedItem.id, { strokeWidth: Number(e.target.value) })}
-                      className="w-full accent-indigo-500"
+                      className="w-full accent-accent"
                     />
                   </div>
 
@@ -1005,8 +1005,8 @@ export default function MemeGeneratorPage() {
                           onClick={() => updateItem(selectedItem.id, { align: a })}
                           className={`flex-1 py-1.5 rounded-lg text-[11px] font-medium capitalize transition-colors border ${
                             selectedItem.align === a
-                              ? "bg-indigo-500/20 border-indigo-500/40 text-indigo-300"
-                              : "bg-bg-secondary border-border text-t-secondary hover:bg-white/5"
+                              ? "bg-accent/20 border-accent/40 text-accent"
+                              : "bg-bg-secondary border-border text-t-secondary hover:bg-bg-secondary"
                           }`}
                         >
                           {a}
@@ -1023,21 +1023,21 @@ export default function MemeGeneratorPage() {
                       <button
                         type="button"
                         onClick={() => duplicateItem(selectedItem.id)}
-                        className="rounded-lg border border-border bg-bg-primary px-3 py-2 text-[12px] font-medium text-t-primary transition-colors hover:border-indigo-500/40"
+                        className="rounded-lg border border-border bg-bg-primary px-3 py-2 text-[12px] font-medium text-t-primary transition-colors hover:border-accent/40"
                       >
                         {editorCopy.duplicate}
                       </button>
                       <button
                         type="button"
                         onClick={() => moveLayer(selectedItem.id, "forward")}
-                        className="rounded-lg border border-border bg-bg-primary px-3 py-2 text-[12px] font-medium text-t-primary transition-colors hover:border-indigo-500/40"
+                        className="rounded-lg border border-border bg-bg-primary px-3 py-2 text-[12px] font-medium text-t-primary transition-colors hover:border-accent/40"
                       >
                         {editorCopy.bringForward}
                       </button>
                       <button
                         type="button"
                         onClick={() => moveLayer(selectedItem.id, "backward")}
-                        className="rounded-lg border border-border bg-bg-primary px-3 py-2 text-[12px] font-medium text-t-primary transition-colors hover:border-indigo-500/40"
+                        className="rounded-lg border border-border bg-bg-primary px-3 py-2 text-[12px] font-medium text-t-primary transition-colors hover:border-accent/40"
                       >
                         {editorCopy.sendBackward}
                       </button>
@@ -1053,7 +1053,7 @@ export default function MemeGeneratorPage() {
                           pushHistorySnapshot();
                           nudgeItem(selectedItem.id, 0, -1);
                         }}
-                        className="rounded-lg border border-border bg-bg-primary px-2 py-2 text-[12px] text-t-primary transition-colors hover:border-indigo-500/40"
+                        className="rounded-lg border border-border bg-bg-primary px-2 py-2 text-[12px] text-t-primary transition-colors hover:border-accent/40"
                       >
                         ↑
                       </button>
@@ -1064,7 +1064,7 @@ export default function MemeGeneratorPage() {
                           pushHistorySnapshot();
                           nudgeItem(selectedItem.id, -1, 0);
                         }}
-                        className="rounded-lg border border-border bg-bg-primary px-2 py-2 text-[12px] text-t-primary transition-colors hover:border-indigo-500/40"
+                        className="rounded-lg border border-border bg-bg-primary px-2 py-2 text-[12px] text-t-primary transition-colors hover:border-accent/40"
                       >
                         ←
                       </button>
@@ -1074,7 +1074,7 @@ export default function MemeGeneratorPage() {
                           pushHistorySnapshot();
                           updateItem(selectedItem.id, { x: 50, y: 50 });
                         }}
-                        className="rounded-lg border border-border bg-bg-primary px-2 py-2 text-[11px] text-t-primary transition-colors hover:border-indigo-500/40"
+                        className="rounded-lg border border-border bg-bg-primary px-2 py-2 text-[11px] text-t-primary transition-colors hover:border-accent/40"
                       >
                         +
                       </button>
@@ -1084,7 +1084,7 @@ export default function MemeGeneratorPage() {
                           pushHistorySnapshot();
                           nudgeItem(selectedItem.id, 1, 0);
                         }}
-                        className="rounded-lg border border-border bg-bg-primary px-2 py-2 text-[12px] text-t-primary transition-colors hover:border-indigo-500/40"
+                        className="rounded-lg border border-border bg-bg-primary px-2 py-2 text-[12px] text-t-primary transition-colors hover:border-accent/40"
                       >
                         →
                       </button>
@@ -1095,7 +1095,7 @@ export default function MemeGeneratorPage() {
                           pushHistorySnapshot();
                           nudgeItem(selectedItem.id, 0, 1);
                         }}
-                        className="rounded-lg border border-border bg-bg-primary px-2 py-2 text-[12px] text-t-primary transition-colors hover:border-indigo-500/40"
+                        className="rounded-lg border border-border bg-bg-primary px-2 py-2 text-[12px] text-t-primary transition-colors hover:border-accent/40"
                       >
                         ↓
                       </button>
@@ -1115,7 +1115,7 @@ export default function MemeGeneratorPage() {
                       step={1}
                       value={selectedItem.x}
                       onChange={(e) => updateItem(selectedItem.id, { x: Number(e.target.value) })}
-                      className="w-full accent-indigo-500"
+                      className="w-full accent-accent"
                     />
                   </div>
 
@@ -1131,7 +1131,7 @@ export default function MemeGeneratorPage() {
                       step={1}
                       value={selectedItem.y}
                       onChange={(e) => updateItem(selectedItem.id, { y: Number(e.target.value) })}
-                      className="w-full accent-indigo-500"
+                      className="w-full accent-accent"
                     />
                   </div>
 
@@ -1147,7 +1147,7 @@ export default function MemeGeneratorPage() {
                       step={1}
                       value={selectedItem.opacity}
                       onChange={(e) => updateItem(selectedItem.id, { opacity: Number(e.target.value) })}
-                      className="w-full accent-indigo-500"
+                      className="w-full accent-accent"
                     />
                   </div>
 
@@ -1176,7 +1176,7 @@ export default function MemeGeneratorPage() {
                         step={1}
                         value={selectedItem.backgroundOpacity}
                         onChange={(e) => updateItem(selectedItem.id, { backgroundOpacity: Number(e.target.value) })}
-                        className="w-full accent-indigo-500"
+                        className="w-full accent-accent"
                       />
                     </div>
                   </div>

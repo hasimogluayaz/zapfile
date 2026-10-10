@@ -7,7 +7,7 @@ ZapFile (zapfile.xyz) is a free, browser-based file processing tool suite. All p
 ## Tech Stack
 
 - **Framework**: Next.js 14 (App Router), TypeScript
-- **Styling**: Tailwind CSS with CSS custom properties (light/dark theme)
+- **Styling**: Tailwind CSS with CSS custom properties (light/dark theme), Lucide icons (`lucide-react`)
 - **Key deps**: `pdf-lib`, `react-dropzone`, `react-hot-toast`, `tesseract.js` (OCR)
 - **Analytics**: `@vercel/analytics`, `@vercel/speed-insights`
 
@@ -25,19 +25,23 @@ src/
 │   ├── terms/page.tsx
 │   └── tools/
 │       ├── page.tsx         # Browse all tools
-│       └── [slug]/page.tsx  # 50 individual tool pages
+│       └── [slug]/page.tsx  # 53 individual tool pages
 ├── components/
 │   ├── Header.tsx           # Sticky header, language switcher, category dropdown
 │   ├── Footer.tsx           # Multi-column footer
-│   ├── ToolCard.tsx         # Vertical tool card with colored icon backgrounds
+│   ├── ToolCard.tsx         # Tool row tile (icon, name, description, favorite star)
+│   ├── ToolIcon.tsx         # Lucide icon per tool slug + category icons
+│   ├── DropPad.tsx          # Home hero: universal drop + search
 │   ├── ToolLayout.tsx       # Shared layout for tool pages (breadcrumb, privacy badge, FAQ)
 │   ├── FileDropzone.tsx     # Drag-and-drop file input with type validation
 │   ├── ClientProviders.tsx  # ErrorBoundary + ThemeContext + I18nProvider wrapper
 │   ├── ErrorBoundary.tsx    # Catches render errors, shows refresh button
 │   └── AdPlaceholder.tsx    # Placeholder for future ads
 ├── lib/
-│   ├── tools.ts             # 50 tools registry (slug, name, description, category, acceptedFormats)
+│   ├── tools.ts             # 53 tools registry (slug, name, description, category, acceptedFormats)
 │   ├── tool-i18n.ts         # toolField() helper for localized tool names/descriptions
+│   ├── file-handoff.ts      # Home drop pad → tool page file handoff (in-memory)
+│   ├── search.ts            # searchTools(): diacritic-insensitive ranked tool search (header modal, home, /tools)
 │   ├── i18n.tsx             # Full dictionaries (EN/TR/DE/FR) + context/hooks
 │   ├── i18n-overrides.ts    # Partial translations for ES/PT/IT/JA
 │   └── locales.ts           # Locale type, SUPPORTED_LOCALES, LOCALE_LABELS, isRtlLocale
@@ -56,13 +60,22 @@ src/
 
 ## Tools
 
-Canonical list: `src/lib/tools.ts` — 50 tools across 4 categories (PDF, Image, Video/Audio, Utility). FFmpeg/AI/browser-fetch tools were removed in v1.4.0; lightweight audio waveform kept.
+Canonical list: `src/lib/tools.ts` — 53 tools across 4 categories (PDF, Image, Video/Audio, Utility). FFmpeg/AI/browser-fetch tools were removed in v1.4.0. v2.0 retired 13 off-brand or third-party-dependent tools and merged 5 duplicates; their URLs 301-redirect via `redirects()` in `next.config.mjs` — add a redirect whenever a tool slug is removed or renamed.
 
-## Design Tokens (globals.css :root)
+## Design System ("Voltage")
 
-- `--bg: #f7f8fc` (warm off-white), `--surface: #ffffff`, `--accent: #6366f1` (indigo)
-- Dark theme via `[data-theme="dark"]` selector
-- Theme-aware classes: `text-t-primary`, `text-t-secondary`, `bg-bg-secondary`, `border-border`
+- Graphite ink + one electric-yellow signal (`volt` #FFD60A). Font: Geist (self-hosted via `next/font/local`, `--font-sans`).
+- Tokens live in `globals.css` as RGB channels (`--accent-rgb: 22 24 29`) and are exposed in `tailwind.config.ts` as `rgb(var(--x-rgb) / <alpha-value>)`, so opacity modifiers like `bg-accent/10` work.
+- `accent` is the action color: graphite in light theme, volt in dark. Text on an accent fill must use `text-on-accent` (never `text-white`).
+- Use `volt`/`volt-ink` only for the brand signal (logo, drop pad, favorites, active markers). Don't add gradients, aurora blobs or emoji icons; tool icons come from `components/ToolIcon.tsx` (Lucide).
+- Shared surfaces: `.glass` (tool workspace panel), `.card-premium`, `.dropzone`, `.segmented`. Theme-aware text: `text-t-primary/secondary/tertiary`.
+- Tailwind `dark:` variants follow `[data-theme="dark"]` (`darkMode` selector), not the OS; an inline script in layout.tsx sets the theme before first paint.
+- Avoid `bg-white/5`-style classes from the old dark-only UI; use `bg-bg-secondary`, `border-border`, etc.
+- `metaTitle` / `metaDescription` in tools.ts must be English (canonical pages are English)
+
+## File handoff
+
+Dropping a file on the home page's `DropPad` lists matching tools (`toolsForFiles` in `lib/file-handoff.ts`, based on `acceptedFormats`). Choosing one stores the File in memory and `FileDropzone` picks it up on mount, so the tool opens with the file loaded. Nothing is uploaded.
 
 ## Canonical URL (`src/lib/site-url.ts`)
 

@@ -144,7 +144,7 @@ export default function TextCasePage() {
                 disabled={!input}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
                   activeConversion === conv.key
-                    ? "bg-indigo-500/20 border border-indigo-500/50 text-indigo-400"
+                    ? "bg-accent/20 border border-accent/50 text-accent"
                     : "px-4 py-2 rounded-lg text-t-secondary bg-bg-secondary border border-border hover:text-t-primary transition-colors"
                 }`}
               >
@@ -182,7 +182,7 @@ export default function TextCasePage() {
                 </button>
                 <button
                   onClick={copyOutput}
-                  className="px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:opacity-90 transition-all text-sm"
+                  className="px-6 py-3 rounded-xl font-semibold text-on-accent bg-accent hover:opacity-90 transition-all text-sm"
                 >
                   Copy Result
                 </button>

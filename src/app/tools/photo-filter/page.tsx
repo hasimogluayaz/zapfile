@@ -423,7 +423,7 @@ export default function PhotoFilterPage() {
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium text-t-primary">
                     {t("photofilter.filterLabel")}:{" "}
-                    <span className="text-indigo-400">
+                    <span className="text-accent">
                       {t(FILTERS.find((f) => f.key === selectedFilter)!.nameKey)}
                     </span>
                   </span>
@@ -447,8 +447,8 @@ export default function PhotoFilterPage() {
                   onClick={() => setPreviewMode("tabs")}
                   className={`text-[12px] px-3 py-1.5 rounded-lg font-medium transition-all ${
                     previewMode === "tabs"
-                      ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white"
-                      : "bg-white/5 text-t-secondary hover:text-t-primary"
+                      ? "bg-accent text-on-accent"
+                      : "bg-bg-secondary text-t-secondary hover:text-t-primary"
                   }`}
                 >
                   {t("photofilter.previewTabs")}
@@ -459,10 +459,10 @@ export default function PhotoFilterPage() {
                   disabled={selectedFilter === "original"}
                   className={`text-[12px] px-3 py-1.5 rounded-lg font-medium transition-all ${
                     previewMode === "slider"
-                      ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white"
+                      ? "bg-accent text-on-accent"
                       : selectedFilter === "original"
-                        ? "bg-white/5 text-t-secondary/40 cursor-not-allowed"
-                        : "bg-white/5 text-t-secondary hover:text-t-primary"
+                        ? "bg-bg-secondary text-t-secondary/40 cursor-not-allowed"
+                        : "bg-bg-secondary text-t-secondary hover:text-t-primary"
                   }`}
                 >
                   {t("photofilter.previewSlider")}
@@ -494,8 +494,8 @@ export default function PhotoFilterPage() {
                       onClick={() => setShowOriginal(false)}
                       className={`text-[12px] px-3 py-1.5 rounded-lg font-medium transition-all ${
                         !showOriginal
-                          ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white"
-                          : "bg-white/5 text-t-secondary hover:text-t-primary"
+                          ? "bg-accent text-on-accent"
+                          : "bg-bg-secondary text-t-secondary hover:text-t-primary"
                       }`}
                     >
                       {t("photofilter.filtered")}
@@ -505,8 +505,8 @@ export default function PhotoFilterPage() {
                       onClick={() => setShowOriginal(true)}
                       className={`text-[12px] px-3 py-1.5 rounded-lg font-medium transition-all ${
                         showOriginal
-                          ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white"
-                          : "bg-white/5 text-t-secondary hover:text-t-primary"
+                          ? "bg-accent text-on-accent"
+                          : "bg-bg-secondary text-t-secondary hover:text-t-primary"
                       }`}
                     >
                       {t("ui.original")}
@@ -556,7 +556,7 @@ export default function PhotoFilterPage() {
                     }}
                     className={`relative rounded-xl overflow-hidden border-2 transition-all aspect-square ${
                       selectedFilter === preset.key
-                        ? "border-indigo-500 shadow-[0_0_0_2px] shadow-indigo-500/30"
+                        ? "border-accent shadow-[0_0_0_2px] shadow-sm"
                         : "border-transparent hover:border-border"
                     }`}
                   >
@@ -586,7 +586,7 @@ export default function PhotoFilterPage() {
               <div className="glass rounded-xl p-6 space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-medium text-t-primary">{t("photofilter.intensity")}</h3>
-                  <span className="text-xs font-mono px-2.5 py-1 rounded-lg bg-white/5 text-t-secondary border border-border">
+                  <span className="text-xs font-mono px-2.5 py-1 rounded-lg bg-bg-secondary text-t-secondary border border-border">
                     {intensity}%
                   </span>
                 </div>
@@ -596,7 +596,7 @@ export default function PhotoFilterPage() {
                   max={100}
                   value={intensity}
                   onChange={(e) => setIntensity(Number(e.target.value))}
-                  className="w-full h-2 rounded-full appearance-none cursor-pointer bg-white/10 accent-indigo-500"
+                  className="w-full h-2 rounded-full appearance-none cursor-pointer bg-bg-tertiary accent-accent"
                 />
                 <div className="flex justify-between text-[10px] text-t-secondary">
                   <span>{t("photofilter.intensityMin")}</span>
@@ -610,7 +610,7 @@ export default function PhotoFilterPage() {
               type="button"
               onClick={handleDownload}
               disabled={downloading}
-              className="w-full px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:opacity-90 transition-all disabled:opacity-50"
+              className="w-full px-6 py-3 rounded-xl font-semibold text-on-accent bg-accent hover:opacity-90 transition-all disabled:opacity-50"
             >
               {downloading ? t("photofilter.exporting") : t("photofilter.downloadPng")}
             </button>

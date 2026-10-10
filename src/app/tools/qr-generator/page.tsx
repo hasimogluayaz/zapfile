@@ -307,18 +307,18 @@ export default function QRGeneratorPage() {
                 <div>
                   <label className="block text-xs text-t-tertiary mb-1.5">{t("qr.foreground")}</label>
                   <div className="flex items-center gap-2">
-                    <input type="color" value={fgColor} onChange={(e) => setFgColor(e.target.value)}
+                    <input type="color" value={fgColor} onChange={(e) => setFgColor(e.target.value)} aria-label={t("qr.foreground")}
                       className="w-9 h-9 rounded-lg cursor-pointer bg-transparent border-0 flex-shrink-0" />
-                    <input type="text" value={fgColor} onChange={(e) => setFgColor(e.target.value)}
+                    <input type="text" value={fgColor} onChange={(e) => setFgColor(e.target.value)} aria-label={`${t("qr.foreground")} (HEX)`}
                       className="flex-1 px-3 py-2 rounded-lg bg-bg-secondary border border-border text-t-primary text-xs focus:outline-none focus:border-accent/50 font-mono min-w-0" />
                   </div>
                 </div>
                 <div>
                   <label className="block text-xs text-t-tertiary mb-1.5">{t("qr.background")}</label>
                   <div className="flex items-center gap-2">
-                    <input type="color" value={bgColor} onChange={(e) => setBgColor(e.target.value)}
+                    <input type="color" value={bgColor} onChange={(e) => setBgColor(e.target.value)} aria-label={t("qr.background")}
                       className="w-9 h-9 rounded-lg cursor-pointer bg-transparent border-0 flex-shrink-0" />
-                    <input type="text" value={bgColor} onChange={(e) => setBgColor(e.target.value)}
+                    <input type="text" value={bgColor} onChange={(e) => setBgColor(e.target.value)} aria-label={`${t("qr.background")} (HEX)`}
                       className="flex-1 px-3 py-2 rounded-lg bg-bg-secondary border border-border text-t-primary text-xs focus:outline-none focus:border-accent/50 font-mono min-w-0" />
                   </div>
                 </div>
@@ -398,7 +398,7 @@ export default function QRGeneratorPage() {
             {qrDataUrl && (
               <div className="space-y-2">
                 <button onClick={downloadPNG}
-                  className="w-full py-3 rounded-xl font-semibold text-white bg-accent hover:bg-accent-hover transition-all hover:scale-[1.02] active:scale-[0.98] text-sm">
+                  className="w-full py-3 rounded-xl font-semibold text-on-accent bg-accent hover:bg-accent-hover transition-all hover:scale-[1.02] active:scale-[0.98] text-sm">
                   ⬇ {t("qr.downloadPNG")}
                 </button>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">

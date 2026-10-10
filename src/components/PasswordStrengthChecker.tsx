@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import toast from "react-hot-toast";
-import ToolLayout from "@/components/ToolLayout";
+import { useI18n } from "@/lib/i18n";
 
 // ── Common passwords breach list ──────────────────────────────────────────────
 
@@ -174,7 +174,8 @@ function CheckRow({ label, passed }: { label: string; passed: boolean }) {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
-export default function PasswordStrengthPage() {
+export default function PasswordStrengthChecker() {
+  const { t } = useI18n();
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
@@ -194,10 +195,10 @@ export default function PasswordStrengthPage() {
   };
 
   return (
-    <ToolLayout
-      toolName="Password Strength Tester"
-      toolDescription="Analyze your password's strength, entropy, and estimated crack time — all processed locally in your browser."
-    >
+    <section aria-labelledby="pw-check-title">
+      <h2 id="pw-check-title" className="mb-3 text-[17px] font-semibold tracking-[-0.015em] text-t-primary">
+        {t("pw.checkTitle")}
+      </h2>
       <div className="space-y-5">
         {/* Input Card */}
         <div className="glass rounded-xl p-6">
@@ -215,17 +216,17 @@ export default function PasswordStrengthPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Type your password here…"
-              className="w-full px-4 py-3 pr-20 rounded-xl bg-white/[0.04] border border-white/[0.08] text-t-primary placeholder:text-t-secondary/40 focus:outline-none focus:border-indigo-500/40 font-mono text-sm"
+              className="w-full px-4 py-3 pe-20 rounded-xl bg-bg-secondary border border-border text-t-primary placeholder:text-t-secondary/40 focus:outline-none focus:border-accent/40 font-mono text-sm"
               autoComplete="off"
               autoCorrect="off"
               autoCapitalize="off"
               spellCheck={false}
             />
-            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1">
+            <div className="absolute end-2 top-1/2 -translate-y-1/2 flex gap-1">
               {password && (
                 <button
                   onClick={copyPassword}
-                  className="p-2 rounded-lg text-t-secondary hover:text-t-primary hover:bg-white/[0.08] transition-all"
+                  className="p-2 rounded-lg text-t-secondary hover:text-t-primary hover:bg-bg-tertiary transition-all"
                   aria-label="Copy password"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -235,7 +236,7 @@ export default function PasswordStrengthPage() {
               )}
               <button
                 onClick={() => setShowPassword((v) => !v)}
-                className="p-2 rounded-lg text-t-secondary hover:text-t-primary hover:bg-white/[0.08] transition-all"
+                className="p-2 rounded-lg text-t-secondary hover:text-t-primary hover:bg-bg-tertiary transition-all"
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? (
@@ -264,7 +265,7 @@ export default function PasswordStrengthPage() {
                   </span>
                 </div>
               </div>
-              <div className="h-2.5 rounded-full bg-white/[0.08] overflow-hidden">
+              <div className="h-2.5 rounded-full bg-bg-tertiary overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all duration-500 bg-gradient-to-r ${strengthGradient(analysis.score)}`}
                   style={{ width: `${analysis.score}%` }}
@@ -359,7 +360,7 @@ export default function PasswordStrengthPage() {
                 <ul className="space-y-2">
                   {analysis.suggestions.map((s, i) => (
                     <li key={i} className="flex items-start gap-2 text-sm text-t-secondary">
-                      <span className="text-indigo-400 mt-0.5 shrink-0">→</span>
+                      <span className="text-accent mt-0.5 shrink-0">→</span>
                       {s}
                     </li>
                   ))}
@@ -377,6 +378,6 @@ export default function PasswordStrengthPage() {
           </>
         )}
       </div>
-    </ToolLayout>
+    </section>
   );
 }

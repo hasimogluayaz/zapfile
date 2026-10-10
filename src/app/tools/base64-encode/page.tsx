@@ -85,8 +85,8 @@ export default function Base64Page() {
                 }}
                 className={`py-3 rounded-xl text-sm font-semibold transition-all capitalize ${
                   mode === m
-                    ? "bg-brand-indigo text-white shadow-lg shadow-brand-indigo/25"
-                    : "bg-white/5 text-brand-muted hover:bg-white/10 hover:text-brand-text"
+                    ? "bg-accent text-on-accent shadow-sm"
+                    : "bg-bg-secondary text-brand-muted hover:bg-bg-tertiary hover:text-brand-text"
                 }`}
               >
                 {m}
@@ -108,7 +108,7 @@ export default function Base64Page() {
                   }}
                   className={`py-2 rounded-lg text-sm font-medium transition-all capitalize ${
                     inputType === inp
-                      ? "bg-white/10 text-brand-text"
+                      ? "bg-bg-tertiary text-brand-text"
                       : "text-brand-muted hover:text-brand-text"
                   }`}
                 >
@@ -143,7 +143,7 @@ export default function Base64Page() {
               onChange={(e) => handleEncode(e.target.value)}
               placeholder={mode === "encode" ? t("b64.textToEncode") : t("b64.base64ToDecode")}
               rows={5}
-              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-brand-text placeholder:text-brand-muted/50 focus:outline-none focus:border-brand-indigo/50 font-mono text-sm resize-none"
+              className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border text-brand-text placeholder:text-brand-muted/50 focus:outline-none focus:border-accent/50 font-mono text-sm resize-none"
             />
           </div>
         )}
@@ -158,13 +158,13 @@ export default function Base64Page() {
               <div className="flex gap-2">
                 <button
                   onClick={copyToClipboard}
-                  className="px-3 py-1.5 text-xs rounded-lg bg-brand-indigo/20 text-brand-indigo hover:bg-brand-indigo/30 transition-colors"
+                  className="px-3 py-1.5 text-xs rounded-lg bg-accent/20 text-accent hover:bg-accent/30 transition-colors"
                 >
                   {t("ui.copy")}
                 </button>
                 <button
                   onClick={clearAll}
-                  className="px-3 py-1.5 text-xs rounded-lg bg-white/5 text-brand-muted hover:bg-white/10 hover:text-brand-text transition-colors"
+                  className="px-3 py-1.5 text-xs rounded-lg bg-bg-secondary text-brand-muted hover:bg-bg-tertiary hover:text-brand-text transition-colors"
                 >
                   {t("ui.clear")}
                 </button>
@@ -174,7 +174,7 @@ export default function Base64Page() {
               value={output}
               readOnly
               rows={5}
-              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-brand-text font-mono text-sm resize-none"
+              className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border text-brand-text font-mono text-sm resize-none"
             />
             <p className="text-xs text-brand-muted mt-2">
               {output.length.toLocaleString()} characters

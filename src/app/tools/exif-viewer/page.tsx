@@ -481,10 +481,10 @@ export default function ExifViewerPage() {
                 type="button"
                 onClick={runBatchStrip}
                 disabled={batchBusy}
-                className={`px-5 py-2.5 rounded-xl text-[13px] font-semibold text-white transition-all ${
+                className={`px-5 py-2.5 rounded-xl text-[13px] font-semibold text-on-accent transition-all ${
                   batchBusy
                     ? "bg-bg-secondary text-t-secondary cursor-not-allowed"
-                    : "bg-gradient-to-r from-indigo-500 to-purple-500 hover:opacity-90"
+                    : "bg-accent hover:opacity-90"
                 }`}
               >
                 {batchBusy ? t("exif.removingExif") : t("exif.stripZip")}
@@ -580,10 +580,10 @@ export default function ExifViewerPage() {
                       type="button"
                       onClick={handleRemoveExif}
                       disabled={processing}
-                      className={`w-full py-3 rounded-xl font-semibold text-[14px] text-white transition-all ${
+                      className={`w-full py-3 rounded-xl font-semibold text-[14px] text-on-accent transition-all ${
                         processing
                           ? "bg-bg-secondary cursor-not-allowed text-t-secondary"
-                          : "bg-gradient-to-r from-indigo-500 to-purple-500 hover:shadow-lg hover:shadow-indigo-500/25 hover:scale-[1.02] active:scale-[0.98]"
+                          : "bg-accent hover:shadow-lg hover:shadow-sm hover:scale-[1.02] active:scale-[0.98]"
                       }`}
                     >
                       {processing ? t("exif.removingExif") : t("exif.removeExif")}

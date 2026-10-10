@@ -667,10 +667,10 @@ export default function PdfPageNumbersPage() {
                   type="button"
                   onClick={handleAddPageNumbers}
                   disabled={processing}
-                  className={`inline-flex items-center rounded-2xl px-6 py-3 text-sm font-semibold text-white transition-all ${
+                  className={`inline-flex items-center rounded-2xl px-6 py-3 text-sm font-semibold text-on-accent transition-all ${
                     processing
                       ? "cursor-not-allowed bg-bg-secondary text-t-secondary"
-                      : "bg-gradient-to-r from-indigo-500 to-purple-500 hover:shadow-lg hover:shadow-indigo-500/25"
+                      : "bg-accent hover:shadow-lg hover:shadow-sm"
                   }`}
                 >
                   {processing ? copy.processing : copy.process}

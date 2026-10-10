@@ -929,7 +929,7 @@ export default function WatermarkImagePage() {
                         >
                           +
                         </button>
-                        <div className="pointer-events-none absolute inset-x-3 bottom-3 rounded-xl border border-white/10 bg-black/45 px-3 py-2 text-[11px] text-white/90 backdrop-blur-sm">
+                        <div className="pointer-events-none absolute inset-x-3 bottom-3 rounded-xl border border-border bg-black/45 px-3 py-2 text-[11px] text-white/90 backdrop-blur-sm">
                           {previewCopy.moveHint}
                         </div>
                       </>
@@ -1426,10 +1426,10 @@ export default function WatermarkImagePage() {
                 <button
                   onClick={handleApplyAndDownload}
                   disabled={processing || !canApply}
-                  className={`w-full px-6 py-3 rounded-xl font-semibold text-white transition-all ${
+                  className={`w-full px-6 py-3 rounded-xl font-semibold text-on-accent transition-all ${
                     processing || !canApply
                       ? "bg-bg-secondary border border-border cursor-not-allowed text-t-secondary"
-                      : "bg-gradient-to-r from-indigo-500 to-purple-500 hover:shadow-lg hover:shadow-indigo-500/25 hover:scale-[1.02] active:scale-[0.98]"
+                      : "bg-accent hover:shadow-lg hover:shadow-sm hover:scale-[1.02] active:scale-[0.98]"
                   }`}
                 >
                   {processing ? t("wm.applying") : t("wm.apply")}

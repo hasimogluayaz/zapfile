@@ -57,7 +57,7 @@ export default function ImageCollagePage() {
         toast.error(t("collage.loadFail"));
       }
     },
-    []
+    [t]
   );
 
   const handleAddMore = useCallback(
@@ -71,7 +71,7 @@ export default function ImageCollagePage() {
         toast.error(t("collage.loadFail"));
       }
     },
-    []
+    [t]
   );
 
   const clearAll = () => {
@@ -223,7 +223,7 @@ export default function ImageCollagePage() {
                     <img
                       src={loaded.objectUrl}
                       alt={loaded.file.name}
-                      className="w-16 h-16 object-cover rounded-lg border border-white/10"
+                      className="w-16 h-16 object-cover rounded-lg border border-border"
                     />
                     <button
                       onClick={() => removeImage(i)}
@@ -275,8 +275,8 @@ export default function ImageCollagePage() {
                         onClick={() => setLayout(opt.value)}
                         className={`p-3 rounded-lg text-center transition-all ${
                           layout === opt.value
-                            ? "bg-brand-indigo/20 border border-brand-indigo text-brand-text"
-                            : "bg-white/5 border border-white/10 text-brand-muted hover:border-white/20"
+                            ? "bg-accent/20 border border-accent text-brand-text"
+                            : "bg-bg-secondary border border-border text-brand-muted hover:border-t-primary/20"
                         }`}
                       >
                         <p className="font-medium text-[12px]">{layoutLabelKey[opt.value]}</p>
@@ -318,7 +318,7 @@ export default function ImageCollagePage() {
                     type="color"
                     value={bgColor}
                     onChange={(e) => setBgColor(e.target.value)}
-                    className="w-10 h-10 rounded-lg cursor-pointer border border-white/10 bg-white/5 p-0.5"
+                    className="w-10 h-10 rounded-lg cursor-pointer border border-border bg-bg-secondary p-0.5"
                   />
                   <span className="text-[12px] font-mono text-brand-muted">{bgColor}</span>
                 </div>
@@ -330,7 +330,7 @@ export default function ImageCollagePage() {
               <p className="text-[12px] font-medium text-brand-muted">Live Preview</p>
               <canvas
                 ref={canvasRef}
-                className="w-full rounded-lg border border-white/10 object-contain max-h-80"
+                className="w-full rounded-lg border border-border object-contain max-h-80"
                 style={{ display: "block" }}
               />
             </div>
@@ -339,10 +339,10 @@ export default function ImageCollagePage() {
             <button
               onClick={handleDownload}
               disabled={images.length < 2}
-              className={`w-full py-3 rounded-xl font-semibold text-[14px] text-white transition-all ${
+              className={`w-full py-3 rounded-xl font-semibold text-[14px] text-on-accent transition-all ${
                 images.length < 2
-                  ? "bg-white/10 cursor-not-allowed text-brand-muted"
-                  : "bg-gradient-to-r from-indigo-500 to-purple-500 hover:shadow-lg hover:shadow-indigo-500/25 hover:scale-[1.02] active:scale-[0.98]"
+                  ? "bg-bg-tertiary cursor-not-allowed text-brand-muted"
+                  : "bg-accent hover:shadow-lg hover:shadow-sm hover:scale-[1.02] active:scale-[0.98]"
               }`}
             >
               {t("collage.create")}
@@ -355,7 +355,7 @@ export default function ImageCollagePage() {
                 <img
                   src={resultPreview}
                   alt="Collage result"
-                  className="max-h-48 rounded-lg border border-white/10 mx-auto block"
+                  className="max-h-48 rounded-lg border border-border mx-auto block"
                 />
                 <div className="flex flex-wrap gap-3 justify-center">
                   <DownloadButton
@@ -365,7 +365,7 @@ export default function ImageCollagePage() {
                   />
                   <button
                     onClick={clearAll}
-                    className="px-6 py-2.5 rounded-xl text-[13px] font-semibold text-brand-muted bg-white/5 hover:bg-white/10 transition-colors"
+                    className="px-6 py-2.5 rounded-xl text-[13px] font-semibold text-brand-muted bg-bg-secondary hover:bg-bg-tertiary transition-colors"
                   >
                     {t("ui.startOver")}
                   </button>

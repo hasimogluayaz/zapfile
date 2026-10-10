@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
 import ToolLayout from "@/components/ToolLayout";
+import PasswordStrengthChecker from "@/components/PasswordStrengthChecker";
 import { useI18n } from "@/lib/i18n";
 
 interface PasswordOptions {
@@ -67,9 +68,9 @@ function formatCrackTime(
   const days = hr / 24;
   if (days < 365) return { label: t("pw.days", { n: Math.round(days) }), color: "text-yellow-400" };
   const years = days / 365;
-  if (years < 100) return { label: t("pw.years", { n: Math.round(years) }), color: "text-emerald-400" };
-  if (years < 10000) return { label: t("pw.centuries"), color: "text-emerald-400" };
-  return { label: t("pw.millennia"), color: "text-emerald-400" };
+  if (years < 100) return { label: t("pw.years", { n: Math.round(years) }), color: "text-emerald-600 dark:text-emerald-400" };
+  if (years < 10000) return { label: t("pw.centuries"), color: "text-emerald-600 dark:text-emerald-400" };
+  return { label: t("pw.millennia"), color: "text-emerald-600 dark:text-emerald-400" };
 }
 
 function getStrength(entropy: number): { strengthKey: string; color: string; percent: number } {
@@ -193,13 +194,13 @@ export default function PasswordGeneratorPage() {
             <button
               onClick={() => copyText(password)}
               disabled={!password}
-              className="px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 hover:opacity-90 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              className="px-6 py-3 rounded-xl font-semibold text-on-accent bg-accent hover:opacity-90 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
               {t("ui.copy")}
             </button>
             <button
               onClick={generate}
-              className="px-6 py-3 rounded-xl font-semibold text-t-primary bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] transition-all"
+              className="px-6 py-3 rounded-xl font-semibold text-t-primary bg-bg-secondary border border-border hover:bg-bg-tertiary transition-all"
             >
               {t("ui.regenerate")}
             </button>
@@ -228,7 +229,7 @@ export default function PasswordGeneratorPage() {
               onChange={(e) =>
                 setOptions({ ...options, length: Number(e.target.value) })
               }
-              className="w-full accent-indigo-500"
+              className="w-full accent-accent"
             />
             <div className="flex justify-between text-xs text-t-tertiary mt-1">
               <span>8</span>
@@ -250,13 +251,13 @@ export default function PasswordGeneratorPage() {
                 <div
                   className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${
                     options[key]
-                      ? "bg-indigo-500 border-indigo-500"
-                      : "border-white/20 bg-transparent group-hover:border-white/40"
+                      ? "bg-accent border-accent"
+                      : "border-t-primary/20 bg-transparent group-hover:border-t-primary/40"
                   }`}
                 >
                   {options[key] && (
                     <svg
-                      className="w-3 h-3 text-white"
+                      className="w-3 h-3 text-on-accent"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -290,7 +291,7 @@ export default function PasswordGeneratorPage() {
                 <button
                   key={`${p}-${i}`}
                   onClick={() => copyText(p)}
-                  className="w-full text-left px-3 py-2 rounded-lg bg-bg-secondary border border-border hover:border-indigo-500/40 transition-colors font-mono text-[13px] text-t-primary truncate"
+                  className="w-full text-left px-3 py-2 rounded-lg bg-bg-secondary border border-border hover:border-accent/40 transition-colors font-mono text-[13px] text-t-primary truncate"
                   title={t("ui.copy")}
                 >
                   {p}
@@ -299,6 +300,10 @@ export default function PasswordGeneratorPage() {
             </div>
           </div>
         )}
+
+        <div className="border-t border-border pt-6">
+          <PasswordStrengthChecker />
+        </div>
       </div>
     </ToolLayout>
   );

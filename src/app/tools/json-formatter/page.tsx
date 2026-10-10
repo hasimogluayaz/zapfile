@@ -144,7 +144,7 @@ export default function JSONFormatterPage() {
                     onClick={() => setIndent(option.value)}
                     className={`px-3 py-1.5 text-xs rounded-lg font-medium transition-all ${
                       indent === option.value
-                        ? "bg-accent text-white shadow-md shadow-accent/25"
+                        ? "bg-accent text-on-accent shadow-md shadow-accent/25"
                         : "bg-bg-secondary text-t-secondary hover:bg-bg-tertiary hover:text-t-primary border border-border"
                     }`}
                   >
@@ -194,14 +194,14 @@ export default function JSONFormatterPage() {
           <button
             type="button"
             onClick={handleFormat}
-            className="py-3 rounded-xl text-sm font-semibold transition-all bg-accent text-white shadow-lg shadow-accent/25 hover:bg-accent-hover"
+            className="py-3 rounded-xl text-sm font-semibold transition-all bg-accent text-on-accent shadow-sm hover:bg-accent-hover"
           >
             {t("ui.format")}
           </button>
           <button
             type="button"
             onClick={handleMinify}
-            className="py-3 rounded-xl text-sm font-semibold transition-all bg-accent text-white shadow-lg shadow-accent/25 hover:bg-accent-hover"
+            className="py-3 rounded-xl text-sm font-semibold transition-all bg-accent text-on-accent shadow-sm hover:bg-accent-hover"
           >
             {t("ui.minify")}
           </button>

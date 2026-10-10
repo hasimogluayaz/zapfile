@@ -38,7 +38,7 @@ export default function ConvertImagePage() {
     setFiles(imageFiles);
     setResults([]);
     setZipBlob(null);
-  }, []);
+  }, [t]);
 
   const handleProcess = async () => {
     if (files.length === 0) return;
@@ -153,7 +153,7 @@ export default function ConvertImagePage() {
               </div>
               <div className="space-y-2 max-h-48 overflow-y-auto">
                 {files.map((file, i) => (
-                  <div key={i} className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
+                  <div key={i} className="flex items-center justify-between py-2 border-b border-border last:border-0">
                     <span className="text-sm text-brand-text truncate max-w-[70%]">{file.name}</span>
                     <span className="text-sm text-brand-muted">{formatFileSize(file.size)}</span>
                   </div>
@@ -171,8 +171,8 @@ export default function ConvertImagePage() {
                     onClick={() => setOutputFormat(opt.value)}
                     className={`py-3 px-4 rounded-xl text-sm font-bold transition-all ${
                       outputFormat === opt.value
-                        ? "bg-brand-indigo text-white shadow-lg shadow-brand-indigo/25"
-                        : "bg-white/5 text-brand-muted hover:bg-white/10 hover:text-brand-text"
+                        ? "bg-accent text-on-accent shadow-sm"
+                        : "bg-bg-secondary text-brand-muted hover:bg-bg-tertiary hover:text-brand-text"
                     }`}
                   >
                     {opt.label}
@@ -218,7 +218,7 @@ export default function ConvertImagePage() {
               <h3 className="text-brand-text font-medium mb-4">Results</h3>
               <div className="space-y-3">
                 {results.map((r, i) => (
-                  <div key={i} className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
+                  <div key={i} className="flex items-center justify-between py-2 border-b border-border last:border-0">
                     <span className="text-sm text-brand-text truncate flex-1 min-w-0">
                       {getFileNameWithoutExtension(r.original.name)}{r.ext}
                     </span>
@@ -246,7 +246,7 @@ export default function ConvertImagePage() {
               ) : null}
               <button
                 onClick={reset}
-                className="px-6 py-3 rounded-xl font-semibold text-brand-text bg-white/5 hover:bg-white/10 transition-colors"
+                className="px-6 py-3 rounded-xl font-semibold text-brand-text bg-bg-secondary hover:bg-bg-tertiary transition-colors"
               >
                 {t("ui.convertMore")}
               </button>
