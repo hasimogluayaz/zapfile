@@ -5,28 +5,17 @@ import toast from "react-hot-toast";
 import ToolLayout from "@/components/ToolLayout";
 import { useI18n } from "@/lib/i18n";
 
-function getRelativeTime(date: Date): string {
-  const now = Date.now();
-  const diff = now - date.getTime();
-  const absDiff = Math.abs(diff);
-  const isFuture = diff < 0;
-
-  const seconds = Math.floor(absDiff / 1000);
-  const minutes = Math.floor(seconds / 60);
-  const hours = Math.floor(minutes / 60);
-  const days = Math.floor(hours / 24);
-  const months = Math.floor(days / 30);
-  const years = Math.floor(days / 365);
-
-  let label: string;
-  if (seconds < 60) label = `${seconds} second${seconds !== 1 ? "s" : ""}`;
-  else if (minutes < 60) label = `${minutes} minute${minutes !== 1 ? "s" : ""}`;
-  else if (hours < 24) label = `${hours} hour${hours !== 1 ? "s" : ""}`;
-  else if (days < 30) label = `${days} day${days !== 1 ? "s" : ""}`;
-  else if (months < 12) label = `${months} month${months !== 1 ? "s" : ""}`;
-  else label = `${years} year${years !== 1 ? "s" : ""}`;
-
-  return isFuture ? `in ${label}` : `${label} ago`;
+/** "3 hours ago" / "in 2 days", in the UI language (Intl handles plurals). */
+function getRelativeTime(date: Date, locale: string): string {
+  const diffSeconds = Math.round((date.getTime() - Date.now()) / 1000);
+  const abs = Math.abs(diffSeconds);
+  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
+  if (abs < 60) return rtf.format(diffSeconds, "second");
+  if (abs < 3600) return rtf.format(Math.trunc(diffSeconds / 60), "minute");
+  if (abs < 86400) return rtf.format(Math.trunc(diffSeconds / 3600), "hour");
+  if (abs < 86400 * 30) return rtf.format(Math.trunc(diffSeconds / 86400), "day");
+  if (abs < 86400 * 365) return rtf.format(Math.trunc(diffSeconds / (86400 * 30)), "month");
+  return rtf.format(Math.trunc(diffSeconds / (86400 * 365)), "year");
 }
 
 function toDatetimeLocalString(date: Date): string {
@@ -35,26 +24,23 @@ function toDatetimeLocalString(date: Date): string {
 }
 
 export default function TimestampConverterPage() {
-  const { t } = useI18n();
-  const [currentTimestamp, setCurrentTimestamp] = useState(
-    Math.floor(Date.now() / 1000)
-  );
+  const { t, locale } = useI18n();
+  // Time-dependent values start empty and are filled after mount, so the
+  // server-rendered HTML (UTC, earlier second) never mismatches the client.
+  const [currentTimestamp, setCurrentTimestamp] = useState<number | null>(null);
 
   // Unix -> Date
-  const [unixInput, setUnixInput] = useState(
-    Math.floor(Date.now() / 1000).toString()
-  );
+  const [unixInput, setUnixInput] = useState("");
   const [convertedDate, setConvertedDate] = useState<Date | null>(null);
   const [unixError, setUnixError] = useState("");
 
   // Date -> Unix
-  const [dateInput, setDateInput] = useState(
-    toDatetimeLocalString(new Date())
-  );
+  const [dateInput, setDateInput] = useState("");
   const [convertedUnix, setConvertedUnix] = useState<number | null>(null);
 
   // Live clock
   useEffect(() => {
+    setCurrentTimestamp(Math.floor(Date.now() / 1000));
     const interval = setInterval(() => {
       setCurrentTimestamp(Math.floor(Date.now() / 1000));
     }, 1000);
@@ -134,7 +120,7 @@ export default function TimestampConverterPage() {
         },
         {
           label: t("ts.localDate"),
-          value: convertedDate.toLocaleString(),
+          value: convertedDate.toLocaleString(locale),
         },
         {
           label: t("ts.utcDate"),
@@ -142,7 +128,7 @@ export default function TimestampConverterPage() {
         },
         {
           label: t("ts.relative"),
-          value: getRelativeTime(convertedDate),
+          value: getRelativeTime(convertedDate, locale),
         },
       ]
     : [];
@@ -160,11 +146,11 @@ export default function TimestampConverterPage() {
           </p>
           <button
             onClick={() =>
-              copyToClipboard(currentTimestamp.toString(), "Current timestamp")
+              currentTimestamp !== null && copyToClipboard(currentTimestamp.toString())
             }
             className="text-3xl font-bold font-mono gradient-text hover:opacity-80 transition-opacity cursor-pointer tabular-nums"
           >
-            {currentTimestamp}
+            {currentTimestamp ?? "\u00a0"}
           </button>
           <p className="text-xs text-t-tertiary mt-2">{t("ts.clickCopy")}</p>
         </div>

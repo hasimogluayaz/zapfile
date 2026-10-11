@@ -309,6 +309,12 @@ function jpegToCleanPngBlob(file: File): Promise<Blob | null> {
 
 export default function ExifViewerPage() {
   const { t } = useI18n();
+  /** Localized EXIF field name; unknown tags keep their English name. */
+  const tagLabel = (name: string) => {
+    const key = `exif.tag.${name.toLowerCase().replace(/[^a-z0-9]/g, "")}`;
+    const label = t(key);
+    return label === key ? name : label;
+  };
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [exifTags, setExifTags] = useState<ExifTag[]>([]);
@@ -628,7 +634,7 @@ export default function ExifViewerPage() {
                           className="border-t border-border hover:bg-bg-secondary/50 transition-colors"
                         >
                           <td className="px-3 py-2 text-t-secondary whitespace-nowrap">
-                            {tag.name}
+                            {tagLabel(tag.name)}
                           </td>
                           <td className="px-3 py-2 text-t-primary break-all">
                             {tag.value}

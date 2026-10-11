@@ -119,6 +119,12 @@ export default function ToolLayout({
         { q: t("faq.formats.q"), a: t("faq.formats.a") },
         { q: t("faq.filesize.q"), a: t("faq.filesize.a") },
       ];
+    } else if (category === "video" && (slug === "text-to-speech" || slug === "audio-recorder")) {
+      // Nothing to upload or convert here: offline/mobile answers fit better.
+      categoryFaqs = [
+        { q: t("faq.offline.q"), a: t("faq.offline.a") },
+        { q: t("faq.mobile.q"), a: t("faq.mobile.a") },
+      ];
     } else if (category === "video") {
       categoryFaqs = [
         { q: t("faq.formats.q"), a: t("faq.formats.a") },
@@ -142,7 +148,7 @@ export default function ToolLayout({
       ...specific,
       ...[...commonFaqs, ...categoryFaqs].filter((f) => !seen.has(f.q)),
     ];
-  }, [faq, currentTool, t, locale, toolFaqs]);
+  }, [faq, currentTool, t, locale, toolFaqs, slug]);
 
   const toggleFaq = (index: number) => {
     setOpenFaqIndices((prev) => {
