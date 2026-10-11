@@ -111,7 +111,7 @@ async function resizeFileToBlob(
 }
 
 export default function ResizeImagePage() {
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const [files, setFiles] = useState<File[]>([]);
   const [preview, setPreview] = useState<string | null>(null);
   const [originalWidth, setOriginalWidth] = useState(0);
@@ -127,39 +127,10 @@ export default function ResizeImagePage() {
   const [results, setResults] = useState<ResizeResult[]>([]);
   const [zipBlob, setZipBlob] = useState<Blob | null>(null);
 
-  const copy =
-    locale === "tr"
-      ? {
-          fitTitle: "Sigdirma bicimi",
-          contain: "Tam sigdir",
-          cover: "Kirp ve doldur",
-          stretch: "Esnet",
-          outputTitle: "Cikti ayarlari",
-          format: "Format",
-          quality: "Kalite",
-          background: "Bos alan rengi",
-          social: "Toplu islem",
-          firstImage: "Ilk gorsel",
-          currentOutput: "Cikis",
-        }
-      : {
-          fitTitle: "Fit mode",
-          contain: "Fit inside",
-          cover: "Crop to fill",
-          stretch: "Stretch",
-          outputTitle: "Output settings",
-          format: "Format",
-          quality: "Quality",
-          background: "Empty space color",
-          social: "Batch",
-          firstImage: "First image",
-          currentOutput: "Output",
-        };
-
   const fitLabels: Record<FitMode, string> = {
-    contain: copy.contain,
-    cover: copy.cover,
-    stretch: copy.stretch,
+    contain: t("resize.ui.contain"),
+    cover: t("resize.ui.cover"),
+    stretch: t("resize.ui.stretch"),
   };
 
   const ratio = originalWidth / originalHeight || 1;
@@ -223,7 +194,7 @@ export default function ResizeImagePage() {
           { label: "4K 3840", w: 3840, h: Math.round(3840 / ratio) },
           { label: "1:1 1080", w: 1080, h: 1080 },
           { label: "16:9 1280", w: 1280, h: 720 },
-          { label: "Story", w: 1080, h: 1920 },
+          { label: t("resize.ui.story"), w: 1080, h: 1920 },
         ]
       : [];
 
@@ -300,7 +271,7 @@ export default function ResizeImagePage() {
             }}
             multiple
             formats={["JPG", "PNG", "WEBP"]}
-            label="Drop images here or click to browse (batch supported)"
+            label={t("resize.ui.dropLabel")}
           />
         ) : results.length === 0 ? (
           <>
@@ -346,25 +317,25 @@ export default function ResizeImagePage() {
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
                 <div className="rounded-xl bg-bg-secondary border border-border p-3">
-                  <p className="text-xs text-t-secondary">{copy.firstImage}</p>
+                  <p className="text-xs text-t-secondary">{t("resize.ui.firstImage")}</p>
                   <p className="text-sm font-semibold text-t-primary">
                     {originalWidth} x {originalHeight}
                   </p>
                 </div>
                 <div className="rounded-xl bg-bg-secondary border border-border p-3">
-                  <p className="text-xs text-t-secondary">{copy.currentOutput}</p>
+                  <p className="text-xs text-t-secondary">{t("ui.output")}</p>
                   <p className="text-sm font-semibold text-t-primary">
                     {finalFormat || "-"}
                   </p>
                 </div>
                 <div className="rounded-xl bg-bg-secondary border border-border p-3">
-                  <p className="text-xs text-t-secondary">{copy.fitTitle}</p>
+                  <p className="text-xs text-t-secondary">{t("resize.ui.fitTitle")}</p>
                   <p className="text-sm font-semibold text-t-primary">
                     {fitLabels[fitMode]}
                   </p>
                 </div>
                 <div className="rounded-xl bg-bg-secondary border border-border p-3">
-                  <p className="text-xs text-t-secondary">{copy.social}</p>
+                  <p className="text-xs text-t-secondary">{t("resize.ui.batch")}</p>
                   <p className="text-sm font-semibold text-t-primary">
                     {files.length}/{MAX_BATCH}
                   </p>
@@ -448,13 +419,13 @@ export default function ResizeImagePage() {
 
             <div className="glass rounded-xl p-6 space-y-5">
               <h3 className="font-semibold text-t-primary">
-                {copy.fitTitle}
+                {t("resize.ui.fitTitle")}
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {[
-                  { value: "contain" as const, label: copy.contain },
-                  { value: "cover" as const, label: copy.cover },
-                  { value: "stretch" as const, label: copy.stretch },
+                  { value: "contain" as const, label: t("resize.ui.contain") },
+                  { value: "cover" as const, label: t("resize.ui.cover") },
+                  { value: "stretch" as const, label: t("resize.ui.stretch") },
                 ].map((option) => (
                   <button
                     key={option.value}
@@ -474,12 +445,12 @@ export default function ResizeImagePage() {
 
             <div className="glass rounded-xl p-6 space-y-5">
               <h3 className="font-semibold text-t-primary">
-                {copy.outputTitle}
+                {t("resize.ui.outputTitle")}
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm text-t-secondary mb-2">
-                    {copy.format}
+                    {t("ui.format")}
                   </label>
                   <select
                     value={outputFormat}
@@ -488,7 +459,7 @@ export default function ResizeImagePage() {
                     }
                     className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border text-t-primary focus:outline-none focus:border-accent/50"
                   >
-                    <option value="original">Original</option>
+                    <option value="original">{t("ui.original")}</option>
                     <option value="jpeg">JPG</option>
                     <option value="png">PNG</option>
                     <option value="webp">WebP</option>
@@ -496,7 +467,7 @@ export default function ResizeImagePage() {
                 </div>
                 <div>
                   <label className="block text-sm text-t-secondary mb-2">
-                    {copy.background}
+                    {t("resize.ui.background")}
                   </label>
                   <div className="flex gap-3">
                     <input
@@ -519,7 +490,7 @@ export default function ResizeImagePage() {
                 resolveOutputFormat(files[0], outputFormat) !== "png" && (
                   <div>
                     <div className="flex justify-between text-sm mb-2">
-                      <span className="text-t-secondary">{copy.quality}</span>
+                      <span className="text-t-secondary">{t("ui.quality")}</span>
                       <span className="text-t-primary">{quality}%</span>
                     </div>
                     <input

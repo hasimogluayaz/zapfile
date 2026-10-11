@@ -84,92 +84,7 @@ function extractPageText(items: PdfTextItemLike[], mode: ExtractionMode) {
 }
 
 export default function PdfTextExtractorPage() {
-  const { locale, t } = useI18n();
-  const copy = locale === "tr"
-    ? {
-        dropLabel: "Metnini almak istediğiniz PDF dosyasını bırakın",
-        invalidFile: "Lütfen geçerli bir PDF dosyası seçin.",
-        invalidPdf: "PDF okunamadı. Dosyayı kontrol edin.",
-        fileReady: "Dosya hazır",
-        options: "Çıkarma ayarları",
-        extract: "Metni çıkar",
-        extracting: "Metin çıkarılıyor...",
-        pageRange: "Sayfa aralığı",
-        firstPage: "İlk sayfa",
-        lastPage: "Son sayfa",
-        mode: "Metin modu",
-        flow: "Akış metni",
-        lines: "Satırları koru",
-        pageMarkers: "Sayfa başlıklarını ekle",
-        pageMarkersHint: "Tam çıktıda `--- Sayfa X ---` ayraçları kullanılır.",
-        summary: "Özet",
-        pages: "Sayfa",
-        words: "Kelime",
-        characters: "Karakter",
-        search: "Metin içinde ara",
-        searchPlaceholder: "Anahtar kelime, marka adı veya ifade ara",
-        allPages: "Tüm sayfalar",
-        matchingPages: "Eşleşen sayfalar",
-        noMatches: "Aramaya uyan sayfa bulunamadı.",
-        output: "Çıktı",
-        copyVisible: "Görüneni kopyala",
-        copyAll: "Tamamını kopyala",
-        downloadTxt: "TXT indir",
-        downloadJson: "JSON indir",
-        newFile: "Yeni dosya",
-        ocrHint: "Tarama veya görsel tabanlı PDF'ler boş görünebilir. Onlar için",
-        ocrLink: "OCR aracını kullanın",
-        copied: "Metin panoya kopyalandı.",
-        copyFailed: "Kopyalama başarısız oldu.",
-        success: "{count} sayfadan metin çıkarıldı.",
-        fail: "Metin çıkarılamadı. PDF taranmış veya görsel tabanlı olabilir.",
-        flowHint: "Satır sonlarını temizleyip tek parça okunabilir metin üretir.",
-        linesHint: "PDF düzenine daha yakın satır yapısını korumaya çalışır.",
-        filteredCount: "Filtrelenmiş görünüm",
-        nothingToShow: "Gösterilecek metin yok.",
-      }
-    : {
-        dropLabel: "Drop the PDF you want to extract text from",
-        invalidFile: "Please select a valid PDF file.",
-        invalidPdf: "Could not read that PDF. Please check the file and try again.",
-        fileReady: "File ready",
-        options: "Extraction options",
-        extract: "Extract text",
-        extracting: "Extracting text...",
-        pageRange: "Page range",
-        firstPage: "First page",
-        lastPage: "Last page",
-        mode: "Text mode",
-        flow: "Flow text",
-        lines: "Preserve lines",
-        pageMarkers: "Include page headers",
-        pageMarkersHint: "Use `--- Page X ---` separators in the full output.",
-        summary: "Summary",
-        pages: "Pages",
-        words: "Words",
-        characters: "Characters",
-        search: "Search in extracted text",
-        searchPlaceholder: "Search for a keyword, phrase, or campaign name",
-        allPages: "All pages",
-        matchingPages: "Matching pages",
-        noMatches: "No pages match this search.",
-        output: "Output",
-        copyVisible: "Copy visible",
-        copyAll: "Copy all",
-        downloadTxt: "Download TXT",
-        downloadJson: "Download JSON",
-        newFile: "New file",
-        ocrHint: "Scanned or image-based PDFs may return empty results. For those, use the",
-        ocrLink: "OCR tool",
-        copied: "Text copied to the clipboard.",
-        copyFailed: "Copy failed.",
-        success: "Extracted text from {count} pages.",
-        fail: "Failed to extract text. The PDF may be scanned or image-based.",
-        flowHint: "Cleans line breaks and produces one continuous readable block.",
-        linesHint: "Keeps a more layout-aware line structure from the PDF.",
-        filteredCount: "Filtered view",
-        nothingToShow: "Nothing to show yet.",
-      };
+  const { t } = useI18n();
 
   const [file, setFile] = useState<File | null>(null);
   const [pageCount, setPageCount] = useState(0);
@@ -209,12 +124,12 @@ export default function PdfTextExtractorPage() {
       pageList
         .map((page) =>
           includePageMarkers
-            ? `--- ${locale === "tr" ? "Sayfa" : "Page"} ${page.pageNumber} ---\n${page.text}`
+            ? `--- ${t("pdftext.ui.page", { n: page.pageNumber })} ---\n${page.text}`
             : page.text,
         )
         .join("\n\n")
         .trim(),
-    [includePageMarkers, locale],
+    [includePageMarkers, t],
   );
 
   const fullText = useMemo(() => buildCombinedText(pages), [buildCombinedText, pages]);
@@ -253,7 +168,7 @@ export default function PdfTextExtractorPage() {
           currentFile.type === "application/pdf" || currentFile.name.toLowerCase().endsWith(".pdf"),
       );
       if (!picked) {
-        toast.error(copy.invalidFile);
+        toast.error(t("pdftext.ui.invalidFile"));
         return;
       }
       let pdf: File;
@@ -282,10 +197,10 @@ export default function PdfTextExtractorPage() {
         console.error(error);
         setFile(null);
         setPageCount(0);
-        toast.error(copy.invalidPdf);
+        toast.error(t("pdftext.ui.invalidPdf"));
       }
     },
-    [copy.invalidFile, copy.invalidPdf],
+    [t],
   );
 
   const handleExtract = useCallback(async () => {
@@ -329,26 +244,26 @@ export default function PdfTextExtractorPage() {
       setPages(extracted);
       setDone(true);
       setProgress(100);
-      toast.success(copy.success.replace("{count}", String(extracted.length)));
+      toast.success(t("pdftext.ui.success", { n: extracted.length }));
     } catch (error) {
       console.error(error);
-      toast.error(copy.fail);
+      toast.error(t("pdftext.ui.fail"));
     } finally {
       setProcessing(false);
     }
-  }, [copy.fail, copy.success, file, mode, rangeEnd, rangeStart]);
+  }, [file, mode, rangeEnd, rangeStart, t]);
 
   const handleCopy = useCallback(
     async (value: string) => {
       if (!value.trim()) return;
       try {
         await navigator.clipboard.writeText(value);
-        toast.success(copy.copied);
+        toast.success(t("pdftext.ui.copied"));
       } catch {
-        toast.error(copy.copyFailed);
+        toast.error(t("pdftext.ui.copyFailed"));
       }
     },
-    [copy.copied, copy.copyFailed],
+    [t],
   );
 
   const handleDownloadTxt = useCallback(() => {
@@ -397,7 +312,7 @@ export default function PdfTextExtractorPage() {
           <FileDropzone
             onFilesSelected={handleFile}
             accept={{ "application/pdf": [".pdf"] }}
-            label={copy.dropLabel}
+            label={t("pdftext.ui.dropLabel")}
             formats={["PDF"]}
           />
         ) : (
@@ -406,13 +321,13 @@ export default function PdfTextExtractorPage() {
               <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                 <div className="min-w-0">
                   <p className="text-xs uppercase tracking-[0.22em] text-t-secondary">
-                    {copy.fileReady}
+                    {t("pdftext.ui.fileReady")}
                   </p>
                   <p className="mt-2 truncate text-lg font-semibold text-t-primary">
                     {file.name}
                   </p>
                   <p className="mt-1 text-sm text-t-secondary">
-                    {pageCount} {copy.pages.toLowerCase()}
+                    {t("pdftext.ui.pageCount", { n: pageCount })}
                   </p>
                 </div>
                 <button
@@ -420,21 +335,21 @@ export default function PdfTextExtractorPage() {
                   onClick={reset}
                   className="rounded-xl border border-border bg-bg-secondary px-4 py-2 text-sm font-medium text-t-secondary transition-colors hover:text-t-primary"
                 >
-                  {copy.newFile}
+                  {t("pdftext.ui.newFile")}
                 </button>
               </div>
 
               <div className="grid gap-5 lg:grid-cols-[0.95fr_1.05fr]">
                 <div className="rounded-2xl border border-border bg-bg-secondary/60 p-4 space-y-4">
                   <div>
-                    <p className="text-sm font-semibold text-t-primary">{copy.options}</p>
-                    <p className="mt-1 text-xs text-t-secondary">{copy.pageMarkersHint}</p>
+                    <p className="text-sm font-semibold text-t-primary">{t("pdftext.ui.options")}</p>
+                    <p className="mt-1 text-xs text-t-secondary">{t("pdftext.ui.pageMarkersHint")}</p>
                   </div>
 
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
                       <label className="mb-2 block text-sm font-medium text-t-secondary">
-                        {copy.firstPage}
+                        {t("pdftext.ui.firstPage")}
                       </label>
                       <input
                         type="number"
@@ -447,7 +362,7 @@ export default function PdfTextExtractorPage() {
                     </div>
                     <div>
                       <label className="mb-2 block text-sm font-medium text-t-secondary">
-                        {copy.lastPage}
+                        {t("pdftext.ui.lastPage")}
                       </label>
                       <input
                         type="number"
@@ -462,7 +377,7 @@ export default function PdfTextExtractorPage() {
 
                   <div>
                     <label className="mb-2 block text-sm font-medium text-t-secondary">
-                      {copy.mode}
+                      {t("pdftext.ui.mode")}
                     </label>
                     <div className="grid gap-2 sm:grid-cols-2">
                       <button
@@ -474,8 +389,8 @@ export default function PdfTextExtractorPage() {
                             : "border-border bg-bg-primary text-t-secondary hover:border-accent/40"
                         }`}
                       >
-                        <span className="block text-sm font-medium">{copy.flow}</span>
-                        <span className="mt-1 block text-xs text-t-secondary">{copy.flowHint}</span>
+                        <span className="block text-sm font-medium">{t("pdftext.ui.flow")}</span>
+                        <span className="mt-1 block text-xs text-t-secondary">{t("pdftext.ui.flowHint")}</span>
                       </button>
                       <button
                         type="button"
@@ -486,8 +401,8 @@ export default function PdfTextExtractorPage() {
                             : "border-border bg-bg-primary text-t-secondary hover:border-accent/40"
                         }`}
                       >
-                        <span className="block text-sm font-medium">{copy.lines}</span>
-                        <span className="mt-1 block text-xs text-t-secondary">{copy.linesHint}</span>
+                        <span className="block text-sm font-medium">{t("pdftext.ui.lines")}</span>
+                        <span className="mt-1 block text-xs text-t-secondary">{t("pdftext.ui.linesHint")}</span>
                       </button>
                     </div>
                   </div>
@@ -501,10 +416,10 @@ export default function PdfTextExtractorPage() {
                     />
                     <div>
                       <span className="block text-sm font-medium text-t-primary">
-                        {copy.pageMarkers}
+                        {t("pdftext.ui.pageMarkers")}
                       </span>
                       <span className="mt-1 block text-xs text-t-secondary">
-                        {copy.pageMarkersHint}
+                        {t("pdftext.ui.pageMarkersHint")}
                       </span>
                     </div>
                   </label>
@@ -513,7 +428,7 @@ export default function PdfTextExtractorPage() {
                 <div className="grid gap-4 sm:grid-cols-3">
                   <div className="rounded-2xl border border-border bg-bg-secondary/60 p-4">
                     <p className="text-[11px] uppercase tracking-[0.2em] text-t-secondary">
-                      {copy.pageRange}
+                      {t("pdftext.ui.pageRange")}
                     </p>
                     <p className="mt-2 text-xl font-semibold text-t-primary">
                       {normalizedRange.from}-{normalizedRange.to}
@@ -521,7 +436,7 @@ export default function PdfTextExtractorPage() {
                   </div>
                   <div className="rounded-2xl border border-border bg-bg-secondary/60 p-4">
                     <p className="text-[11px] uppercase tracking-[0.2em] text-t-secondary">
-                      {copy.pages}
+                      {t("pdftext.ui.pages")}
                     </p>
                     <p className="mt-2 text-xl font-semibold text-t-primary">
                       {done ? totalTotals.pages : normalizedRange.to - normalizedRange.from + 1}
@@ -529,10 +444,10 @@ export default function PdfTextExtractorPage() {
                   </div>
                   <div className="rounded-2xl border border-border bg-bg-secondary/60 p-4">
                     <p className="text-[11px] uppercase tracking-[0.2em] text-t-secondary">
-                      {copy.summary}
+                      {t("pdftext.ui.summary")}
                     </p>
                     <p className="mt-2 text-sm font-medium text-t-primary">
-                      {mode === "flow" ? copy.flow : copy.lines}
+                      {mode === "flow" ? t("pdftext.ui.flow") : t("pdftext.ui.lines")}
                     </p>
                   </div>
 
@@ -547,7 +462,7 @@ export default function PdfTextExtractorPage() {
                           : "bg-accent hover:shadow-lg hover:shadow-sm"
                       }`}
                     >
-                      {processing ? copy.extracting : copy.extract}
+                      {processing ? t("pdftext.ui.extracting") : t("pdftext.ui.extract")}
                     </button>
                   </div>
                 </div>
@@ -556,7 +471,7 @@ export default function PdfTextExtractorPage() {
 
             {(processing || progress > 0) && (
               <div className="glass rounded-2xl p-4">
-                <ProgressBar progress={progress} label={processing ? copy.extracting : undefined} />
+                <ProgressBar progress={progress} label={processing ? t("pdftext.ui.extracting") : undefined} />
               </div>
             )}
 
@@ -565,13 +480,13 @@ export default function PdfTextExtractorPage() {
                 <div className="grid gap-4 md:grid-cols-4">
                   <div className="rounded-2xl border border-border bg-bg-secondary/60 p-4">
                     <p className="text-[11px] uppercase tracking-[0.2em] text-t-secondary">
-                      {copy.pages}
+                      {t("pdftext.ui.pages")}
                     </p>
                     <p className="mt-2 text-2xl font-semibold text-t-primary">{totalTotals.pages}</p>
                   </div>
                   <div className="rounded-2xl border border-border bg-bg-secondary/60 p-4">
                     <p className="text-[11px] uppercase tracking-[0.2em] text-t-secondary">
-                      {copy.words}
+                      {t("pdftext.ui.words")}
                     </p>
                     <p className="mt-2 text-2xl font-semibold text-t-primary">
                       {totalTotals.words.toLocaleString()}
@@ -579,7 +494,7 @@ export default function PdfTextExtractorPage() {
                   </div>
                   <div className="rounded-2xl border border-border bg-bg-secondary/60 p-4">
                     <p className="text-[11px] uppercase tracking-[0.2em] text-t-secondary">
-                      {copy.characters}
+                      {t("pdftext.ui.characters")}
                     </p>
                     <p className="mt-2 text-2xl font-semibold text-t-primary">
                       {totalTotals.characters.toLocaleString()}
@@ -587,7 +502,7 @@ export default function PdfTextExtractorPage() {
                   </div>
                   <div className="rounded-2xl border border-border bg-bg-secondary/60 p-4">
                     <p className="text-[11px] uppercase tracking-[0.2em] text-t-secondary">
-                      {copy.filteredCount}
+                      {t("pdftext.ui.filteredCount")}
                     </p>
                     <p className="mt-2 text-lg font-semibold text-t-primary">
                       {visibleTotals.pages} / {totalTotals.pages}
@@ -599,13 +514,13 @@ export default function PdfTextExtractorPage() {
                   <aside className="glass rounded-2xl p-4 space-y-4">
                     <div>
                       <label className="mb-2 block text-sm font-medium text-t-secondary">
-                        {copy.search}
+                        {t("pdftext.ui.search")}
                       </label>
                       <input
                         type="search"
                         value={searchQuery}
                         onChange={(event) => setSearchQuery(event.target.value)}
-                        placeholder={copy.searchPlaceholder}
+                        placeholder={t("pdftext.ui.searchPlaceholder")}
                         className="w-full rounded-xl border border-border bg-bg-secondary px-3 py-2.5 text-sm text-t-primary placeholder:text-t-secondary/50 focus:border-accent/50 focus:outline-none"
                       />
                     </div>
@@ -620,12 +535,12 @@ export default function PdfTextExtractorPage() {
                             : "border-border bg-bg-secondary text-t-secondary hover:border-accent/40 hover:text-t-primary"
                         }`}
                       >
-                        {copy.allPages}
+                        {t("pdftext.ui.allPages")}
                       </button>
 
                       <div>
                         <p className="mb-2 text-xs uppercase tracking-[0.18em] text-t-secondary">
-                          {copy.matchingPages}
+                          {t("pdftext.ui.matchingPages")}
                         </p>
                         <div className="space-y-2 max-h-[420px] overflow-y-auto pe-1">
                           {filteredPages.length > 0 ? (
@@ -641,16 +556,16 @@ export default function PdfTextExtractorPage() {
                                 }`}
                               >
                                 <span className="block text-sm font-medium">
-                                  {locale === "tr" ? "Sayfa" : "Page"} {page.pageNumber}
+                                  {t("pdftext.ui.page", { n: page.pageNumber })}
                                 </span>
                                 <span className="mt-1 block text-xs text-t-secondary">
-                                  {page.wordCount.toLocaleString()} {copy.words.toLowerCase()}
+                                  {t("pdftext.ui.wordCount", { n: page.wordCount.toLocaleString() })}
                                 </span>
                               </button>
                             ))
                           ) : (
                             <div className="rounded-xl border border-border bg-bg-secondary px-3 py-3 text-sm text-t-secondary">
-                              {copy.noMatches}
+                              {t("pdftext.ui.noMatches")}
                             </div>
                           )}
                         </div>
@@ -661,11 +576,11 @@ export default function PdfTextExtractorPage() {
                   <section className="glass rounded-2xl p-4 sm:p-5 space-y-4">
                     <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
                       <div>
-                        <p className="text-sm font-semibold text-t-primary">{copy.output}</p>
+                        <p className="text-sm font-semibold text-t-primary">{t("ui.output")}</p>
                         <p className="mt-1 text-xs text-t-secondary">
                           {selectedPage === "all"
-                            ? `${visibleTotals.pages} ${copy.pages.toLowerCase()}`
-                            : `${locale === "tr" ? "Sayfa" : "Page"} ${selectedPage}`}
+                            ? t("pdftext.ui.pageCount", { n: visibleTotals.pages })
+                            : t("pdftext.ui.page", { n: selectedPage })}
                         </p>
                       </div>
                       <div className="flex flex-wrap gap-2">
@@ -674,28 +589,28 @@ export default function PdfTextExtractorPage() {
                           onClick={() => void handleCopy(visibleText)}
                           className="rounded-xl border border-border bg-bg-secondary px-4 py-2 text-sm font-medium text-t-secondary transition-colors hover:text-t-primary"
                         >
-                          {copy.copyVisible}
+                          {t("pdftext.ui.copyVisible")}
                         </button>
                         <button
                           type="button"
                           onClick={() => void handleCopy(fullText)}
                           className="rounded-xl border border-border bg-bg-secondary px-4 py-2 text-sm font-medium text-t-secondary transition-colors hover:text-t-primary"
                         >
-                          {copy.copyAll}
+                          {t("pdftext.ui.copyAll")}
                         </button>
                         <button
                           type="button"
                           onClick={handleDownloadTxt}
                           className="rounded-xl border border-border bg-bg-secondary px-4 py-2 text-sm font-medium text-t-secondary transition-colors hover:text-t-primary"
                         >
-                          {copy.downloadTxt}
+                          {t("pdftext.ui.downloadTxt")}
                         </button>
                         <button
                           type="button"
                           onClick={handleDownloadJson}
                           className="rounded-xl border border-border bg-bg-secondary px-4 py-2 text-sm font-medium text-t-secondary transition-colors hover:text-t-primary"
                         >
-                          {copy.downloadJson}
+                          {t("pdftext.ui.downloadJson")}
                         </button>
                       </div>
                     </div>
@@ -703,13 +618,13 @@ export default function PdfTextExtractorPage() {
                     <div className="grid gap-4 sm:grid-cols-3">
                       <div className="rounded-2xl border border-border bg-bg-secondary/60 p-4">
                         <p className="text-[11px] uppercase tracking-[0.2em] text-t-secondary">
-                          {copy.pages}
+                          {t("pdftext.ui.pages")}
                         </p>
                         <p className="mt-2 text-lg font-semibold text-t-primary">{visibleTotals.pages}</p>
                       </div>
                       <div className="rounded-2xl border border-border bg-bg-secondary/60 p-4">
                         <p className="text-[11px] uppercase tracking-[0.2em] text-t-secondary">
-                          {copy.words}
+                          {t("pdftext.ui.words")}
                         </p>
                         <p className="mt-2 text-lg font-semibold text-t-primary">
                           {visibleTotals.words.toLocaleString()}
@@ -717,7 +632,7 @@ export default function PdfTextExtractorPage() {
                       </div>
                       <div className="rounded-2xl border border-border bg-bg-secondary/60 p-4">
                         <p className="text-[11px] uppercase tracking-[0.2em] text-t-secondary">
-                          {copy.characters}
+                          {t("pdftext.ui.characters")}
                         </p>
                         <p className="mt-2 text-lg font-semibold text-t-primary">
                           {visibleTotals.characters.toLocaleString()}
@@ -727,14 +642,14 @@ export default function PdfTextExtractorPage() {
 
                     <textarea
                       readOnly
-                      value={visibleText || copy.nothingToShow}
+                      value={visibleText || t("pdftext.ui.nothingToShow")}
                       className="h-[520px] w-full resize-y rounded-2xl border border-border bg-bg-secondary px-4 py-4 font-mono text-sm text-t-primary focus:border-accent/40 focus:outline-none"
                     />
 
                     <div className="rounded-2xl border border-amber-500/20 bg-amber-500/8 px-4 py-3 text-sm text-t-secondary">
-                      {copy.ocrHint}{" "}
+                      {t("pdftext.ui.ocrHint")}{" "}
                       <Link href="/tools/ocr" className="font-medium text-amber-700 dark:text-amber-400 underline underline-offset-4">
-                        {copy.ocrLink}
+                        {t("pdftext.ui.ocrLink")}
                       </Link>
                       .
                     </div>

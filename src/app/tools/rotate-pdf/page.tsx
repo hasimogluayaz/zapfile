@@ -73,7 +73,7 @@ function parsePageRange(input: string, pageCount: number): Set<number> | null {
 }
 
 export default function RotatePdfPage() {
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const [file, setFile] = useState<File | null>(null);
   const [pageCount, setPageCount] = useState<number>(0);
   const [rotationDegrees, setRotationDegrees] = useState<RotationDegrees>(90);
@@ -84,35 +84,6 @@ export default function RotatePdfPage() {
   const [progress, setProgress] = useState(0);
   const [resultBlob, setResultBlob] = useState<Blob | null>(null);
   const [resultFilename, setResultFilename] = useState("");
-
-  const copy =
-    locale === "tr"
-      ? {
-          rangeLabel: "Sayfa araligi",
-          rangeHint: "1-3, 5, odd, even veya last yazabilirsiniz.",
-          applyRange: "Araligi uygula",
-          quickAll: "Tumunu sec",
-          quickOdd: "Tek sayfalar",
-          quickEven: "Cift sayfalar",
-          clear: "Temizle",
-          invalidRange: "Sayfa araligi gecersiz.",
-          picked: "Secilen sayfalar",
-          previewMore: "daha",
-          affected: "Etkilenecek sayfa",
-        }
-      : {
-          rangeLabel: "Page range",
-          rangeHint: "Use 1-3, 5, odd, even, or last.",
-          applyRange: "Apply range",
-          quickAll: "Select all",
-          quickOdd: "Odd pages",
-          quickEven: "Even pages",
-          clear: "Clear",
-          invalidRange: "Invalid page range.",
-          picked: "Selected pages",
-          previewMore: "more",
-          affected: "Pages affected",
-        };
 
   const handleFileSelected = useCallback(async (files: File[]) => {
     const picked = files[0];
@@ -151,8 +122,8 @@ export default function RotatePdfPage() {
       .map((page) => page + 1);
     const visible = pages.slice(0, 14).join(", ");
     const rest = Math.max(0, pages.length - 14);
-    return rest > 0 ? `${visible} +${rest} ${copy.previewMore}` : visible;
-  }, [copy.previewMore, selectedPages]);
+    return rest > 0 ? `${visible} ${t("rotatepdf.ui.previewMore", { n: rest })}` : visible;
+  }, [selectedPages, t]);
 
   const togglePage = (index: number) => {
     setSelectedPages((prev) => {
@@ -170,7 +141,7 @@ export default function RotatePdfPage() {
   const applyRangeInput = () => {
     const parsed = parsePageRange(rangeInput, pageCount);
     if (!parsed) {
-      toast.error(copy.invalidRange);
+      toast.error(t("rotatepdf.ui.invalidRange"));
       return;
     }
     setSelectedPages(parsed);
@@ -271,7 +242,7 @@ export default function RotatePdfPage() {
             onFilesSelected={handleFileSelected}
             accept={{ "application/pdf": [".pdf"] }}
             multiple={false}
-            label="Drop your PDF file here or click to browse"
+            label={t("rotatepdf.ui.dropLabel")}
             formats={["pdf"]}
           />
         ) : (
@@ -299,8 +270,10 @@ export default function RotatePdfPage() {
                     {file.name}
                   </p>
                   <p className="text-t-secondary text-xs">
-                    {formatFileSize(file.size)} &middot; {pageCount} page
-                    {pageCount !== 1 ? "s" : ""}
+                    {formatFileSize(file.size)} &middot;{" "}
+                    {pageCount !== 1
+                      ? t("rotatepdf.ui.pageCountOther", { n: pageCount })
+                      : t("rotatepdf.ui.pageCountOne", { n: pageCount })}
                   </p>
                 </div>
               </div>
@@ -359,13 +332,13 @@ export default function RotatePdfPage() {
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="rounded-xl bg-bg-secondary border border-border p-4">
-                  <p className="text-xs text-t-secondary">{copy.affected}</p>
+                  <p className="text-xs text-t-secondary">{t("rotatepdf.ui.affected")}</p>
                   <p className="text-2xl font-semibold text-t-primary">
                     {affectedPageCount}
                   </p>
                 </div>
                 <div className="rounded-xl bg-bg-secondary border border-border p-4 sm:col-span-2">
-                  <p className="text-xs text-t-secondary">{copy.picked}</p>
+                  <p className="text-xs text-t-secondary">{t("rotatepdf.ui.picked")}</p>
                   <p className="text-sm text-t-primary mt-1 min-h-5">
                     {rotationMode === "all"
                       ? t("rotpdf.allPages")
@@ -407,7 +380,7 @@ export default function RotatePdfPage() {
                 <div className="space-y-4 pt-2">
                   <div className="rounded-xl bg-bg-secondary border border-border p-4 space-y-3">
                     <label className="block text-sm font-medium text-t-primary">
-                      {copy.rangeLabel}
+                      {t("rotatepdf.ui.rangeLabel")}
                     </label>
                     <div className="flex flex-col sm:flex-row gap-3">
                       <input
@@ -417,7 +390,7 @@ export default function RotatePdfPage() {
                         onKeyDown={(event) => {
                           if (event.key === "Enter") applyRangeInput();
                         }}
-                        placeholder="1-3, 5, odd, even"
+                        placeholder={t("rotatepdf.ui.rangePlaceholder")}
                         className="flex-1 px-4 py-3 rounded-xl bg-bg-secondary border border-border text-t-primary placeholder:text-t-tertiary focus:outline-none focus:border-accent/60"
                       />
                       <button
@@ -425,16 +398,16 @@ export default function RotatePdfPage() {
                         onClick={applyRangeInput}
                         className="px-4 py-3 rounded-xl bg-accent text-on-accent text-sm font-semibold hover:bg-accent/90 transition-colors"
                       >
-                        {copy.applyRange}
+                        {t("rotatepdf.ui.applyRange")}
                       </button>
                     </div>
-                    <p className="text-xs text-t-secondary">{copy.rangeHint}</p>
+                    <p className="text-xs text-t-secondary">{t("rotatepdf.ui.rangeHint")}</p>
                     <div className="flex flex-wrap gap-2">
                       {[
-                        { type: "all" as const, label: copy.quickAll },
-                        { type: "odd" as const, label: copy.quickOdd },
-                        { type: "even" as const, label: copy.quickEven },
-                        { type: "clear" as const, label: copy.clear },
+                        { type: "all" as const, label: t("rotatepdf.ui.quickAll") },
+                        { type: "odd" as const, label: t("rotatepdf.ui.quickOdd") },
+                        { type: "even" as const, label: t("rotatepdf.ui.quickEven") },
+                        { type: "clear" as const, label: t("ui.clear") },
                       ].map((item) => (
                         <button
                           key={item.type}

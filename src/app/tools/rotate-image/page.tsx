@@ -106,7 +106,7 @@ async function transformFileToBlob(
 }
 
 export default function RotateImagePage() {
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const [files, setFiles] = useState<File[]>([]);
   const [preview, setPreview] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
@@ -122,35 +122,6 @@ export default function RotateImagePage() {
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
-
-  const copy =
-    locale === "tr"
-      ? {
-          settings: "Donusum ayarlari",
-          rotation: "Derece",
-          output: "Cikti",
-          quality: "Kalite",
-          background: "Arka plan",
-          current: "Mevcut cikti",
-          reset: "Sifirla",
-          exportAll: "Gorselleri hazirla",
-          preparing: "Hazirlaniyor...",
-          another: "Yeni gorsel",
-          more: "daha",
-        }
-      : {
-          settings: "Transform settings",
-          rotation: "Degrees",
-          output: "Output",
-          quality: "Quality",
-          background: "Background",
-          current: "Current output",
-          reset: "Reset",
-          exportAll: "Prepare images",
-          preparing: "Preparing...",
-          another: "Another image",
-          more: "more",
-        };
 
   const redrawTransform = useCallback(
     (img: HTMLImageElement, rot: number, fH: boolean, fV: boolean) => {
@@ -299,7 +270,7 @@ export default function RotateImagePage() {
             }}
             multiple
             formats={["JPG", "PNG", "WEBP", "GIF", "BMP"]}
-            label="Drop images here or click (batch supported)"
+            label={t("rotateimg.ui.dropLabel")}
           />
         ) : resultBlobs.length === 0 ? (
           <>
@@ -311,7 +282,7 @@ export default function RotateImagePage() {
                   </p>
                   <p className="text-[12px] text-t-secondary">
                     {files[0]?.name}
-                    {files.length > 1 && ` + ${files.length - 1} ${copy.more}`}
+                    {files.length > 1 && ` ${t("rotateimg.ui.more", { n: files.length - 1 })}`}
                   </p>
                 </div>
                 <button
@@ -336,25 +307,25 @@ export default function RotateImagePage() {
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
                 <div className="rounded-xl bg-bg-secondary border border-border p-3">
-                  <p className="text-xs text-t-secondary">Input</p>
+                  <p className="text-xs text-t-secondary">{t("ui.input")}</p>
                   <p className="text-sm font-semibold text-t-primary">
                     {originalDims.w} x {originalDims.h}
                   </p>
                 </div>
                 <div className="rounded-xl bg-bg-secondary border border-border p-3">
-                  <p className="text-xs text-t-secondary">{copy.current}</p>
+                  <p className="text-xs text-t-secondary">{t("rotateimg.ui.current")}</p>
                   <p className="text-sm font-semibold text-t-primary">
                     {currentDims ? `${currentDims.w} x ${currentDims.h}` : "-"}
                   </p>
                 </div>
                 <div className="rounded-xl bg-bg-secondary border border-border p-3">
-                  <p className="text-xs text-t-secondary">{copy.rotation}</p>
+                  <p className="text-xs text-t-secondary">{t("rotateimg.ui.degrees")}</p>
                   <p className="text-sm font-semibold text-t-primary">
-                    {rotation} deg
+                    {t("rotateimg.ui.deg", { n: rotation })}
                   </p>
                 </div>
                 <div className="rounded-xl bg-bg-secondary border border-border p-3">
-                  <p className="text-xs text-t-secondary">{copy.output}</p>
+                  <p className="text-xs text-t-secondary">{t("ui.output")}</p>
                   <p className="text-sm font-semibold text-t-primary">
                     {finalFormat || "-"}
                   </p>
@@ -365,17 +336,17 @@ export default function RotateImagePage() {
             <div className="glass rounded-xl p-4 space-y-5">
               <div className="flex items-center justify-between">
                 <span className="text-[13px] text-t-secondary font-medium">
-                  {copy.settings}
+                  {t("rotateimg.ui.settings")}
                 </span>
                 <span className="text-[12px] font-mono px-2.5 py-1 rounded-lg bg-bg-secondary text-t-secondary border border-border">
-                  {rotation} deg {flipH && "H"} {flipV && "V"}
+                  {t("rotateimg.ui.deg", { n: rotation })} {flipH && t("rotateimg.ui.flipHShort")} {flipV && t("rotateimg.ui.flipVShort")}
                 </span>
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="text-sm text-t-secondary">
-                    {copy.rotation}
+                    {t("rotateimg.ui.degrees")}
                   </label>
                   <input
                     type="number"
@@ -404,14 +375,14 @@ export default function RotateImagePage() {
                   onClick={rotateLeft}
                   className="px-3 py-3 rounded-xl bg-bg-secondary hover:bg-bg-tertiary text-t-secondary hover:text-t-primary transition-all text-[12px] font-medium"
                 >
-                  -90 deg
+                  {t("rotateimg.ui.deg", { n: -90 })}
                 </button>
                 <button
                   type="button"
                   onClick={rotateRight}
                   className="px-3 py-3 rounded-xl bg-bg-secondary hover:bg-bg-tertiary text-t-secondary hover:text-t-primary transition-all text-[12px] font-medium"
                 >
-                  +90 deg
+                  {t("rotateimg.ui.deg", { n: "+90" })}
                 </button>
                 <button
                   type="button"
@@ -422,7 +393,7 @@ export default function RotateImagePage() {
                       : "bg-bg-secondary hover:bg-bg-tertiary text-t-secondary hover:text-t-primary"
                   }`}
                 >
-                  Flip H
+                  {t("rotateimg.ui.flipH")}
                 </button>
                 <button
                   type="button"
@@ -433,24 +404,24 @@ export default function RotateImagePage() {
                       : "bg-bg-secondary hover:bg-bg-tertiary text-t-secondary hover:text-t-primary"
                   }`}
                 >
-                  Flip V
+                  {t("rotateimg.ui.flipV")}
                 </button>
                 <button
                   type="button"
                   onClick={handleReset}
                   className="px-3 py-3 rounded-xl bg-bg-secondary hover:bg-bg-tertiary text-t-secondary hover:text-t-primary transition-all text-[12px] font-medium"
                 >
-                  {copy.reset}
+                  {t("ui.reset")}
                 </button>
               </div>
             </div>
 
             <div className="glass rounded-xl p-4 space-y-5">
-              <h3 className="text-t-primary font-semibold">{copy.output}</h3>
+              <h3 className="text-t-primary font-semibold">{t("ui.output")}</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm text-t-secondary mb-2">
-                    {copy.output}
+                    {t("ui.output")}
                   </label>
                   <select
                     value={outputFormat}
@@ -459,7 +430,7 @@ export default function RotateImagePage() {
                     }
                     className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border text-t-primary focus:outline-none focus:border-accent/50"
                   >
-                    <option value="original">Original</option>
+                    <option value="original">{t("ui.original")}</option>
                     <option value="jpeg">JPG</option>
                     <option value="png">PNG</option>
                     <option value="webp">WebP</option>
@@ -467,7 +438,7 @@ export default function RotateImagePage() {
                 </div>
                 <div>
                   <label className="block text-sm text-t-secondary mb-2">
-                    {copy.background}
+                    {t("rotateimg.ui.background")}
                   </label>
                   <div className="flex gap-3">
                     <input
@@ -490,7 +461,7 @@ export default function RotateImagePage() {
                 resolveOutputFormat(files[0], outputFormat) !== "png" && (
                   <div>
                     <div className="flex justify-between text-sm mb-2">
-                      <span className="text-t-secondary">{copy.quality}</span>
+                      <span className="text-t-secondary">{t("ui.quality")}</span>
                       <span className="text-t-primary">{quality}%</span>
                     </div>
                     <input
@@ -515,7 +486,7 @@ export default function RotateImagePage() {
                   : "bg-gradient-brand hover:shadow-lg hover:shadow-accent/25"
               }`}
             >
-              {processing ? copy.preparing : copy.exportAll}
+              {processing ? t("rotateimg.ui.preparing") : t("rotateimg.ui.exportAll")}
             </button>
           </>
         ) : (
@@ -560,7 +531,7 @@ export default function RotateImagePage() {
                 onClick={reset}
                 className="px-6 py-3 rounded-xl font-semibold text-t-primary bg-bg-secondary hover:bg-bg-tertiary transition-colors"
               >
-                {copy.another}
+                {t("rotateimg.ui.another")}
               </button>
             </div>
           </div>

@@ -106,62 +106,7 @@ async function loadImageMeta(file: File) {
 }
 
 export default function ImageToPdfPage() {
-  const { locale, t } = useI18n();
-  const copy = locale === "tr"
-    ? {
-        dropLabel: "PDF'e dönüştürmek istediğiniz görselleri bırakın",
-        settings: "PDF ayarları",
-        layout: "Yerleşim",
-        pageSize: "Sayfa boyutu",
-        orientation: "Yön",
-        fitMode: "Görsel yerleşimi",
-        margin: "Kenar boşluğu",
-        background: "Arka plan",
-        outputName: "Çıktı adı",
-        selected: "Seçilen görseller",
-        contain: "Sığdır",
-        cover: "Doldur",
-        stretch: "Esnet",
-        auto: "Otomatik",
-        portrait: "Dikey",
-        landscape: "Yatay",
-        create: "PDF oluştur",
-        creating: "PDF hazırlanıyor...",
-        success: "{count} görsel PDF'e dönüştürüldü.",
-        fail: "PDF oluşturulamadı.",
-        download: "PDF indir",
-        newBatch: "Yeni görseller",
-        clearAll: "Temizle",
-        moveUp: "Yukarı taşı",
-        moveDown: "Aşağı taşı",
-      }
-    : {
-        dropLabel: "Drop images to build a PDF",
-        settings: "PDF settings",
-        layout: "Layout",
-        pageSize: "Page size",
-        orientation: "Orientation",
-        fitMode: "Image fit",
-        margin: "Margin",
-        background: "Background",
-        outputName: "Output name",
-        selected: "Selected images",
-        contain: "Contain",
-        cover: "Cover",
-        stretch: "Stretch",
-        auto: "Auto",
-        portrait: "Portrait",
-        landscape: "Landscape",
-        create: "Create PDF",
-        creating: "Creating PDF...",
-        success: "{count} images converted to PDF.",
-        fail: "Failed to create PDF.",
-        download: "Download PDF",
-        newBatch: "New images",
-        clearAll: "Clear all",
-        moveUp: "Move up",
-        moveDown: "Move down",
-      };
+  const { t } = useI18n();
 
   const [images, setImages] = useState<ImageItem[]>([]);
   const [processing, setProcessing] = useState(false);
@@ -309,22 +254,21 @@ export default function ImageToPdfPage() {
       const pdfBytes = await pdfDoc.save({ useObjectStreams: true });
       setResultBlob(new Blob([pdfBytes.buffer as ArrayBuffer], { type: "application/pdf" }));
       setProgress(100);
-      toast.success(copy.success.replace("{count}", String(images.length)));
+      toast.success(t("img2pdf.ui.success", { count: images.length }));
     } catch (error) {
       console.error(error);
-      toast.error(copy.fail);
+      toast.error(t("img2pdf.ui.fail"));
     } finally {
       setProcessing(false);
     }
   }, [
     backgroundColor,
-    copy.fail,
-    copy.success,
     fitMode,
     images,
     margin,
     orientation,
     pageSize,
+    t,
   ]);
 
   const reset = useCallback(() => {
@@ -345,7 +289,7 @@ export default function ImageToPdfPage() {
           accept={{ "image/*": [".jpg", ".jpeg", ".png", ".webp"] }}
           formats={["JPG", "PNG", "WEBP"]}
           multiple
-          label={copy.dropLabel}
+          label={t("img2pdf.ui.dropLabel")}
         />
 
         {images.length > 0 && (
@@ -354,14 +298,14 @@ export default function ImageToPdfPage() {
               <div className="glass rounded-2xl p-5 space-y-4">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-sm font-semibold text-t-primary">
-                    {copy.selected}: {images.length}
+                    {t("img2pdf.ui.selectedCount", { n: images.length })}
                   </p>
                   <button
                     type="button"
                     onClick={reset}
                     className="text-sm font-medium text-t-secondary transition-colors hover:text-red-600 dark:hover:text-red-400"
                   >
-                    {copy.clearAll}
+                    {t("img2pdf.ui.clearAll")}
                   </button>
                 </div>
 
@@ -393,7 +337,7 @@ export default function ImageToPdfPage() {
                           onClick={() => moveImage(img.id, "up")}
                           disabled={idx === 0}
                           className="rounded-lg px-2 py-1.5 text-sm text-t-secondary transition-colors hover:bg-bg-primary hover:text-t-primary disabled:opacity-30"
-                          title={copy.moveUp}
+                          title={t("ui.moveUp")}
                         >
                           ^
                         </button>
@@ -402,7 +346,7 @@ export default function ImageToPdfPage() {
                           onClick={() => moveImage(img.id, "down")}
                           disabled={idx === images.length - 1}
                           className="rounded-lg px-2 py-1.5 text-sm text-t-secondary transition-colors hover:bg-bg-primary hover:text-t-primary disabled:opacity-30"
-                          title={copy.moveDown}
+                          title={t("ui.moveDown")}
                         >
                           v
                         </button>
@@ -421,12 +365,12 @@ export default function ImageToPdfPage() {
               </div>
 
               <div className="glass rounded-2xl p-5 space-y-4">
-                <p className="text-sm font-semibold text-t-primary">{copy.settings}</p>
+                <p className="text-sm font-semibold text-t-primary">{t("img2pdf.ui.settings")}</p>
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
                     <label className="mb-2 block text-sm font-medium text-t-secondary">
-                      {copy.pageSize}
+                      {t("img2pdf.ui.pageSize")}
                     </label>
                     <select
                       value={pageSize}
@@ -434,36 +378,36 @@ export default function ImageToPdfPage() {
                       className="w-full rounded-xl border border-border bg-bg-secondary px-3 py-2.5 text-sm text-t-primary focus:border-accent/50 focus:outline-none"
                     >
                       <option value="a4">A4</option>
-                      <option value="letter">Letter</option>
-                      <option value="square">Square</option>
+                      <option value="letter">{t("img2pdf.ui.letter")}</option>
+                      <option value="square">{t("img2pdf.ui.square")}</option>
                       <option value="fit">{t("img2pdf.fitToImage")}</option>
                     </select>
                   </div>
                   <div>
                     <label className="mb-2 block text-sm font-medium text-t-secondary">
-                      {copy.orientation}
+                      {t("img2pdf.ui.orientation")}
                     </label>
                     <select
                       value={orientation}
                       onChange={(event) => setOrientation(event.target.value as Orientation)}
                       className="w-full rounded-xl border border-border bg-bg-secondary px-3 py-2.5 text-sm text-t-primary focus:border-accent/50 focus:outline-none"
                     >
-                      <option value="auto">{copy.auto}</option>
-                      <option value="portrait">{copy.portrait}</option>
-                      <option value="landscape">{copy.landscape}</option>
+                      <option value="auto">{t("img2pdf.ui.auto")}</option>
+                      <option value="portrait">{t("img2pdf.ui.portrait")}</option>
+                      <option value="landscape">{t("img2pdf.ui.landscape")}</option>
                     </select>
                   </div>
                 </div>
 
                 <div>
                   <label className="mb-2 block text-sm font-medium text-t-secondary">
-                    {copy.fitMode}
+                    {t("img2pdf.ui.fitMode")}
                   </label>
                   <div className="grid grid-cols-3 gap-2">
                     {([
-                      ["contain", copy.contain],
-                      ["cover", copy.cover],
-                      ["stretch", copy.stretch],
+                      ["contain", t("img2pdf.ui.contain")],
+                      ["cover", t("img2pdf.ui.cover")],
+                      ["stretch", t("img2pdf.ui.stretch")],
                     ] as const).map(([value, label]) => (
                       <button
                         key={value}
@@ -483,7 +427,7 @@ export default function ImageToPdfPage() {
 
                 <div>
                   <div className="mb-2 flex items-center justify-between text-sm text-t-secondary">
-                    <label>{copy.margin}</label>
+                    <label>{t("img2pdf.ui.margin")}</label>
                     <span className="font-mono">{pageSize === "fit" ? 0 : margin}px</span>
                   </div>
                   <input
@@ -500,7 +444,7 @@ export default function ImageToPdfPage() {
 
                 <div>
                   <label className="mb-2 block text-sm font-medium text-t-secondary">
-                    {copy.background}
+                    {t("img2pdf.ui.background")}
                   </label>
                   <div className="flex items-center gap-3 rounded-xl border border-border bg-bg-secondary px-3 py-2">
                     <input
@@ -515,7 +459,7 @@ export default function ImageToPdfPage() {
 
                 <div>
                   <label className="mb-2 block text-sm font-medium text-t-secondary">
-                    {copy.outputName}
+                    {t("img2pdf.ui.outputName")}
                   </label>
                   <input
                     type="text"
@@ -529,7 +473,7 @@ export default function ImageToPdfPage() {
 
             {processing && (
               <div className="glass rounded-2xl p-4">
-                <ProgressBar progress={progress} label={copy.creating} />
+                <ProgressBar progress={progress} label={t("img2pdf.ui.creating")} />
               </div>
             )}
 
@@ -545,7 +489,7 @@ export default function ImageToPdfPage() {
                       : "bg-accent hover:shadow-lg hover:shadow-sm"
                   }`}
                 >
-                  {processing ? copy.creating : copy.create}
+                  {processing ? t("img2pdf.ui.creating") : t("img2pdf.ui.create")}
                 </button>
               )}
 
@@ -554,14 +498,14 @@ export default function ImageToPdfPage() {
                   <DownloadButton
                     blob={resultBlob}
                     filename={outputName.toLowerCase().endsWith(".pdf") ? outputName : `${outputName}.pdf`}
-                    label={copy.download}
+                    label={t("ui.downloadPdf")}
                   />
                   <button
                     type="button"
                     onClick={() => setResultBlob(null)}
                     className="rounded-xl border border-border bg-bg-secondary px-5 py-2.5 text-sm font-semibold text-t-secondary transition-colors hover:text-t-primary"
                   >
-                    {copy.newBatch}
+                    {t("img2pdf.ui.newBatch")}
                   </button>
                 </>
               )}
