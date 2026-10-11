@@ -4,6 +4,24 @@ export interface FaqItem {
 }
 
 const toolFaqs: Record<string, FaqItem[]> = {
+  "background-remover": [
+    {
+      question: "Is the background remover really free and private?",
+      answer: "Yes. The AI model (BiRefNet, MIT licensed) runs entirely in your browser using WebGPU or WebAssembly. Your photo is never uploaded, and there are no watermarks or limits.",
+    },
+    {
+      question: "Why does the first run take longer?",
+      answer: "The first time, your browser downloads the AI model once (about 214 MB) and stores it in its cache. After that it starts instantly, even offline.",
+    },
+    {
+      question: "How do I fix an area the AI got wrong?",
+      answer: "Pick the Erase or Restore brush below the preview and paint over the area. Zoom in with the scroll wheel or a pinch for precise work, and use Undo (Ctrl+Z) at any time.",
+    },
+    {
+      question: "Can I put a new background behind the subject?",
+      answer: "Yes. Choose a solid color, a blurred version of the original photo, or your own image, then download as PNG, WebP or JPG at full resolution.",
+    },
+  ],
   "pdf-encrypt": [
     {
       question: "How do I password-protect a PDF for free?",

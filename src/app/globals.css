@@ -555,3 +555,20 @@ input[type="radio"] {
   display: none;
 }
 
+
+/* Indeterminate progress bar sweep. */
+@keyframes indeterminate {
+  0% {
+    transform: translateX(-110%);
+  }
+  100% {
+    transform: translateX(320%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-\[indeterminate_1\.2s_ease-in-out_infinite\] {
+    animation: none;
+    width: 100%;
+    opacity: 0.5;
+  }
+}

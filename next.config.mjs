@@ -1,4 +1,11 @@
+import fs from "node:fs";
 import bundleAnalyzer from "@next/bundle-analyzer";
+
+// The background remover loads onnxruntime-web from /vendor/ort-<version>/
+// (copied by scripts/copy-vendor-assets.mjs), never through webpack.
+const ortVersion = JSON.parse(
+  fs.readFileSync(new URL("./node_modules/onnxruntime-web/package.json", import.meta.url), "utf8"),
+).version;
 
 const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === "true",
@@ -6,6 +13,9 @@ const withBundleAnalyzer = bundleAnalyzer({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  env: {
+    NEXT_PUBLIC_ORT_VERSION: ortVersion,
+  },
   transpilePackages: ["lamejs"],
   // Exclude onnxruntime-node from server-side bundling (native Node addon)
   serverExternalPackages: ["onnxruntime-node", "onnxruntime-web"],

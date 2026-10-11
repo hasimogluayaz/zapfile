@@ -7,10 +7,8 @@
  */
 import fs from "node:fs";
 import path from "node:path";
-import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 
-const require = createRequire(import.meta.url);
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const vendorRoot = path.join(root, "public", "vendor");
 
@@ -25,7 +23,12 @@ function copyDir(from, to) {
 }
 
 function pkgDir(name) {
-  return path.dirname(require.resolve(`${name}/package.json`));
+  // Resolve via node_modules: some packages don't export ./package.json.
+  const dir = path.join(root, "node_modules", name);
+  if (!fs.existsSync(path.join(dir, "package.json"))) {
+    throw new Error(`copy-vendor-assets: ${name} is not installed`);
+  }
+  return dir;
 }
 
 function pkgVersion(name) {
@@ -47,6 +50,25 @@ fs.rmSync(vendorRoot, { recursive: true, force: true });
   for (const sub of ["cmaps", "standard_fonts", "wasm", "iccs"]) {
     const src = path.join(dir, sub);
     if (fs.existsSync(src)) copyDir(src, path.join(out, sub));
+  }
+}
+
+// ── onnxruntime-web (background remover) ────────────────────────────────────
+// ort.webgpu runs on the asyncify build (WebGPU + WASM EPs); ort.wasm is the
+// smaller CPU-only build used when the browser has no WebGPU.
+{
+  const dist = path.join(pkgDir("onnxruntime-web"), "dist");
+  const out = path.join(vendorRoot, `ort-${pkgVersion("onnxruntime-web")}`);
+  fs.mkdirSync(out, { recursive: true });
+  for (const file of [
+    "ort.webgpu.min.mjs",
+    "ort-wasm-simd-threaded.asyncify.mjs",
+    "ort-wasm-simd-threaded.asyncify.wasm",
+    "ort.wasm.min.mjs",
+    "ort-wasm-simd-threaded.mjs",
+    "ort-wasm-simd-threaded.wasm",
+  ]) {
+    fs.copyFileSync(path.join(dist, file), path.join(out, file));
   }
 }
 

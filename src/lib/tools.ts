@@ -520,13 +520,13 @@ export const tools: Tool[] = [
   {
     slug: "background-remover",
     name: "Background Remover",
-    description: "Remove image backgrounds automatically in your browser",
+    description: "Remove image backgrounds with on-device AI and fine-tune edges with a brush",
     emoji: "✂️",
     category: "image",
     acceptedFormats: [".jpg", ".jpeg", ".png", ".webp"],
     metaTitle: "Background Remover - Remove Image Background Free | ZapFile",
     metaDescription:
-      "Remove image backgrounds automatically with AI that runs entirely in your browser. No uploads, free, transparent PNG output.",
+      "Remove image backgrounds with AI that runs entirely in your browser. Clean hair edges, erase/restore brush, new backgrounds, full-resolution PNG. No uploads, free.",
   },
   {
     slug: "color-dropper",
