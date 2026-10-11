@@ -39,59 +39,7 @@ function mimeFor(format: ImageFormat) {
 }
 
 export default function PdfToImagesPage() {
-  const { locale, t } = useI18n();
-  const copy = locale === "tr"
-    ? {
-        dropLabel: "Görsele çevirmek istediğiniz PDF dosyasını bırakın",
-        fileReady: "Dosya hazır",
-        settings: "Çıktı ayarları",
-        pageRange: "Sayfa aralığı",
-        firstPage: "İlk sayfa",
-        lastPage: "Son sayfa",
-        format: "Biçim",
-        resolution: "Çözünürlük",
-        quality: "Kalite",
-        background: "JPEG/WebP arka planı",
-        naming: "Dosya adlandırma",
-        simpleNames: "page-1",
-        paddedNames: "page-001",
-        convert: "Sayfaları görsele çevir",
-        converting: "Sayfalar dönüştürülüyor...",
-        converted: "Dönüştürülen sayfalar",
-        downloadAll: "Tümünü indir",
-        newFile: "Yeni PDF",
-        rangeSummary: "Seçilen",
-        pageWord: "sayfa",
-        invalidPdf: "PDF okunamadı. Lütfen başka bir dosya deneyin.",
-        fail: "PDF görsellere çevrilemedi.",
-        success: "{count} sayfa hazır.",
-      }
-    : {
-        dropLabel: "Drop the PDF you want to turn into images",
-        fileReady: "File ready",
-        settings: "Output settings",
-        pageRange: "Page range",
-        firstPage: "First page",
-        lastPage: "Last page",
-        format: "Format",
-        resolution: "Resolution",
-        quality: "Quality",
-        background: "JPEG/WebP background",
-        naming: "File naming",
-        simpleNames: "page-1",
-        paddedNames: "page-001",
-        convert: "Convert pages to images",
-        converting: "Converting pages...",
-        converted: "Converted pages",
-        downloadAll: "Download all",
-        newFile: "New PDF",
-        rangeSummary: "Selected",
-        pageWord: "pages",
-        invalidPdf: "Could not read that PDF. Please try another file.",
-        fail: "Failed to convert PDF pages.",
-        success: "{count} pages ready.",
-      };
-
+  const { t } = useI18n();
   const [file, setFile] = useState<File | null>(null);
   const [pageCount, setPageCount] = useState(0);
   const [rangeStart, setRangeStart] = useState(1);
@@ -158,10 +106,10 @@ export default function PdfToImagesPage() {
         console.error(error);
         setFile(null);
         setPageCount(0);
-        toast.error(copy.invalidPdf);
+        toast.error(t("pdfimages.ui.invalidPdf"));
       }
     },
-    [copy.invalidPdf],
+    [t],
   );
 
   const handleProcess = useCallback(async () => {
@@ -221,24 +169,23 @@ export default function PdfToImagesPage() {
 
       setImages(results);
       setProgress(100);
-      toast.success(copy.success.replace("{count}", String(results.length)));
+      toast.success(t("pdfimages.ui.success", { count: results.length }));
     } catch (error) {
       console.error(error);
-      toast.error(copy.fail);
+      toast.error(t("pdfimages.ui.fail"));
     } finally {
       setProcessing(false);
     }
   }, [
     backgroundColor,
     buildFilename,
-    copy.fail,
-    copy.success,
     file,
     format,
     normalizedRange.from,
     normalizedRange.to,
     quality,
     scale,
+    t,
   ]);
 
   const downloadSingle = useCallback((img: PageImage) => {
@@ -281,7 +228,7 @@ export default function PdfToImagesPage() {
             onFilesSelected={handleFilesSelected}
             accept={{ "application/pdf": [".pdf"] }}
             formats={["PDF"]}
-            label={copy.dropLabel}
+            label={t("pdfimages.ui.dropLabel")}
           />
         ) : images.length === 0 ? (
           <>
@@ -289,11 +236,11 @@ export default function PdfToImagesPage() {
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0">
                   <p className="text-xs uppercase tracking-[0.2em] text-t-secondary">
-                    {copy.fileReady}
+                    {t("pdfimages.ui.fileReady")}
                   </p>
                   <p className="mt-2 truncate text-lg font-semibold text-t-primary">{file.name}</p>
                   <p className="mt-1 text-sm text-t-secondary">
-                    {formatFileSize(file.size)} - {pageCount} {copy.pageWord}
+                    {formatFileSize(file.size)} - {t("pdfsec.pages", { count: pageCount })}
                   </p>
                 </div>
                 <button
@@ -301,14 +248,14 @@ export default function PdfToImagesPage() {
                   onClick={reset}
                   className="rounded-xl border border-border bg-bg-secondary px-4 py-2 text-sm font-medium text-t-secondary transition-colors hover:text-t-primary"
                 >
-                  {copy.newFile}
+                  {t("pdfimages.ui.newFile")}
                 </button>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-3">
                 <div className="rounded-2xl border border-border bg-bg-secondary/60 p-4">
                   <p className="text-[11px] uppercase tracking-[0.2em] text-t-secondary">
-                    {copy.rangeSummary}
+                    {t("pdfimages.ui.rangeSummary")}
                   </p>
                   <p className="mt-2 text-xl font-semibold text-t-primary">
                     {normalizedRange.count}
@@ -316,7 +263,7 @@ export default function PdfToImagesPage() {
                 </div>
                 <div className="rounded-2xl border border-border bg-bg-secondary/60 p-4">
                   <p className="text-[11px] uppercase tracking-[0.2em] text-t-secondary">
-                    {copy.format}
+                    {t("ui.format")}
                   </p>
                   <p className="mt-2 text-xl font-semibold text-t-primary">
                     {format.toUpperCase()}
@@ -324,7 +271,7 @@ export default function PdfToImagesPage() {
                 </div>
                 <div className="rounded-2xl border border-border bg-bg-secondary/60 p-4">
                   <p className="text-[11px] uppercase tracking-[0.2em] text-t-secondary">
-                    {copy.resolution}
+                    {t("pdfimages.ui.resolution")}
                   </p>
                   <p className="mt-2 text-xl font-semibold text-t-primary">{scale}x</p>
                 </div>
@@ -333,11 +280,11 @@ export default function PdfToImagesPage() {
 
             <div className="grid gap-5 lg:grid-cols-2">
               <div className="glass rounded-2xl p-5 space-y-4">
-                <p className="text-sm font-semibold text-t-primary">{copy.pageRange}</p>
+                <p className="text-sm font-semibold text-t-primary">{t("pdfimages.ui.pageRange")}</p>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
                     <label className="mb-2 block text-sm font-medium text-t-secondary">
-                      {copy.firstPage}
+                      {t("pdfimages.ui.firstPage")}
                     </label>
                     <input
                       type="number"
@@ -350,7 +297,7 @@ export default function PdfToImagesPage() {
                   </div>
                   <div>
                     <label className="mb-2 block text-sm font-medium text-t-secondary">
-                      {copy.lastPage}
+                      {t("pdfimages.ui.lastPage")}
                     </label>
                     <input
                       type="number"
@@ -365,7 +312,7 @@ export default function PdfToImagesPage() {
               </div>
 
               <div className="glass rounded-2xl p-5 space-y-4">
-                <p className="text-sm font-semibold text-t-primary">{copy.settings}</p>
+                <p className="text-sm font-semibold text-t-primary">{t("pdfimages.ui.settings")}</p>
 
                 <div className="grid grid-cols-3 gap-2">
                   {(["png", "jpeg", "webp"] as const).map((nextFormat) => (
@@ -386,7 +333,7 @@ export default function PdfToImagesPage() {
 
                 <div>
                   <div className="mb-2 flex items-center justify-between text-sm text-t-secondary">
-                    <label>{copy.resolution}</label>
+                    <label>{t("pdfimages.ui.resolution")}</label>
                     <span className="font-mono">{scale}x</span>
                   </div>
                   <input
@@ -404,7 +351,7 @@ export default function PdfToImagesPage() {
                   <>
                     <div>
                       <div className="mb-2 flex items-center justify-between text-sm text-t-secondary">
-                        <label>{copy.quality}</label>
+                        <label>{t("ui.quality")}</label>
                         <span className="font-mono">{quality}%</span>
                       </div>
                       <input
@@ -419,7 +366,7 @@ export default function PdfToImagesPage() {
                     </div>
                     <div>
                       <label className="mb-2 block text-sm font-medium text-t-secondary">
-                        {copy.background}
+                        {t("pdfimages.ui.background")}
                       </label>
                       <div className="flex items-center gap-3 rounded-xl border border-border bg-bg-secondary px-3 py-2">
                         <input
@@ -436,12 +383,12 @@ export default function PdfToImagesPage() {
 
                 <div>
                   <label className="mb-2 block text-sm font-medium text-t-secondary">
-                    {copy.naming}
+                    {t("pdfimages.ui.naming")}
                   </label>
                   <div className="grid grid-cols-2 gap-2">
                     {([
-                      ["page", copy.simpleNames],
-                      ["padded", copy.paddedNames],
+                      ["page", "page-1"],
+                      ["padded", "page-001"],
                     ] as const).map(([value, label]) => (
                       <button
                         key={value}
@@ -463,7 +410,7 @@ export default function PdfToImagesPage() {
 
             {processing && (
               <div className="glass rounded-2xl p-4">
-                <ProgressBar progress={progress} label={copy.converting} />
+                <ProgressBar progress={progress} label={t("pdfimages.ui.converting")} />
               </div>
             )}
 
@@ -473,7 +420,7 @@ export default function PdfToImagesPage() {
                 onClick={handleProcess}
                 className="rounded-2xl bg-accent px-8 py-3 text-sm font-semibold text-on-accent transition-all hover:shadow-lg hover:shadow-sm"
               >
-                {copy.convert}
+                {t("pdfimages.ui.convert")}
               </button>
             )}
           </>
@@ -482,7 +429,7 @@ export default function PdfToImagesPage() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-sm font-semibold text-t-primary">
-                  {copy.converted}: {images.length}
+                  {t("pdfimages.ui.convertedCount", { count: images.length })}
                 </p>
                 <p className="mt-1 text-xs text-t-secondary">
                   {formatFileSize(totalOutputSize)}
@@ -494,14 +441,14 @@ export default function PdfToImagesPage() {
                   onClick={() => void downloadAll()}
                   className="rounded-xl bg-accent px-5 py-2.5 text-sm font-semibold text-on-accent transition-colors hover:bg-accent-hover"
                 >
-                  {images.length > 1 ? copy.downloadAll : t("ui.download")}
+                  {images.length > 1 ? t("pdfimages.ui.downloadAll") : t("ui.download")}
                 </button>
                 <button
                   type="button"
                   onClick={reset}
                   className="rounded-xl border border-border bg-bg-secondary px-5 py-2.5 text-sm font-semibold text-t-secondary transition-colors hover:text-t-primary"
                 >
-                  {copy.newFile}
+                  {t("pdfimages.ui.newFile")}
                 </button>
               </div>
             </div>

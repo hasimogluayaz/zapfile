@@ -21,9 +21,9 @@ interface CompressResult {
 }
 
 const RASTER_PRESETS = [
-  { value: "screen", label: "Screen", scale: 1, quality: 0.55 },
-  { value: "balanced", label: "Balanced", scale: 1.35, quality: 0.68 },
-  { value: "print", label: "Print", scale: 1.75, quality: 0.8 },
+  { value: "screen", scale: 1, quality: 0.55 },
+  { value: "balanced", scale: 1.35, quality: 0.68 },
+  { value: "print", scale: 1.75, quality: 0.8 },
 ] as const;
 
 function percentSaved(original: number, next: number) {
@@ -32,65 +32,7 @@ function percentSaved(original: number, next: number) {
 }
 
 export default function PdfCompressPage() {
-  const { locale, t } = useI18n();
-  const copy = locale === "tr"
-    ? {
-        dropLabel: "Sıkıştırmak istediğiniz PDF dosyasını bırakın",
-        fileReady: "Dosya hazır",
-        settings: "Sıkıştırma ayarları",
-        mode: "Mod",
-        lossless: "Kayıpsız optimize",
-        losslessDesc: "Metin seçilebilir kalır, dosya yapısı sadeleştirilir.",
-        raster: "Agresif küçült",
-        rasterDesc: "Sayfalar görsel olarak yeniden paketlenir; metin seçimi kaybolabilir.",
-        quality: "Görsel kalite",
-        screen: "Ekran",
-        balanced: "Dengeli",
-        print: "Baskı",
-        removeMetadata: "Belge meta verisini temizle",
-        objectStreams: "Modern PDF sıkıştırma kullan",
-        compress: "PDF'i sıkıştır",
-        compressing: "PDF sıkıştırılıyor...",
-        success: "PDF hazır. {saved}% tasarruf.",
-        already: "PDF zaten oldukça optimize görünüyor.",
-        fail: "PDF sıkıştırılamadı. Dosya şifreli veya bozuk olabilir.",
-        download: "Sıkıştırılmış PDF indir",
-        newFile: "Yeni dosya",
-        original: "Orijinal",
-        result: "Sonuç",
-        pages: "Sayfa",
-        warning: "Agresif mod PDF'i görüntüye dönüştürdüğü için kopyalanabilir metin ve form alanları korunmayabilir.",
-        invalidFile: "Lütfen geçerli bir PDF seçin.",
-      }
-    : {
-        dropLabel: "Drop the PDF you want to compress",
-        fileReady: "File ready",
-        settings: "Compression settings",
-        mode: "Mode",
-        lossless: "Lossless optimize",
-        losslessDesc: "Keeps selectable text while cleaning up the PDF structure.",
-        raster: "Aggressive shrink",
-        rasterDesc: "Repackages pages as images; selectable text may be lost.",
-        quality: "Visual quality",
-        screen: "Screen",
-        balanced: "Balanced",
-        print: "Print",
-        removeMetadata: "Remove document metadata",
-        objectStreams: "Use modern PDF compression",
-        compress: "Compress PDF",
-        compressing: "Compressing PDF...",
-        success: "PDF ready. {saved}% saved.",
-        already: "PDF already looks well optimized.",
-        fail: "Compression failed. The PDF may be encrypted or corrupted.",
-        download: "Download compressed PDF",
-        newFile: "New file",
-        original: "Original",
-        result: "Result",
-        pages: "Pages",
-        warning: "Aggressive mode turns pages into images, so selectable text and form fields may not be preserved.",
-        invalidFile: "Please select a valid PDF file.",
-      };
-
+  const { t } = useI18n();
   const [file, setFile] = useState<File | null>(null);
   const [pageCount, setPageCount] = useState(0);
   const [mode, setMode] = useState<CompressMode>("lossless");
@@ -110,7 +52,7 @@ export default function PdfCompressPage() {
     async (files: File[]) => {
       const picked = files.find((f) => f.type === "application/pdf" || f.name.toLowerCase().endsWith(".pdf"));
       if (!picked) {
-        toast.error(copy.invalidFile);
+        toast.error(t("pdfcompress.ui.invalidFile"));
         return;
       }
       let pdf: File;
@@ -134,10 +76,10 @@ export default function PdfCompressPage() {
         console.error(error);
         setFile(null);
         setPageCount(0);
-        toast.error(copy.fail);
+        toast.error(t("pdfcompress.ui.fail"));
       }
     },
-    [copy.fail, copy.invalidFile],
+    [t],
   );
 
   const compressLossless = useCallback(async (sourceFile: File) => {
@@ -244,14 +186,14 @@ export default function PdfCompressPage() {
       setProgress(100);
 
       const saved = percentSaved(file.size, compressed.blob.size);
-      toast.success(saved > 0 ? copy.success.replace("{saved}", String(saved)) : copy.already);
+      toast.success(saved > 0 ? t("pdfcompress.ui.success", { saved }) : t("pdfcompress.ui.already"));
     } catch (error) {
       console.error(error);
-      toast.error(copy.fail);
+      toast.error(t("pdfcompress.ui.fail"));
     } finally {
       setProcessing(false);
     }
-  }, [compressLossless, compressRaster, copy.already, copy.fail, copy.success, file, mode]);
+  }, [compressLossless, compressRaster, file, mode, t]);
 
   const handleDownload = useCallback(() => {
     if (!result || !file) return;
@@ -276,7 +218,7 @@ export default function PdfCompressPage() {
           <FileDropzone
             onFilesSelected={handleFile}
             accept={{ "application/pdf": [".pdf"] }}
-            label={copy.dropLabel}
+            label={t("pdfcompress.ui.dropLabel")}
             formats={["PDF"]}
           />
         ) : (
@@ -285,11 +227,11 @@ export default function PdfCompressPage() {
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0">
                   <p className="text-xs uppercase tracking-[0.2em] text-t-secondary">
-                    {copy.fileReady}
+                    {t("pdfcompress.ui.fileReady")}
                   </p>
                   <p className="mt-2 truncate text-lg font-semibold text-t-primary">{file.name}</p>
                   <p className="mt-1 text-sm text-t-secondary">
-                    {formatFileSize(file.size)} - {pageCount} {copy.pages.toLowerCase()}
+                    {formatFileSize(file.size)} - {t("pdfsec.pages", { count: pageCount })}
                   </p>
                 </div>
                 <button
@@ -297,7 +239,7 @@ export default function PdfCompressPage() {
                   onClick={reset}
                   className="rounded-xl border border-border bg-bg-secondary px-4 py-2 text-sm font-medium text-t-secondary transition-colors hover:text-t-primary"
                 >
-                  {copy.newFile}
+                  {t("pdfcompress.ui.newFile")}
                 </button>
               </div>
             </div>
@@ -305,7 +247,7 @@ export default function PdfCompressPage() {
             {!result && (
               <div className="grid gap-5 lg:grid-cols-[1fr_0.9fr]">
                 <div className="glass rounded-2xl p-5 space-y-4">
-                  <p className="text-sm font-semibold text-t-primary">{copy.mode}</p>
+                  <p className="text-sm font-semibold text-t-primary">{t("pdfsec.mode")}</p>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <button
                       type="button"
@@ -316,9 +258,9 @@ export default function PdfCompressPage() {
                           : "border-border bg-bg-secondary hover:border-accent/40"
                       }`}
                     >
-                      <span className="block text-sm font-semibold text-t-primary">{copy.lossless}</span>
+                      <span className="block text-sm font-semibold text-t-primary">{t("pdfcompress.ui.lossless")}</span>
                       <span className="mt-2 block text-xs leading-relaxed text-t-secondary">
-                        {copy.losslessDesc}
+                        {t("pdfcompress.ui.losslessDesc")}
                       </span>
                     </button>
                     <button
@@ -330,22 +272,22 @@ export default function PdfCompressPage() {
                           : "border-border bg-bg-secondary hover:border-accent/40"
                       }`}
                     >
-                      <span className="block text-sm font-semibold text-t-primary">{copy.raster}</span>
+                      <span className="block text-sm font-semibold text-t-primary">{t("pdfcompress.ui.raster")}</span>
                       <span className="mt-2 block text-xs leading-relaxed text-t-secondary">
-                        {copy.rasterDesc}
+                        {t("pdfcompress.ui.rasterDesc")}
                       </span>
                     </button>
                   </div>
 
                   {mode === "raster" && (
                     <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4 text-sm text-t-secondary">
-                      {copy.warning}
+                      {t("pdfcompress.ui.warning")}
                     </div>
                   )}
                 </div>
 
                 <div className="glass rounded-2xl p-5 space-y-4">
-                  <p className="text-sm font-semibold text-t-primary">{copy.settings}</p>
+                  <p className="text-sm font-semibold text-t-primary">{t("pdfcompress.ui.settings")}</p>
 
                   {mode === "lossless" ? (
                     <div className="space-y-3">
@@ -356,7 +298,7 @@ export default function PdfCompressPage() {
                           onChange={(event) => setRemoveMetadata(event.target.checked)}
                           className="mt-0.5 accent-accent"
                         />
-                        <span className="text-sm text-t-primary">{copy.removeMetadata}</span>
+                        <span className="text-sm text-t-primary">{t("pdfcompress.ui.removeMetadata")}</span>
                       </label>
                       <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border bg-bg-secondary p-3">
                         <input
@@ -365,22 +307,22 @@ export default function PdfCompressPage() {
                           onChange={(event) => setObjectStreams(event.target.checked)}
                           className="mt-0.5 accent-accent"
                         />
-                        <span className="text-sm text-t-primary">{copy.objectStreams}</span>
+                        <span className="text-sm text-t-primary">{t("pdfcompress.ui.objectStreams")}</span>
                       </label>
                     </div>
                   ) : (
                     <div>
                       <label className="mb-2 block text-sm font-medium text-t-secondary">
-                        {copy.quality}
+                        {t("pdfcompress.ui.quality")}
                       </label>
                       <div className="grid gap-2 sm:grid-cols-3">
                         {RASTER_PRESETS.map((preset) => {
                           const label =
                             preset.value === "screen"
-                              ? copy.screen
+                              ? t("pdfcompress.ui.presetScreen")
                               : preset.value === "print"
-                                ? copy.print
-                                : copy.balanced;
+                                ? t("pdfcompress.ui.presetPrint")
+                                : t("pdfcompress.ui.presetBalanced");
                           return (
                             <button
                               key={preset.value}
@@ -405,7 +347,7 @@ export default function PdfCompressPage() {
 
             {processing && (
               <div className="glass rounded-2xl p-4">
-                <ProgressBar progress={progress} label={copy.compressing} />
+                <ProgressBar progress={progress} label={t("pdfcompress.ui.compressing")} />
               </div>
             )}
 
@@ -415,7 +357,7 @@ export default function PdfCompressPage() {
                 <div className="grid gap-4 sm:grid-cols-3">
                   <div className="rounded-2xl border border-border bg-bg-secondary/60 p-4">
                     <p className="text-[11px] uppercase tracking-[0.2em] text-t-secondary">
-                      {copy.original}
+                      {t("ui.original")}
                     </p>
                     <p className="mt-2 text-lg font-semibold text-t-primary">
                       {formatFileSize(result.originalSize)}
@@ -423,7 +365,7 @@ export default function PdfCompressPage() {
                   </div>
                   <div className="rounded-2xl border border-border bg-bg-secondary/60 p-4">
                     <p className="text-[11px] uppercase tracking-[0.2em] text-t-secondary">
-                      {copy.result}
+                      {t("ui.result")}
                     </p>
                     <p className="mt-2 text-lg font-semibold text-t-primary">
                       {formatFileSize(result.newSize)}
@@ -431,7 +373,7 @@ export default function PdfCompressPage() {
                   </div>
                   <div className="rounded-2xl border border-border bg-bg-secondary/60 p-4">
                     <p className="text-[11px] uppercase tracking-[0.2em] text-t-secondary">
-                      {copy.pages}
+                      {t("pdfcompress.ui.pages")}
                     </p>
                     <p className="mt-2 text-lg font-semibold text-t-primary">{result.pageCount}</p>
                   </div>
@@ -451,7 +393,7 @@ export default function PdfCompressPage() {
                       : "bg-accent hover:shadow-lg hover:shadow-sm"
                   }`}
                 >
-                  {processing ? copy.compressing : copy.compress}
+                  {processing ? t("pdfcompress.ui.compressing") : t("pdfcompress.ui.compress")}
                 </button>
               )}
               {result && (
@@ -461,14 +403,14 @@ export default function PdfCompressPage() {
                     onClick={handleDownload}
                     className="rounded-xl bg-accent px-6 py-3 text-sm font-semibold text-on-accent transition-colors hover:bg-accent-hover"
                   >
-                    {copy.download}
+                    {t("pdfcompress.ui.download")}
                   </button>
                   <button
                     type="button"
                     onClick={() => setResult(null)}
                     className="rounded-2xl border border-border bg-bg-secondary px-6 py-3 text-sm font-semibold text-t-secondary transition-colors hover:text-t-primary"
                   >
-                    {copy.settings}
+                    {t("pdfcompress.ui.settings")}
                   </button>
                 </>
               )}
