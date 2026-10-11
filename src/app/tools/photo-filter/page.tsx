@@ -227,11 +227,15 @@ export default function PhotoFilterPage() {
   const [previewMode, setPreviewMode] = useState<"tabs" | "slider">("tabs");
   const [sliderAfterUrl, setSliderAfterUrl] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
+  /** Bumped when a new image's pixels are ready, so previews re-render. */
+  const [loadedVersion, setLoadedVersion] = useState(0);
 
   const imgRef = useRef<HTMLImageElement>(null);
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const thumbCanvasesRef = useRef<Map<FilterKey, HTMLCanvasElement>>(new Map());
   const origPixelsRef = useRef<{ data: Uint8ClampedArray; w: number; h: number } | null>(null);
+  /** Small centre-cropped square of the image, used for the filter thumbnails. */
+  const thumbPixelsRef = useRef<{ data: Uint8ClampedArray; size: number; canvas: HTMLCanvasElement } | null>(null);
 
   const handleFilesSelected = useCallback((files: File[]) => {
     const f = files[0];
@@ -244,6 +248,7 @@ export default function PhotoFilterPage() {
     setPreviewMode("tabs");
     setSliderAfterUrl(null);
     origPixelsRef.current = null;
+    thumbPixelsRef.current = null;
     thumbCanvasesRef.current.clear();
   }, []);
 
@@ -262,6 +267,29 @@ export default function PhotoFilterPage() {
       w: img.naturalWidth,
       h: img.naturalHeight,
     };
+
+    // Thumbnails filter a 160 px centre crop instead of the full photo:
+    // undistorted, and N filters stay fast on 12 MP images.
+    const size = 160;
+    const side = Math.min(img.naturalWidth, img.naturalHeight);
+    const thumb = document.createElement("canvas");
+    thumb.width = size;
+    thumb.height = size;
+    const tctx = thumb.getContext("2d")!;
+    tctx.imageSmoothingQuality = "high";
+    tctx.drawImage(
+      img,
+      (img.naturalWidth - side) / 2,
+      (img.naturalHeight - side) / 2,
+      side,
+      side,
+      0,
+      0,
+      size,
+      size,
+    );
+    thumbPixelsRef.current = { data: tctx.getImageData(0, 0, size, size).data, size, canvas: thumb };
+    setLoadedVersion((v) => v + 1);
   }, []);
 
   // Re-render preview canvas when filter/intensity/mode changes; sync slider strip
@@ -313,53 +341,36 @@ export default function PhotoFilterPage() {
     const blended = int01 >= 1 ? filtered : blendPixels(data, filtered, int01);
     ctx.putImageData(new ImageData(blended.slice() as unknown as Uint8ClampedArray<ArrayBuffer>, w, h), 0, 0);
     syncSliderStrip();
-  }, [selectedFilter, intensity, previewMode]);
+  }, [selectedFilter, intensity, previewMode, loadedVersion]);
 
   // Render a thumbnail for a given filter into a small canvas
-  const renderThumb = useCallback(
-    (key: FilterKey, thumbCanvas: HTMLCanvasElement) => {
-      const orig = origPixelsRef.current;
-      if (!orig) return;
-
-      const { data, w, h } = orig;
-      // Scale down for thumbnail
-      const thumbW = 80, thumbH = 80;
-      const tmpFull = document.createElement("canvas");
-      tmpFull.width = w;
-      tmpFull.height = h;
-      const fullCtx = tmpFull.getContext("2d")!;
-
-      if (key === "original") {
-        fullCtx.putImageData(new ImageData(data.slice() as unknown as Uint8ClampedArray<ArrayBuffer>, w, h), 0, 0);
-      } else if (key === "blur") {
-        const img = imgRef.current;
-        if (!img) return;
-        fullCtx.filter = "blur(5px)";
-        fullCtx.drawImage(img, 0, 0);
-        fullCtx.filter = "none";
-      } else {
-        const preset = FILTERS.find((f) => f.key === key)!;
-        const filtered = preset.apply(data, w, h);
-        fullCtx.putImageData(new ImageData(filtered.slice() as unknown as Uint8ClampedArray<ArrayBuffer>, w, h), 0, 0);
-      }
-
-      thumbCanvas.width = thumbW;
-      thumbCanvas.height = thumbH;
-      const tCtx = thumbCanvas.getContext("2d")!;
-      tCtx.drawImage(tmpFull, 0, 0, thumbW, thumbH);
-    },
-    [],
-  );
+  const renderThumb = useCallback((key: FilterKey, thumbCanvas: HTMLCanvasElement) => {
+    const thumb = thumbPixelsRef.current;
+    if (!thumb) return;
+    const { data, size, canvas: source } = thumb;
+    thumbCanvas.width = size;
+    thumbCanvas.height = size;
+    const ctx = thumbCanvas.getContext("2d")!;
+    if (key === "original") {
+      ctx.putImageData(new ImageData(data.slice() as unknown as Uint8ClampedArray<ArrayBuffer>, size, size), 0, 0);
+    } else if (key === "blur") {
+      ctx.filter = "blur(2px)";
+      ctx.drawImage(source, 0, 0);
+      ctx.filter = "none";
+    } else {
+      const preset = FILTERS.find((f) => f.key === key)!;
+      const filtered = preset.apply(data, size, size);
+      ctx.putImageData(new ImageData(filtered.slice() as unknown as Uint8ClampedArray<ArrayBuffer>, size, size), 0, 0);
+    }
+  }, []);
 
   // Render all thumbnails after image loads
   useEffect(() => {
-    if (!origPixelsRef.current) return;
-    setTimeout(() => {
-      thumbCanvasesRef.current.forEach((canvas, key) => {
-        renderThumb(key, canvas);
-      });
-    }, 0);
-  }, [imgUrl, renderThumb]);
+    if (!thumbPixelsRef.current) return;
+    thumbCanvasesRef.current.forEach((canvas, key) => {
+      renderThumb(key, canvas);
+    });
+  }, [loadedVersion, renderThumb]);
 
   const handleDownload = useCallback(async () => {
     if (!file || !previewCanvasRef.current) return;
@@ -564,7 +575,7 @@ export default function PhotoFilterPage() {
                       ref={(el) => {
                         if (el) {
                           thumbCanvasesRef.current.set(preset.key, el);
-                          if (origPixelsRef.current) renderThumb(preset.key, el);
+                          if (thumbPixelsRef.current) renderThumb(preset.key, el);
                         }
                       }}
                       width={80}

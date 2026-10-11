@@ -101,8 +101,6 @@ export default function ImageCollagePage() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const CELL_SIZE = 300;
-
     let cols: number;
     let rows: number;
 
@@ -128,8 +126,20 @@ export default function ImageCollagePage() {
         rows = Math.ceil(images.length / 2);
     }
 
-    const totalW = cols * CELL_SIZE + (cols + 1) * gap;
-    const totalH = rows * CELL_SIZE + (rows + 1) * gap;
+    // Cells follow the source resolution (gap is defined relative to a 300 px
+    // cell), capped so the collage stays within canvas limits.
+    const minSide = Math.min(...images.map((l) => Math.min(l.img.naturalWidth, l.img.naturalHeight)));
+    let CELL_SIZE = Math.max(400, Math.min(1600, minSide));
+    const MAX_DIM = 8192;
+    const gapFor = (cell: number) => Math.round((gap * cell) / 300);
+    CELL_SIZE = Math.min(
+      CELL_SIZE,
+      Math.floor((MAX_DIM - (cols + 1) * gapFor(CELL_SIZE)) / cols),
+      Math.floor((MAX_DIM - (rows + 1) * gapFor(CELL_SIZE)) / rows),
+    );
+    const g = gapFor(CELL_SIZE);
+    const totalW = cols * CELL_SIZE + (cols + 1) * g;
+    const totalH = rows * CELL_SIZE + (rows + 1) * g;
 
     canvas.width = totalW;
     canvas.height = totalH;
@@ -137,13 +147,14 @@ export default function ImageCollagePage() {
     // Fill background
     ctx.fillStyle = bgColor;
     ctx.fillRect(0, 0, totalW, totalH);
+    ctx.imageSmoothingQuality = "high";
 
     // Draw images (object-fit: cover)
     images.forEach((loaded, i) => {
       const col = layout === "vertical" ? 0 : i % cols;
       const row = layout === "horizontal" ? 0 : Math.floor(i / cols);
-      const x = gap + col * (CELL_SIZE + gap);
-      const y = gap + row * (CELL_SIZE + gap);
+      const x = g + col * (CELL_SIZE + g);
+      const y = g + row * (CELL_SIZE + g);
 
       const img = loaded.img;
       const imgRatio = img.naturalWidth / img.naturalHeight;
@@ -175,7 +186,11 @@ export default function ImageCollagePage() {
     canvas.toBlob((blob) => {
       if (blob) {
         setResultBlob(blob);
-        setResultPreview(URL.createObjectURL(blob));
+        const url = URL.createObjectURL(blob);
+        setResultPreview((prev) => {
+          if (prev) URL.revokeObjectURL(prev);
+          return url;
+        });
         toast.success(t("collage.success"));
       } else {
         toast.error(t("collage.fail"));
