@@ -100,80 +100,7 @@ function resolveCoordinates(
 }
 
 export default function PdfPageNumbersPage() {
-  const { locale, t } = useI18n();
-  const copy = locale === "tr"
-    ? {
-        dropLabel: "Numaralandırmak istediğiniz PDF dosyasını bırakın",
-        fileReady: "Dosya hazır",
-        quickSetup: "Hızlı ayarlar",
-        pageRange: "Sayfa aralığı",
-        firstPage: "İlk sayfa",
-        lastPage: "Son sayfa",
-        formatting: "Biçim",
-        prefix: "Önek",
-        suffix: "Sonek",
-        digits: "Sıfır dolgusu",
-        labelStyle: "Numara stili",
-        numberOnly: "Sadece numara",
-        numberAndTotal: "Numara / toplam",
-        appearance: "Görünüm",
-        font: "Yazı tipi",
-        fontSize: "Boyut",
-        opacity: "Saydamlık",
-        color: "Renk",
-        marginX: "Yatay boşluk",
-        marginY: "Dikey boşluk",
-        sample: "Örnek çıktı",
-        numberedPages: "Numaralanacak sayfa",
-        actualRange: "Uygulama aralığı",
-        process: "Sayfa numaralarını uygula",
-        processing: "PDF işleniyor...",
-        resultTitle: "Hazır çıktı",
-        anotherFile: "Başka PDF seç",
-        invalidPdf: "PDF okunamadı. Başka bir dosya deneyin.",
-        invalidRange: "Sayfa aralığını kontrol edin.",
-        success: "Sayfa numaraları eklendi.",
-        fail: "Sayfa numaraları eklenemedi.",
-        startHint: "İlk numaralı sayfada görünecek sayı.",
-        positionHint: "Konumu seçin, sonra boyut ve boşlukları ince ayarlayın.",
-        fromLabel: "Başlangıç",
-      }
-    : {
-        dropLabel: "Drop the PDF you want to number",
-        fileReady: "File ready",
-        quickSetup: "Quick setup",
-        pageRange: "Page range",
-        firstPage: "First page",
-        lastPage: "Last page",
-        formatting: "Formatting",
-        prefix: "Prefix",
-        suffix: "Suffix",
-        digits: "Zero padding",
-        labelStyle: "Number style",
-        numberOnly: "Number only",
-        numberAndTotal: "Number / total",
-        appearance: "Appearance",
-        font: "Font",
-        fontSize: "Size",
-        opacity: "Opacity",
-        color: "Color",
-        marginX: "Horizontal margin",
-        marginY: "Vertical margin",
-        sample: "Sample output",
-        numberedPages: "Pages to number",
-        actualRange: "Applied range",
-        process: "Apply page numbers",
-        processing: "Processing PDF...",
-        resultTitle: "Ready to download",
-        anotherFile: "Choose another PDF",
-        invalidPdf: "Could not read that PDF. Please try another file.",
-        invalidRange: "Please review the page range.",
-        success: "Page numbers added.",
-        fail: "Failed to add page numbers.",
-        startHint: "The number that appears on the first numbered page.",
-        positionHint: "Pick a placement, then fine-tune size and margins.",
-        fromLabel: "Start from",
-      };
+  const { t } = useI18n();
 
   const [file, setFile] = useState<File | null>(null);
   const [pageCount, setPageCount] = useState(0);
@@ -238,10 +165,10 @@ export default function PdfPageNumbersPage() {
         console.error(error);
         setFile(null);
         setPageCount(0);
-        toast.error(copy.invalidPdf);
+        toast.error(t("pagenum.ui.invalidPdf"));
       }
     },
-    [copy.invalidPdf],
+    [t],
   );
 
   const reset = useCallback(() => {
@@ -259,7 +186,7 @@ export default function PdfPageNumbersPage() {
     const from = clamp(rangeStart || 1, 1, pageCount);
     const to = clamp(rangeEnd || pageCount, from, pageCount);
     if (from > to) {
-      toast.error(copy.invalidRange);
+      toast.error(t("pagenum.ui.invalidRange"));
       return;
     }
 
@@ -320,18 +247,15 @@ export default function PdfPageNumbersPage() {
       const pdfBytes = await pdfDoc.save();
       setResultBlob(new Blob([new Uint8Array(pdfBytes)], { type: "application/pdf" }));
       setProgress(100);
-      toast.success(copy.success);
+      toast.success(t("pagenum.ui.success"));
     } catch (error) {
       console.error(error);
-      toast.error(copy.fail);
+      toast.error(t("pagenum.ui.fail"));
     } finally {
       setProcessing(false);
     }
   }, [
     color,
-    copy.fail,
-    copy.invalidRange,
-    copy.success,
     digits,
     file,
     fontChoice,
@@ -347,6 +271,7 @@ export default function PdfPageNumbersPage() {
     rangeStart,
     startFrom,
     suffix,
+    t,
   ]);
 
   return (
@@ -360,7 +285,7 @@ export default function PdfPageNumbersPage() {
             onFilesSelected={handleFilesSelected}
             accept={{ "application/pdf": [".pdf"] }}
             formats={["PDF"]}
-            label={copy.dropLabel}
+            label={t("pagenum.ui.dropLabel")}
           />
         ) : (
           <>
@@ -368,13 +293,15 @@ export default function PdfPageNumbersPage() {
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0">
                   <p className="text-xs uppercase tracking-[0.22em] text-t-secondary">
-                    {copy.fileReady}
+                    {t("pagenum.ui.fileReady")}
                   </p>
                   <p className="mt-2 text-lg font-semibold text-t-primary truncate">
                     {file.name}
                   </p>
                   <p className="mt-1 text-sm text-t-secondary">
-                    {pageCount} {pageCount === 1 ? "page" : "pages"}
+                    {pageCount === 1
+                      ? t("pagenum.ui.pageOne", { n: pageCount })
+                      : t("pagenum.ui.pageMany", { n: pageCount })}
                   </p>
                 </div>
                 <button
@@ -382,14 +309,14 @@ export default function PdfPageNumbersPage() {
                   onClick={reset}
                   className="shrink-0 rounded-xl border border-border bg-bg-secondary px-4 py-2 text-sm font-medium text-t-secondary transition-colors hover:text-t-primary"
                 >
-                  {copy.anotherFile}
+                  {t("pagenum.ui.anotherFile")}
                 </button>
               </div>
 
               <div className="grid gap-4 md:grid-cols-3">
                 <div className="rounded-2xl border border-border bg-bg-secondary/70 p-4">
                   <p className="text-[11px] uppercase tracking-[0.2em] text-t-secondary">
-                    {copy.actualRange}
+                    {t("pagenum.ui.actualRange")}
                   </p>
                   <p className="mt-2 text-xl font-semibold text-t-primary">
                     {normalizedRange.from}-{normalizedRange.to}
@@ -397,7 +324,7 @@ export default function PdfPageNumbersPage() {
                 </div>
                 <div className="rounded-2xl border border-border bg-bg-secondary/70 p-4">
                   <p className="text-[11px] uppercase tracking-[0.2em] text-t-secondary">
-                    {copy.numberedPages}
+                    {t("pagenum.ui.numberedPages")}
                   </p>
                   <p className="mt-2 text-xl font-semibold text-t-primary">
                     {normalizedRange.count}
@@ -405,7 +332,7 @@ export default function PdfPageNumbersPage() {
                 </div>
                 <div className="rounded-2xl border border-border bg-bg-secondary/70 p-4">
                   <p className="text-[11px] uppercase tracking-[0.2em] text-t-secondary">
-                    {copy.sample}
+                    {t("pagenum.ui.sample")}
                   </p>
                   <p className="mt-2 text-xl font-semibold text-t-primary">
                     {positionedLabel}
@@ -418,8 +345,8 @@ export default function PdfPageNumbersPage() {
               <div className="space-y-5">
                 <div className="glass rounded-2xl p-5 space-y-4">
                   <div>
-                    <p className="text-sm font-semibold text-t-primary">{copy.quickSetup}</p>
-                    <p className="mt-1 text-xs text-t-secondary">{copy.positionHint}</p>
+                    <p className="text-sm font-semibold text-t-primary">{t("pagenum.ui.quickSetup")}</p>
+                    <p className="mt-1 text-xs text-t-secondary">{t("pagenum.ui.positionHint")}</p>
                   </div>
 
                   <div className="grid grid-cols-3 gap-2">
@@ -442,7 +369,7 @@ export default function PdfPageNumbersPage() {
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
                       <label className="mb-2 block text-sm font-medium text-t-secondary">
-                        {copy.fromLabel}
+                        {t("pagenum.ui.fromLabel")}
                       </label>
                       <input
                         type="number"
@@ -451,12 +378,12 @@ export default function PdfPageNumbersPage() {
                         onChange={(event) => setStartFrom(Number(event.target.value || 1))}
                         className="w-full rounded-xl border border-border bg-bg-secondary px-3 py-2.5 text-sm text-t-primary focus:border-accent/50 focus:outline-none"
                       />
-                      <p className="mt-1.5 text-xs text-t-secondary">{copy.startHint}</p>
+                      <p className="mt-1.5 text-xs text-t-secondary">{t("pagenum.ui.startHint")}</p>
                     </div>
 
                     <div>
                       <label className="mb-2 block text-sm font-medium text-t-secondary">
-                        {copy.digits}
+                        {t("pagenum.ui.digits")}
                       </label>
                       <input
                         type="range"
@@ -477,11 +404,11 @@ export default function PdfPageNumbersPage() {
                 </div>
 
                 <div className="glass rounded-2xl p-5 space-y-4">
-                  <p className="text-sm font-semibold text-t-primary">{copy.pageRange}</p>
+                  <p className="text-sm font-semibold text-t-primary">{t("pagenum.ui.pageRange")}</p>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
                       <label className="mb-2 block text-sm font-medium text-t-secondary">
-                        {copy.firstPage}
+                        {t("pagenum.ui.firstPage")}
                       </label>
                       <input
                         type="number"
@@ -494,7 +421,7 @@ export default function PdfPageNumbersPage() {
                     </div>
                     <div>
                       <label className="mb-2 block text-sm font-medium text-t-secondary">
-                        {copy.lastPage}
+                        {t("pagenum.ui.lastPage")}
                       </label>
                       <input
                         type="number"
@@ -511,11 +438,11 @@ export default function PdfPageNumbersPage() {
 
               <div className="space-y-5">
                 <div className="glass rounded-2xl p-5 space-y-4">
-                  <p className="text-sm font-semibold text-t-primary">{copy.formatting}</p>
+                  <p className="text-sm font-semibold text-t-primary">{t("pagenum.ui.formatting")}</p>
                   <div className="flex flex-wrap gap-2">
                     {([
-                      { value: "page" as const, label: copy.numberOnly },
-                      { value: "page-total" as const, label: copy.numberAndTotal },
+                      { value: "page" as const, label: t("pagenum.ui.numberOnly") },
+                      { value: "page-total" as const, label: t("pagenum.ui.numberAndTotal") },
                     ]).map((option) => (
                       <button
                         key={option.value}
@@ -535,19 +462,19 @@ export default function PdfPageNumbersPage() {
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
                       <label className="mb-2 block text-sm font-medium text-t-secondary">
-                        {copy.prefix}
+                        {t("pagenum.ui.prefix")}
                       </label>
                       <input
                         type="text"
                         value={prefix}
                         onChange={(event) => setPrefix(event.target.value)}
-                        placeholder="Page "
+                        placeholder={t("pagenum.ui.prefixPlaceholder")}
                         className="w-full rounded-xl border border-border bg-bg-secondary px-3 py-2.5 text-sm text-t-primary placeholder:text-t-secondary/50 focus:border-accent/50 focus:outline-none"
                       />
                     </div>
                     <div>
                       <label className="mb-2 block text-sm font-medium text-t-secondary">
-                        {copy.suffix}
+                        {t("pagenum.ui.suffix")}
                       </label>
                       <input
                         type="text"
@@ -561,11 +488,11 @@ export default function PdfPageNumbersPage() {
                 </div>
 
                 <div className="glass rounded-2xl p-5 space-y-4">
-                  <p className="text-sm font-semibold text-t-primary">{copy.appearance}</p>
+                  <p className="text-sm font-semibold text-t-primary">{t("pagenum.ui.appearance")}</p>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
                       <label className="mb-2 block text-sm font-medium text-t-secondary">
-                        {copy.font}
+                        {t("pagenum.ui.font")}
                       </label>
                       <select
                         value={fontChoice}
@@ -581,7 +508,7 @@ export default function PdfPageNumbersPage() {
                     </div>
                     <div>
                       <label className="mb-2 block text-sm font-medium text-t-secondary">
-                        {copy.color}
+                        {t("ui.color")}
                       </label>
                       <div className="flex items-center gap-3 rounded-xl border border-border bg-bg-secondary px-3 py-2">
                         <input
@@ -598,7 +525,7 @@ export default function PdfPageNumbersPage() {
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
                       <div className="mb-2 flex items-center justify-between text-sm text-t-secondary">
-                        <label>{copy.fontSize}</label>
+                        <label>{t("pagenum.ui.fontSize")}</label>
                         <span className="font-mono">{fontSize}px</span>
                       </div>
                       <input
@@ -613,7 +540,7 @@ export default function PdfPageNumbersPage() {
                     </div>
                     <div>
                       <div className="mb-2 flex items-center justify-between text-sm text-t-secondary">
-                        <label>{copy.opacity}</label>
+                        <label>{t("pagenum.ui.opacity")}</label>
                         <span className="font-mono">{opacity}%</span>
                       </div>
                       <input
@@ -631,7 +558,7 @@ export default function PdfPageNumbersPage() {
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
                       <div className="mb-2 flex items-center justify-between text-sm text-t-secondary">
-                        <label>{copy.marginX}</label>
+                        <label>{t("pagenum.ui.marginX")}</label>
                         <span className="font-mono">{marginX}px</span>
                       </div>
                       <input
@@ -646,7 +573,7 @@ export default function PdfPageNumbersPage() {
                     </div>
                     <div>
                       <div className="mb-2 flex items-center justify-between text-sm text-t-secondary">
-                        <label>{copy.marginY}</label>
+                        <label>{t("pagenum.ui.marginY")}</label>
                         <span className="font-mono">{marginY}px</span>
                       </div>
                       <input
@@ -666,7 +593,7 @@ export default function PdfPageNumbersPage() {
 
             {(progress > 0 || processing) && (
               <div className="glass rounded-2xl p-4">
-                <ProgressBar progress={progress} label={processing ? copy.processing : undefined} />
+                <ProgressBar progress={progress} label={processing ? t("pagenum.ui.processing") : undefined} />
               </div>
             )}
 
@@ -682,7 +609,7 @@ export default function PdfPageNumbersPage() {
                       : "bg-accent hover:shadow-lg hover:shadow-sm"
                   }`}
                 >
-                  {processing ? copy.processing : copy.process}
+                  {processing ? t("pagenum.ui.processing") : t("pagenum.ui.process")}
                 </button>
               ) : (
                 <>
@@ -691,7 +618,7 @@ export default function PdfPageNumbersPage() {
                     filename={`numbered_${file.name}`}
                   />
                   <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-300">
-                    {copy.resultTitle}
+                    {t("pagenum.ui.resultTitle")}
                   </div>
                 </>
               )}

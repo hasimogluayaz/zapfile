@@ -33,16 +33,16 @@ type FontFamily =
   | "Impact, sans-serif"
   | "Georgia, serif";
 
-const GRID_CELLS: { value: GridPosition; label: string }[] = [
-  { value: "top-left", label: "TL" },
-  { value: "top-center", label: "TC" },
-  { value: "top-right", label: "TR" },
-  { value: "middle-left", label: "ML" },
-  { value: "middle-center", label: "MC" },
-  { value: "middle-right", label: "MR" },
-  { value: "bottom-left", label: "BL" },
-  { value: "bottom-center", label: "BC" },
-  { value: "bottom-right", label: "BR" },
+const GRID_CELLS: { value: GridPosition; label: string; titleKey: string }[] = [
+  { value: "top-left", label: "TL", titleKey: "watermark.ui.pos.top-left" },
+  { value: "top-center", label: "TC", titleKey: "watermark.ui.pos.top-center" },
+  { value: "top-right", label: "TR", titleKey: "watermark.ui.pos.top-right" },
+  { value: "middle-left", label: "ML", titleKey: "watermark.ui.pos.middle-left" },
+  { value: "middle-center", label: "MC", titleKey: "watermark.ui.pos.middle-center" },
+  { value: "middle-right", label: "MR", titleKey: "watermark.ui.pos.middle-right" },
+  { value: "bottom-left", label: "BL", titleKey: "watermark.ui.pos.bottom-left" },
+  { value: "bottom-center", label: "BC", titleKey: "watermark.ui.pos.bottom-center" },
+  { value: "bottom-right", label: "BR", titleKey: "watermark.ui.pos.bottom-right" },
 ];
 
 const FONT_FAMILIES: { value: FontFamily; labelKey: string }[] = [
@@ -356,20 +356,7 @@ function drawWatermarkToCanvas(
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function WatermarkImagePage() {
-  const { locale, t } = useI18n();
-  const previewCopy = locale === "tr"
-    ? {
-        moveHint: "Önizleme üzerinde tıklayıp sürükleyerek filigranı taşıyın.",
-        directPlacement: "Doğrudan yerleştirme",
-        directPlacementHint: "Önizleme içindeki tutamacı sürükleyin veya görselin istediğiniz yerine tıklayın.",
-        fineNudge: "İnce hareket",
-      }
-    : {
-        moveHint: "Click or drag on the preview to reposition the watermark.",
-        directPlacement: "Direct placement",
-        directPlacementHint: "Drag the handle inside the preview or click anywhere on the image to place it.",
-        fineNudge: "Fine nudge",
-      };
+  const { t } = useI18n();
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
@@ -925,12 +912,12 @@ export default function WatermarkImagePage() {
                           className={`absolute z-10 flex h-9 w-9 items-center justify-center rounded-full border border-white/70 bg-white/90 text-[15px] text-accent shadow-lg shadow-black/20 transition-opacity ${
                             gridPosition === "custom" ? "cursor-grab opacity-100" : "pointer-events-none opacity-0"
                           }`}
-                          aria-label={previewCopy.directPlacement}
+                          aria-label={t("watermark.ui.directPlacement")}
                         >
                           +
                         </button>
                         <div className="pointer-events-none absolute inset-x-3 bottom-3 rounded-xl border border-border bg-black/45 px-3 py-2 text-[11px] text-white/90 backdrop-blur-sm">
-                          {previewCopy.moveHint}
+                          {t("watermark.ui.moveHint")}
                         </div>
                       </>
                     )}
@@ -1256,7 +1243,7 @@ export default function WatermarkImagePage() {
                         <button
                           key={cell.value}
                           onClick={() => setGridPosition(cell.value)}
-                          title={cell.value.replace("-", " ")}
+                          title={t(cell.titleKey)}
                           className={`w-8 h-8 rounded border text-[10px] font-semibold transition-all ${
                             gridPosition === cell.value
                               ? "border-accent bg-accent/20 text-t-primary"
@@ -1287,10 +1274,10 @@ export default function WatermarkImagePage() {
                     <div className="space-y-3">
                       <div className="rounded-xl border border-border bg-bg-secondary/70 p-3">
                         <p className="text-[12px] font-medium text-t-primary">
-                          {previewCopy.directPlacement}
+                          {t("watermark.ui.directPlacement")}
                         </p>
                         <p className="mt-1 text-[11px] text-t-secondary">
-                          {previewCopy.directPlacementHint}
+                          {t("watermark.ui.directPlacementHint")}
                         </p>
                       </div>
                       <div>
@@ -1326,7 +1313,7 @@ export default function WatermarkImagePage() {
                       <div className="rounded-xl border border-border bg-bg-secondary/70 p-3">
                         <div className="mb-3 flex items-center justify-between">
                           <span className="text-[12px] font-medium text-t-primary">
-                            {previewCopy.fineNudge}
+                            {t("watermark.ui.fineNudge")}
                           </span>
                           <span className="text-[11px] text-t-secondary">1%</span>
                         </div>
