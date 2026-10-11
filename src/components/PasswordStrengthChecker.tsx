@@ -4,6 +4,8 @@ import { useState, useMemo } from "react";
 import toast from "react-hot-toast";
 import { useI18n } from "@/lib/i18n";
 
+type TFn = (key: string, params?: Record<string, string | number>) => string;
+
 // ── Common passwords breach list ──────────────────────────────────────────────
 
 const COMMON_PASSWORDS = new Set([
@@ -20,36 +22,36 @@ const KEYBOARD_PATTERNS = [
   "45678","56789","98765","87654","76543","65432","54321","abcdef","fedcba",
 ];
 
-function detectPatterns(password: string): string[] {
+function detectPatterns(password: string, t: TFn): string[] {
   const lp = password.toLowerCase();
   const warnings: string[] = [];
 
   // Keyboard sequences
   for (const pattern of KEYBOARD_PATTERNS) {
     if (lp.includes(pattern)) {
-      warnings.push(`Contains keyboard pattern "${pattern}"`);
+      warnings.push(t("pwcheck.ui.keyboardPattern", { pattern }));
       break;
     }
   }
 
   // Repeated characters (3+)
   if (/(.)\1{2,}/.test(password)) {
-    warnings.push("Contains repeated characters (e.g. aaa, 111)");
+    warnings.push(t("pwcheck.ui.repeatedChars"));
   }
 
   // Date patterns
   if (/(?:19|20)\d{2}/.test(password)) {
-    warnings.push("Contains a year (19xx / 20xx) — easy to guess");
+    warnings.push(t("pwcheck.ui.containsYear"));
   }
 
   // Only digits
   if (/^\d+$/.test(password)) {
-    warnings.push("Password is all numbers — very weak");
+    warnings.push(t("pwcheck.ui.allNumbers"));
   }
 
   // Only letters
   if (/^[a-zA-Z]+$/.test(password)) {
-    warnings.push("Password is all letters — no numbers or symbols");
+    warnings.push(t("pwcheck.ui.allLetters"));
   }
 
   return warnings;
@@ -66,14 +68,14 @@ interface PasswordAnalysis {
   charsetSize: number;
   entropy: number;
   score: number; // 0-100
-  label: "Very Weak" | "Weak" | "Fair" | "Strong" | "Very Strong";
+  label: string;
   crackTime: string;
   isBreached: boolean;
   suggestions: string[];
   patternWarnings: string[];
 }
 
-function analyzePassword(password: string): PasswordAnalysis {
+function analyzePassword(password: string, t: TFn): PasswordAnalysis {
   const length = password.length;
   const hasUppercase = /[A-Z]/.test(password);
   const hasLowercase = /[a-z]/.test(password);
@@ -97,11 +99,11 @@ function analyzePassword(password: string): PasswordAnalysis {
   const score = Math.round(entropyScore + lengthScore + criteriaScore);
 
   let label: PasswordAnalysis["label"];
-  if (score < 20) label = "Very Weak";
-  else if (score < 40) label = "Weak";
-  else if (score < 60) label = "Fair";
-  else if (score < 80) label = "Strong";
-  else label = "Very Strong";
+  if (score < 20) label = t("pwcheck.ui.veryWeak");
+  else if (score < 40) label = t("pw.weak");
+  else if (score < 60) label = t("pdfsec.strength.fair");
+  else if (score < 80) label = t("pw.strong");
+  else label = t("pw.veryStrong");
 
   // Crack time — 100 billion guesses/sec (modern GPU cluster)
   const GUESSES_PER_SECOND = 1e11;
@@ -109,32 +111,32 @@ function analyzePassword(password: string): PasswordAnalysis {
   const seconds = combinations / GUESSES_PER_SECOND;
 
   let crackTime: string;
-  if (seconds < 1) crackTime = "Instantly";
-  else if (seconds < 60) crackTime = `${Math.round(seconds)} seconds`;
-  else if (seconds < 3600) crackTime = `${Math.round(seconds / 60)} minutes`;
-  else if (seconds < 86400) crackTime = `${Math.round(seconds / 3600)} hours`;
-  else if (seconds < 2592000) crackTime = `${Math.round(seconds / 86400)} days`;
-  else if (seconds < 31536000) crackTime = `${Math.round(seconds / 2592000)} months`;
-  else if (seconds < 3.156e9) crackTime = `${Math.round(seconds / 31536000)} years`;
-  else if (seconds < 3.156e12) crackTime = `${Math.round(seconds / 3.156e9)} thousand years`;
-  else if (seconds < 3.156e15) crackTime = `${Math.round(seconds / 3.156e12)} million years`;
-  else crackTime = "Centuries";
+  if (seconds < 1) crackTime = t("pwcheck.ui.instantly");
+  else if (seconds < 60) crackTime = t("pw.seconds", { n: Math.round(seconds) });
+  else if (seconds < 3600) crackTime = t("pw.minutes", { n: Math.round(seconds / 60) });
+  else if (seconds < 86400) crackTime = t("pw.hours", { n: Math.round(seconds / 3600) });
+  else if (seconds < 2592000) crackTime = t("pw.days", { n: Math.round(seconds / 86400) });
+  else if (seconds < 31536000) crackTime = t("pwcheck.ui.months", { n: Math.round(seconds / 2592000) });
+  else if (seconds < 3.156e9) crackTime = t("pw.years", { n: Math.round(seconds / 31536000) });
+  else if (seconds < 3.156e12) crackTime = t("pwcheck.ui.thousandYears", { n: Math.round(seconds / 3.156e9) });
+  else if (seconds < 3.156e15) crackTime = t("pwcheck.ui.millionYears", { n: Math.round(seconds / 3.156e12) });
+  else crackTime = t("pw.centuries");
 
   // Breach check
   const isBreached = COMMON_PASSWORDS.has(password.toLowerCase());
 
   // Improvement suggestions
   const suggestions: string[] = [];
-  if (!hasUppercase) suggestions.push("Add uppercase letters (A-Z)");
-  if (!hasLowercase) suggestions.push("Add lowercase letters (a-z)");
-  if (!hasNumbers) suggestions.push("Add numbers (0-9)");
-  if (!hasSymbols) suggestions.push("Add symbols (!@#$%^&*)");
-  if (length < 12) suggestions.push("Make it longer — aim for at least 12 characters");
-  if (length < 16 && criteriaMet >= 3) suggestions.push("16+ characters is ideal for maximum security");
+  if (!hasUppercase) suggestions.push(t("pwcheck.ui.addUpper"));
+  if (!hasLowercase) suggestions.push(t("pwcheck.ui.addLower"));
+  if (!hasNumbers) suggestions.push(t("pwcheck.ui.addNumbers"));
+  if (!hasSymbols) suggestions.push(t("pwcheck.ui.addSymbols"));
+  if (length < 12) suggestions.push(t("pwcheck.ui.makeLonger"));
+  if (length < 16 && criteriaMet >= 3) suggestions.push(t("pwcheck.ui.sixteenIdeal"));
 
   // Pattern warnings
-  const patternWarnings = detectPatterns(password);
-  if (isBreached) patternWarnings.unshift("This password is in the top common passwords list!");
+  const patternWarnings = detectPatterns(password, t);
+  if (isBreached) patternWarnings.unshift(t("pwcheck.ui.topCommon"));
 
   return {
     length, hasUppercase, hasLowercase, hasNumbers, hasSymbols,
@@ -181,16 +183,16 @@ export default function PasswordStrengthChecker() {
 
   const analysis = useMemo<PasswordAnalysis | null>(() => {
     if (!password) return null;
-    return analyzePassword(password);
-  }, [password]);
+    return analyzePassword(password, t);
+  }, [password, t]);
 
   const copyPassword = async () => {
     if (!password) return;
     try {
       await navigator.clipboard.writeText(password);
-      toast.success("Password copied!");
+      toast.success(t("pwcheck.ui.passwordCopied"));
     } catch {
-      toast.error("Failed to copy");
+      toast.error(t("clr.copyFail"));
     }
   };
 
@@ -203,10 +205,10 @@ export default function PasswordStrengthChecker() {
         {/* Input Card */}
         <div className="glass rounded-xl p-6">
           <div className="flex items-center justify-between mb-3">
-            <label className="text-sm font-medium text-t-secondary">Enter your password</label>
+            <label className="text-sm font-medium text-t-secondary">{t("pwcheck.ui.enterPassword")}</label>
             {password && (
               <span className="text-xs font-mono text-t-secondary bg-bg-secondary px-2 py-1 rounded-lg border border-border">
-                {password.length} chars
+                {t("pwcheck.ui.charsCount", { n: password.length })}
               </span>
             )}
           </div>
@@ -215,7 +217,7 @@ export default function PasswordStrengthChecker() {
               type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Type your password here…"
+              placeholder={t("pwcheck.ui.placeholder")}
               className="w-full px-4 py-3 pe-20 rounded-xl bg-bg-secondary border border-border text-t-primary placeholder:text-t-secondary/40 focus:outline-none focus:border-accent/40 font-mono text-sm"
               autoComplete="off"
               autoCorrect="off"
@@ -227,7 +229,7 @@ export default function PasswordStrengthChecker() {
                 <button
                   onClick={copyPassword}
                   className="p-2 rounded-lg text-t-secondary hover:text-t-primary hover:bg-bg-tertiary transition-all"
-                  aria-label="Copy password"
+                  aria-label={t("pwcheck.ui.copyPassword")}
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -237,7 +239,7 @@ export default function PasswordStrengthChecker() {
               <button
                 onClick={() => setShowPassword((v) => !v)}
                 className="p-2 rounded-lg text-t-secondary hover:text-t-primary hover:bg-bg-tertiary transition-all"
-                aria-label={showPassword ? "Hide password" : "Show password"}
+                aria-label={showPassword ? t("pdfsec.hide") : t("pdfsec.show")}
               >
                 {showPassword ? (
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -257,7 +259,7 @@ export default function PasswordStrengthChecker() {
           {analysis && (
             <div className="mt-4">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs text-t-secondary">Strength</span>
+                <span className="text-xs text-t-secondary">{t("pw.strength")}</span>
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-mono text-t-secondary">{analysis.score}/100</span>
                   <span className={`text-xs font-semibold ${strengthTextColor(analysis.score)}`}>
@@ -284,7 +286,7 @@ export default function PasswordStrengthChecker() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
                 <p className="text-sm text-red-700 dark:text-red-400 font-medium">
-                  This password appears in common breach lists. Do not use it.
+                  {t("pwcheck.ui.breachWarning")}
                 </p>
               </div>
             )}
@@ -293,17 +295,17 @@ export default function PasswordStrengthChecker() {
             <div className="grid grid-cols-3 gap-3">
               <div className="glass rounded-xl p-4 text-center">
                 <p className="text-2xl font-bold text-t-primary font-mono">{analysis.length}</p>
-                <p className="text-xs text-t-secondary mt-1">Characters</p>
+                <p className="text-xs text-t-secondary mt-1">{t("wc.chars")}</p>
               </div>
               <div className="glass rounded-xl p-4 text-center">
                 <p className="text-2xl font-bold text-t-primary font-mono">
                   {analysis.entropy.toFixed(0)}
                 </p>
-                <p className="text-xs text-t-secondary mt-1">Entropy bits</p>
+                <p className="text-xs text-t-secondary mt-1">{t("pwcheck.ui.entropyBits")}</p>
               </div>
               <div className="glass rounded-xl p-4 text-center">
                 <p className="text-2xl font-bold text-t-primary font-mono">{analysis.charsetSize}</p>
-                <p className="text-xs text-t-secondary mt-1">Charset size</p>
+                <p className="text-xs text-t-secondary mt-1">{t("pwcheck.ui.charsetSize")}</p>
               </div>
             </div>
 
@@ -313,35 +315,35 @@ export default function PasswordStrengthChecker() {
                 <svg className="w-4 h-4 text-t-secondary shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" />
                 </svg>
-                <p className="text-sm font-medium text-t-secondary">Time to Crack</p>
+                <p className="text-sm font-medium text-t-secondary">{t("pwcheck.ui.timeToCrack")}</p>
               </div>
               <p className={`text-2xl font-bold ${strengthTextColor(analysis.score)}`}>
                 {analysis.crackTime}
               </p>
               <p className="text-xs text-t-secondary mt-1">
-                At 100 billion guesses/sec (modern GPU cluster)
+                {t("pwcheck.ui.guessRate")}
               </p>
             </div>
 
             {/* Criteria checklist */}
             <div className="glass rounded-xl p-5">
-              <p className="text-sm font-medium text-t-secondary mb-4">Criteria</p>
+              <p className="text-sm font-medium text-t-secondary mb-4">{t("pwcheck.ui.criteria")}</p>
               <div className="space-y-2.5">
-                <CheckRow label="At least 8 characters" passed={analysis.length >= 8} />
-                <CheckRow label="At least 12 characters (recommended)" passed={analysis.length >= 12} />
-                <CheckRow label="At least 16 characters (ideal)" passed={analysis.length >= 16} />
-                <CheckRow label="Contains uppercase letters (A-Z)" passed={analysis.hasUppercase} />
-                <CheckRow label="Contains lowercase letters (a-z)" passed={analysis.hasLowercase} />
-                <CheckRow label="Contains numbers (0-9)" passed={analysis.hasNumbers} />
-                <CheckRow label="Contains symbols (!@#$…)" passed={analysis.hasSymbols} />
-                <CheckRow label="Not a commonly used password" passed={!analysis.isBreached} />
+                <CheckRow label={t("pwcheck.ui.min8")} passed={analysis.length >= 8} />
+                <CheckRow label={t("pwcheck.ui.min12")} passed={analysis.length >= 12} />
+                <CheckRow label={t("pwcheck.ui.min16")} passed={analysis.length >= 16} />
+                <CheckRow label={t("pwcheck.ui.hasUpper")} passed={analysis.hasUppercase} />
+                <CheckRow label={t("pwcheck.ui.hasLower")} passed={analysis.hasLowercase} />
+                <CheckRow label={t("pwcheck.ui.hasNumbers")} passed={analysis.hasNumbers} />
+                <CheckRow label={t("pwcheck.ui.hasSymbols")} passed={analysis.hasSymbols} />
+                <CheckRow label={t("pwcheck.ui.notCommon")} passed={!analysis.isBreached} />
               </div>
             </div>
 
             {/* Pattern warnings */}
             {analysis.patternWarnings.length > 0 && (
               <div className="glass rounded-xl p-5">
-                <p className="text-sm font-medium text-amber-700 dark:text-amber-400 mb-3">Pattern Warnings</p>
+                <p className="text-sm font-medium text-amber-700 dark:text-amber-400 mb-3">{t("pwcheck.ui.patternWarnings")}</p>
                 <ul className="space-y-2">
                   {analysis.patternWarnings.map((w, i) => (
                     <li key={i} className="flex items-start gap-2 text-sm text-t-secondary">
@@ -356,7 +358,7 @@ export default function PasswordStrengthChecker() {
             {/* Suggestions */}
             {analysis.suggestions.length > 0 && (
               <div className="glass rounded-xl p-5">
-                <p className="text-sm font-medium text-t-secondary mb-3">Suggestions</p>
+                <p className="text-sm font-medium text-t-secondary mb-3">{t("pwcheck.ui.suggestions")}</p>
                 <ul className="space-y-2">
                   {analysis.suggestions.map((s, i) => (
                     <li key={i} className="flex items-start gap-2 text-sm text-t-secondary">
@@ -373,7 +375,7 @@ export default function PasswordStrengthChecker() {
               <svg className="w-4 h-4 text-emerald-700 dark:text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </svg>
-              Your password is never sent anywhere. All analysis happens entirely in your browser.
+              {t("pwcheck.ui.privacyNote")}
             </div>
           </>
         )}

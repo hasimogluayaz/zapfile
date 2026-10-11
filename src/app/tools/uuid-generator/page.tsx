@@ -39,15 +39,15 @@ export default function UuidGeneratorPage() {
       result.push(idType === "uuid" ? crypto.randomUUID() : generateNanoId());
     }
     setIds(result);
-    toast.success(`Generated ${clamped} ${idType === "uuid" ? "UUID v4" : "Nano ID"}s`);
+    toast.success(t("uuid.ui.generated", { n: clamped, type: idType === "uuid" ? "UUID v4" : "Nano ID" }));
   };
 
   const copyOne = async (id: string) => {
     try {
       await navigator.clipboard.writeText(id);
-      toast.success("Copied");
+      toast.success(t("uuid.ui.copied"));
     } catch {
-      toast.error("Failed to copy");
+      toast.error(t("clr.copyFail"));
     }
   };
 
@@ -55,9 +55,9 @@ export default function UuidGeneratorPage() {
     if (ids.length === 0) return;
     try {
       await navigator.clipboard.writeText(ids.join("\n"));
-      toast.success("All IDs copied");
+      toast.success(t("uuid.ui.allCopied"));
     } catch {
-      toast.error("Failed to copy");
+      toast.error(t("clr.copyFail"));
     }
   };
 
@@ -153,7 +153,7 @@ export default function UuidGeneratorPage() {
                   <button
                     onClick={() => copyOne(id)}
                     className="flex-shrink-0 text-t-secondary opacity-0 group-hover:opacity-100 hover:text-t-primary transition-all"
-                    aria-label="Copy"
+                    aria-label={t("ui.copy")}
                   >
                     <CopyIcon />
                   </button>

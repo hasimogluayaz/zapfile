@@ -38,12 +38,12 @@ export default function QRGeneratorPage() {
   const logoInputRef = useRef<HTMLInputElement>(null);
 
   const PRESETS = [
-    { label: "Dark", fg: "#1a1a2e", bg: "#ffffff" },
-    { label: "Indigo", fg: "#4f46e5", bg: "#eef2ff" },
-    { label: "Forest", fg: "#15803d", bg: "#f0fdf4" },
-    { label: "Sunset", fg: "#b45309", bg: "#fffbeb" },
-    { label: "Neon", fg: "#00ff88", bg: "#0f0f13" },
-    { label: "Pure", fg: "#000000", bg: "#ffffff" },
+    { label: t("qr.ui.presetDark"), fg: "#1a1a2e", bg: "#ffffff" },
+    { label: t("qr.ui.presetIndigo"), fg: "#4f46e5", bg: "#eef2ff" },
+    { label: t("qr.ui.presetForest"), fg: "#15803d", bg: "#f0fdf4" },
+    { label: t("qr.ui.presetSunset"), fg: "#b45309", bg: "#fffbeb" },
+    { label: t("qr.ui.presetNeon"), fg: "#00ff88", bg: "#0f0f13" },
+    { label: t("qr.ui.presetPure"), fg: "#000000", bg: "#ffffff" },
   ];
 
   const TYPE_LABELS: Record<QRType, string> = {
@@ -343,7 +343,7 @@ export default function QRGeneratorPage() {
               {logoDataUrl ? (
                 <div className="flex items-center gap-3 p-3 rounded-xl bg-bg-secondary border border-border">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={logoDataUrl} alt="Logo preview" className="w-12 h-12 rounded-lg object-contain border border-border" />
+                  <img src={logoDataUrl} alt={t("qr.ui.logoPreview")} className="w-12 h-12 rounded-lg object-contain border border-border" />
                   <div>
                     <p className="text-sm text-t-primary font-medium">{t("qr.logoLoaded")}</p>
                     <p className="text-xs text-t-tertiary">{t("qr.logoCenterHint")}</p>
@@ -383,7 +383,7 @@ export default function QRGeneratorPage() {
               {qrDataUrl ? (
                 <div className="w-full">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={qrDataUrl} alt="QR Code" className="w-full max-w-[260px] mx-auto rounded-xl block" />
+                  <img src={qrDataUrl} alt={t("qr.ui.qrAlt")} className="w-full max-w-[260px] mx-auto rounded-xl block" />
                 </div>
               ) : (
                 <div className="text-center">

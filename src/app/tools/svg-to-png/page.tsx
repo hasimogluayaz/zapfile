@@ -168,7 +168,7 @@ export default function SvgToPngPage() {
                       type: "image/svg+xml;charset=utf-8",
                     }),
                   )}
-                  alt="SVG Preview"
+                  alt={t("svg2png.svgPreview")}
                   className="max-h-[200px] max-w-full object-contain"
                 />
               </div>
@@ -231,7 +231,7 @@ export default function SvgToPngPage() {
         <div className="space-y-6">
           <div className="glass rounded-xl p-6 text-center">
             <p className="text-t-primary font-medium">
-              Converted to PNG ({width} &times; {height})
+              {t("svg2png.ui.convertedTo", { w: width, h: height })}
             </p>
           </div>
 
@@ -240,7 +240,7 @@ export default function SvgToPngPage() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={preview}
-                alt="PNG result"
+                alt={t("svg2png.ui.resultAlt")}
                 className="max-w-full max-h-72 rounded-lg border border-border"
               />
             </div>

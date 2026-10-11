@@ -167,12 +167,12 @@ export default function ColorPalettePage() {
         setIsExtracting(false);
       };
       img.onerror = () => {
-        toast.error("Failed to load image.");
+        toast.error(t("ui.failedLoad"));
         setIsExtracting(false);
       };
       img.src = src;
     },
-    []
+    [t]
   );
 
   const handleFilesSelected = (files: File[]) => {
@@ -355,7 +355,7 @@ export default function ColorPalettePage() {
             </div>
 
             <p className="text-xs text-t-secondary/60 text-center">
-              Click any swatch to copy its HEX code
+              {t("palette.ui.clickSwatch")}
             </p>
           </div>
         )}
@@ -366,12 +366,12 @@ export default function ColorPalettePage() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={imageSrc}
-              alt="Uploaded preview"
+              alt={t("palette.ui.uploadedPreview")}
               className="w-16 h-16 object-cover rounded-xl border border-border"
             />
             <div>
               <p className="text-sm font-medium text-t-primary">
-                Image loaded
+                {t("palette.ui.imageLoaded")}
               </p>
               <p className="text-xs text-t-secondary">
                 {colors.length} colors extracted

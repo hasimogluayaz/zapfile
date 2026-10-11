@@ -412,7 +412,7 @@ export default function BlurImagePage() {
               "image/webp": [".webp"],
             }}
             formats={["JPG", "PNG", "WEBP"]}
-            label="Drop your image here or click to browse"
+            label={t("ui.dropImage")}
           />
         ) : (
           <>

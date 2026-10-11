@@ -97,9 +97,9 @@ export default function ColorContrastPage() {
               className="rounded-xl p-8 text-center border border-border"
               style={{ backgroundColor: bg, color: fg }}
             >
-              <p className="text-lg font-semibold">Sample heading text</p>
+              <p className="text-lg font-semibold">{t("contrast.ui.sampleHeading")}</p>
               <p className="text-sm mt-2 opacity-90">
-                Body text for readability check.
+                {t("contrast.ui.sampleBody")}
               </p>
             </div>
 

@@ -341,7 +341,7 @@ export default function CropImagePage() {
             onFilesSelected={handleFilesSelected}
             accept={{ "image/jpeg": [".jpg", ".jpeg"], "image/png": [".png"], "image/webp": [".webp"] }}
             formats={["JPG", "PNG", "WEBP"]}
-            label="Drop your image here or click to browse"
+            label={t("ui.dropImage")}
           />
         ) : !result ? (
           <>
@@ -389,7 +389,7 @@ export default function CropImagePage() {
                   <img
                     ref={imgRef}
                     src={imageUrl}
-                    alt="Crop source"
+                    alt={t("crop.ui.sourceAlt")}
                     className="w-full max-h-[480px] object-contain rounded-xl block select-none"
                     draggable={false}
                   />
@@ -446,12 +446,12 @@ export default function CropImagePage() {
             <div className="glass rounded-2xl p-4">
               <div className="flex flex-wrap items-center gap-4">
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs text-t-tertiary mb-1">Selection (px)</p>
+                  <p className="text-xs text-t-tertiary mb-1">{t("crop.ui.selectionPx")}</p>
                   <p className="text-sm text-t-primary font-mono">
                     {Math.round(crop.w)} × {Math.round(crop.h)}
                     {hasCrop && (
                       <span className="text-t-tertiary ml-2">
-                        from ({Math.round(crop.x)}, {Math.round(crop.y)})
+                        {t("crop.ui.fromXY", { x: Math.round(crop.x), y: Math.round(crop.y) })}
                       </span>
                     )}
                   </p>
@@ -485,7 +485,7 @@ export default function CropImagePage() {
 
                 {naturalSize.w > 0 && (
                   <p className="text-xs text-t-tertiary whitespace-nowrap">
-                    Original: {naturalSize.w} × {naturalSize.h}
+                    {t("crop.ui.originalSize", { w: naturalSize.w, h: naturalSize.h })}
                   </p>
                 )}
               </div>
@@ -504,7 +504,7 @@ export default function CropImagePage() {
                 {t("crop.button")}
               </button>
               <button onClick={reset} className="px-5 py-3 rounded-xl text-t-secondary hover:text-t-primary transition-colors text-sm">
-                Cancel
+                {t("bg.cancel")}
               </button>
             </div>
           </>
@@ -516,7 +516,7 @@ export default function CropImagePage() {
                 <p className="text-sm font-semibold text-t-primary">
                   {Math.round(crop.w)} × {Math.round(crop.h)}px
                 </p>
-                <p className="text-xs text-t-tertiary mt-0.5">Cropped successfully</p>
+                <p className="text-xs text-t-tertiary mt-0.5">{t("crop.ui.croppedOk")}</p>
               </div>
               <span className="text-emerald-700 dark:text-emerald-400 text-xl">✓</span>
             </div>
@@ -524,7 +524,7 @@ export default function CropImagePage() {
             {resultPreview && (
               <div className="flex justify-center glass rounded-2xl p-4">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={resultPreview} alt="Cropped result"
+                <img src={resultPreview} alt={t("crop.ui.resultAlt")}
                   className="max-h-80 max-w-full rounded-xl border border-border object-contain" />
               </div>
             )}

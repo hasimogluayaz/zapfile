@@ -81,7 +81,7 @@ export default function QrScannerPage() {
       setCameraActive(true);
       animFrameRef.current = requestAnimationFrame(scanFrameFromVideo);
     } catch {
-      toast.error("Camera access denied or unavailable.");
+      toast.error(t("qrscan.ui.cameraDenied"));
     }
   };
 
@@ -142,7 +142,7 @@ export default function QrScannerPage() {
     img.onerror = () => {
       URL.revokeObjectURL(url);
       setIsScanning(false);
-      toast.error("Failed to load image.");
+      toast.error(t("ui.failedLoad"));
     };
     img.src = url;
   };
@@ -153,7 +153,7 @@ export default function QrScannerPage() {
       await navigator.clipboard.writeText(result);
       toast.success(t("qrscan.copy"));
     } catch {
-      toast.error("Failed to copy.");
+      toast.error(t("ui.copyFailed"));
     }
   };
 
@@ -260,7 +260,7 @@ export default function QrScannerPage() {
                       onClick={stopCamera}
                       className="px-6 py-3 rounded-xl font-semibold text-t-primary bg-bg-secondary border border-border hover:bg-bg-tertiary transition-all"
                     >
-                      Stop
+                      {t("ar.stop")}
                     </button>
                   </>
                 )}

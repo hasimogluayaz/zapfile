@@ -530,7 +530,7 @@ export default function ExifViewerPage() {
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={preview}
-                    alt="Preview"
+                    alt={t("ui.preview")}
                     className="w-full rounded-lg border border-border object-contain max-h-72"
                   />
                 ) : (
@@ -561,7 +561,7 @@ export default function ExifViewerPage() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-t-secondary">{t("exif.fileType")}</span>
-                    <span className="text-t-primary">{file.type || "Unknown"}</span>
+                    <span className="text-t-primary">{file.type || t("exif.ui.unknown")}</span>
                   </div>
                   {imageInfo && (
                     <div className="flex justify-between">

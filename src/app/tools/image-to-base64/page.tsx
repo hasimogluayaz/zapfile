@@ -137,7 +137,7 @@ export default function ImageToBase64Page() {
                   "image/*": [".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp", ".svg"],
                 }}
                 formats={["JPG", "PNG", "WEBP", "SVG", "GIF"]}
-                label="Drop your image here to convert to Base64"
+                label={t("imgb64.ui.dropLabel")}
               />
             ) : (
               <>
@@ -147,7 +147,7 @@ export default function ImageToBase64Page() {
                   <div className="glass rounded-xl p-3 space-y-2">
                     <div className="flex items-center justify-between">
                       <p className="text-[12px] font-medium text-t-secondary">
-                        Image Preview
+                        {t("exif.imagePreview")}
                       </p>
                       <button
                         onClick={reset}
@@ -160,7 +160,7 @@ export default function ImageToBase64Page() {
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={preview}
-                        alt="Preview"
+                        alt={t("ui.preview")}
                         className="w-full rounded-lg border border-border object-contain max-h-48"
                       />
                     )}
@@ -271,7 +271,7 @@ export default function ImageToBase64Page() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={decodedPreview}
-                  alt="Decoded from Base64"
+                  alt={t("imgb64.ui.decodedAlt")}
                   className="max-h-64 rounded-lg border border-border mx-auto block"
                   onError={() => {
                     toast.error(t("imgb64.invalidBase64"));

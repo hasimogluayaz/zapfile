@@ -200,7 +200,7 @@ export default function FaviconGeneratorPage() {
     const blob = generatedBlobs.get(size.size);
     if (blob) {
       downloadBlob(blob, size.filename);
-      toast.success(`Downloaded ${size.filename}`);
+      toast.success(t("fav.ui.downloaded", { file: size.filename }));
     }
   };
 
@@ -279,7 +279,7 @@ export default function FaviconGeneratorPage() {
               "image/svg+xml": [".svg"],
             }}
             formats={["JPG", "PNG", "WEBP", "SVG"]}
-            label="Drop your image here or click to browse"
+            label={t("ui.dropImage")}
           />
         ) : (
           <>
@@ -314,7 +314,7 @@ export default function FaviconGeneratorPage() {
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={preview}
-                    alt="Source preview"
+                    alt={t("fav.ui.sourcePreview")}
                     className="max-h-48 max-w-full rounded-lg border border-border object-contain"
                   />
                 </div>
@@ -375,7 +375,7 @@ export default function FaviconGeneratorPage() {
                           handleDownloadIndividual(s);
                         }}
                         className="text-[11px] text-accent hover:text-accent transition-colors flex-shrink-0"
-                        title={`Download ${s.filename}`}
+                        title={t("fav.ui.downloadFile", { file: s.filename })}
                       >
                         <svg
                           className="w-4 h-4"
@@ -401,7 +401,7 @@ export default function FaviconGeneratorPage() {
             {generatedPreviews.size > 0 && (
               <div className="glass rounded-xl p-6 space-y-4">
                 <span className="text-[13px] text-t-secondary font-medium block">
-                  Preview
+                  {t("ui.preview")}
                 </span>
 
                 <div className="flex flex-wrap gap-4 items-end">
@@ -549,7 +549,7 @@ export default function FaviconGeneratorPage() {
             >
               {processing
                 ? t("fav.creatingZip")
-                : `${t("fav.downloadZip")} (${checkedCount} file${checkedCount !== 1 ? "s" : ""})`}
+                : `${t("fav.downloadZip")} (${checkedCount !== 1 ? t("fav.ui.nFiles", { n: checkedCount }) : t("fav.ui.oneFile", { n: checkedCount })})`}
             </button>
           </>
         )}

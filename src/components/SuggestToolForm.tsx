@@ -25,7 +25,7 @@ export default function SuggestToolForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!toolName.trim()) { toast.error("Please enter a tool name."); return; }
+    if (!toolName.trim()) { toast.error(t("suggest.ui.enterName")); return; }
     if (sending) return;
 
     // 1. Honeypot — if filled, silently fake success and drop
@@ -37,7 +37,7 @@ export default function SuggestToolForm() {
     // 2. Min fill time — forms filled in <3s are almost certainly bots
     const elapsed = Date.now() - (openedAt.current || Date.now());
     if (elapsed < MIN_FILL_MS) {
-      toast.error("Please take a moment before submitting.");
+      toast.error(t("suggest.ui.tooFast"));
       return;
     }
 
@@ -47,7 +47,7 @@ export default function SuggestToolForm() {
       const remain = RATE_LIMIT_MS - (Date.now() - last);
       if (remain > 0) {
         const mins = Math.ceil(remain / 60000);
-        toast.error(`Please wait ${mins} min before sending another suggestion.`);
+        toast.error(t("suggest.ui.rateLimited", { n: mins }));
         return;
       }
     } catch { /* ignore localStorage errors */ }
@@ -55,7 +55,7 @@ export default function SuggestToolForm() {
     // 4. Length / content sanity
     const name = toolName.trim().slice(0, 80);
     const desc = description.trim().slice(0, 500);
-    if (name.length < 2) { toast.error("Tool name too short."); return; }
+    if (name.length < 2) { toast.error(t("suggest.ui.nameTooShort")); return; }
 
     setSending(true);
 
@@ -105,7 +105,7 @@ export default function SuggestToolForm() {
 
     setSubmitted(true);
     setSending(false);
-    toast.success("Thank you! Your suggestion has been sent.");
+    toast.success(t("suggest.ui.sent"));
   };
 
   const handleReset = () => {
@@ -164,7 +164,7 @@ export default function SuggestToolForm() {
                   onClick={handleReset}
                   className="px-5 py-2 rounded-xl text-sm font-semibold text-t-secondary bg-bg-secondary border border-border hover:text-t-primary transition-colors"
                 >
-                  Suggest another
+                  {t("suggest.ui.another")}
                 </button>
               </div>
             ) : (
@@ -182,7 +182,7 @@ export default function SuggestToolForm() {
                   }}
                 >
                   <label>
-                    Website (leave blank)
+                    {t("suggest.ui.honeypot")}
                     <input
                       type="text"
                       tabIndex={-1}
@@ -195,25 +195,25 @@ export default function SuggestToolForm() {
 
                 <div>
                   <label className="text-xs font-semibold text-t-secondary mb-1.5 block">
-                    Tool Name <span className="text-red-700 dark:text-red-400">*</span>
+                    {t("suggest.ui.toolName")} <span className="text-red-700 dark:text-red-400">*</span>
                   </label>
                   <input
                     type="text"
                     value={toolName}
                     onChange={(e) => setToolName(e.target.value)}
-                    placeholder="e.g. JSON to CSV Converter"
+                    placeholder={t("suggest.ui.namePlaceholder")}
                     maxLength={80}
                     className="w-full px-4 py-2.5 rounded-xl bg-bg-secondary border border-border text-t-primary text-sm focus:outline-none focus:border-accent/50"
                   />
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-t-secondary mb-1.5 block">
-                    What should it do? (optional)
+                    {t("suggest.ui.whatShouldItDo")}
                   </label>
                   <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Describe what the tool should do…"
+                    placeholder={t("suggest.ui.descPlaceholder")}
                     rows={3}
                     maxLength={500}
                     className="w-full px-4 py-2.5 rounded-xl bg-bg-secondary border border-border text-t-primary text-sm resize-none focus:outline-none focus:border-accent/50"
@@ -224,7 +224,7 @@ export default function SuggestToolForm() {
                   disabled={sending}
                   className="px-6 py-2.5 rounded-xl text-sm font-semibold text-on-accent bg-accent hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {sending ? "Sending…" : "Submit Suggestion"}
+                  {sending ? t("suggest.ui.sending") : t("suggest.ui.submit")}
                 </button>
               </form>
             )}

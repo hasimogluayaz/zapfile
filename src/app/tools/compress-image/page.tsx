@@ -226,7 +226,7 @@ export default function CompressImagePage() {
               "image/webp": [".webp"],
             }}
             multiple
-            label="Drop your images here or click to browse"
+            label={t("convimg.ui.dropImages")}
             formats={["jpg", "png", "webp"]}
           />
         )}
@@ -286,7 +286,7 @@ export default function CompressImagePage() {
             {/* Quality Slider */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="text-sm text-t-secondary">Quality</label>
+                <label className="text-sm text-t-secondary">{t("ui.quality")}</label>
                 <span className="text-sm font-medium text-t-primary">
                   {Math.round(quality * 100)}%
                 </span>
@@ -397,7 +397,7 @@ export default function CompressImagePage() {
 
             {/* Individual results */}
             <div className="glass rounded-xl p-6">
-              <h3 className="text-t-primary font-medium mb-4">Results</h3>
+              <h3 className="text-t-primary font-medium mb-4">{t("ui.results")}</h3>
               <div className="space-y-3">
                 {results.map((result, i) => {
                   const saved = result.originalSize - result.compressedSize;

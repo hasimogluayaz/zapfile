@@ -3,6 +3,7 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
 import ToolLayout from "@/components/ToolLayout";
+import { useI18n } from "@/lib/i18n";
 
 type Conversion = {
   label: string;
@@ -80,6 +81,7 @@ const CONVERSIONS: Conversion[] = [
 ];
 
 export default function TextCasePage() {
+  const { t } = useI18n();
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
   const [activeConversion, setActiveConversion] = useState<string | null>(null);
@@ -94,9 +96,9 @@ export default function TextCasePage() {
     if (!output) return;
     try {
       await navigator.clipboard.writeText(output);
-      toast.success("Copied to clipboard");
+      toast.success(t("bg.copied"));
     } catch {
-      toast.error("Failed to copy");
+      toast.error(t("clr.copyFail"));
     }
   };
 
@@ -108,6 +110,16 @@ export default function TextCasePage() {
 
   const charDiff = output.length - input.length;
 
+  // Word-style labels are localized; code-style names (camelCase, snake_case…) stay as-is.
+  const localizedLabels: Record<string, string> = {
+    upper: t("case.ui.upper"),
+    lower: t("case.ui.lower"),
+    title: t("case.ui.title"),
+    sentence: t("case.ui.sentence"),
+    reverse: t("case.ui.reverse"),
+    spaces: t("case.ui.spaces"),
+  };
+
   return (
     <ToolLayout
       toolName="Text Case Converter"
@@ -116,7 +128,7 @@ export default function TextCasePage() {
       <div className="space-y-6">
         {/* Input */}
         <div className="glass rounded-xl p-6">
-          <label className="block text-sm font-medium text-t-secondary mb-3">Input Text</label>
+          <label className="block text-sm font-medium text-t-secondary mb-3">{t("case.ui.inputText")}</label>
           <textarea
             value={input}
             onChange={(e) => {
@@ -126,16 +138,16 @@ export default function TextCasePage() {
                 if (conv) setOutput(conv.fn(e.target.value));
               }
             }}
-            placeholder="Paste or type your text here..."
+            placeholder={t("case.ui.placeholder")}
             rows={5}
             className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border text-t-primary focus:outline-none focus:border-accent/50 resize-y placeholder:text-t-tertiary"
           />
-          <div className="text-xs text-t-tertiary mt-1">{input.length} characters</div>
+          <div className="text-xs text-t-tertiary mt-1">{t("json.charCount", { count: input.length })}</div>
         </div>
 
         {/* Conversion Buttons */}
         <div className="glass rounded-xl p-6">
-          <h3 className="text-sm font-semibold text-t-secondary mb-3">Convert To</h3>
+          <h3 className="text-sm font-semibold text-t-secondary mb-3">{t("case.ui.convertTo")}</h3>
           <div className="flex flex-wrap gap-2">
             {CONVERSIONS.map((conv) => (
               <button
@@ -148,7 +160,7 @@ export default function TextCasePage() {
                     : "px-4 py-2 rounded-lg text-t-secondary bg-bg-secondary border border-border hover:text-t-primary transition-colors"
                 }`}
               >
-                {conv.label}
+                {localizedLabels[conv.key] ?? conv.label}
               </button>
             ))}
           </div>
@@ -159,7 +171,7 @@ export default function TextCasePage() {
           <div className="glass rounded-xl p-6">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
-                <label className="text-sm font-medium text-t-secondary">Result</label>
+                <label className="text-sm font-medium text-t-secondary">{t("ui.result")}</label>
                 {charDiff !== 0 && (
                   <span
                     className={`text-xs px-2 py-0.5 rounded-full font-mono ${
@@ -168,7 +180,7 @@ export default function TextCasePage() {
                         : "bg-red-500/10 text-red-700 dark:text-red-400"
                     }`}
                   >
-                    {charDiff > 0 ? "+" : ""}{charDiff} chars
+                    {t("pwcheck.ui.charsCount", { n: `${charDiff > 0 ? "+" : ""}${charDiff}` })}
                   </span>
                 )}
               </div>
@@ -176,15 +188,15 @@ export default function TextCasePage() {
                 <button
                   onClick={swapTexts}
                   className="px-4 py-2 rounded-lg text-t-secondary bg-bg-secondary border border-border hover:text-t-primary transition-colors text-sm"
-                  title="Use result as input"
+                  title={t("case.ui.useAsInput")}
                 >
-                  ⇅ Swap
+                  ⇅ {t("ui.swap")}
                 </button>
                 <button
                   onClick={copyOutput}
                   className="px-6 py-3 rounded-xl font-semibold text-on-accent bg-accent hover:opacity-90 transition-all text-sm"
                 >
-                  Copy Result
+                  {t("qrscan.copy")}
                 </button>
               </div>
             </div>
@@ -194,7 +206,7 @@ export default function TextCasePage() {
               rows={5}
               className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border text-t-primary focus:outline-none resize-y font-mono text-sm cursor-text select-all"
             />
-            <div className="text-xs text-t-tertiary mt-1">{output.length} characters</div>
+            <div className="text-xs text-t-tertiary mt-1">{t("json.charCount", { count: output.length })}</div>
           </div>
         )}
       </div>

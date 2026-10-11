@@ -65,9 +65,9 @@ export default function JwtDecoderPage() {
   const copyText = async (text: string, label: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      toast.success(`${label} copied`);
+      toast.success(t("jwt.ui.itemCopied", { label }));
     } catch {
-      toast.error("Failed to copy");
+      toast.error(t("clr.copyFail"));
     }
   };
 
@@ -92,7 +92,7 @@ export default function JwtDecoderPage() {
         {/* Input Section */}
         <div className="glass rounded-2xl p-6">
           <label className="block text-sm font-medium text-t-secondary mb-3">
-            JWT Token
+            {t("jwt.ui.tokenLabel")}
           </label>
           <textarea
             value={input}

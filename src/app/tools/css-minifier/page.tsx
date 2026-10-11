@@ -91,7 +91,7 @@ export default function CssMinifierPage() {
 
   const process = (text: string, m: Mode) => {
     if (!text.trim()) {
-      toast.error("Please enter some CSS first.");
+      toast.error(t("css.ui.enterCss"));
       return;
     }
     const result = m === "minify" ? minifyCSS(text) : beautifyCSS(text);
@@ -124,7 +124,7 @@ export default function CssMinifierPage() {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.name.endsWith(".css")) {
-      toast.error("Please select a .css file.");
+      toast.error(t("css.ui.selectCssFile"));
       if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
@@ -134,7 +134,7 @@ export default function CssMinifierPage() {
       setInput(text);
       setOutput("");
     };
-    reader.onerror = () => toast.error("Failed to read file.");
+    reader.onerror = () => toast.error(t("imgb64.readFail"));
     reader.readAsText(file);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
@@ -180,7 +180,7 @@ export default function CssMinifierPage() {
                     d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.338-2.32 3 3 0 013.808 3.397A3.75 3.75 0 0118 19.5H6.75z"
                   />
                 </svg>
-                Upload .css
+                {t("css.ui.upload")}
               </div>
               <input
                 ref={fileInputRef}
@@ -211,7 +211,7 @@ export default function CssMinifierPage() {
                 setInput(e.target.value);
                 setOutput("");
               }}
-              placeholder="/* Paste your CSS here */"
+              placeholder={`/* ${t("css.ui.pasteHere")} */`}
               rows={16}
               spellCheck={false}
               className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border text-t-primary placeholder:text-t-tertiary/50 focus:outline-none focus:border-accent/40 resize-none font-mono text-xs flex-1"
@@ -231,7 +231,7 @@ export default function CssMinifierPage() {
             <textarea
               value={output}
               readOnly
-              placeholder="Output will appear here…"
+              placeholder={t("css.ui.outputPlaceholder")}
               rows={16}
               className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border text-t-secondary resize-none font-mono text-xs flex-1 cursor-default select-all"
             />
@@ -242,16 +242,16 @@ export default function CssMinifierPage() {
         {output && inputBytes > 0 && (
           <div className="glass rounded-2xl p-4 flex flex-wrap items-center gap-4">
             <div className="flex items-center gap-2">
-              <span className="text-xs text-t-secondary">Input:</span>
+              <span className="text-xs text-t-secondary">{t("css.ui.inputLabel")}</span>
               <span className="text-xs font-mono text-t-primary font-semibold">
-                {inputBytes.toLocaleString()} bytes
+                {t("css.ui.bytes", { n: inputBytes.toLocaleString() })}
               </span>
             </div>
             <div className="text-t-secondary/40 hidden sm:block">→</div>
             <div className="flex items-center gap-2">
-              <span className="text-xs text-t-secondary">Output:</span>
+              <span className="text-xs text-t-secondary">{t("css.ui.outputLabel")}</span>
               <span className="text-xs font-mono text-t-primary font-semibold">
-                {outputBytes.toLocaleString()} bytes
+                {t("css.ui.bytes", { n: outputBytes.toLocaleString() })}
               </span>
             </div>
             {savedBytes > 0 && (

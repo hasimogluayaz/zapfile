@@ -65,7 +65,7 @@ export default function HashGeneratorPage() {
       setFileBuffer(reader.result as ArrayBuffer);
     };
     reader.onerror = () => {
-      toast.error("Failed to read file");
+      toast.error(t("hash.ui.readFail"));
       setFileName(null);
       setFileBuffer(null);
       setFileSize(0);
@@ -162,9 +162,9 @@ export default function HashGeneratorPage() {
   const copyToClipboard = async (hash: string, algorithm: string) => {
     try {
       await navigator.clipboard.writeText(hash);
-      toast.success(`${algorithm} hash copied`);
+      toast.success(t("hash.ui.hashCopied", { algorithm }));
     } catch {
-      toast.error("Failed to copy to clipboard");
+      toast.error(t("hash.ui.copyFail"));
     }
   };
 
@@ -173,9 +173,9 @@ export default function HashGeneratorPage() {
     const text = results.map((r) => `${r.algorithm}: ${r.hash}`).join("\n");
     try {
       await navigator.clipboard.writeText(text);
-      toast.success("All hashes copied");
+      toast.success(t("hash.ui.allCopied"));
     } catch {
-      toast.error("Failed to copy to clipboard");
+      toast.error(t("hash.ui.copyFail"));
     }
   };
 
@@ -382,7 +382,7 @@ export default function HashGeneratorPage() {
                           d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
                         />
                       </svg>
-                      Copy
+                      {t("ui.copy")}
                     </button>
                   </div>
                   <p className="font-mono text-sm text-t-secondary break-all leading-relaxed select-all">

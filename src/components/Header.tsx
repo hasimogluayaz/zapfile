@@ -536,7 +536,7 @@ export default function Header() {
             </Link>
 
             {/* Desktop nav */}
-            <nav className="hidden items-center gap-0.5 md:flex" aria-label="Primary">
+            <nav className="hidden items-center gap-0.5 md:flex" aria-label={t("nav.primaryLabel")}>
               <div className="relative" ref={menuRef}>
                 <button
                   type="button"

@@ -220,7 +220,7 @@ export default function ToolLayout({
           <div className="min-w-0 flex-1">
             <header className="mb-6">
               <nav
-                aria-label="Breadcrumb"
+                aria-label={t("breadcrumb.label")}
                 className="mb-4 flex flex-wrap items-center gap-1 text-[12.5px] text-t-tertiary"
               >
                 <Link href="/" className="hover:text-t-primary">

@@ -83,9 +83,9 @@ export default function BaseConverterPage() {
     if (!val || val === "—") return;
     try {
       await navigator.clipboard.writeText(val);
-      toast.success(`${label} copied`);
+      toast.success(t("jwt.ui.itemCopied", { label }));
     } catch {
-      toast.error("Failed to copy");
+      toast.error(t("clr.copyFail"));
     }
   };
 
@@ -119,7 +119,7 @@ export default function BaseConverterPage() {
                     <button
                       onClick={() => copyValue(values[key], label)}
                       className="absolute right-2.5 top-1/2 -translate-y-1/2 text-t-secondary hover:text-t-primary transition-colors"
-                      aria-label={`Copy ${label}`}
+                      aria-label={t("base.ui.copyLabel", { label })}
                     >
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -157,7 +157,7 @@ export default function BaseConverterPage() {
                   <button
                     onClick={() => copyValue(values[key], label)}
                     className="shrink-0 text-t-secondary hover:text-t-primary transition-colors"
-                    aria-label={`Copy ${label}`}
+                    aria-label={t("base.ui.copyLabel", { label })}
                   >
                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />

@@ -137,7 +137,7 @@ export default function ConvertImagePage() {
             }}
             multiple
             formats={["JPG", "PNG", "WEBP", "AVIF"]}
-            label="Drop your images here or click to browse"
+            label={t("convimg.ui.dropImages")}
           />
         ) : results.length === 0 ? (
           <>
@@ -184,7 +184,7 @@ export default function ConvertImagePage() {
               {outputFormat !== "png" && (
                 <div>
                   <div className="flex justify-between mb-2">
-                    <span className="text-sm text-t-secondary">Quality</span>
+                    <span className="text-sm text-t-secondary">{t("ui.quality")}</span>
                     <span className="text-sm font-medium text-t-primary">{Math.round(quality * 100)}%</span>
                   </div>
                   <input
@@ -204,8 +204,8 @@ export default function ConvertImagePage() {
               onClick={handleProcess}
               loading={processing}
               disabled={files.length === 0}
-              label={`Convert to ${formatOptions.find((f) => f.value === outputFormat)?.label}`}
-              loadingLabel="Converting..."
+              label={t("convroute.convertLabel", { format: formatOptions.find((f) => f.value === outputFormat)?.label ?? "" })}
+              loadingLabel={t("ui.converting")}
             />
           </>
         ) : (
@@ -215,7 +215,7 @@ export default function ConvertImagePage() {
             )}
 
             <div className="glass rounded-xl p-6">
-              <h3 className="text-t-primary font-medium mb-4">Results</h3>
+              <h3 className="text-t-primary font-medium mb-4">{t("ui.results")}</h3>
               <div className="space-y-3">
                 {results.map((r, i) => (
                   <div key={i} className="flex items-center justify-between py-2 border-b border-border last:border-0">

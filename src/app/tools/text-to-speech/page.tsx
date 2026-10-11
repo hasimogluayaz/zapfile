@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import toast from "react-hot-toast";
 import ToolLayout from "@/components/ToolLayout";
+import { useI18n } from "@/lib/i18n";
 
 interface VoiceOption {
   voice: SpeechSynthesisVoice;
@@ -13,6 +14,7 @@ interface VoiceOption {
 const MAX_CHARS = 5000;
 
 export default function TextToSpeechPage() {
+  const { t } = useI18n();
   const [text, setText] = useState("");
   const [voices, setVoices] = useState<VoiceOption[]>([]);
   const [selectedVoice, setSelectedVoice] = useState<string>("");
@@ -61,7 +63,7 @@ export default function TextToSpeechPage() {
   }, [loadVoices]);
 
   const handlePlay = useCallback(() => {
-    if (!text.trim()) { toast.error("Please enter some text."); return; }
+    if (!text.trim()) { toast.error(t("tts.ui.enterText")); return; }
 
     window.speechSynthesis.cancel();
 
@@ -74,7 +76,7 @@ export default function TextToSpeechPage() {
 
     utter.onstart = () => { setPlaying(true); setPaused(false); };
     utter.onend = () => { setPlaying(false); setPaused(false); setHighlightedWord(null); };
-    utter.onerror = () => { setPlaying(false); setPaused(false); toast.error("Speech synthesis failed."); };
+    utter.onerror = () => { setPlaying(false); setPaused(false); toast.error(t("tts.ui.synthFailed")); };
     utter.onboundary = (e) => {
       if (e.name === "word") {
         setHighlightedWord({ start: e.charIndex, end: e.charIndex + (e.charLength ?? 0) });
@@ -83,7 +85,7 @@ export default function TextToSpeechPage() {
 
     utteranceRef.current = utter;
     window.speechSynthesis.speak(utter);
-  }, [text, voices, selectedVoice, rate, pitch, volume]);
+  }, [text, voices, selectedVoice, rate, pitch, volume, t]);
 
   const handlePause = useCallback(() => {
     window.speechSynthesis.pause();
@@ -127,7 +129,7 @@ export default function TextToSpeechPage() {
         {!supported ? (
           <div className="glass rounded-xl p-6 text-center">
             <p className="text-t-secondary text-sm">
-              ⚠️ Your browser doesn&apos;t support the Web Speech API. Please try Chrome or Edge.
+              ⚠️ {t("tts.ui.unsupported")}
             </p>
           </div>
         ) : (
@@ -135,7 +137,7 @@ export default function TextToSpeechPage() {
             {/* Text Input */}
             <div className="glass rounded-xl p-5 space-y-3">
               <div className="flex items-center justify-between">
-                <label className="text-sm font-semibold text-t-primary">Text</label>
+                <label className="text-sm font-semibold text-t-primary">{t("tts.ui.text")}</label>
                 <span className={`text-xs ${text.length > MAX_CHARS * 0.9 ? "text-red-700 dark:text-red-400" : "text-t-tertiary"}`}>
                   {text.length}/{MAX_CHARS}
                 </span>
@@ -148,7 +150,7 @@ export default function TextToSpeechPage() {
                 <textarea
                   value={text}
                   onChange={(e) => setText(e.target.value.slice(0, MAX_CHARS))}
-                  placeholder="Type or paste your text here…"
+                  placeholder={t("tts.ui.placeholder")}
                   className="w-full h-32 px-4 py-3 rounded-xl bg-bg-secondary border border-border text-t-primary text-sm resize-y focus:outline-none focus:border-accent/50"
                 />
               )}
@@ -156,41 +158,41 @@ export default function TextToSpeechPage() {
 
             {/* Voice Selector */}
             <div className="glass rounded-xl p-5 space-y-4">
-              <h3 className="text-sm font-semibold text-t-primary">Voice Settings</h3>
+              <h3 className="text-sm font-semibold text-t-primary">{t("tts.ui.voiceSettings")}</h3>
 
               <div>
-                <label className="text-xs text-t-secondary mb-1.5 block">Voice</label>
+                <label className="text-xs text-t-secondary mb-1.5 block">{t("tts.ui.voice")}</label>
                 <select
                   value={selectedVoice}
                   onChange={(e) => setSelectedVoice(e.target.value)}
                   className="w-full px-3 py-2.5 rounded-xl bg-bg-secondary border border-border text-t-primary text-sm focus:outline-none focus:border-accent/50"
                 >
                   {trVoices.length > 0 && (
-                    <optgroup label="🇹🇷 Turkish">
+                    <optgroup label={`🇹🇷 ${t("tts.ui.turkish")}`}>
                       {trVoices.map((v) => <option key={v.voice.name} value={v.voice.name}>{v.label}</option>)}
                     </optgroup>
                   )}
                   {enVoices.length > 0 && (
-                    <optgroup label="🇺🇸 English">
+                    <optgroup label={`🇺🇸 ${t("tts.ui.english")}`}>
                       {enVoices.map((v) => <option key={v.voice.name} value={v.voice.name}>{v.label}</option>)}
                     </optgroup>
                   )}
                   {otherVoices.length > 0 && (
-                    <optgroup label="Other">
+                    <optgroup label={t("tts.ui.other")}>
                       {otherVoices.map((v) => <option key={v.voice.name} value={v.voice.name}>{v.label}</option>)}
                     </optgroup>
                   )}
-                  {voices.length === 0 && <option value="">Loading voices…</option>}
+                  {voices.length === 0 && <option value="">{t("tts.ui.loadingVoices")}</option>}
                 </select>
               </div>
 
               {/* Sliders */}
               {[
-                { label: "Speed", value: rate, min: 0.5, max: 2, step: 0.1, format: (v: number) => `${v.toFixed(1)}×`, setter: setRate },
-                { label: "Pitch", value: pitch, min: 0.5, max: 2, step: 0.1, format: (v: number) => v.toFixed(1), setter: setPitch },
-                { label: "Volume", value: volume, min: 0, max: 1, step: 0.05, format: (v: number) => `${Math.round(v * 100)}%`, setter: setVolume },
-              ].map(({ label, value, min, max, step, format, setter }) => (
-                <div key={label}>
+                { key: "speed", label: t("tts.ui.speed"), value: rate, min: 0.5, max: 2, step: 0.1, format: (v: number) => `${v.toFixed(1)}×`, setter: setRate },
+                { key: "pitch", label: t("tts.ui.pitch"), value: pitch, min: 0.5, max: 2, step: 0.1, format: (v: number) => v.toFixed(1), setter: setPitch },
+                { key: "volume", label: t("tts.ui.volume"), value: volume, min: 0, max: 1, step: 0.05, format: (v: number) => `${Math.round(v * 100)}%`, setter: setVolume },
+              ].map(({ key, label, value, min, max, step, format, setter }) => (
+                <div key={key}>
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="text-xs text-t-secondary">{label}</label>
                     <span className="text-xs font-semibold text-t-primary">{format(value)}</span>
@@ -212,30 +214,30 @@ export default function TextToSpeechPage() {
                   disabled={!text.trim() || voices.length === 0}
                   className="px-6 py-3 rounded-xl font-semibold text-on-accent bg-accent hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  ▶ Speak
+                  ▶ {t("tts.ui.speak")}
                 </button>
               )}
               {playing && !paused && (
                 <button onClick={handlePause} className="px-6 py-3 rounded-xl font-semibold text-t-primary bg-bg-tertiary hover:bg-border transition-all">
-                  ⏸ Pause
+                  ⏸ {t("ar.pause")}
                 </button>
               )}
               {playing && paused && (
                 <button onClick={handleResume} className="px-6 py-3 rounded-xl font-semibold text-on-accent bg-accent hover:opacity-90 transition-all">
-                  ▶ Resume
+                  ▶ {t("ar.resume")}
                 </button>
               )}
               {playing && (
                 <button onClick={handleStop} className="px-6 py-3 rounded-xl font-semibold text-t-secondary bg-bg-secondary border border-border hover:text-t-primary transition-colors">
-                  ⏹ Stop
+                  ⏹ {t("ar.stop")}
                 </button>
               )}
               {text && (
                 <button
-                  onClick={() => { navigator.clipboard.writeText(text); toast.success("Text copied!"); }}
+                  onClick={() => { navigator.clipboard.writeText(text); toast.success(t("tts.ui.textCopied")); }}
                   className="px-4 py-3 rounded-xl font-semibold text-t-secondary bg-bg-secondary border border-border hover:text-t-primary transition-colors"
                 >
-                  📋 Copy
+                  📋 {t("ui.copy")}
                 </button>
               )}
             </div>
@@ -244,8 +246,7 @@ export default function TextToSpeechPage() {
             <div className="flex gap-3 p-4 rounded-xl bg-accent/5 border border-accent/10">
               <span className="text-lg shrink-0">💡</span>
               <p className="text-xs text-t-secondary leading-relaxed">
-                Available voices depend on your operating system. For Turkish voice, install the Turkish
-                language pack in your system settings. Chrome and Edge offer the widest voice selection.
+                {t("tts.ui.tip")}
               </p>
             </div>
           </>

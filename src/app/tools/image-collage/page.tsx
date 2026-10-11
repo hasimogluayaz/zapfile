@@ -10,11 +10,11 @@ import { useI18n } from "@/lib/i18n";
 
 type LayoutOption = "grid-2x2" | "grid-3x3" | "horizontal" | "vertical";
 
-const layoutOptions: { value: LayoutOption; label: string; desc: string }[] = [
-  { value: "grid-2x2", label: "Grid 2x2", desc: "2 columns, 2 rows" },
-  { value: "grid-3x3", label: "Grid 3x3", desc: "3 columns, 3 rows" },
-  { value: "horizontal", label: "Horizontal", desc: "Side by side" },
-  { value: "vertical", label: "Vertical", desc: "Stacked vertically" },
+const layoutOptions: { value: LayoutOption; label: string }[] = [
+  { value: "grid-2x2", label: "Grid 2x2" },
+  { value: "grid-3x3", label: "Grid 3x3" },
+  { value: "horizontal", label: "Horizontal" },
+  { value: "vertical", label: "Vertical" },
 ];
 
 interface LoadedImage {
@@ -214,7 +214,7 @@ export default function ImageCollagePage() {
             }}
             multiple
             formats={["JPG", "PNG", "WEBP"]}
-            label="Drop your images here to create a collage"
+            label={t("collage.ui.dropLabel")}
           />
         ) : (
           <>
@@ -284,6 +284,12 @@ export default function ImageCollagePage() {
                       "horizontal": t("collage.horizontal"),
                       "vertical": t("collage.vertical"),
                     };
+                    const layoutDesc: Record<LayoutOption, string> = {
+                      "grid-2x2": t("collage.ui.desc2x2"),
+                      "grid-3x3": t("collage.ui.desc3x3"),
+                      "horizontal": t("collage.ui.descHorizontal"),
+                      "vertical": t("collage.ui.descVertical"),
+                    };
                     return (
                       <button
                         key={opt.value}
@@ -295,7 +301,7 @@ export default function ImageCollagePage() {
                         }`}
                       >
                         <p className="font-medium text-[12px]">{layoutLabelKey[opt.value]}</p>
-                        <p className="text-[10px] mt-0.5 opacity-70">{opt.desc}</p>
+                        <p className="text-[10px] mt-0.5 opacity-70">{layoutDesc[opt.value]}</p>
                       </button>
                     );
                   })}
@@ -342,7 +348,7 @@ export default function ImageCollagePage() {
 
             {/* Live Preview */}
             <div className="glass rounded-xl p-3 space-y-2">
-              <p className="text-[12px] font-medium text-t-secondary">Live Preview</p>
+              <p className="text-[12px] font-medium text-t-secondary">{t("ui.livePreview")}</p>
               <canvas
                 ref={canvasRef}
                 className="w-full rounded-lg border border-border object-contain max-h-80"
@@ -365,11 +371,11 @@ export default function ImageCollagePage() {
 
             {resultBlob && resultPreview && (
               <div className="glass rounded-xl p-4 space-y-3">
-                <p className="text-[13px] font-medium text-t-primary">Result</p>
+                <p className="text-[13px] font-medium text-t-primary">{t("ui.result")}</p>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={resultPreview}
-                  alt="Collage result"
+                  alt={t("collage.ui.resultAlt")}
                   className="max-h-48 rounded-lg border border-border mx-auto block"
                 />
                 <div className="flex flex-wrap gap-3 justify-center">

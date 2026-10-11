@@ -45,7 +45,7 @@ export default function Base64Page() {
       // Remove the data:...;base64, prefix
       const base64 = result.split(",")[1] || result;
       setOutput(base64);
-      toast.success(`File encoded (${(base64.length / 1024).toFixed(1)} KB output)`);
+      toast.success(t("b64.ui.fileEncoded", { kb: (base64.length / 1024).toFixed(1) }));
     };
     reader.readAsDataURL(file);
   };
@@ -124,7 +124,7 @@ export default function Base64Page() {
           <div className="space-y-4">
             <FileDropzone
               onFilesSelected={handleFileSelected}
-              formats={["Any file"]}
+              formats={[t("b64.ui.anyFile")]}
               label={t("b64.dropFile")}
             />
             {fileName && (

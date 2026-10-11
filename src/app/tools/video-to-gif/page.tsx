@@ -432,9 +432,9 @@ function estimateSize(
 const FPS_OPTIONS = [5, 10, 15, 20] as const;
 const WIDTH_OPTIONS = [240, 320, 480] as const;
 const COLOR_OPTIONS = [
-  { label: "Low", value: 64 },
-  { label: "Medium", value: 128 },
-  { label: "High", value: 256 },
+  { value: 64 },
+  { value: 128 },
+  { value: 256 },
 ] as const;
 
 type FpsValue = (typeof FPS_OPTIONS)[number];
@@ -577,11 +577,11 @@ export default function VideoToGifPage() {
     if (!video || !file) return;
 
     if (clipDuration <= 0) {
-      toast.error("End time must be greater than start time.");
+      toast.error(t("gif.ui.endAfterStart"));
       return;
     }
     if (clipDuration > 10) {
-      toast.error("Maximum clip length is 10 seconds.");
+      toast.error(t("gif.ui.maxClip"));
       return;
     }
 
@@ -613,13 +613,13 @@ export default function VideoToGifPage() {
       const frames: ImageData[] = [];
 
       // ---- Phase 1: Extract frames ----
-      setProgressLabel("Extracting frames…");
+      setProgressLabel(t("gif.ui.extractingFrames"));
       for (let i = 0; i < frameCount; i++) {
-        const t = startTime + i * frameInterval;
+        const frameTime = startTime + i * frameInterval;
         const frame = await seekAndCapture(
           video,
           ctx,
-          Math.min(t, endTime - 0.001),
+          Math.min(frameTime, endTime - 0.001),
           outW,
           outH
         );
@@ -628,7 +628,7 @@ export default function VideoToGifPage() {
       }
 
       // ---- Phase 2: Encode GIF ----
-      setProgressLabel("Encoding GIF…");
+      setProgressLabel(t("gif.ui.encodingGif"));
       const netscapeLoopCount =
         gifLoop === "forever" ? 0 : gifLoop === "once" ? 1 : 3;
       const gifBytes = await framesToGIF(
@@ -648,15 +648,15 @@ export default function VideoToGifPage() {
       setOutputUrl(url);
       setOutputSize(blob.size);
 
-      toast.success("GIF created!");
+      toast.success(t("gif.ui.created"));
     } catch (err) {
       console.error(err);
-      toast.error("Conversion failed. Please try another video.");
+      toast.error(t("gif.ui.conversionFailed"));
     } finally {
       setProcessing(false);
       setProgressLabel("");
     }
-  }, [file, startTime, endTime, fps, outputWidth, colorCount, clipDuration, gifLoop]);
+  }, [file, startTime, endTime, fps, outputWidth, colorCount, clipDuration, gifLoop, t]);
 
   const handleDownload = useCallback(() => {
     if (!outputUrl || !file) return;
@@ -666,6 +666,12 @@ export default function VideoToGifPage() {
     a.download = `${baseName}.gif`;
     a.click();
   }, [outputUrl, file]);
+
+  const colorLabels: Record<(typeof COLOR_OPTIONS)[number]["value"], string> = {
+    64: t("gif.ui.colorLow"),
+    128: t("gif.ui.colorMedium"),
+    256: t("gif.ui.colorHigh"),
+  };
 
   // Overall progress for single combined bar
   const overallProgress = processing
@@ -716,7 +722,7 @@ export default function VideoToGifPage() {
 
               {videoDuration > 0 && (
                 <p className="text-xs text-t-secondary">
-                  Duration: {formatTime(videoDuration)}
+                  {t("gif.ui.duration", { time: formatTime(videoDuration) })}
                 </p>
               )}
             </div>
@@ -724,18 +730,18 @@ export default function VideoToGifPage() {
             {/* Trim range slider */}
             {videoDuration > 0 && (
               <div className="glass rounded-xl p-5 space-y-4">
-                <h3 className="text-sm font-semibold text-t-primary">Trim Clip</h3>
+                <h3 className="text-sm font-semibold text-t-primary">{t("gif.ui.trimClip")}</h3>
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-xs text-t-secondary">
-                    <span>Start: {formatTime(startTime)}</span>
-                    <span>End: {formatTime(endTime)}</span>
+                    <span>{t("gif.ui.startAt", { time: formatTime(startTime) })}</span>
+                    <span>{t("gif.ui.endAt", { time: formatTime(endTime) })}</span>
                   </div>
 
                   {/* Start time slider */}
                   <div className="space-y-1">
                     <label className="text-xs text-t-secondary">
-                      Start time
+                      {t("gif.ui.startTime")}
                     </label>
                     <input
                       type="range"
@@ -757,9 +763,9 @@ export default function VideoToGifPage() {
                   {/* End time slider */}
                   <div className="space-y-1">
                     <label className="text-xs text-t-secondary">
-                      End time{" "}
+                      {t("gif.ui.endTime")}{" "}
                       <span className="text-t-secondary font-normal opacity-60">
-                        (max 10s after start)
+                        {t("gif.ui.max10s")}
                       </span>
                     </label>
                     <input
@@ -779,7 +785,7 @@ export default function VideoToGifPage() {
                   <div className="grid grid-cols-2 gap-3 pt-1">
                     <div className="space-y-1">
                       <label className="text-xs text-t-secondary block">
-                        Start (seconds)
+                        {t("gif.ui.startSeconds")}
                       </label>
                       <input
                         type="number"
@@ -800,7 +806,7 @@ export default function VideoToGifPage() {
                     </div>
                     <div className="space-y-1">
                       <label className="text-xs text-t-secondary block">
-                        End (seconds)
+                        {t("gif.ui.endSeconds")}
                       </label>
                       <input
                         type="number"
@@ -821,12 +827,12 @@ export default function VideoToGifPage() {
 
             {/* Settings card */}
             <div className="glass rounded-xl p-6 space-y-5">
-              <h3 className="text-sm font-semibold text-t-primary">Settings</h3>
+              <h3 className="text-sm font-semibold text-t-primary">{t("ui.settings")}</h3>
 
               {/* FPS */}
               <div className="space-y-2">
                 <label className="text-xs font-medium text-t-secondary block">
-                  Frame Rate
+                  {t("vid2gif.frameRate")}
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {FPS_OPTIONS.map((f) => (
@@ -840,7 +846,7 @@ export default function VideoToGifPage() {
                           : "border-border text-t-secondary hover:bg-bg-secondary"
                       }`}
                     >
-                      {f} fps
+                      {t("gif.ui.fps", { n: f })}
                     </button>
                   ))}
                 </div>
@@ -878,7 +884,7 @@ export default function VideoToGifPage() {
               {/* Width */}
               <div className="space-y-2">
                 <label className="text-xs font-medium text-t-secondary block">
-                  Output Width
+                  {t("gifmaker.outputWidth")}
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {WIDTH_OPTIONS.map((w) => (
@@ -901,10 +907,10 @@ export default function VideoToGifPage() {
               {/* Quality / color count */}
               <div className="space-y-2">
                 <label className="text-xs font-medium text-t-secondary block">
-                  Color Quality
+                  {t("gif.ui.colorQuality")}
                 </label>
                 <div className="flex flex-wrap gap-2">
-                  {COLOR_OPTIONS.map(({ label, value }) => (
+                  {COLOR_OPTIONS.map(({ value }) => (
                     <button
                       key={value}
                       type="button"
@@ -915,13 +921,13 @@ export default function VideoToGifPage() {
                           : "border-border text-t-secondary hover:bg-bg-secondary"
                       }`}
                     >
-                      {label}
+                      {colorLabels[value]}
                       <span className="ml-1 opacity-60 text-xs">({value})</span>
                     </button>
                   ))}
                 </div>
                 <p className="text-xs text-t-secondary opacity-60">
-                  Higher quality = more colors = larger file size
+                  {t("gif.ui.qualityHint")}
                 </p>
               </div>
 
@@ -929,17 +935,17 @@ export default function VideoToGifPage() {
               <div className="rounded-lg border border-border bg-bg-secondary px-4 py-3 text-xs text-t-secondary space-y-1">
                 <div className="flex flex-wrap gap-x-4 gap-y-1">
                   <span>
-                    Clip:{" "}
+                    {t("gif.ui.clip")}{" "}
                     <span className="text-t-primary font-medium">
                       {formatTime(startTime)} → {formatTime(endTime)} ({clipDuration.toFixed(1)}s)
                     </span>
                   </span>
                   <span>
-                    Frames:{" "}
+                    {t("gif.ui.frames")}{" "}
                     <span className="text-t-primary font-medium">{totalFrames}</span>
                   </span>
                   <span>
-                    Est. size:{" "}
+                    {t("gif.ui.estSize")}{" "}
                     <span className="text-t-primary font-medium">
                       ~{formatBytes(estimatedBytes)}
                     </span>
@@ -955,7 +961,7 @@ export default function VideoToGifPage() {
                   disabled={processing || clipDuration <= 0}
                   className="px-6 py-3 rounded-xl font-semibold text-on-accent bg-accent hover:opacity-90 disabled:opacity-60 transition-opacity"
                 >
-                  {processing ? "Creating GIF…" : "Create GIF"}
+                  {processing ? t("gif.ui.creating") : t("vid2gif.create")}
                 </button>
                 <button
                   type="button"
@@ -963,7 +969,7 @@ export default function VideoToGifPage() {
                   disabled={processing}
                   className="px-4 py-3 rounded-xl text-sm border border-border text-t-secondary hover:bg-bg-secondary disabled:opacity-60 transition-colors"
                 >
-                  New File
+                  {t("gif.ui.newFile")}
                 </button>
               </div>
             </div>
@@ -974,18 +980,18 @@ export default function VideoToGifPage() {
                 <p className="text-sm font-medium text-t-primary">{progressLabel}</p>
                 <ProgressBar
                   progress={extractProgress}
-                  label={`Extracting frames (${Math.round(extractProgress)}%)`}
+                  label={t("gif.ui.extractProgress", { n: Math.round(extractProgress) })}
                 />
                 <ProgressBar
                   progress={encodeProgress}
-                  label={`Quantizing & encoding (${Math.round(encodeProgress)}%)`}
+                  label={t("gif.ui.encodeProgress", { n: Math.round(encodeProgress) })}
                 />
                 <ProgressBar
                   progress={overallProgress}
-                  label={`Overall (${overallProgress}%)`}
+                  label={t("gif.ui.overallProgress", { n: overallProgress })}
                 />
                 <p className="text-xs text-t-secondary opacity-60">
-                  GIF encoding is CPU-intensive — larger clips may take a moment.
+                  {t("gif.ui.cpuNote")}
                 </p>
               </div>
             )}
@@ -995,7 +1001,7 @@ export default function VideoToGifPage() {
               <div className="glass rounded-xl p-6 space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-semibold text-t-primary">
-                    Animated GIF
+                    {t("gif.ui.animatedGif")}
                   </h3>
                   <span className="text-xs text-t-secondary">
                     {formatBytes(outputSize)}
@@ -1007,13 +1013,13 @@ export default function VideoToGifPage() {
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={outputUrl}
-                    alt="Animated GIF preview"
+                    alt={t("gif.ui.previewAlt")}
                     className="max-w-full max-h-64 object-contain"
                   />
                 </div>
 
                 <p className="text-xs text-t-secondary opacity-70">
-                  Real GIF89a format — works everywhere: browsers, messaging apps, social media, Slack, Discord, email.
+                  {t("gif.ui.formatNote")}
                 </p>
 
                 <button
@@ -1021,7 +1027,7 @@ export default function VideoToGifPage() {
                   onClick={handleDownload}
                   className="w-full px-6 py-3 rounded-xl font-semibold text-on-accent bg-accent hover:opacity-90 transition-opacity"
                 >
-                  Download .gif
+                  {t("gif.ui.downloadGif")}
                 </button>
               </div>
             )}
