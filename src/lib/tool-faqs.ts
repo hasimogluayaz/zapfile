@@ -11,7 +11,7 @@ const toolFaqs: Record<string, FaqItem[]> = {
     },
     {
       question: "Why does the first run take longer?",
-      answer: "The first time, your browser downloads the AI model once (about 214 MB) and stores it in its cache. After that it starts instantly, even offline.",
+      answer: "The first time, your browser downloads the AI model once (about 94 MB) and stores it in its cache. After that it starts instantly, even offline.",
     },
     {
       question: "How do I fix an area the AI got wrong?",

@@ -333,11 +333,10 @@ export default function BackgroundRemoverPage() {
         });
         if (id !== runId.current) return;
         setSource(image);
-        const started = performance.now();
         const result = await getEngine().segment(image.data, options, tta);
         if (id !== runId.current) return;
         setModelCached(true);
-        setTiming(performance.now() - started);
+        setTiming(result.inferenceMs + result.refineMs);
         const next = new CutoutDocument(
           new Uint8ClampedArray(image.data.data),
           result.data,
@@ -721,7 +720,10 @@ export default function BackgroundRemoverPage() {
                 </div>
               </div>
 
-              <div className="relative h-[min(68vh,680px)] min-h-[340px] bg-bg-secondary">
+              <div
+                className="relative max-h-[min(68vh,680px)] min-h-[260px] w-full bg-bg-secondary"
+                style={{ aspectRatio: `${doc.width} / ${doc.height}` }}
+              >
                 <CutoutEditor
                   ref={editorRef}
                   doc={doc}

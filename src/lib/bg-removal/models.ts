@@ -29,7 +29,7 @@ export interface ModelSpec {
  * commit, so a URL's content can never change underneath a cached copy.
  */
 const REPO = "hasimogluayaz/zapfile";
-const MODEL_COMMIT = "__MODEL_COMMIT__";
+const MODEL_COMMIT = "0eb75899472993e34031fc56f58a1603477f99bb";
 
 function githubSources(dir: string, count: number): ModelSource[] {
   const names = Array.from({ length: count }, (_, i) => `${dir}/part-${String(i).padStart(2, "0")}.bin`);
@@ -40,8 +40,8 @@ function githubSources(dir: string, count: number): ModelSource[] {
 }
 
 /**
- * Optional self-hosted copy (single file, CORS-enabled), tried first. Lets a
- * deployment move the model to its own storage without a code change.
+ * Optional self-hosted copy (single file, CORS-enabled, same bytes), tried
+ * first. Lets a deployment move the model to its own storage without a code change.
  */
 function overrideSource(): ModelSource[] {
   const url = process.env.NEXT_PUBLIC_BG_MODEL_URL;
@@ -51,19 +51,19 @@ function overrideSource(): ModelSource[] {
 /**
  * BiRefNet lite (Swin-T backbone, "general" weights, epoch 232), MIT
  * licensed — https://github.com/ZhengPeng7/BiRefNet. Re-exported to ONNX at
- * 512×512 (pending) with a memory-light deformable convolution so it runs
+ * 768×768 with a memory-light deformable convolution so it runs
  * inside the browser's WebAssembly memory limit; full-resolution detail is
  * recovered by the edge refinement in refine.ts.
  */
 export const BIREFNET_LITE: ModelSpec = {
   id: "birefnet-lite",
   file: {
-    id: "__FILE_ID__",
-    bytes: 0 /* TODO: set after model export */,
-    sha256: "__SHA256__",
-    sources: [...overrideSource(), ...githubSources("__FILE_ID__", 0)],
+    id: "birefnet-lite-768",
+    bytes: 94_370_922,
+    sha256: "94db4755eef843b440490b19b5bfcf4695ff5a2550238fefeb583663304eba27",
+    sources: [...overrideSource(), ...githubSources("birefnet-lite-768", 5)],
   },
-  inputSize: { width: 512, height: 512 },
+  inputSize: { width: 768, height: 768 },
   normalization: IMAGENET,
   license: "MIT",
   homepage: "https://github.com/ZhengPeng7/BiRefNet",

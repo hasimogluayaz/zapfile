@@ -8,7 +8,7 @@ ZapFile (zapfile.xyz) is a free, browser-based file processing tool suite. All p
 
 - **Framework**: Next.js 14 (App Router), TypeScript
 - **Styling**: Tailwind CSS with CSS custom properties (light/dark theme), Lucide icons (`lucide-react`)
-- **Key deps**: `pdf-lib`, `react-dropzone`, `react-hot-toast`, `tesseract.js` (OCR)
+- **Key deps**: `pdf-lib`, `@cantoo/pdf-lib` (PDF encryption), `pdfjs-dist`, `onnxruntime-web` (background remover), `react-dropzone`, `react-hot-toast`, `tesseract.js` (OCR)
 - **Analytics**: `@vercel/analytics`, `@vercel/speed-insights`
 
 ## Architecture
@@ -72,6 +72,18 @@ Canonical list: `src/lib/tools.ts` — 53 tools across 4 categories (PDF, Image,
 - Tailwind `dark:` variants follow `[data-theme="dark"]` (`darkMode` selector), not the OS; an inline script in layout.tsx sets the theme before first paint.
 - Avoid `bg-white/5`-style classes from the old dark-only UI; use `bg-bg-secondary`, `border-border`, etc.
 - `metaTitle` / `metaDescription` in tools.ts must be English (canonical pages are English)
+
+## Runtime assets (`public/vendor/`)
+
+Workers/wasm that libraries load at runtime are copied from `node_modules` into `public/vendor/<lib>-<version>/` by `scripts/copy-vendor-assets.mjs` (runs on `predev`/`prebuild`, output git-ignored). Never load them from a third-party CDN. pdf.js goes through `src/lib/pdfjs.ts` (`openPdf`).
+
+## Background remover (`src/lib/bg-removal/`)
+
+- `worker.ts` (Web Worker): loads onnxruntime-web from `/vendor/ort-<NEXT_PUBLIC_ORT_VERSION>/` (WebGPU build, WASM fallback; NaN/failed GPU runs retry on WASM), downloads the model, runs inference and refinement. `client.ts` is the main-thread wrapper.
+- `models.ts`: model manifest. The model (BiRefNet lite, MIT, re-exported at 768×768, fp16-stored weights, 94 MB) lives in `models/` of this repo, split into ≤19 MB parts, served from a **pinned commit** via jsDelivr (fallback raw.githubusercontent), SHA-256 verified, kept in Cache Storage. `models/` is excluded from Vercel (`.vercelignore`); provenance and export scripts in `models/README.md`. To change the model: add new parts in one commit, then point `MODEL_COMMIT`/hash/size at it.
+- `refine.ts`: speck/hole cleanup, colour guided filter (full-res edges), levels, blur-fusion foreground estimation (colour decontamination). Pure functions, testable in Node.
+- `document.ts` (brush erase/restore + tile undo/redo, outputs), `compose.ts` (backdrops + export), `components/bg-removal/CutoutEditor.tsx` (zoom/pan/pinch canvas).
+- Don't use the published 1024 BiRefNet ONNX files: they peak at ~6.7 GB and exceed WebAssembly's 4 GB limit.
 
 ## File handoff
 
