@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface ImageCompareSliderProps {
   beforeSrc: string;
@@ -8,12 +8,17 @@ interface ImageCompareSliderProps {
   beforeLabel?: string;
   afterLabel?: string;
   className?: string;
-  /** Override inner frame (default: aspect-[4/3] max-h-80) */
+  /** Extra classes for the frame (e.g. max height). The stage keeps the image's aspect ratio inside it. */
   frameClassName?: string;
   dragHandleAriaLabel?: string;
   rangeAriaLabel?: string;
 }
 
+/**
+ * Before/after comparison. Both images fill the same stage (sized to the
+ * image's aspect ratio), and the "before" layer is revealed with clip-path,
+ * so the two can never drift out of alignment.
+ */
 export default function ImageCompareSlider({
   beforeSrc,
   afterSrc,
@@ -21,144 +26,98 @@ export default function ImageCompareSlider({
   afterLabel = "After",
   className = "",
   frameClassName = "aspect-[4/3] max-h-80",
-  dragHandleAriaLabel = "Drag to compare before and after",
   rangeAriaLabel = "Compare before and after",
 }: ImageCompareSliderProps) {
   const [pct, setPct] = useState(50);
+  const [ratio, setRatio] = useState<number | null>(null);
+  const stage = useRef<HTMLDivElement>(null);
   const dragging = useRef(false);
-  const wrap = useRef<HTMLDivElement>(null);
-  const [boxW, setBoxW] = useState(0);
 
-  useEffect(() => {
-    setPct(50);
-  }, [beforeSrc, afterSrc]);
-
-  useEffect(() => {
-    const el = wrap.current;
-    if (!el) return;
-    const ro = new ResizeObserver(() => setBoxW(el.offsetWidth));
-    ro.observe(el);
-    setBoxW(el.offsetWidth);
-    return () => ro.disconnect();
-  }, []);
+  useEffect(() => setPct(50), [beforeSrc]);
 
   const setFromClientX = useCallback((clientX: number) => {
-    const el = wrap.current;
+    const el = stage.current;
     if (!el) return;
     const r = el.getBoundingClientRect();
-    const x = Math.min(Math.max(clientX - r.left, 0), r.width);
-    setPct(Math.round((x / r.width) * 100));
+    setPct(Math.min(100, Math.max(0, ((clientX - r.left) / r.width) * 100)));
   }, []);
 
-  useEffect(() => {
-    const up = () => {
-      dragging.current = false;
-    };
-    const move = (e: MouseEvent) => {
-      if (!dragging.current) return;
-      setFromClientX(e.clientX);
-    };
-    window.addEventListener("mousemove", move);
-    window.addEventListener("mouseup", up);
-    return () => {
-      window.removeEventListener("mousemove", move);
-      window.removeEventListener("mouseup", up);
-    };
-  }, [setFromClientX]);
-
-  const onTouchStart = useCallback(
-    (e: React.TouchEvent) => {
-      e.preventDefault();
-      dragging.current = true;
-      setFromClientX(e.touches[0].clientX);
-    },
-    [setFromClientX],
-  );
-
-  const onTouchMove = useCallback(
-    (e: React.TouchEvent) => {
-      if (!dragging.current) return;
-      setFromClientX(e.touches[0].clientX);
-    },
-    [setFromClientX],
-  );
-
-  const onTouchEnd = useCallback(() => {
-    dragging.current = false;
-  }, []);
+  const onKey = (e: React.KeyboardEvent) => {
+    const step = e.shiftKey ? 10 : 2;
+    if (e.key === "ArrowLeft" || e.key === "ArrowDown") setPct((p) => Math.max(0, p - step));
+    else if (e.key === "ArrowRight" || e.key === "ArrowUp") setPct((p) => Math.min(100, p + step));
+    else if (e.key === "Home") setPct(0);
+    else if (e.key === "End") setPct(100);
+    else return;
+    e.preventDefault();
+  };
 
   return (
-    <div className={`relative select-none ${className}`}>
+    <div className={`select-none ${className}`}>
       <div
-        ref={wrap}
-        className={`relative overflow-hidden rounded-xl border border-border bg-bg-secondary ${frameClassName}`}
-        onMouseMove={(e) => {
-          if (!dragging.current) return;
-          setFromClientX(e.clientX);
-        }}
-        onMouseUp={() => {
-          dragging.current = false;
-        }}
-        onMouseLeave={() => {
-          dragging.current = false;
-        }}
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
+        className={`flex items-center justify-center overflow-hidden rounded-xl border border-border bg-bg-secondary ${frameClassName}`}
+        style={{ containerType: "size" }}
       >
-        {/* After (full background) */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={afterSrc}
-          alt=""
-          className="absolute inset-0 w-full h-full object-contain pointer-events-none"
-        />
-        {/* Before (clipped) */}
         <div
-          className="absolute inset-y-0 left-0 overflow-hidden top-0"
-          style={{ width: `${pct}%` }}
+          ref={stage}
+          className="relative touch-none cursor-ew-resize"
+          // Largest box with the image's aspect ratio that fits the frame.
+          style={
+            ratio
+              ? { width: `min(100cqw, ${ratio} * 100cqh)`, aspectRatio: String(ratio) }
+              : { width: "100%", height: "100%" }
+          }
+          onPointerDown={(e) => {
+            dragging.current = true;
+            (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+            setFromClientX(e.clientX);
+          }}
+          onPointerMove={(e) => dragging.current && setFromClientX(e.clientX)}
+          onPointerUp={() => (dragging.current = false)}
+          onPointerCancel={() => (dragging.current = false)}
         >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={afterSrc}
+            alt=""
+            draggable={false}
+            className="pointer-events-none absolute inset-0 h-full w-full object-contain"
+          />
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={beforeSrc}
             alt=""
-            className="absolute left-0 top-0 h-full object-contain pointer-events-none"
-            style={{ width: boxW ? `${boxW}px` : "100%" }}
+            draggable={false}
+            onLoad={(e) => {
+              const img = e.currentTarget;
+              if (img.naturalWidth && img.naturalHeight) setRatio(img.naturalWidth / img.naturalHeight);
+            }}
+            className="pointer-events-none absolute inset-0 h-full w-full object-contain"
+            style={{ clipPath: `inset(0 ${100 - pct}% 0 0)` }}
           />
+          <span className="pointer-events-none absolute start-2 top-2 rounded-full bg-black/55 px-2 py-0.5 text-[11.5px] font-medium text-white">
+            {beforeLabel}
+          </span>
+          <span className="pointer-events-none absolute end-2 top-2 rounded-full bg-black/55 px-2 py-0.5 text-[11.5px] font-medium text-white">
+            {afterLabel}
+          </span>
+          <div className="pointer-events-none absolute inset-y-0 w-0.5 -translate-x-1/2 bg-white shadow-[0_0_6px_rgba(0,0,0,0.35)]" style={{ left: `${pct}%` }} />
+          <div
+            role="slider"
+            tabIndex={0}
+            aria-label={rangeAriaLabel}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={Math.round(pct)}
+            onKeyDown={onKey}
+            className="absolute top-1/2 flex h-9 w-9 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white text-[#16181d] shadow-lg outline-none focus-visible:ring-2 focus-visible:ring-volt"
+            style={{ left: `${pct}%` }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M9 6l-6 6 6 6M15 6l6 6-6 6" />
+            </svg>
+          </div>
         </div>
-        <div
-          className="absolute top-0 bottom-0 w-0.5 bg-white/90 shadow-md z-10 pointer-events-none"
-          style={{ left: `${pct}%`, transform: "translateX(-50%)" }}
-        />
-        <button
-          type="button"
-          aria-label={dragHandleAriaLabel}
-          className="absolute top-1/2 z-20 w-10 h-10 -ml-5 rounded-full bg-white shadow-lg border-2 border-accent flex items-center justify-center text-accent text-xs font-bold cursor-ew-resize touch-none"
-          style={{
-            left: `${pct}%`,
-            transform: "translate(-50%, -50%)",
-          }}
-          onMouseDown={(e) => {
-            e.preventDefault();
-            dragging.current = true;
-            setFromClientX(e.clientX);
-          }}
-        >
-          ⇄
-        </button>
-      </div>
-      <input
-        type="range"
-        min={0}
-        max={100}
-        value={pct}
-        onChange={(e) => setPct(Number(e.target.value))}
-        className="w-full mt-2 accent-accent"
-        aria-label={rangeAriaLabel}
-      />
-      <div className="flex justify-between text-xs text-t-tertiary mt-1">
-        <span>{beforeLabel}</span>
-        <span>{afterLabel}</span>
       </div>
     </div>
   );

@@ -8,7 +8,7 @@ ZapFile (zapfile.xyz) is a free, browser-based file processing tool suite. All p
 
 - **Framework**: Next.js 14 (App Router), TypeScript
 - **Styling**: Tailwind CSS with CSS custom properties (light/dark theme), Lucide icons (`lucide-react`)
-- **Key deps**: `pdf-lib`, `@cantoo/pdf-lib` (PDF encryption), `pdfjs-dist`, `onnxruntime-web` (background remover), `react-dropzone`, `react-hot-toast`, `tesseract.js` (OCR)
+- **Key deps**: `pdf-lib`, `@cantoo/pdf-lib` (PDF encryption), `pdfjs-dist`, `onnxruntime-web` (background remover), `@jsquash/*` + `image-q` (image engine codecs), `gifenc`, `yaml`, `papaparse`, `marked` + `dompurify`, `diff`, `hash-wasm`, `jszip`, `qrcode`, `jsqr`, `react-dropzone`, `react-hot-toast`
 - **Analytics**: `@vercel/analytics`, `@vercel/speed-insights`
 
 ## Architecture
@@ -84,6 +84,14 @@ Workers/wasm that libraries load at runtime are copied from `node_modules` into 
 - `refine.ts`: speck/hole cleanup, colour guided filter (full-res edges), levels, blur-fusion foreground estimation (colour decontamination). Pure functions, testable in Node.
 - `document.ts` (brush erase/restore + tile undo/redo, outputs), `compose.ts` (backdrops + export), `components/bg-removal/CutoutEditor.tsx` (zoom/pan/pinch canvas).
 - Don't use the published 1024 BiRefNet ONNX files: they peak at ~6.7 GB and exceed WebAssembly's 4 GB limit.
+
+## Image engine (`src/lib/image-engine/`) — use it for any image export
+
+- `processImage(job, signal?)` runs decode → crop → rotate/flip → resize → encode in a Web Worker pool (no UI jank; batches run in parallel). `processAll`, `makeThumbnail(blob, maxSide)` (small WebP previews), `scanQr(blob|bitmap)` (BarcodeDetector, else jsQR at several scales). `AbortError` on cancel.
+- Decode honours EXIF orientation and caps pixels at 16.7 MP on WebKit (iOS canvas limit). Resize is Lanczos3 in linear light (`@jsquash/resize`); `fit: contain | cover | stretch`, `withoutEnlargement` (default true).
+- Encoders: JPEG = MozJPEG, WebP = libwebp (quality 1 = lossless), PNG = OxiPNG; `pngLossy` = 256-colour palette PNG (fast, `palette-png.ts`). `targetBytes` binary-searches quality; `keepOriginalIfLarger` returns the input when re-encoding would grow it. Re-encoding strips EXIF/GPS.
+- Never call `canvas.toDataURL` on full-size images or loop over full-res pixels on the main thread; preview on a downscaled proxy and export through the engine.
+- Shared Voltage controls for tool UIs: `components/ui/controls.tsx` (`Segmented`, `Toggle`, `Slider`, button/section classes). `ImageCompareSlider` is the before/after component.
 
 ## File handoff
 
