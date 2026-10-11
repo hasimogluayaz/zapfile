@@ -325,7 +325,7 @@ export default function AudioRecorderPage() {
           {/* Timer */}
           <div
             className={`text-5xl font-mono font-bold tabular-nums tracking-widest transition-colors ${
-              isRecording ? "text-red-400" : isPaused ? "text-amber-400" : "text-t-primary"
+              isRecording ? "text-red-700 dark:text-red-400" : isPaused ? "text-amber-700 dark:text-amber-400" : "text-t-primary"
             }`}
           >
             {formatDuration(duration)}

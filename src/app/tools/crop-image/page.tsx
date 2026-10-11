@@ -518,7 +518,7 @@ export default function CropImagePage() {
                 </p>
                 <p className="text-xs text-t-tertiary mt-0.5">Cropped successfully</p>
               </div>
-              <span className="text-emerald-400 text-xl">✓</span>
+              <span className="text-emerald-700 dark:text-emerald-400 text-xl">✓</span>
             </div>
 
             {resultPreview && (

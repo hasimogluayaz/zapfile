@@ -9,6 +9,7 @@ import ToolLayout from "@/components/ToolLayout";
 import FileDropzone from "@/components/FileDropzone";
 import ProgressBar from "@/components/ProgressBar";
 import { downloadBlob } from "@/lib/utils";
+import { pdfInputErrorKey, toEditablePdf } from "@/lib/pdf-input";
 import { useI18n } from "@/lib/i18n";
 
 type ExtractionMode = "flow" | "lines";
@@ -83,7 +84,7 @@ function extractPageText(items: PdfTextItemLike[], mode: ExtractionMode) {
 }
 
 export default function PdfTextExtractorPage() {
-  const { locale } = useI18n();
+  const { locale, t } = useI18n();
   const copy = locale === "tr"
     ? {
         dropLabel: "Metnini almak istediğiniz PDF dosyasını bırakın",
@@ -247,12 +248,20 @@ export default function PdfTextExtractorPage() {
 
   const handleFile = useCallback(
     async (files: File[]) => {
-      const pdf = files.find(
+      const picked = files.find(
         (currentFile) =>
           currentFile.type === "application/pdf" || currentFile.name.toLowerCase().endsWith(".pdf"),
       );
-      if (!pdf) {
+      if (!picked) {
         toast.error(copy.invalidFile);
+        return;
+      }
+      let pdf: File;
+      try {
+        pdf = await toEditablePdf(picked);
+      } catch (error) {
+        console.error(error);
+        toast.error(t(pdfInputErrorKey(error)));
         return;
       }
 
@@ -724,7 +733,7 @@ export default function PdfTextExtractorPage() {
 
                     <div className="rounded-2xl border border-amber-500/20 bg-amber-500/8 px-4 py-3 text-sm text-t-secondary">
                       {copy.ocrHint}{" "}
-                      <Link href="/tools/ocr" className="font-medium text-amber-300 underline underline-offset-4">
+                      <Link href="/tools/ocr" className="font-medium text-amber-700 dark:text-amber-400 underline underline-offset-4">
                         {copy.ocrLink}
                       </Link>
                       .

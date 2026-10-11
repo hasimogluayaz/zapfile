@@ -155,8 +155,8 @@ export default function CssMinifierPage() {
                   onClick={() => handleModeChange(m)}
                   className={`px-5 py-2.5 rounded-xl text-sm font-medium transition-all capitalize ${
                     mode === m
-                      ? "bg-accent/20 border border-accent text-brand-text"
-                      : "bg-bg-secondary border border-border text-brand-muted hover:border-t-primary/20"
+                      ? "bg-accent/20 border border-accent text-t-primary"
+                      : "bg-bg-secondary border border-border text-t-secondary hover:border-t-primary/20"
                   }`}
                 >
                   {m === "minify" ? t("css.minify") : t("css.beautify")}
@@ -166,7 +166,7 @@ export default function CssMinifierPage() {
 
             {/* File upload */}
             <label className="cursor-pointer">
-              <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-brand-muted bg-bg-secondary border border-border hover:bg-bg-tertiary hover:text-brand-text transition-all">
+              <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-t-secondary bg-bg-secondary border border-border hover:bg-bg-tertiary hover:text-t-primary transition-all">
                 <svg
                   className="w-4 h-4"
                   fill="none"
@@ -198,10 +198,10 @@ export default function CssMinifierPage() {
           {/* Input */}
           <div className="glass rounded-2xl p-5 flex flex-col gap-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold text-brand-text">
+              <span className="text-sm font-semibold text-t-primary">
                 {t("css.input")}
               </span>
-              <span className="text-xs text-brand-muted font-mono">
+              <span className="text-xs text-t-secondary font-mono">
                 {input.length} {t("css.chars")}
               </span>
             </div>
@@ -214,17 +214,17 @@ export default function CssMinifierPage() {
               placeholder="/* Paste your CSS here */"
               rows={16}
               spellCheck={false}
-              className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border text-brand-text placeholder:text-brand-muted/50 focus:outline-none focus:border-accent/40 resize-none font-mono text-xs flex-1"
+              className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border text-t-primary placeholder:text-t-tertiary/50 focus:outline-none focus:border-accent/40 resize-none font-mono text-xs flex-1"
             />
           </div>
 
           {/* Output */}
           <div className="glass rounded-2xl p-5 flex flex-col gap-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold text-brand-text">
+              <span className="text-sm font-semibold text-t-primary">
                 {t("css.output")}
               </span>
-              <span className="text-xs text-brand-muted font-mono">
+              <span className="text-xs text-t-secondary font-mono">
                 {output.length} {t("css.chars")}
               </span>
             </div>
@@ -233,7 +233,7 @@ export default function CssMinifierPage() {
               readOnly
               placeholder="Output will appear here…"
               rows={16}
-              className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border text-brand-muted resize-none font-mono text-xs flex-1 cursor-default select-all"
+              className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border text-t-secondary resize-none font-mono text-xs flex-1 cursor-default select-all"
             />
           </div>
         </div>
@@ -242,23 +242,23 @@ export default function CssMinifierPage() {
         {output && inputBytes > 0 && (
           <div className="glass rounded-2xl p-4 flex flex-wrap items-center gap-4">
             <div className="flex items-center gap-2">
-              <span className="text-xs text-brand-muted">Input:</span>
-              <span className="text-xs font-mono text-brand-text font-semibold">
+              <span className="text-xs text-t-secondary">Input:</span>
+              <span className="text-xs font-mono text-t-primary font-semibold">
                 {inputBytes.toLocaleString()} bytes
               </span>
             </div>
-            <div className="text-brand-muted/40 hidden sm:block">→</div>
+            <div className="text-t-secondary/40 hidden sm:block">→</div>
             <div className="flex items-center gap-2">
-              <span className="text-xs text-brand-muted">Output:</span>
-              <span className="text-xs font-mono text-brand-text font-semibold">
+              <span className="text-xs text-t-secondary">Output:</span>
+              <span className="text-xs font-mono text-t-primary font-semibold">
                 {outputBytes.toLocaleString()} bytes
               </span>
             </div>
             {savedBytes > 0 && (
               <>
-                <div className="text-brand-muted/40 hidden sm:block">·</div>
+                <div className="text-t-secondary/40 hidden sm:block">·</div>
                 <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-semibold text-emerald-400">
+                  <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
                     {t("css.saved")
                       .replace("{n}", String(savedPercent))
                       .replace("{bytes}", savedBytes.toLocaleString())}
@@ -280,7 +280,7 @@ export default function CssMinifierPage() {
           <button
             onClick={handleCopy}
             disabled={!output}
-            className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-brand-text bg-bg-secondary border border-border hover:bg-bg-tertiary transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-t-primary bg-bg-secondary border border-border hover:bg-bg-tertiary transition-all disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <svg
               className="w-4 h-4"
@@ -299,7 +299,7 @@ export default function CssMinifierPage() {
           </button>
           <button
             onClick={handleClear}
-            className="px-6 py-3 rounded-xl font-semibold text-brand-text bg-bg-secondary border border-border hover:bg-bg-tertiary transition-all"
+            className="px-6 py-3 rounded-xl font-semibold text-t-primary bg-bg-secondary border border-border hover:bg-bg-tertiary transition-all"
           >
             {t("css.clear")}
           </button>

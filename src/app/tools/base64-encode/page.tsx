@@ -86,7 +86,7 @@ export default function Base64Page() {
                 className={`py-3 rounded-xl text-sm font-semibold transition-all capitalize ${
                   mode === m
                     ? "bg-accent text-on-accent shadow-sm"
-                    : "bg-bg-secondary text-brand-muted hover:bg-bg-tertiary hover:text-brand-text"
+                    : "bg-bg-secondary text-t-secondary hover:bg-bg-tertiary hover:text-t-primary"
                 }`}
               >
                 {m}
@@ -108,8 +108,8 @@ export default function Base64Page() {
                   }}
                   className={`py-2 rounded-lg text-sm font-medium transition-all capitalize ${
                     inputType === inp
-                      ? "bg-bg-tertiary text-brand-text"
-                      : "text-brand-muted hover:text-brand-text"
+                      ? "bg-bg-tertiary text-t-primary"
+                      : "text-t-secondary hover:text-t-primary"
                   }`}
                 >
                   {inp === "text" ? t("b64.textInput") : t("b64.fileInput")}
@@ -128,14 +128,14 @@ export default function Base64Page() {
               label={t("b64.dropFile")}
             />
             {fileName && (
-              <p className="text-sm text-brand-muted text-center">
+              <p className="text-sm text-t-secondary text-center">
                 Encoded: {fileName}
               </p>
             )}
           </div>
         ) : (
           <div className="glass rounded-xl p-6">
-            <label className="block text-sm text-brand-muted mb-2">
+            <label className="block text-sm text-t-secondary mb-2">
               {mode === "encode" ? t("b64.textToEncode") : t("b64.base64ToDecode")}
             </label>
             <textarea
@@ -143,7 +143,7 @@ export default function Base64Page() {
               onChange={(e) => handleEncode(e.target.value)}
               placeholder={mode === "encode" ? t("b64.textToEncode") : t("b64.base64ToDecode")}
               rows={5}
-              className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border text-brand-text placeholder:text-brand-muted/50 focus:outline-none focus:border-accent/50 font-mono text-sm resize-none"
+              className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border text-t-primary placeholder:text-t-tertiary/50 focus:outline-none focus:border-accent/50 font-mono text-sm resize-none"
             />
           </div>
         )}
@@ -152,7 +152,7 @@ export default function Base64Page() {
         {output && (
           <div className="glass rounded-xl p-6">
             <div className="flex items-center justify-between mb-2">
-              <label className="text-sm text-brand-muted">
+              <label className="text-sm text-t-secondary">
                 {mode === "encode" ? t("b64.base64Output") : t("b64.decodedText")}
               </label>
               <div className="flex gap-2">
@@ -164,7 +164,7 @@ export default function Base64Page() {
                 </button>
                 <button
                   onClick={clearAll}
-                  className="px-3 py-1.5 text-xs rounded-lg bg-bg-secondary text-brand-muted hover:bg-bg-tertiary hover:text-brand-text transition-colors"
+                  className="px-3 py-1.5 text-xs rounded-lg bg-bg-secondary text-t-secondary hover:bg-bg-tertiary hover:text-t-primary transition-colors"
                 >
                   {t("ui.clear")}
                 </button>
@@ -174,9 +174,9 @@ export default function Base64Page() {
               value={output}
               readOnly
               rows={5}
-              className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border text-brand-text font-mono text-sm resize-none"
+              className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border text-t-primary font-mono text-sm resize-none"
             />
-            <p className="text-xs text-brand-muted mt-2">
+            <p className="text-xs text-t-secondary mt-2">
               {output.length.toLocaleString()} characters
             </p>
           </div>

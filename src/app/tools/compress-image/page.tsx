@@ -235,12 +235,12 @@ export default function CompressImagePage() {
         {files.length > 0 && results.length === 0 && (
           <div className="glass rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-brand-text font-medium">
+              <h3 className="text-t-primary font-medium">
                 {t("compimg.selected", { count: files.length })}
               </h3>
               <button
                 onClick={handleReset}
-                className="text-brand-muted hover:text-brand-text transition-colors p-2 rounded-lg hover:bg-bg-secondary"
+                className="text-t-secondary hover:text-t-primary transition-colors p-2 rounded-lg hover:bg-bg-secondary"
                 title={t("compimg.removeAll")}
               >
                 <svg
@@ -264,10 +264,10 @@ export default function CompressImagePage() {
                   key={i}
                   className="flex items-center justify-between py-2 border-b border-border last:border-0"
                 >
-                  <span className="text-sm text-brand-text truncate max-w-[70%]">
+                  <span className="text-sm text-t-primary truncate max-w-[70%]">
                     {file.name}
                   </span>
-                  <span className="text-sm text-brand-muted">
+                  <span className="text-sm text-t-secondary">
                     {formatFileSize(file.size)}
                   </span>
                 </div>
@@ -279,15 +279,15 @@ export default function CompressImagePage() {
         {/* Settings */}
         {files.length > 0 && results.length === 0 && (
           <div className="glass rounded-xl p-6 space-y-6">
-            <h3 className="text-brand-text font-medium">
+            <h3 className="text-t-primary font-medium">
               {t("compimg.settings")}
             </h3>
 
             {/* Quality Slider */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="text-sm text-brand-muted">Quality</label>
-                <span className="text-sm font-medium text-brand-text">
+                <label className="text-sm text-t-secondary">Quality</label>
+                <span className="text-sm font-medium text-t-primary">
                   {Math.round(quality * 100)}%
                 </span>
               </div>
@@ -298,9 +298,9 @@ export default function CompressImagePage() {
                 step="0.05"
                 value={quality}
                 onChange={(e) => setQuality(parseFloat(e.target.value))}
-                className="w-full h-2 rounded-full appearance-none cursor-pointer bg-bg-tertiary accent-brand-indigo"
+                className="w-full h-2 rounded-full appearance-none cursor-pointer bg-bg-tertiary accent-accent"
               />
-              <div className="flex justify-between text-xs text-brand-muted mt-1">
+              <div className="flex justify-between text-xs text-t-secondary mt-1">
                 <span>{t("compimg.smaller")}</span>
                 <span>{t("compimg.higher")}</span>
               </div>
@@ -309,10 +309,10 @@ export default function CompressImagePage() {
             {/* Max Dimension */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="text-sm text-brand-muted">
+                <label className="text-sm text-t-secondary">
                   {t("compimg.maxDim")}
                 </label>
-                <span className="text-sm font-medium text-brand-text">
+                <span className="text-sm font-medium text-t-primary">
                   {maxDimension}px
                 </span>
               </div>
@@ -323,9 +323,9 @@ export default function CompressImagePage() {
                 step="64"
                 value={maxDimension}
                 onChange={(e) => setMaxDimension(parseInt(e.target.value))}
-                className="w-full h-2 rounded-full appearance-none cursor-pointer bg-bg-tertiary accent-brand-indigo"
+                className="w-full h-2 rounded-full appearance-none cursor-pointer bg-bg-tertiary accent-accent"
               />
-              <div className="flex justify-between text-xs text-brand-muted mt-1">
+              <div className="flex justify-between text-xs text-t-secondary mt-1">
                 <span>320px</span>
                 <span>4096px</span>
               </div>
@@ -334,7 +334,7 @@ export default function CompressImagePage() {
             {/* Output Format */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="text-sm text-brand-muted">
+                <label className="text-sm text-t-secondary">
                   {t("compimg.format")}
                 </label>
               </div>
@@ -345,8 +345,8 @@ export default function CompressImagePage() {
                     onClick={() => setOutputFormat(fmt)}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                       outputFormat === fmt
-                        ? "bg-accent/20 border border-accent text-brand-text"
-                        : "bg-bg-secondary border border-border text-brand-muted hover:border-t-primary/20"
+                        ? "bg-accent/20 border border-accent text-t-primary"
+                        : "bg-bg-secondary border border-border text-t-secondary hover:border-t-primary/20"
                     }`}
                   >
                     {fmt === "original"
@@ -356,8 +356,8 @@ export default function CompressImagePage() {
                 ))}
               </div>
               {outputFormat === "webp" && (
-                <p className="text-xs text-brand-muted mt-2 flex items-center gap-1.5">
-                  <span className="text-emerald-400">✓</span>
+                <p className="text-xs text-t-secondary mt-2 flex items-center gap-1.5">
+                  <span className="text-emerald-700 dark:text-emerald-400">✓</span>
                   {t("compimg.webpHint")}
                 </p>
               )}
@@ -397,7 +397,7 @@ export default function CompressImagePage() {
 
             {/* Individual results */}
             <div className="glass rounded-xl p-6">
-              <h3 className="text-brand-text font-medium mb-4">Results</h3>
+              <h3 className="text-t-primary font-medium mb-4">Results</h3>
               <div className="space-y-3">
                 {results.map((result, i) => {
                   const saved = result.originalSize - result.compressedSize;
@@ -410,15 +410,15 @@ export default function CompressImagePage() {
                       key={i}
                       className="flex items-center justify-between py-3 border-b border-border last:border-0 gap-4"
                     >
-                      <span className="text-sm text-brand-text truncate min-w-0 flex-1">
+                      <span className="text-sm text-t-primary truncate min-w-0 flex-1">
                         {result.original.name}
                       </span>
-                      <span className="text-sm text-brand-muted whitespace-nowrap">
+                      <span className="text-sm text-t-secondary whitespace-nowrap">
                         {formatFileSize(result.originalSize)} &rarr;{" "}
                         {formatFileSize(result.compressedSize)}
                       </span>
                       {saved > 0 && (
-                        <span className="text-sm font-medium text-emerald-400 whitespace-nowrap">
+                        <span className="text-sm font-medium text-emerald-700 dark:text-emerald-400 whitespace-nowrap">
                           -{pct}%
                         </span>
                       )}
@@ -438,7 +438,7 @@ export default function CompressImagePage() {
                               `${baseName}-compressed.${ext}`,
                             );
                           }}
-                          className="text-sm text-accent hover:text-brand-purple transition-colors whitespace-nowrap"
+                          className="text-sm text-accent hover:text-accent-hover transition-colors whitespace-nowrap"
                         >
                           {t("compimg.download")}
                         </button>
@@ -483,7 +483,7 @@ export default function CompressImagePage() {
               </button>
               <button
                 onClick={handleReset}
-                className="px-6 py-3 rounded-xl font-semibold text-brand-muted border border-border hover:text-brand-text hover:border-t-primary/20 transition-all duration-300"
+                className="px-6 py-3 rounded-xl font-semibold text-t-secondary border border-border hover:text-t-primary hover:border-t-primary/20 transition-all duration-300"
               >
                 {t("compimg.more")}
               </button>
@@ -499,7 +499,7 @@ export default function CompressImagePage() {
               />
               <button
                 onClick={handleReset}
-                className="px-6 py-3 rounded-xl font-semibold text-brand-muted border border-border hover:text-brand-text hover:border-t-primary/20 transition-all duration-300"
+                className="px-6 py-3 rounded-xl font-semibold text-t-secondary border border-border hover:text-t-primary hover:border-t-primary/20 transition-all duration-300"
               >
                 {t("compimg.more")}
               </button>

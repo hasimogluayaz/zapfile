@@ -303,7 +303,7 @@ export default function FaviconGeneratorPage() {
                 </div>
                 <button
                   onClick={reset}
-                  className="text-[12px] text-t-secondary hover:text-red-400 transition-colors flex-shrink-0"
+                  className="text-[12px] text-t-secondary hover:text-red-600 dark:hover:text-red-400 transition-colors flex-shrink-0"
                 >
                   {t("ui.remove")}
                 </button>

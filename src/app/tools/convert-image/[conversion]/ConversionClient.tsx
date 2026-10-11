@@ -152,7 +152,7 @@ export default function ConversionClient({
               </h3>
               <button
                 onClick={reset}
-                className="text-sm text-t-tertiary hover:text-red-400 transition-colors"
+                className="text-sm text-t-tertiary hover:text-red-600 dark:hover:text-red-400 transition-colors"
               >
                 {t("ui.clearAll")}
               </button>

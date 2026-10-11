@@ -11,6 +11,7 @@ import {
   formatFileSize,
   getFileNameWithoutExtension,
 } from "@/lib/utils";
+import { pdfInputErrorKey, toEditablePdf } from "@/lib/pdf-input";
 import { useI18n } from "@/lib/i18n";
 
 type ImageFormat = "png" | "jpeg" | "webp";
@@ -131,8 +132,16 @@ export default function PdfToImagesPage() {
 
   const handleFilesSelected = useCallback(
     async (files: File[]) => {
-      const nextFile = files[0];
-      if (!nextFile) return;
+      const picked = files[0];
+      if (!picked) return;
+      let nextFile: File;
+      try {
+        nextFile = await toEditablePdf(picked);
+      } catch (error) {
+        console.error(error);
+        toast.error(t(pdfInputErrorKey(error)));
+        return;
+      }
 
       setFile(nextFile);
       setImages([]);
@@ -140,9 +149,7 @@ export default function PdfToImagesPage() {
 
       try {
         const { PDFDocument } = await import("pdf-lib");
-        const pdfDoc = await PDFDocument.load(await nextFile.arrayBuffer(), {
-          ignoreEncryption: true,
-        });
+        const pdfDoc = await PDFDocument.load(await nextFile.arrayBuffer());
         const count = pdfDoc.getPageCount();
         setPageCount(count);
         setRangeStart(1);
@@ -485,7 +492,7 @@ export default function PdfToImagesPage() {
                 <button
                   type="button"
                   onClick={() => void downloadAll()}
-                  className="rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-500"
+                  className="rounded-xl bg-accent px-5 py-2.5 text-sm font-semibold text-on-accent transition-colors hover:bg-accent-hover"
                 >
                   {images.length > 1 ? copy.downloadAll : t("ui.download")}
                 </button>

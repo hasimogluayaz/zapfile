@@ -8,6 +8,7 @@ import FileDropzone from "@/components/FileDropzone";
 import ProgressBar from "@/components/ProgressBar";
 import FileSizeCompare from "@/components/FileSizeCompare";
 import { downloadBlob, formatFileSize } from "@/lib/utils";
+import { pdfInputErrorKey, toEditablePdf } from "@/lib/pdf-input";
 import { useI18n } from "@/lib/i18n";
 
 type CompressMode = "lossless" | "raster";
@@ -31,7 +32,7 @@ function percentSaved(original: number, next: number) {
 }
 
 export default function PdfCompressPage() {
-  const { locale } = useI18n();
+  const { locale, t } = useI18n();
   const copy = locale === "tr"
     ? {
         dropLabel: "Sıkıştırmak istediğiniz PDF dosyasını bırakın",
@@ -107,9 +108,17 @@ export default function PdfCompressPage() {
 
   const handleFile = useCallback(
     async (files: File[]) => {
-      const pdf = files.find((f) => f.type === "application/pdf" || f.name.toLowerCase().endsWith(".pdf"));
-      if (!pdf) {
+      const picked = files.find((f) => f.type === "application/pdf" || f.name.toLowerCase().endsWith(".pdf"));
+      if (!picked) {
         toast.error(copy.invalidFile);
+        return;
+      }
+      let pdf: File;
+      try {
+        pdf = await toEditablePdf(picked);
+      } catch (error) {
+        console.error(error);
+        toast.error(t(pdfInputErrorKey(error)));
         return;
       }
 
@@ -119,9 +128,7 @@ export default function PdfCompressPage() {
 
       try {
         const { PDFDocument } = await import("pdf-lib");
-        const doc = await PDFDocument.load(await pdf.arrayBuffer(), {
-          ignoreEncryption: true,
-        });
+        const doc = await PDFDocument.load(await pdf.arrayBuffer());
         setPageCount(doc.getPageCount());
       } catch (error) {
         console.error(error);
@@ -136,7 +143,6 @@ export default function PdfCompressPage() {
   const compressLossless = useCallback(async (sourceFile: File) => {
     const { PDFDocument } = await import("pdf-lib");
     const doc = await PDFDocument.load(await sourceFile.arrayBuffer(), {
-      ignoreEncryption: true,
       updateMetadata: false,
     });
 
@@ -453,7 +459,7 @@ export default function PdfCompressPage() {
                   <button
                     type="button"
                     onClick={handleDownload}
-                    className="rounded-2xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-500"
+                    className="rounded-xl bg-accent px-6 py-3 text-sm font-semibold text-on-accent transition-colors hover:bg-accent-hover"
                   >
                     {copy.download}
                   </button>

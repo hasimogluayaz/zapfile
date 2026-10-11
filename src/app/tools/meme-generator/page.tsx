@@ -847,7 +847,7 @@ export default function MemeGeneratorPage() {
                           e.stopPropagation();
                           deleteItem(item.id);
                         }}
-                        className="text-[14px] text-t-secondary hover:text-red-400 transition-colors leading-none"
+                        className="text-[14px] text-t-secondary hover:text-red-600 dark:hover:text-red-400 transition-colors leading-none"
                         title={t("meme.deleteLayerTitle")}
                       >
                         &times;
@@ -1184,7 +1184,7 @@ export default function MemeGeneratorPage() {
                   {/* Delete */}
                   <button
                     onClick={() => deleteItem(selectedItem.id)}
-                    className="w-full py-2 rounded-lg text-[12px] font-semibold text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors"
+                    className="w-full py-2 rounded-lg text-[12px] font-semibold text-red-700 dark:text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors"
                   >
                     {t("meme.deleteThisLayer")}
                   </button>

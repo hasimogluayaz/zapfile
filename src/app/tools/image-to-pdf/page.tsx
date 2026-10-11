@@ -359,7 +359,7 @@ export default function ImageToPdfPage() {
                   <button
                     type="button"
                     onClick={reset}
-                    className="text-sm font-medium text-t-secondary transition-colors hover:text-red-400"
+                    className="text-sm font-medium text-t-secondary transition-colors hover:text-red-600 dark:hover:text-red-400"
                   >
                     {copy.clearAll}
                   </button>
@@ -409,7 +409,7 @@ export default function ImageToPdfPage() {
                         <button
                           type="button"
                           onClick={() => removeImage(img.id)}
-                          className="rounded-lg px-2 py-1.5 text-sm text-t-secondary transition-colors hover:bg-red-500/10 hover:text-red-400"
+                          className="rounded-lg px-2 py-1.5 text-sm text-t-secondary transition-colors hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400"
                           title={t("ui.remove")}
                         >
                           x

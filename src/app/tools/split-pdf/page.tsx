@@ -8,6 +8,7 @@ import ProcessButton from "@/components/ProcessButton";
 import DownloadButton from "@/components/DownloadButton";
 import ProgressBar from "@/components/ProgressBar";
 import { formatFileSize, getFileNameWithoutExtension } from "@/lib/utils";
+import { pdfInputErrorKey, toEditablePdf } from "@/lib/pdf-input";
 import { useI18n } from "@/lib/i18n";
 import { pdfPageThumbnail } from "@/lib/pdf-thumb";
 
@@ -63,11 +64,19 @@ export default function SplitPdfPage() {
   const pdfBufferRef = useRef<ArrayBuffer | null>(null);
 
   const handleFilesSelected = useCallback(async (files: File[]) => {
-    const selected = files[0];
-    if (!selected) return;
+    const picked = files[0];
+    if (!picked) return;
 
-    if (selected.type !== "application/pdf" && !selected.name.toLowerCase().endsWith(".pdf")) {
+    if (picked.type !== "application/pdf" && !picked.name.toLowerCase().endsWith(".pdf")) {
       toast.error(t("split.invalidFile"));
+      return;
+    }
+    let selected: File;
+    try {
+      selected = await toEditablePdf(picked);
+    } catch (error) {
+      console.error(error);
+      toast.error(t(pdfInputErrorKey(error)));
       return;
     }
 
@@ -75,9 +84,7 @@ export default function SplitPdfPage() {
       const arrayBuffer = await selected.arrayBuffer();
       pdfBufferRef.current = arrayBuffer.slice(0);
       const { PDFDocument } = await import("pdf-lib");
-      const doc = await PDFDocument.load(arrayBuffer, {
-        ignoreEncryption: true,
-      });
+      const doc = await PDFDocument.load(arrayBuffer);
       const pageCount = doc.getPageCount();
 
       setFile(selected);
@@ -140,9 +147,7 @@ export default function SplitPdfPage() {
       setProgress(10);
 
       const arrayBuffer = await file.arrayBuffer();
-      const srcDoc = await PDFDocument.load(arrayBuffer, {
-        ignoreEncryption: true,
-      });
+      const srcDoc = await PDFDocument.load(arrayBuffer);
       setProgress(25);
 
       const zip = new JSZip();
@@ -172,14 +177,21 @@ export default function SplitPdfPage() {
 
       setProgress(90);
 
-      const zipBlob = await zip.generateAsync({
-        type: "blob",
-        compression: "DEFLATE",
-        compressionOptions: { level: 6 },
-      });
-
-      setResultBlob(zipBlob);
-      setResultFilename(`${baseName}-split.zip`);
+      if (ranges.length === 1) {
+        // One range: hand back the PDF itself rather than a ZIP with one file.
+        const only = Object.values(zip.files)[0];
+        const pdfBytes = await only.async("uint8array");
+        setResultBlob(new Blob([pdfBytes as BlobPart], { type: "application/pdf" }));
+        setResultFilename(only.name);
+      } else {
+        const zipBlob = await zip.generateAsync({
+          type: "blob",
+          compression: "DEFLATE",
+          compressionOptions: { level: 6 },
+        });
+        setResultBlob(zipBlob);
+        setResultFilename(`${baseName}-split.zip`);
+      }
       setProgress(100);
 
       toast.success(t("split.success", { count: ranges.length }));
@@ -225,7 +237,7 @@ export default function SplitPdfPage() {
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center">
                   <svg
-                    className="w-6 h-6 text-red-400"
+                    className="w-6 h-6 text-red-700 dark:text-red-400"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -393,7 +405,7 @@ export default function SplitPdfPage() {
               <DownloadButton
                 blob={resultBlob}
                 filename={resultFilename}
-                label={t("split.download")}
+                label={resultFilename.endsWith(".zip") ? t("split.download") : t("ui.download")}
               />
               <button
                 type="button"

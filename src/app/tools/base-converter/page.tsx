@@ -96,14 +96,14 @@ export default function BaseConverterPage() {
     >
       <div className="space-y-8">
         <div className="glass rounded-2xl p-6">
-          <p className="text-sm text-brand-muted mb-6">
+          <p className="text-sm text-t-secondary mb-6">
             {t("base.input")}
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {baseConfig.map(({ key, label, placeholder }) => (
               <div key={key} className="space-y-2">
-                <label className="block text-sm font-medium text-brand-muted">
+                <label className="block text-sm font-medium text-t-secondary">
                   {label}
                 </label>
                 <div className="relative">
@@ -113,12 +113,12 @@ export default function BaseConverterPage() {
                     onChange={(e) => handleChange(key, e.target.value)}
                     placeholder={placeholder}
                     spellCheck={false}
-                    className="w-full px-4 py-3 pr-10 rounded-xl bg-bg-secondary border border-border text-brand-text placeholder:text-brand-muted/40 focus:outline-none focus:border-accent/40 font-mono text-sm transition-colors"
+                    className="w-full px-4 py-3 pr-10 rounded-xl bg-bg-secondary border border-border text-t-primary placeholder:text-t-tertiary/40 focus:outline-none focus:border-accent/40 font-mono text-sm transition-colors"
                   />
                   {values[key] && values[key] !== "—" && (
                     <button
                       onClick={() => copyValue(values[key], label)}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-brand-muted hover:text-brand-text transition-colors"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-t-secondary hover:text-t-primary transition-colors"
                       aria-label={`Copy ${label}`}
                     >
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -132,14 +132,14 @@ export default function BaseConverterPage() {
           </div>
 
           {error && (
-            <p className="mt-4 text-sm text-red-400">{error}</p>
+            <p className="mt-4 text-sm text-red-700 dark:text-red-400">{error}</p>
           )}
         </div>
 
         {/* Summary card — only shown when a valid value is present */}
         {values.decimal !== "" && values.decimal !== "—" && !error && (
           <div className="glass rounded-2xl p-6">
-            <h3 className="text-sm font-semibold text-brand-text mb-4">
+            <h3 className="text-sm font-semibold text-t-primary mb-4">
               {t("base.results")}
             </h3>
             <div className="space-y-3">
@@ -148,15 +148,15 @@ export default function BaseConverterPage() {
                   key={key}
                   className="flex items-center justify-between gap-4 px-4 py-3 rounded-xl bg-bg-secondary border border-border"
                 >
-                  <span className="text-xs font-semibold text-brand-muted w-24 shrink-0">
+                  <span className="text-xs font-semibold text-t-secondary w-24 shrink-0">
                     {label}
                   </span>
-                  <span className="font-mono text-sm text-brand-text flex-1 break-all">
+                  <span className="font-mono text-sm text-t-primary flex-1 break-all">
                     {values[key]}
                   </span>
                   <button
                     onClick={() => copyValue(values[key], label)}
-                    className="shrink-0 text-brand-muted hover:text-brand-text transition-colors"
+                    className="shrink-0 text-t-secondary hover:text-t-primary transition-colors"
                     aria-label={`Copy ${label}`}
                   >
                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

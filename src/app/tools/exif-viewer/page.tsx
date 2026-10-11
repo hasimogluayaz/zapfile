@@ -492,7 +492,7 @@ export default function ExifViewerPage() {
               <button
                 type="button"
                 onClick={() => setBatchFiles([])}
-                className="text-[12px] text-t-secondary hover:text-red-400"
+                className="text-[12px] text-t-secondary hover:text-red-600 dark:hover:text-red-400"
               >
                 {t("ui.remove")}
               </button>
@@ -521,7 +521,7 @@ export default function ExifViewerPage() {
                   <button
                     type="button"
                     onClick={reset}
-                    className="text-[11px] text-t-secondary hover:text-red-400 transition-colors"
+                    className="text-[11px] text-t-secondary hover:text-red-600 dark:hover:text-red-400 transition-colors"
                   >
                     {t("ui.remove")}
                   </button>

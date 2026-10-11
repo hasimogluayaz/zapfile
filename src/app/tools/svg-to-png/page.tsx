@@ -149,11 +149,11 @@ export default function SvgToPngPage() {
           <div className="glass rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <p className="font-medium text-brand-text">{file.name}</p>
+                <p className="font-medium text-t-primary">{file.name}</p>
               </div>
               <button
                 onClick={reset}
-                className="text-sm text-brand-muted hover:text-red-400 transition-colors"
+                className="text-sm text-t-secondary hover:text-red-600 dark:hover:text-red-400 transition-colors"
               >
                 {t("ui.remove")}
               </button>
@@ -177,10 +177,10 @@ export default function SvgToPngPage() {
 
           {/* Size */}
           <div className="glass rounded-xl p-6">
-            <h3 className="font-medium text-brand-text mb-4">{t("svg2png.outputSize")}</h3>
+            <h3 className="font-medium text-t-primary mb-4">{t("svg2png.outputSize")}</h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm text-brand-muted mb-2">
+                <label className="block text-sm text-t-secondary mb-2">
                   {t("ui.width")} (px)
                 </label>
                 <input
@@ -189,11 +189,11 @@ export default function SvgToPngPage() {
                   max="8192"
                   value={width}
                   onChange={(e) => handleWidthChange(Number(e.target.value))}
-                  className="w-full px-4 py-2 rounded-lg bg-bg-secondary border border-border text-brand-text focus:outline-none focus:border-accent/50"
+                  className="w-full px-4 py-2 rounded-lg bg-bg-secondary border border-border text-t-primary focus:outline-none focus:border-accent/50"
                 />
               </div>
               <div>
-                <label className="block text-sm text-brand-muted mb-2">
+                <label className="block text-sm text-t-secondary mb-2">
                   {t("ui.height")} (px)
                 </label>
                 <input
@@ -202,7 +202,7 @@ export default function SvgToPngPage() {
                   max="8192"
                   value={height}
                   onChange={(e) => handleHeightChange(Number(e.target.value))}
-                  className="w-full px-4 py-2 rounded-lg bg-bg-secondary border border-border text-brand-text focus:outline-none focus:border-accent/50"
+                  className="w-full px-4 py-2 rounded-lg bg-bg-secondary border border-border text-t-primary focus:outline-none focus:border-accent/50"
                 />
               </div>
             </div>
@@ -211,9 +211,9 @@ export default function SvgToPngPage() {
                 type="checkbox"
                 checked={lockRatio}
                 onChange={(e) => setLockRatio(e.target.checked)}
-                className="accent-brand-indigo"
+                className="accent-accent"
               />
-              <span className="text-sm text-brand-muted">
+              <span className="text-sm text-t-secondary">
                 {t("ui.lockAspect")}
               </span>
             </label>
@@ -230,7 +230,7 @@ export default function SvgToPngPage() {
       ) : (
         <div className="space-y-6">
           <div className="glass rounded-xl p-6 text-center">
-            <p className="text-brand-text font-medium">
+            <p className="text-t-primary font-medium">
               Converted to PNG ({width} &times; {height})
             </p>
           </div>
@@ -254,7 +254,7 @@ export default function SvgToPngPage() {
             />
             <button
               onClick={reset}
-              className="px-6 py-3 rounded-xl font-semibold text-brand-text bg-bg-secondary hover:bg-bg-tertiary transition-colors"
+              className="px-6 py-3 rounded-xl font-semibold text-t-primary bg-bg-secondary hover:bg-bg-tertiary transition-colors"
             >
               {t("svg2png.another")}
             </button>

@@ -231,7 +231,7 @@ export default function ColorPalettePage() {
 
         {/* Color count selector */}
         <div className="glass rounded-2xl p-5">
-          <p className="text-sm font-medium text-brand-muted mb-3">
+          <p className="text-sm font-medium text-t-secondary mb-3">
             {t("palette.count")}
           </p>
           <div className="flex gap-2 flex-wrap">
@@ -241,8 +241,8 @@ export default function ColorPalettePage() {
                 onClick={() => handleCountChange(n)}
                 className={`px-5 py-2 rounded-xl text-sm font-medium transition-all ${
                   colorCount === n
-                    ? "bg-accent/20 border border-accent text-brand-text"
-                    : "bg-bg-secondary border border-border text-brand-muted hover:border-t-primary/20"
+                    ? "bg-accent/20 border border-accent text-t-primary"
+                    : "bg-bg-secondary border border-border text-t-secondary hover:border-t-primary/20"
                 }`}
               >
                 {n}
@@ -273,7 +273,7 @@ export default function ColorPalettePage() {
                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
               />
             </svg>
-            <span className="text-sm text-brand-muted">
+            <span className="text-sm text-t-secondary">
               {t("palette.extract")}…
             </span>
           </div>
@@ -283,12 +283,12 @@ export default function ColorPalettePage() {
         {!isExtracting && colors.length > 0 && (
           <div className="space-y-4">
             <div className="flex items-center justify-between flex-wrap gap-3">
-              <h3 className="text-base font-semibold text-brand-text">
+              <h3 className="text-base font-semibold text-t-primary">
                 {t("palette.colors")} ({colors.length})
               </h3>
               <button
                 onClick={handleDownload}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-brand-text bg-bg-secondary border border-border hover:bg-bg-tertiary transition-all"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-t-primary bg-bg-secondary border border-border hover:bg-bg-tertiary transition-all"
               >
                 <svg
                   className="w-4 h-4"
@@ -345,7 +345,7 @@ export default function ColorPalettePage() {
                     </div>
                     {/* HEX label */}
                     <div className="w-full bg-bg-secondary px-2 py-2 text-center">
-                      <span className="font-mono text-xs font-semibold text-brand-text tracking-wide">
+                      <span className="font-mono text-xs font-semibold text-t-primary tracking-wide">
                         {hex}
                       </span>
                     </div>
@@ -354,7 +354,7 @@ export default function ColorPalettePage() {
               })}
             </div>
 
-            <p className="text-xs text-brand-muted/60 text-center">
+            <p className="text-xs text-t-secondary/60 text-center">
               Click any swatch to copy its HEX code
             </p>
           </div>
@@ -370,10 +370,10 @@ export default function ColorPalettePage() {
               className="w-16 h-16 object-cover rounded-xl border border-border"
             />
             <div>
-              <p className="text-sm font-medium text-brand-text">
+              <p className="text-sm font-medium text-t-primary">
                 Image loaded
               </p>
-              <p className="text-xs text-brand-muted">
+              <p className="text-xs text-t-secondary">
                 {colors.length} colors extracted
               </p>
             </div>

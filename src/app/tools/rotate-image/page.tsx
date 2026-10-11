@@ -46,8 +46,9 @@ function getRotatedSize(width: number, height: number, rotation: number) {
   const cos = Math.abs(Math.cos(angle));
   const sin = Math.abs(Math.sin(angle));
   return {
-    w: Math.ceil(width * cos + height * sin),
-    h: Math.ceil(width * sin + height * cos),
+    // Subtract an epsilon so float noise at 90°/180° (cos ≈ 6e-17) can't add a pixel.
+    w: Math.max(1, Math.ceil(width * cos + height * sin - 1e-6)),
+    h: Math.max(1, Math.ceil(width * sin + height * cos - 1e-6)),
   };
 }
 
@@ -305,10 +306,10 @@ export default function RotateImagePage() {
             <div className="glass rounded-xl p-4">
               <div className="flex items-center justify-between mb-3 gap-4">
                 <div>
-                  <p className="text-[13px] font-medium text-brand-text">
+                  <p className="text-[13px] font-medium text-t-primary">
                     {t("rotimg.batchHint", { count: files.length })}
                   </p>
-                  <p className="text-[12px] text-brand-muted">
+                  <p className="text-[12px] text-t-secondary">
                     {files[0]?.name}
                     {files.length > 1 && ` + ${files.length - 1} ${copy.more}`}
                   </p>
@@ -316,7 +317,7 @@ export default function RotateImagePage() {
                 <button
                   type="button"
                   onClick={reset}
-                  className="text-[12px] text-brand-muted hover:text-red-400 transition-colors flex-shrink-0"
+                  className="text-[12px] text-t-secondary hover:text-red-600 dark:hover:text-red-400 transition-colors flex-shrink-0"
                 >
                   {t("ui.remove")}
                 </button>
@@ -335,26 +336,26 @@ export default function RotateImagePage() {
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
                 <div className="rounded-xl bg-bg-secondary border border-border p-3">
-                  <p className="text-xs text-brand-muted">Input</p>
-                  <p className="text-sm font-semibold text-brand-text">
+                  <p className="text-xs text-t-secondary">Input</p>
+                  <p className="text-sm font-semibold text-t-primary">
                     {originalDims.w} x {originalDims.h}
                   </p>
                 </div>
                 <div className="rounded-xl bg-bg-secondary border border-border p-3">
-                  <p className="text-xs text-brand-muted">{copy.current}</p>
-                  <p className="text-sm font-semibold text-brand-text">
+                  <p className="text-xs text-t-secondary">{copy.current}</p>
+                  <p className="text-sm font-semibold text-t-primary">
                     {currentDims ? `${currentDims.w} x ${currentDims.h}` : "-"}
                   </p>
                 </div>
                 <div className="rounded-xl bg-bg-secondary border border-border p-3">
-                  <p className="text-xs text-brand-muted">{copy.rotation}</p>
-                  <p className="text-sm font-semibold text-brand-text">
+                  <p className="text-xs text-t-secondary">{copy.rotation}</p>
+                  <p className="text-sm font-semibold text-t-primary">
                     {rotation} deg
                   </p>
                 </div>
                 <div className="rounded-xl bg-bg-secondary border border-border p-3">
-                  <p className="text-xs text-brand-muted">{copy.output}</p>
-                  <p className="text-sm font-semibold text-brand-text">
+                  <p className="text-xs text-t-secondary">{copy.output}</p>
+                  <p className="text-sm font-semibold text-t-primary">
                     {finalFormat || "-"}
                   </p>
                 </div>
@@ -363,17 +364,17 @@ export default function RotateImagePage() {
 
             <div className="glass rounded-xl p-4 space-y-5">
               <div className="flex items-center justify-between">
-                <span className="text-[13px] text-brand-muted font-medium">
+                <span className="text-[13px] text-t-secondary font-medium">
                   {copy.settings}
                 </span>
-                <span className="text-[12px] font-mono px-2.5 py-1 rounded-lg bg-bg-secondary text-brand-muted border border-border">
+                <span className="text-[12px] font-mono px-2.5 py-1 rounded-lg bg-bg-secondary text-t-secondary border border-border">
                   {rotation} deg {flipH && "H"} {flipV && "V"}
                 </span>
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm text-brand-muted">
+                  <label className="text-sm text-t-secondary">
                     {copy.rotation}
                   </label>
                   <input
@@ -384,7 +385,7 @@ export default function RotateImagePage() {
                     onChange={(event) =>
                       setRotation(normalizeRotation(Number(event.target.value)))
                     }
-                    className="w-24 px-3 py-2 rounded-lg bg-bg-secondary border border-border text-brand-text text-sm focus:outline-none focus:border-accent/50"
+                    className="w-24 px-3 py-2 rounded-lg bg-bg-secondary border border-border text-t-primary text-sm focus:outline-none focus:border-accent/50"
                   />
                 </div>
                 <input
@@ -393,7 +394,7 @@ export default function RotateImagePage() {
                   max={359}
                   value={rotation}
                   onChange={(event) => setRotation(Number(event.target.value))}
-                  className="w-full accent-brand-indigo"
+                  className="w-full accent-accent"
                 />
               </div>
 
@@ -401,14 +402,14 @@ export default function RotateImagePage() {
                 <button
                   type="button"
                   onClick={rotateLeft}
-                  className="px-3 py-3 rounded-xl bg-bg-secondary hover:bg-bg-tertiary text-brand-muted hover:text-brand-text transition-all text-[12px] font-medium"
+                  className="px-3 py-3 rounded-xl bg-bg-secondary hover:bg-bg-tertiary text-t-secondary hover:text-t-primary transition-all text-[12px] font-medium"
                 >
                   -90 deg
                 </button>
                 <button
                   type="button"
                   onClick={rotateRight}
-                  className="px-3 py-3 rounded-xl bg-bg-secondary hover:bg-bg-tertiary text-brand-muted hover:text-brand-text transition-all text-[12px] font-medium"
+                  className="px-3 py-3 rounded-xl bg-bg-secondary hover:bg-bg-tertiary text-t-secondary hover:text-t-primary transition-all text-[12px] font-medium"
                 >
                   +90 deg
                 </button>
@@ -418,7 +419,7 @@ export default function RotateImagePage() {
                   className={`px-3 py-3 rounded-xl transition-all text-[12px] font-medium ${
                     flipH
                       ? "bg-accent text-on-accent"
-                      : "bg-bg-secondary hover:bg-bg-tertiary text-brand-muted hover:text-brand-text"
+                      : "bg-bg-secondary hover:bg-bg-tertiary text-t-secondary hover:text-t-primary"
                   }`}
                 >
                   Flip H
@@ -429,7 +430,7 @@ export default function RotateImagePage() {
                   className={`px-3 py-3 rounded-xl transition-all text-[12px] font-medium ${
                     flipV
                       ? "bg-accent text-on-accent"
-                      : "bg-bg-secondary hover:bg-bg-tertiary text-brand-muted hover:text-brand-text"
+                      : "bg-bg-secondary hover:bg-bg-tertiary text-t-secondary hover:text-t-primary"
                   }`}
                 >
                   Flip V
@@ -437,7 +438,7 @@ export default function RotateImagePage() {
                 <button
                   type="button"
                   onClick={handleReset}
-                  className="px-3 py-3 rounded-xl bg-bg-secondary hover:bg-bg-tertiary text-brand-muted hover:text-brand-text transition-all text-[12px] font-medium"
+                  className="px-3 py-3 rounded-xl bg-bg-secondary hover:bg-bg-tertiary text-t-secondary hover:text-t-primary transition-all text-[12px] font-medium"
                 >
                   {copy.reset}
                 </button>
@@ -445,10 +446,10 @@ export default function RotateImagePage() {
             </div>
 
             <div className="glass rounded-xl p-4 space-y-5">
-              <h3 className="text-brand-text font-semibold">{copy.output}</h3>
+              <h3 className="text-t-primary font-semibold">{copy.output}</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-brand-muted mb-2">
+                  <label className="block text-sm text-t-secondary mb-2">
                     {copy.output}
                   </label>
                   <select
@@ -456,7 +457,7 @@ export default function RotateImagePage() {
                     onChange={(event) =>
                       setOutputFormat(event.target.value as OutputFormat)
                     }
-                    className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border text-brand-text focus:outline-none focus:border-accent/50"
+                    className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border text-t-primary focus:outline-none focus:border-accent/50"
                   >
                     <option value="original">Original</option>
                     <option value="jpeg">JPG</option>
@@ -465,7 +466,7 @@ export default function RotateImagePage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm text-brand-muted mb-2">
+                  <label className="block text-sm text-t-secondary mb-2">
                     {copy.background}
                   </label>
                   <div className="flex gap-3">
@@ -479,7 +480,7 @@ export default function RotateImagePage() {
                       type="text"
                       value={backgroundColor}
                       onChange={(event) => setBackgroundColor(event.target.value)}
-                      className="flex-1 px-4 py-3 rounded-xl bg-bg-secondary border border-border text-brand-text focus:outline-none focus:border-accent/50"
+                      className="flex-1 px-4 py-3 rounded-xl bg-bg-secondary border border-border text-t-primary focus:outline-none focus:border-accent/50"
                     />
                   </div>
                 </div>
@@ -489,8 +490,8 @@ export default function RotateImagePage() {
                 resolveOutputFormat(files[0], outputFormat) !== "png" && (
                   <div>
                     <div className="flex justify-between text-sm mb-2">
-                      <span className="text-brand-muted">{copy.quality}</span>
-                      <span className="text-brand-text">{quality}%</span>
+                      <span className="text-t-secondary">{copy.quality}</span>
+                      <span className="text-t-primary">{quality}%</span>
                     </div>
                     <input
                       type="range"
@@ -498,7 +499,7 @@ export default function RotateImagePage() {
                       max={100}
                       value={quality}
                       onChange={(event) => setQuality(Number(event.target.value))}
-                      className="w-full accent-brand-indigo"
+                      className="w-full accent-accent"
                     />
                   </div>
                 )}
@@ -510,7 +511,7 @@ export default function RotateImagePage() {
               disabled={processing || !preview}
               className={`w-full py-3 rounded-xl font-semibold text-[14px] text-white transition-all ${
                 processing || !preview
-                  ? "bg-bg-tertiary cursor-not-allowed text-brand-muted"
+                  ? "bg-bg-tertiary cursor-not-allowed text-t-secondary"
                   : "bg-gradient-brand hover:shadow-lg hover:shadow-accent/25"
               }`}
             >
@@ -520,7 +521,7 @@ export default function RotateImagePage() {
         ) : (
           <div className="space-y-6">
             <div className="glass rounded-xl p-6">
-              <h3 className="text-brand-text font-medium mb-4">
+              <h3 className="text-t-primary font-medium mb-4">
                 {t("compimg.results")}
               </h3>
               <div className="space-y-3">
@@ -529,10 +530,10 @@ export default function RotateImagePage() {
                     key={`${result.filename}-${index}`}
                     className="flex items-center justify-between py-2 border-b border-border last:border-0"
                   >
-                    <span className="text-sm text-brand-text truncate flex-1 min-w-0">
+                    <span className="text-sm text-t-primary truncate flex-1 min-w-0">
                       {result.filename}
                     </span>
-                    <span className="text-sm text-brand-muted whitespace-nowrap ml-4">
+                    <span className="text-sm text-t-secondary whitespace-nowrap ml-4">
                       {formatFileSize(result.blob.size)}
                     </span>
                   </div>
@@ -557,7 +558,7 @@ export default function RotateImagePage() {
               <button
                 type="button"
                 onClick={reset}
-                className="px-6 py-3 rounded-xl font-semibold text-brand-text bg-bg-secondary hover:bg-bg-tertiary transition-colors"
+                className="px-6 py-3 rounded-xl font-semibold text-t-primary bg-bg-secondary hover:bg-bg-tertiary transition-colors"
               >
                 {copy.another}
               </button>

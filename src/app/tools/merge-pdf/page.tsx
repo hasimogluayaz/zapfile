@@ -8,6 +8,7 @@ import ProcessButton from "@/components/ProcessButton";
 import DownloadButton from "@/components/DownloadButton";
 import ProgressBar from "@/components/ProgressBar";
 import { formatFileSize } from "@/lib/utils";
+import { pdfInputErrorKey, toEditablePdf } from "@/lib/pdf-input";
 import { useI18n } from "@/lib/i18n";
 import { pdfFirstPageThumbnail } from "@/lib/pdf-thumb";
 
@@ -39,7 +40,7 @@ export default function MergePdfPage() {
     }
   }, []);
 
-  const handleFilesSelected = useCallback((selectedFiles: File[]) => {
+  const handleFilesSelected = useCallback(async (selectedFiles: File[]) => {
     const pdfFiles = selectedFiles.filter(
       (f) => f.type === "application/pdf" || f.name.toLowerCase().endsWith(".pdf")
     );
@@ -53,7 +54,19 @@ export default function MergePdfPage() {
       return;
     }
 
-    const newEntries: PdfFileEntry[] = pdfFiles.map((file) => ({
+    // Decrypt restriction-only PDFs; skip files that need a password to open.
+    const ready: File[] = [];
+    for (const file of pdfFiles) {
+      try {
+        ready.push(await toEditablePdf(file));
+      } catch (error) {
+        console.error(error);
+        toast.error(`${file.name}: ${t(pdfInputErrorKey(error))}`);
+      }
+    }
+    if (ready.length === 0) return;
+
+    const newEntries: PdfFileEntry[] = ready.map((file) => ({
       id: `${file.name}-${file.size}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
       file,
     }));
@@ -135,9 +148,7 @@ export default function MergePdfPage() {
         const arrayBuffer = await entry.file.arrayBuffer();
         setProgress(10 + ((i + 0.5) / totalFiles) * 70);
 
-        const srcDoc = await PDFDocument.load(arrayBuffer, {
-          ignoreEncryption: true,
-        });
+        const srcDoc = await PDFDocument.load(arrayBuffer);
 
         const pageCount = srcDoc.getPageCount();
         const pageIndices = Array.from({ length: pageCount }, (_, idx) => idx);
@@ -205,7 +216,7 @@ export default function MergePdfPage() {
               </h3>
               <button
                 onClick={handleReset}
-                className="text-sm text-t-secondary hover:text-red-400 transition-colors"
+                className="text-sm text-t-secondary hover:text-red-600 dark:hover:text-red-400 transition-colors"
               >
                 {t("merge.clearAll")}
               </button>
@@ -238,7 +249,7 @@ export default function MergePdfPage() {
                       />
                     ) : (
                       <svg
-                        className="w-6 h-6 text-red-400/80"
+                        className="w-6 h-6 text-red-700/80 dark:text-red-400/80"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -321,7 +332,7 @@ export default function MergePdfPage() {
                   <button
                     type="button"
                     onClick={() => handleRemoveFile(entry.id)}
-                    className="p-1.5 rounded-md text-t-secondary hover:text-red-400 hover:bg-red-500/10 transition-colors shrink-0"
+                    className="p-1.5 rounded-md text-t-secondary hover:text-red-600 dark:hover:text-red-400 hover:bg-red-500/10 transition-colors shrink-0"
                     aria-label={t("merge.removeFile")}
                     title={t("merge.removeFile")}
                   >

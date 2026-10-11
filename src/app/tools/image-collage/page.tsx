@@ -206,12 +206,12 @@ export default function ImageCollagePage() {
             {/* Thumbnail strip */}
             <div className="glass rounded-xl p-4 space-y-3">
               <div className="flex items-center justify-between">
-                <h3 className="text-[13px] font-semibold text-brand-text">
+                <h3 className="text-[13px] font-semibold text-t-primary">
                   {t("collage.images")} ({images.length})
                 </h3>
                 <button
                   onClick={clearAll}
-                  className="text-[11px] text-brand-muted hover:text-red-400 transition-colors"
+                  className="text-[11px] text-t-secondary hover:text-red-600 dark:hover:text-red-400 transition-colors"
                 >
                   {t("ui.clearAll")}
                 </button>
@@ -231,7 +231,7 @@ export default function ImageCollagePage() {
                     >
                       x
                     </button>
-                    <p className="text-[9px] text-brand-muted mt-0.5 truncate w-16 text-center">
+                    <p className="text-[9px] text-t-secondary mt-0.5 truncate w-16 text-center">
                       {formatFileSize(loaded.file.size)}
                     </p>
                   </div>
@@ -252,13 +252,13 @@ export default function ImageCollagePage() {
 
             {/* Settings */}
             <div className="glass rounded-xl p-4 space-y-4">
-              <h3 className="text-[13px] font-semibold text-brand-text">
+              <h3 className="text-[13px] font-semibold text-t-primary">
                 {t("collage.settings")}
               </h3>
 
               {/* Layout */}
               <div>
-                <label className="block text-[12px] text-brand-muted mb-1.5">
+                <label className="block text-[12px] text-t-secondary mb-1.5">
                   {t("collage.layout")}
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -275,8 +275,8 @@ export default function ImageCollagePage() {
                         onClick={() => setLayout(opt.value)}
                         className={`p-3 rounded-lg text-center transition-all ${
                           layout === opt.value
-                            ? "bg-accent/20 border border-accent text-brand-text"
-                            : "bg-bg-secondary border border-border text-brand-muted hover:border-t-primary/20"
+                            ? "bg-accent/20 border border-accent text-t-primary"
+                            : "bg-bg-secondary border border-border text-t-secondary hover:border-t-primary/20"
                         }`}
                       >
                         <p className="font-medium text-[12px]">{layoutLabelKey[opt.value]}</p>
@@ -290,8 +290,8 @@ export default function ImageCollagePage() {
               {/* Gap */}
               <div>
                 <div className="flex justify-between mb-1.5">
-                  <label className="text-[12px] text-brand-muted">{t("collage.gap")}</label>
-                  <span className="text-[12px] font-mono text-brand-muted">{gap}px</span>
+                  <label className="text-[12px] text-t-secondary">{t("collage.gap")}</label>
+                  <span className="text-[12px] font-mono text-t-secondary">{gap}px</span>
                 </div>
                 <input
                   type="range"
@@ -300,17 +300,17 @@ export default function ImageCollagePage() {
                   step={1}
                   value={gap}
                   onChange={(e) => setGap(Number(e.target.value))}
-                  className="w-full accent-brand-indigo"
+                  className="w-full accent-accent"
                 />
                 <div className="flex justify-between mt-0.5">
-                  <span className="text-[10px] text-brand-muted">0</span>
-                  <span className="text-[10px] text-brand-muted">20</span>
+                  <span className="text-[10px] text-t-secondary">0</span>
+                  <span className="text-[10px] text-t-secondary">20</span>
                 </div>
               </div>
 
               {/* Background color */}
               <div>
-                <label className="block text-[12px] text-brand-muted mb-1.5">
+                <label className="block text-[12px] text-t-secondary mb-1.5">
                   {t("collage.bgColor")}
                 </label>
                 <div className="flex items-center gap-3">
@@ -320,14 +320,14 @@ export default function ImageCollagePage() {
                     onChange={(e) => setBgColor(e.target.value)}
                     className="w-10 h-10 rounded-lg cursor-pointer border border-border bg-bg-secondary p-0.5"
                   />
-                  <span className="text-[12px] font-mono text-brand-muted">{bgColor}</span>
+                  <span className="text-[12px] font-mono text-t-secondary">{bgColor}</span>
                 </div>
               </div>
             </div>
 
             {/* Live Preview */}
             <div className="glass rounded-xl p-3 space-y-2">
-              <p className="text-[12px] font-medium text-brand-muted">Live Preview</p>
+              <p className="text-[12px] font-medium text-t-secondary">Live Preview</p>
               <canvas
                 ref={canvasRef}
                 className="w-full rounded-lg border border-border object-contain max-h-80"
@@ -341,7 +341,7 @@ export default function ImageCollagePage() {
               disabled={images.length < 2}
               className={`w-full py-3 rounded-xl font-semibold text-[14px] text-on-accent transition-all ${
                 images.length < 2
-                  ? "bg-bg-tertiary cursor-not-allowed text-brand-muted"
+                  ? "bg-bg-tertiary cursor-not-allowed text-t-secondary"
                   : "bg-accent hover:shadow-lg hover:shadow-sm hover:scale-[1.02] active:scale-[0.98]"
               }`}
             >
@@ -350,7 +350,7 @@ export default function ImageCollagePage() {
 
             {resultBlob && resultPreview && (
               <div className="glass rounded-xl p-4 space-y-3">
-                <p className="text-[13px] font-medium text-brand-text">Result</p>
+                <p className="text-[13px] font-medium text-t-primary">Result</p>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={resultPreview}
@@ -365,7 +365,7 @@ export default function ImageCollagePage() {
                   />
                   <button
                     onClick={clearAll}
-                    className="px-6 py-2.5 rounded-xl text-[13px] font-semibold text-brand-muted bg-bg-secondary hover:bg-bg-tertiary transition-colors"
+                    className="px-6 py-2.5 rounded-xl text-[13px] font-semibold text-t-secondary bg-bg-secondary hover:bg-bg-tertiary transition-colors"
                   >
                     {t("ui.startOver")}
                   </button>

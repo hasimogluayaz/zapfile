@@ -9,6 +9,7 @@ import DownloadButton from "@/components/DownloadButton";
 import ProgressBar from "@/components/ProgressBar";
 import FileSizeCompare from "@/components/FileSizeCompare";
 import { formatFileSize, getFileNameWithoutExtension } from "@/lib/utils";
+import { pdfInputErrorKey, toEditablePdf } from "@/lib/pdf-input";
 import { useI18n } from "@/lib/i18n";
 
 type RotationDegrees = 90 | 180 | 270;
@@ -114,8 +115,16 @@ export default function RotatePdfPage() {
         };
 
   const handleFileSelected = useCallback(async (files: File[]) => {
-    const selected = files[0];
-    if (!selected) return;
+    const picked = files[0];
+    if (!picked) return;
+    let selected: File;
+    try {
+      selected = await toEditablePdf(picked);
+    } catch (error) {
+      console.error(error);
+      toast.error(t(pdfInputErrorKey(error)));
+      return;
+    }
 
     setFile(selected);
     setResultBlob(null);
@@ -124,9 +133,7 @@ export default function RotatePdfPage() {
     try {
       const { PDFDocument } = await import("pdf-lib");
       const arrayBuffer = await selected.arrayBuffer();
-      const pdfDoc = await PDFDocument.load(arrayBuffer, {
-        ignoreEncryption: true,
-      });
+      const pdfDoc = await PDFDocument.load(arrayBuffer);
       const count = pdfDoc.getPageCount();
       setPageCount(count);
       setRotationMode("all");
@@ -193,9 +200,7 @@ export default function RotatePdfPage() {
     try {
       const { PDFDocument, degrees } = await import("pdf-lib");
       const arrayBuffer = await file.arrayBuffer();
-      const pdfDoc = await PDFDocument.load(arrayBuffer, {
-        ignoreEncryption: true,
-      });
+      const pdfDoc = await PDFDocument.load(arrayBuffer);
 
       const pages = pdfDoc.getPages();
 
@@ -290,10 +295,10 @@ export default function RotatePdfPage() {
                   </svg>
                 </div>
                 <div>
-                  <p className="text-brand-text font-medium text-sm">
+                  <p className="text-t-primary font-medium text-sm">
                     {file.name}
                   </p>
-                  <p className="text-brand-muted text-xs">
+                  <p className="text-t-secondary text-xs">
                     {formatFileSize(file.size)} &middot; {pageCount} page
                     {pageCount !== 1 ? "s" : ""}
                   </p>
@@ -301,7 +306,7 @@ export default function RotatePdfPage() {
               </div>
               <button
                 onClick={handleReset}
-                className="text-brand-muted hover:text-brand-text transition-colors text-sm"
+                className="text-t-secondary hover:text-t-primary transition-colors text-sm"
               >
                 {t("rotpdf.changeFile")}
               </button>
@@ -309,7 +314,7 @@ export default function RotatePdfPage() {
 
             {/* Rotation Angle */}
             <div className="glass rounded-xl p-6 space-y-4">
-              <h3 className="text-brand-text font-semibold">{t("rotpdf.angle")}</h3>
+              <h3 className="text-t-primary font-semibold">{t("rotpdf.angle")}</h3>
               <div className="flex gap-3">
                 {rotationOptions.map((opt) => (
                   <button
@@ -321,7 +326,7 @@ export default function RotatePdfPage() {
                       ${
                         rotationDegrees === opt.value
                           ? "bg-accent text-on-accent shadow-sm"
-                          : "bg-bg-secondary text-brand-muted hover:bg-bg-tertiary hover:text-brand-text"
+                          : "bg-bg-secondary text-t-secondary hover:bg-bg-tertiary hover:text-t-primary"
                       }
                     `}
                   >
@@ -349,19 +354,19 @@ export default function RotatePdfPage() {
 
             {/* Rotation Mode */}
             <div className="glass rounded-xl p-6 space-y-4">
-              <h3 className="text-brand-text font-semibold">
+              <h3 className="text-t-primary font-semibold">
                 {t("rotpdf.pages")}
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="rounded-xl bg-bg-secondary border border-border p-4">
-                  <p className="text-xs text-brand-muted">{copy.affected}</p>
-                  <p className="text-2xl font-semibold text-brand-text">
+                  <p className="text-xs text-t-secondary">{copy.affected}</p>
+                  <p className="text-2xl font-semibold text-t-primary">
                     {affectedPageCount}
                   </p>
                 </div>
                 <div className="rounded-xl bg-bg-secondary border border-border p-4 sm:col-span-2">
-                  <p className="text-xs text-brand-muted">{copy.picked}</p>
-                  <p className="text-sm text-brand-text mt-1 min-h-5">
+                  <p className="text-xs text-t-secondary">{copy.picked}</p>
+                  <p className="text-sm text-t-primary mt-1 min-h-5">
                     {rotationMode === "all"
                       ? t("rotpdf.allPages")
                       : selectedPagePreview || "-"}
@@ -376,7 +381,7 @@ export default function RotatePdfPage() {
                     ${
                       rotationMode === "all"
                         ? "bg-accent text-on-accent shadow-sm"
-                        : "bg-bg-secondary text-brand-muted hover:bg-bg-tertiary hover:text-brand-text"
+                        : "bg-bg-secondary text-t-secondary hover:bg-bg-tertiary hover:text-t-primary"
                     }
                   `}
                 >
@@ -389,7 +394,7 @@ export default function RotatePdfPage() {
                     ${
                       rotationMode === "specific"
                         ? "bg-accent text-on-accent shadow-sm"
-                        : "bg-bg-secondary text-brand-muted hover:bg-bg-tertiary hover:text-brand-text"
+                        : "bg-bg-secondary text-t-secondary hover:bg-bg-tertiary hover:text-t-primary"
                     }
                   `}
                 >
@@ -401,7 +406,7 @@ export default function RotatePdfPage() {
               {rotationMode === "specific" && pageCount > 0 && (
                 <div className="space-y-4 pt-2">
                   <div className="rounded-xl bg-bg-secondary border border-border p-4 space-y-3">
-                    <label className="block text-sm font-medium text-brand-text">
+                    <label className="block text-sm font-medium text-t-primary">
                       {copy.rangeLabel}
                     </label>
                     <div className="flex flex-col sm:flex-row gap-3">
@@ -413,7 +418,7 @@ export default function RotatePdfPage() {
                           if (event.key === "Enter") applyRangeInput();
                         }}
                         placeholder="1-3, 5, odd, even"
-                        className="flex-1 px-4 py-3 rounded-xl bg-brand-bg border border-border text-brand-text placeholder:text-brand-muted focus:outline-none focus:border-accent/60"
+                        className="flex-1 px-4 py-3 rounded-xl bg-bg-secondary border border-border text-t-primary placeholder:text-t-tertiary focus:outline-none focus:border-accent/60"
                       />
                       <button
                         type="button"
@@ -423,7 +428,7 @@ export default function RotatePdfPage() {
                         {copy.applyRange}
                       </button>
                     </div>
-                    <p className="text-xs text-brand-muted">{copy.rangeHint}</p>
+                    <p className="text-xs text-t-secondary">{copy.rangeHint}</p>
                     <div className="flex flex-wrap gap-2">
                       {[
                         { type: "all" as const, label: copy.quickAll },
@@ -435,7 +440,7 @@ export default function RotatePdfPage() {
                           key={item.type}
                           type="button"
                           onClick={() => applyQuickSelection(item.type)}
-                          className="px-3 py-2 rounded-lg bg-bg-secondary text-xs font-medium text-brand-muted hover:bg-bg-tertiary hover:text-brand-text transition-colors"
+                          className="px-3 py-2 rounded-lg bg-bg-secondary text-xs font-medium text-t-secondary hover:bg-bg-tertiary hover:text-t-primary transition-colors"
                         >
                           {item.label}
                         </button>
@@ -453,7 +458,7 @@ export default function RotatePdfPage() {
                           ${
                             selectedPages.has(i)
                               ? "bg-accent text-on-accent shadow-sm"
-                              : "bg-bg-secondary text-brand-muted hover:bg-bg-tertiary hover:text-brand-text"
+                              : "bg-bg-secondary text-t-secondary hover:bg-bg-tertiary hover:text-t-primary"
                           }
                         `}
                       >
@@ -461,7 +466,7 @@ export default function RotatePdfPage() {
                       </button>
                     ))}
                   </div>
-                  <p className="text-xs text-brand-muted">
+                  <p className="text-xs text-t-secondary">
                     {t("rotpdf.selected", { count: selectedPages.size })}
                   </p>
                 </div>

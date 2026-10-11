@@ -167,11 +167,11 @@ export default function DiffCheckerPage() {
             {/* Statistics */}
             <div className="glass rounded-xl p-6">
               <div className="flex flex-wrap gap-6 text-sm">
-                <span className="text-green-400 font-medium">
+                <span className="text-green-700 dark:text-green-400 font-medium">
                   +{additions}{" "}
                   {additions !== 1 ? t("diff.additions") : t("diff.addition")}
                 </span>
-                <span className="text-red-400 font-medium">
+                <span className="text-red-700 dark:text-red-400 font-medium">
                   -{deletions}{" "}
                   {deletions !== 1 ? t("diff.deletions") : t("diff.deletion")}
                 </span>
@@ -246,9 +246,9 @@ export default function DiffCheckerPage() {
                         <div
                           className={`flex-shrink-0 w-6 text-center py-1 select-none leading-6 ${
                             line.type === "added"
-                              ? "text-green-400"
+                              ? "text-green-700 dark:text-green-400"
                               : line.type === "removed"
-                                ? "text-red-400"
+                                ? "text-red-700 dark:text-red-400"
                                 : "text-t-tertiary"
                           }`}
                         >

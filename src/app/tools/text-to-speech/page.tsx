@@ -136,7 +136,7 @@ export default function TextToSpeechPage() {
             <div className="glass rounded-xl p-5 space-y-3">
               <div className="flex items-center justify-between">
                 <label className="text-sm font-semibold text-t-primary">Text</label>
-                <span className={`text-xs ${text.length > MAX_CHARS * 0.9 ? "text-red-400" : "text-t-tertiary"}`}>
+                <span className={`text-xs ${text.length > MAX_CHARS * 0.9 ? "text-red-700 dark:text-red-400" : "text-t-tertiary"}`}>
                   {text.length}/{MAX_CHARS}
                 </span>
               </div>

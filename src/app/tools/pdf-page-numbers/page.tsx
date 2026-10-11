@@ -7,6 +7,7 @@ import ToolLayout from "@/components/ToolLayout";
 import FileDropzone from "@/components/FileDropzone";
 import DownloadButton from "@/components/DownloadButton";
 import ProgressBar from "@/components/ProgressBar";
+import { pdfInputErrorKey, toEditablePdf } from "@/lib/pdf-input";
 import { useI18n } from "@/lib/i18n";
 
 type Position =
@@ -99,7 +100,7 @@ function resolveCoordinates(
 }
 
 export default function PdfPageNumbersPage() {
-  const { locale } = useI18n();
+  const { locale, t } = useI18n();
   const copy = locale === "tr"
     ? {
         dropLabel: "Numaralandırmak istediğiniz PDF dosyasını bırakın",
@@ -212,8 +213,16 @@ export default function PdfPageNumbersPage() {
 
   const handleFilesSelected = useCallback(
     async (files: File[]) => {
-      const nextFile = files[0];
-      if (!nextFile) return;
+      const picked = files[0];
+      if (!picked) return;
+      let nextFile: File;
+      try {
+        nextFile = await toEditablePdf(picked);
+      } catch (error) {
+        console.error(error);
+        toast.error(t(pdfInputErrorKey(error)));
+        return;
+      }
 
       setFile(nextFile);
       setResultBlob(null);
@@ -681,7 +690,7 @@ export default function PdfPageNumbersPage() {
                     blob={resultBlob}
                     filename={`numbered_${file.name}`}
                   />
-                  <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
+                  <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-300">
                     {copy.resultTitle}
                   </div>
                 </>

@@ -208,8 +208,8 @@ export default function HashGeneratorPage() {
                 }}
                 className={`px-5 py-2.5 rounded-xl text-sm font-medium transition-all capitalize ${
                   inputMode === mode
-                    ? "bg-accent/20 border border-accent text-brand-text"
-                    : "bg-bg-secondary border border-border text-brand-muted hover:border-t-primary/20"
+                    ? "bg-accent/20 border border-accent text-t-primary"
+                    : "bg-bg-secondary border border-border text-t-secondary hover:border-t-primary/20"
                 }`}
               >
                 {mode === "text" ? t("hash.textInput") : t("hash.fileInput")}
@@ -224,7 +224,7 @@ export default function HashGeneratorPage() {
               onChange={(e) => setTextInput(e.target.value)}
               placeholder={t("hash.enterText")}
               rows={6}
-              className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border text-brand-text placeholder:text-brand-muted/50 focus:outline-none focus:border-accent/40 resize-none font-mono text-sm"
+              className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border text-t-primary placeholder:text-t-tertiary/50 focus:outline-none focus:border-accent/40 resize-none font-mono text-sm"
             />
           )}
 
@@ -234,7 +234,7 @@ export default function HashGeneratorPage() {
               <label className="block w-full cursor-pointer">
                 <div className="flex items-center justify-center gap-3 px-4 py-8 rounded-xl bg-bg-secondary border border-dashed border-border hover:border-accent/40 transition-colors">
                   <svg
-                    className="w-6 h-6 text-brand-muted"
+                    className="w-6 h-6 text-t-secondary"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -246,7 +246,7 @@ export default function HashGeneratorPage() {
                       d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.338-2.32 3 3 0 013.808 3.397A3.75 3.75 0 0118 19.5H6.75z"
                     />
                   </svg>
-                  <span className="text-brand-muted text-sm">
+                  <span className="text-t-secondary text-sm">
                     {fileName ? (
                       <>
                         {fileName}
@@ -270,9 +270,9 @@ export default function HashGeneratorPage() {
               {largeFileWarning && (
                 <div className="rounded-xl p-4 border border-amber-500/30 bg-amber-500/10">
                   <div className="flex items-start gap-3">
-                    <span className="text-amber-400 text-lg mt-0.5">⚠️</span>
+                    <span className="text-amber-700 dark:text-amber-400 text-lg mt-0.5">⚠️</span>
                     <div>
-                      <p className="text-xs text-amber-400/90 leading-relaxed">
+                      <p className="text-xs text-amber-700/90 dark:text-amber-400/90 leading-relaxed">
                         {t("hash.largeFileWarn", {
                           size: `${(fileSize / (1024 * 1024)).toFixed(1)} MB`,
                         })}
@@ -280,7 +280,7 @@ export default function HashGeneratorPage() {
                       <button
                         type="button"
                         onClick={() => setLargeFileWarning(false)}
-                        className="mt-2 px-4 py-1.5 rounded-lg text-xs font-medium bg-amber-500/20 border border-amber-500/40 text-amber-300 hover:bg-amber-500/30 transition-all"
+                        className="mt-2 px-4 py-1.5 rounded-lg text-xs font-medium bg-amber-500/20 border border-amber-500/40 text-amber-700 dark:text-amber-400 hover:bg-amber-500/30 transition-all"
                       >
                         {t("hash.ackLargeFile")}
                       </button>
@@ -329,7 +329,7 @@ export default function HashGeneratorPage() {
             <button
               type="button"
               onClick={clearAll}
-              className="px-6 py-3 rounded-xl font-semibold text-brand-text bg-bg-secondary border border-border hover:bg-bg-tertiary transition-all"
+              className="px-6 py-3 rounded-xl font-semibold text-t-primary bg-bg-secondary border border-border hover:bg-bg-tertiary transition-all"
             >
               {t("ui.clear")}
             </button>
@@ -340,13 +340,13 @@ export default function HashGeneratorPage() {
         {results.length > 0 && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-brand-text">
+              <h3 className="text-lg font-semibold text-t-primary">
                 {t("hash.results")}
               </h3>
               <button
                 type="button"
                 onClick={copyAll}
-                className="px-4 py-2 rounded-lg text-sm font-medium text-brand-muted bg-bg-secondary border border-border hover:bg-bg-tertiary hover:text-brand-text transition-all"
+                className="px-4 py-2 rounded-lg text-sm font-medium text-t-secondary bg-bg-secondary border border-border hover:bg-bg-tertiary hover:text-t-primary transition-all"
               >
                 {t("hash.copyAll")}
               </button>
@@ -359,7 +359,7 @@ export default function HashGeneratorPage() {
                   className="glass rounded-2xl p-6"
                 >
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-semibold text-brand-text">
+                    <span className="text-sm font-semibold text-t-primary">
                       {result.algorithm}
                     </span>
                     <button
@@ -367,7 +367,7 @@ export default function HashGeneratorPage() {
                       onClick={() =>
                         copyToClipboard(result.hash, result.algorithm)
                       }
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-brand-muted bg-bg-secondary border border-border hover:bg-bg-tertiary hover:text-brand-text transition-all"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-t-secondary bg-bg-secondary border border-border hover:bg-bg-tertiary hover:text-t-primary transition-all"
                     >
                       <svg
                         className="w-3.5 h-3.5"
@@ -385,7 +385,7 @@ export default function HashGeneratorPage() {
                       Copy
                     </button>
                   </div>
-                  <p className="font-mono text-sm text-brand-muted break-all leading-relaxed select-all">
+                  <p className="font-mono text-sm text-t-secondary break-all leading-relaxed select-all">
                     {result.hash}
                   </p>
                 </div>

@@ -218,7 +218,7 @@ export default function JSONFormatterPage() {
           <div className="glass rounded-2xl p-4 border border-red-500/20 bg-red-500/5">
             <div className="flex items-start gap-3">
               <svg
-                className="w-5 h-5 text-red-400 mt-0.5 shrink-0"
+                className="w-5 h-5 text-red-700 dark:text-red-400 mt-0.5 shrink-0"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -231,10 +231,10 @@ export default function JSONFormatterPage() {
                 />
               </svg>
               <div>
-                <p className="text-sm font-medium text-red-400">
+                <p className="text-sm font-medium text-red-700 dark:text-red-400">
                   {t("json.invalidJson")}
                 </p>
-                <p className="text-xs text-red-400/70 mt-1 font-mono">
+                <p className="text-xs text-red-700/70 dark:text-red-400/70 mt-1 font-mono">
                   {error}
                 </p>
               </div>

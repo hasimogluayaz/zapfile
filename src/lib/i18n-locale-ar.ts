@@ -5,6 +5,8 @@
 
 export const arLocaleStrings: Record<string, string> = {
   "nav.allTools": "جميع الأدوات",
+  "pdf.locked": "يتطلب فتح ملف PDF هذا كلمة مرور. أزلها أولًا باستخدام أداة حماية PDF ثم حاول مجددًا.",
+  "pdf.unreadable": "تعذّرت قراءة هذا الملف كملف PDF. قد يكون تالفًا.",
   "bg.drop": "أفلت صورة لإزالة خلفيتها",
   "bg.modelNote": "يعمل نموذج الذكاء الاصطناعي على جهازك. في المرة الأولى يُنزَّل مرة واحدة ({size}) ثم يُحفظ مؤقتًا — لا تُرفع صورك أبدًا.",
   "bg.modelReady": "نموذج الذكاء الاصطناعي جاهز على هذا الجهاز — لا تُرفع صورك أبدًا.",
@@ -575,7 +577,7 @@ export const arLocaleStrings: Record<string, string> = {
     "تطبيق فلاتر قديمة وأبيض وأسود وCSS على الصور",
   "tool.image-compare.name": "مقارنة الصور",
   "tool.image-compare.desc": "مقارنة صورتين جنباً إلى جنب بمنزلق",
-  "tool.pdf-encrypt.name": "تشفير PDF",
+  "tool.pdf-encrypt.name": "حماية PDF",
   "tool.pdf-encrypt.desc": "إضافة حماية بكلمة مرور لملفات PDF",
   "tool.pdf-text-extractor.name": "مستخرج نص PDF",
   "tool.pdf-text-extractor.desc": "استخراج ونسخ كل النص من ملفات PDF",

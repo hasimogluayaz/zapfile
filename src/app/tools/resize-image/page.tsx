@@ -306,12 +306,12 @@ export default function ResizeImagePage() {
           <>
             <div className="glass rounded-xl p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-brand-text font-medium">
+                <h3 className="text-t-primary font-medium">
                   {t("resimg.selected", { count: files.length })}
                 </h3>
                 <button
                   onClick={reset}
-                  className="text-sm text-brand-muted hover:text-red-400 transition-colors"
+                  className="text-sm text-t-secondary hover:text-red-600 dark:hover:text-red-400 transition-colors"
                 >
                   {t("ui.clearAll")}
                 </button>
@@ -323,10 +323,10 @@ export default function ResizeImagePage() {
                     key={`${file.name}-${index}`}
                     className="flex items-center justify-between py-2 border-b border-border last:border-0"
                   >
-                    <span className="text-sm text-brand-text truncate max-w-[70%]">
+                    <span className="text-sm text-t-primary truncate max-w-[70%]">
                       {file.name}
                     </span>
-                    <span className="text-sm text-brand-muted">
+                    <span className="text-sm text-t-secondary">
                       {formatFileSize(file.size)}
                     </span>
                   </div>
@@ -346,26 +346,26 @@ export default function ResizeImagePage() {
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
                 <div className="rounded-xl bg-bg-secondary border border-border p-3">
-                  <p className="text-xs text-brand-muted">{copy.firstImage}</p>
-                  <p className="text-sm font-semibold text-brand-text">
+                  <p className="text-xs text-t-secondary">{copy.firstImage}</p>
+                  <p className="text-sm font-semibold text-t-primary">
                     {originalWidth} x {originalHeight}
                   </p>
                 </div>
                 <div className="rounded-xl bg-bg-secondary border border-border p-3">
-                  <p className="text-xs text-brand-muted">{copy.currentOutput}</p>
-                  <p className="text-sm font-semibold text-brand-text">
+                  <p className="text-xs text-t-secondary">{copy.currentOutput}</p>
+                  <p className="text-sm font-semibold text-t-primary">
                     {finalFormat || "-"}
                   </p>
                 </div>
                 <div className="rounded-xl bg-bg-secondary border border-border p-3">
-                  <p className="text-xs text-brand-muted">{copy.fitTitle}</p>
-                  <p className="text-sm font-semibold text-brand-text">
+                  <p className="text-xs text-t-secondary">{copy.fitTitle}</p>
+                  <p className="text-sm font-semibold text-t-primary">
                     {fitLabels[fitMode]}
                   </p>
                 </div>
                 <div className="rounded-xl bg-bg-secondary border border-border p-3">
-                  <p className="text-xs text-brand-muted">{copy.social}</p>
-                  <p className="text-sm font-semibold text-brand-text">
+                  <p className="text-xs text-t-secondary">{copy.social}</p>
+                  <p className="text-sm font-semibold text-t-primary">
                     {files.length}/{MAX_BATCH}
                   </p>
                 </div>
@@ -373,13 +373,13 @@ export default function ResizeImagePage() {
             </div>
 
             <div className="glass rounded-xl p-6 space-y-4">
-              <h3 className="font-semibold text-brand-text">
+              <h3 className="font-semibold text-t-primary">
                 {t("resimg.outputSize")}
               </h3>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-brand-muted mb-2">
+                  <label className="block text-sm text-t-secondary mb-2">
                     {t("resimg.widthPx")}
                   </label>
                   <input
@@ -390,11 +390,11 @@ export default function ResizeImagePage() {
                     onChange={(event) =>
                       handleWidthChange(Number(event.target.value))
                     }
-                    className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border text-brand-text focus:outline-none focus:border-accent/50"
+                    className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border text-t-primary focus:outline-none focus:border-accent/50"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-brand-muted mb-2">
+                  <label className="block text-sm text-t-secondary mb-2">
                     {t("resimg.heightPx")}
                   </label>
                   <input
@@ -405,7 +405,7 @@ export default function ResizeImagePage() {
                     onChange={(event) =>
                       handleHeightChange(Number(event.target.value))
                     }
-                    className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border text-brand-text focus:outline-none focus:border-accent/50"
+                    className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border text-t-primary focus:outline-none focus:border-accent/50"
                   />
                 </div>
               </div>
@@ -415,16 +415,16 @@ export default function ResizeImagePage() {
                   type="checkbox"
                   checked={lockRatio}
                   onChange={(event) => setLockRatio(event.target.checked)}
-                  className="accent-brand-indigo"
+                  className="accent-accent"
                 />
-                <span className="text-sm text-brand-muted">
+                <span className="text-sm text-t-secondary">
                   {t("ui.lockAspect")}
                 </span>
               </label>
 
               {presetSizes.length > 0 && (
                 <div>
-                  <p className="text-sm text-brand-muted mb-2">
+                  <p className="text-sm text-t-secondary mb-2">
                     {t("resimg.presets")}
                   </p>
                   <div className="flex flex-wrap gap-2">
@@ -436,7 +436,7 @@ export default function ResizeImagePage() {
                           setWidth(preset.w);
                           setHeight(preset.h);
                         }}
-                        className="px-3 py-1.5 text-xs rounded-lg bg-bg-secondary text-brand-muted hover:text-brand-text hover:bg-bg-tertiary transition-colors"
+                        className="px-3 py-1.5 text-xs rounded-lg bg-bg-secondary text-t-secondary hover:text-t-primary hover:bg-bg-tertiary transition-colors"
                       >
                         {preset.label}
                       </button>
@@ -447,7 +447,7 @@ export default function ResizeImagePage() {
             </div>
 
             <div className="glass rounded-xl p-6 space-y-5">
-              <h3 className="font-semibold text-brand-text">
+              <h3 className="font-semibold text-t-primary">
                 {copy.fitTitle}
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -463,7 +463,7 @@ export default function ResizeImagePage() {
                     className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
                       fitMode === option.value
                         ? "bg-accent text-on-accent shadow-sm"
-                        : "bg-bg-secondary text-brand-muted hover:bg-bg-tertiary hover:text-brand-text"
+                        : "bg-bg-secondary text-t-secondary hover:bg-bg-tertiary hover:text-t-primary"
                     }`}
                   >
                     {option.label}
@@ -473,12 +473,12 @@ export default function ResizeImagePage() {
             </div>
 
             <div className="glass rounded-xl p-6 space-y-5">
-              <h3 className="font-semibold text-brand-text">
+              <h3 className="font-semibold text-t-primary">
                 {copy.outputTitle}
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-brand-muted mb-2">
+                  <label className="block text-sm text-t-secondary mb-2">
                     {copy.format}
                   </label>
                   <select
@@ -486,7 +486,7 @@ export default function ResizeImagePage() {
                     onChange={(event) =>
                       setOutputFormat(event.target.value as OutputFormat)
                     }
-                    className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border text-brand-text focus:outline-none focus:border-accent/50"
+                    className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border text-t-primary focus:outline-none focus:border-accent/50"
                   >
                     <option value="original">Original</option>
                     <option value="jpeg">JPG</option>
@@ -495,7 +495,7 @@ export default function ResizeImagePage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm text-brand-muted mb-2">
+                  <label className="block text-sm text-t-secondary mb-2">
                     {copy.background}
                   </label>
                   <div className="flex gap-3">
@@ -509,7 +509,7 @@ export default function ResizeImagePage() {
                       type="text"
                       value={backgroundColor}
                       onChange={(event) => setBackgroundColor(event.target.value)}
-                      className="flex-1 px-4 py-3 rounded-xl bg-bg-secondary border border-border text-brand-text focus:outline-none focus:border-accent/50"
+                      className="flex-1 px-4 py-3 rounded-xl bg-bg-secondary border border-border text-t-primary focus:outline-none focus:border-accent/50"
                     />
                   </div>
                 </div>
@@ -519,8 +519,8 @@ export default function ResizeImagePage() {
                 resolveOutputFormat(files[0], outputFormat) !== "png" && (
                   <div>
                     <div className="flex justify-between text-sm mb-2">
-                      <span className="text-brand-muted">{copy.quality}</span>
-                      <span className="text-brand-text">{quality}%</span>
+                      <span className="text-t-secondary">{copy.quality}</span>
+                      <span className="text-t-primary">{quality}%</span>
                     </div>
                     <input
                       type="range"
@@ -528,7 +528,7 @@ export default function ResizeImagePage() {
                       max={100}
                       value={quality}
                       onChange={(event) => setQuality(Number(event.target.value))}
-                      className="w-full accent-brand-indigo"
+                      className="w-full accent-accent"
                     />
                   </div>
                 )}
@@ -549,7 +549,7 @@ export default function ResizeImagePage() {
             )}
 
             <div className="glass rounded-xl p-6">
-              <h3 className="text-brand-text font-medium mb-4">
+              <h3 className="text-t-primary font-medium mb-4">
                 {t("compimg.results")}
               </h3>
               <div className="space-y-3">
@@ -558,10 +558,10 @@ export default function ResizeImagePage() {
                     key={`${result.filename}-${index}`}
                     className="flex items-center justify-between py-2 border-b border-border last:border-0"
                   >
-                    <span className="text-sm text-brand-text truncate flex-1 min-w-0">
+                    <span className="text-sm text-t-primary truncate flex-1 min-w-0">
                       {result.filename}
                     </span>
-                    <span className="text-sm text-brand-muted whitespace-nowrap ml-4">
+                    <span className="text-sm text-t-secondary whitespace-nowrap ml-4">
                       {formatFileSize(result.file.size)} -{" "}
                       {formatFileSize(result.blob.size)}
                     </span>
@@ -587,7 +587,7 @@ export default function ResizeImagePage() {
               <button
                 type="button"
                 onClick={reset}
-                className="px-6 py-3 rounded-xl font-semibold text-brand-text bg-bg-secondary hover:bg-bg-tertiary transition-colors"
+                className="px-6 py-3 rounded-xl font-semibold text-t-primary bg-bg-secondary hover:bg-bg-tertiary transition-colors"
               >
                 {t("resimg.another")}
               </button>

@@ -91,7 +91,7 @@ export default function JwtDecoderPage() {
       <div className="space-y-8">
         {/* Input Section */}
         <div className="glass rounded-2xl p-6">
-          <label className="block text-sm font-medium text-brand-muted mb-3">
+          <label className="block text-sm font-medium text-t-secondary mb-3">
             JWT Token
           </label>
           <textarea
@@ -99,11 +99,11 @@ export default function JwtDecoderPage() {
             onChange={(e) => setInput(e.target.value)}
             placeholder={t("jwt.placeholder")}
             rows={5}
-            className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border text-brand-text placeholder:text-brand-muted/50 focus:outline-none focus:border-accent/40 resize-none font-mono text-sm"
+            className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border text-t-primary placeholder:text-t-tertiary/50 focus:outline-none focus:border-accent/40 resize-none font-mono text-sm"
           />
 
           {error && (
-            <p className="mt-3 text-sm text-red-400">{error}</p>
+            <p className="mt-3 text-sm text-red-700 dark:text-red-400">{error}</p>
           )}
 
           <div className="flex gap-3 mt-4">
@@ -115,7 +115,7 @@ export default function JwtDecoderPage() {
             </button>
             <button
               onClick={() => { setInput(""); setDecoded(null); setError(null); }}
-              className="px-6 py-3 rounded-xl font-semibold text-brand-text bg-bg-secondary border border-border hover:bg-bg-tertiary transition-all"
+              className="px-6 py-3 rounded-xl font-semibold text-t-primary bg-bg-secondary border border-border hover:bg-bg-tertiary transition-all"
             >
               {t("ui.clear")}
             </button>
@@ -130,8 +130,8 @@ export default function JwtDecoderPage() {
               <span
                 className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
                   expired
-                    ? "bg-red-500/15 text-red-400 border border-red-500/20"
-                    : "bg-green-500/15 text-green-400 border border-green-500/20"
+                    ? "bg-red-500/15 text-red-700 dark:text-red-400 border border-red-500/20"
+                    : "bg-green-500/15 text-green-700 dark:text-green-400 border border-green-500/20"
                 }`}
               >
                 <span className={`w-1.5 h-1.5 rounded-full ${expired ? "bg-red-400" : "bg-green-400"}`} />
@@ -139,12 +139,12 @@ export default function JwtDecoderPage() {
               </span>
 
               {iat && (
-                <span className="text-xs text-brand-muted">
+                <span className="text-xs text-t-secondary">
                   {t("jwt.issuedAt")}: {formatUnixDate(iat)}
                 </span>
               )}
               {exp && (
-                <span className="text-xs text-brand-muted">
+                <span className="text-xs text-t-secondary">
                   {t("jwt.expiresAt")}: {formatUnixDate(exp)}
                 </span>
               )}
@@ -153,16 +153,16 @@ export default function JwtDecoderPage() {
             {/* Header */}
             <div className="glass rounded-2xl p-6">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-semibold text-brand-text">{t("jwt.header")}</span>
+                <span className="text-sm font-semibold text-t-primary">{t("jwt.header")}</span>
                 <button
                   onClick={() => copyText(JSON.stringify(decoded.header, null, 2), t("jwt.header"))}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-brand-muted bg-bg-secondary border border-border hover:bg-bg-tertiary hover:text-brand-text transition-all"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-t-secondary bg-bg-secondary border border-border hover:bg-bg-tertiary hover:text-t-primary transition-all"
                 >
                   <CopyIcon />
                   {t("jwt.copy")}
                 </button>
               </div>
-              <pre className="font-mono text-sm text-brand-muted bg-bg-secondary rounded-xl p-4 overflow-x-auto select-all whitespace-pre-wrap break-all">
+              <pre className="font-mono text-sm text-t-secondary bg-bg-secondary rounded-xl p-4 overflow-x-auto select-all whitespace-pre-wrap break-all">
                 {JSON.stringify(decoded.header, null, 2)}
               </pre>
             </div>
@@ -170,16 +170,16 @@ export default function JwtDecoderPage() {
             {/* Payload */}
             <div className="glass rounded-2xl p-6">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-semibold text-brand-text">{t("jwt.payload")}</span>
+                <span className="text-sm font-semibold text-t-primary">{t("jwt.payload")}</span>
                 <button
                   onClick={() => copyText(JSON.stringify(decoded.payload, null, 2), t("jwt.payload"))}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-brand-muted bg-bg-secondary border border-border hover:bg-bg-tertiary hover:text-brand-text transition-all"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-t-secondary bg-bg-secondary border border-border hover:bg-bg-tertiary hover:text-t-primary transition-all"
                 >
                   <CopyIcon />
                   {t("jwt.copy")}
                 </button>
               </div>
-              <pre className="font-mono text-sm text-brand-muted bg-bg-secondary rounded-xl p-4 overflow-x-auto select-all whitespace-pre-wrap break-all">
+              <pre className="font-mono text-sm text-t-secondary bg-bg-secondary rounded-xl p-4 overflow-x-auto select-all whitespace-pre-wrap break-all">
                 {JSON.stringify(decoded.payload, null, 2)}
               </pre>
             </div>
@@ -187,16 +187,16 @@ export default function JwtDecoderPage() {
             {/* Signature */}
             <div className="glass rounded-2xl p-6">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-semibold text-brand-text">{t("jwt.signature")}</span>
+                <span className="text-sm font-semibold text-t-primary">{t("jwt.signature")}</span>
                 <button
                   onClick={() => copyText(decoded.signature, t("jwt.signature"))}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-brand-muted bg-bg-secondary border border-border hover:bg-bg-tertiary hover:text-brand-text transition-all"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-t-secondary bg-bg-secondary border border-border hover:bg-bg-tertiary hover:text-t-primary transition-all"
                 >
                   <CopyIcon />
                   {t("jwt.copy")}
                 </button>
               </div>
-              <p className="font-mono text-sm text-brand-muted bg-bg-secondary rounded-xl p-4 break-all select-all">
+              <p className="font-mono text-sm text-t-secondary bg-bg-secondary rounded-xl p-4 break-all select-all">
                 {decoded.signature}
               </p>
             </div>

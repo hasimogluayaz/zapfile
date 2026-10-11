@@ -34,13 +34,13 @@ const GROUP_COLORS = [
   },
   {
     bg: "bg-emerald-500/30",
-    text: "text-emerald-300",
+    text: "text-emerald-700 dark:text-emerald-400",
     border: "border-emerald-400",
     dot: "bg-emerald-400",
   },
   {
     bg: "bg-amber-500/30",
-    text: "text-amber-300",
+    text: "text-amber-700 dark:text-amber-400",
     border: "border-amber-400",
     dot: "bg-amber-400",
   },
@@ -316,7 +316,7 @@ export default function RegexTesterPage() {
           <div className="glass rounded-xl p-4 border border-red-500/20 bg-red-500/5">
             <div className="flex items-start gap-3">
               <svg
-                className="w-5 h-5 text-red-400 mt-0.5 shrink-0"
+                className="w-5 h-5 text-red-700 dark:text-red-400 mt-0.5 shrink-0"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -329,10 +329,10 @@ export default function RegexTesterPage() {
                 />
               </svg>
               <div>
-                <p className="text-sm font-medium text-red-400">
+                <p className="text-sm font-medium text-red-700 dark:text-red-400">
                   {t("regex.invalid")}
                 </p>
-                <p className="text-xs text-red-400/70 mt-1 font-mono">
+                <p className="text-xs text-red-700/70 dark:text-red-400/70 mt-1 font-mono">
                   {error}
                 </p>
               </div>

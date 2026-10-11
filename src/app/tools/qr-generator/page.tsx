@@ -334,7 +334,7 @@ export default function QRGeneratorPage() {
                 </div>
                 {logoDataUrl && (
                   <button onClick={removeLogo}
-                    className="text-xs text-red-400 hover:text-red-300 transition-colors px-2 py-1 rounded-lg hover:bg-red-500/10">
+                    className="text-xs text-red-700 dark:text-red-400 hover:text-red-600 dark:hover:text-red-400 transition-colors px-2 py-1 rounded-lg hover:bg-red-500/10">
                     {t("qr.removeLogo")}
                   </button>
                 )}

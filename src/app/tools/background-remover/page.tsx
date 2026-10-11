@@ -197,7 +197,7 @@ function Slider({
         step={step}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full accent-[rgb(var(--accent-rgb))]"
+        className="w-full accent-accent"
       />
     </label>
   );

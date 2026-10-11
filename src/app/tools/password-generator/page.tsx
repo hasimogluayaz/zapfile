@@ -55,18 +55,18 @@ function formatCrackTime(
   entropyBits: number,
   t: (k: string, p?: Record<string, string | number>) => string
 ): { label: string; color: string } {
-  if (entropyBits <= 0) return { label: t("pw.instant"), color: "text-red-400" };
+  if (entropyBits <= 0) return { label: t("pw.instant"), color: "text-red-700 dark:text-red-400" };
   const guesses = Math.pow(2, entropyBits - 1); // average
   const guessesPerSec = 1e11;
   const sec = guesses / guessesPerSec;
-  if (sec < 1) return { label: t("pw.instant"), color: "text-red-400" };
-  if (sec < 60) return { label: t("pw.seconds", { n: Math.round(sec) }), color: "text-red-400" };
+  if (sec < 1) return { label: t("pw.instant"), color: "text-red-700 dark:text-red-400" };
+  if (sec < 60) return { label: t("pw.seconds", { n: Math.round(sec) }), color: "text-red-700 dark:text-red-400" };
   const min = sec / 60;
   if (min < 60) return { label: t("pw.minutes", { n: Math.round(min) }), color: "text-orange-400" };
   const hr = min / 60;
   if (hr < 24) return { label: t("pw.hours", { n: Math.round(hr) }), color: "text-orange-400" };
   const days = hr / 24;
-  if (days < 365) return { label: t("pw.days", { n: Math.round(days) }), color: "text-yellow-400" };
+  if (days < 365) return { label: t("pw.days", { n: Math.round(days) }), color: "text-yellow-700 dark:text-yellow-400" };
   const years = days / 365;
   if (years < 100) return { label: t("pw.years", { n: Math.round(years) }), color: "text-emerald-600 dark:text-emerald-400" };
   if (years < 10000) return { label: t("pw.centuries"), color: "text-emerald-600 dark:text-emerald-400" };

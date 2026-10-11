@@ -193,7 +193,7 @@ export default function TimestampConverterPage() {
           </div>
 
           {unixError && (
-            <p className="text-xs text-red-400 mt-2">{unixError === "Please enter a valid number" ? t("ts.invalidNumber") : t("ts.invalidTimestamp")}</p>
+            <p className="text-xs text-red-700 dark:text-red-400 mt-2">{unixError === "Please enter a valid number" ? t("ts.invalidNumber") : t("ts.invalidTimestamp")}</p>
           )}
 
           {dateFormats.length > 0 && (

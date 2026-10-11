@@ -109,8 +109,8 @@ export default function ImageToBase64Page() {
             onClick={() => setShowReverse(false)}
             className={`px-4 py-2 rounded-xl text-[13px] font-medium transition-all ${
               !showReverse
-                ? "bg-accent/20 border border-accent text-brand-text"
-                : "bg-bg-secondary border border-border text-brand-muted hover:border-t-primary/20"
+                ? "bg-accent/20 border border-accent text-t-primary"
+                : "bg-bg-secondary border border-border text-t-secondary hover:border-t-primary/20"
             }`}
           >
             {t("imgb64.imageToBase64")}
@@ -119,8 +119,8 @@ export default function ImageToBase64Page() {
             onClick={() => setShowReverse(true)}
             className={`px-4 py-2 rounded-xl text-[13px] font-medium transition-all ${
               showReverse
-                ? "bg-accent/20 border border-accent text-brand-text"
-                : "bg-bg-secondary border border-border text-brand-muted hover:border-t-primary/20"
+                ? "bg-accent/20 border border-accent text-t-primary"
+                : "bg-bg-secondary border border-border text-t-secondary hover:border-t-primary/20"
             }`}
           >
             {t("imgb64.base64ToImage")}
@@ -146,12 +146,12 @@ export default function ImageToBase64Page() {
                   {/* Preview */}
                   <div className="glass rounded-xl p-3 space-y-2">
                     <div className="flex items-center justify-between">
-                      <p className="text-[12px] font-medium text-brand-muted">
+                      <p className="text-[12px] font-medium text-t-secondary">
                         Image Preview
                       </p>
                       <button
                         onClick={reset}
-                        className="text-[11px] text-brand-muted hover:text-red-400 transition-colors"
+                        className="text-[11px] text-t-secondary hover:text-red-600 dark:hover:text-red-400 transition-colors"
                       >
                         {t("ui.remove")}
                       </button>
@@ -164,34 +164,34 @@ export default function ImageToBase64Page() {
                         className="w-full rounded-lg border border-border object-contain max-h-48"
                       />
                     )}
-                    <p className="text-[11px] text-brand-muted truncate">
+                    <p className="text-[11px] text-t-secondary truncate">
                       {file.name} &middot; {formatFileSize(file.size)}
                     </p>
                   </div>
 
                   {/* Stats */}
                   <div className="glass rounded-xl p-4 space-y-3">
-                    <h3 className="text-[13px] font-semibold text-brand-text">
+                    <h3 className="text-[13px] font-semibold text-t-primary">
                       {t("imgb64.stats")}
                     </h3>
                     <div className="space-y-2 text-[12px]">
                       <div className="flex justify-between">
-                        <span className="text-brand-muted">{t("imgb64.originalSize")}</span>
-                        <span className="text-brand-text">{formatFileSize(file.size)}</span>
+                        <span className="text-t-secondary">{t("imgb64.originalSize")}</span>
+                        <span className="text-t-primary">{formatFileSize(file.size)}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-brand-muted">{t("imgb64.base64Length")}</span>
-                        <span className="text-brand-text">
+                        <span className="text-t-secondary">{t("imgb64.base64Length")}</span>
+                        <span className="text-t-primary">
                           {base64Raw.length.toLocaleString()} {t("imgb64.chars")}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-brand-muted">{t("imgb64.base64Size")}</span>
-                        <span className="text-brand-text">{formatFileSize(base64Size)}</span>
+                        <span className="text-t-secondary">{t("imgb64.base64Size")}</span>
+                        <span className="text-t-primary">{formatFileSize(base64Size)}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-brand-muted">{t("imgb64.sizeIncrease")}</span>
-                        <span className="text-brand-text">
+                        <span className="text-t-secondary">{t("imgb64.sizeIncrease")}</span>
+                        <span className="text-t-primary">
                           {file.size > 0
                             ? `~${Math.round(((base64Size - file.size) / file.size) * 100)}%`
                             : "N/A"}
@@ -210,8 +210,8 @@ export default function ImageToBase64Page() {
                         onClick={() => setActiveFormat(fmt)}
                         className={`px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all ${
                           activeFormat === fmt
-                            ? "bg-accent/20 border border-accent text-brand-text"
-                            : "bg-bg-secondary border border-border text-brand-muted hover:border-t-primary/20"
+                            ? "bg-accent/20 border border-accent text-t-primary"
+                            : "bg-bg-secondary border border-border text-t-secondary hover:border-t-primary/20"
                         }`}
                       >
                         {t(FORMAT_LABEL_KEYS[fmt] as Parameters<typeof t>[0])}
@@ -223,7 +223,7 @@ export default function ImageToBase64Page() {
                   <textarea
                     readOnly
                     value={getOutput()}
-                    className="w-full h-40 px-3 py-2.5 rounded-xl bg-bg-secondary border border-border text-[11px] font-mono text-brand-text resize-none focus:outline-none focus:border-accent/50 transition-colors"
+                    className="w-full h-40 px-3 py-2.5 rounded-xl bg-bg-secondary border border-border text-[11px] font-mono text-t-primary resize-none focus:outline-none focus:border-accent/50 transition-colors"
                   />
 
                   {/* Copy button */}
@@ -241,21 +241,21 @@ export default function ImageToBase64Page() {
           <>
             {/* Base64 to Image (reverse) */}
             <div className="glass rounded-xl p-4 space-y-3">
-              <h3 className="text-[13px] font-semibold text-brand-text">
+              <h3 className="text-[13px] font-semibold text-t-primary">
                 {t("imgb64.pasteBase64")}
               </h3>
               <textarea
                 value={pastedBase64}
                 onChange={(e) => setPastedBase64(e.target.value)}
                 placeholder={t("imgb64.pasteHere")}
-                className="w-full h-32 px-3 py-2.5 rounded-xl bg-bg-secondary border border-border text-[11px] font-mono text-brand-text placeholder:text-brand-muted/50 resize-none focus:outline-none focus:border-accent/50 transition-colors"
+                className="w-full h-32 px-3 py-2.5 rounded-xl bg-bg-secondary border border-border text-[11px] font-mono text-t-primary placeholder:text-t-tertiary/50 resize-none focus:outline-none focus:border-accent/50 transition-colors"
               />
               <button
                 onClick={handlePastedBase64}
                 disabled={!pastedBase64.trim()}
                 className={`px-6 py-3 rounded-xl font-semibold text-[14px] text-on-accent transition-all ${
                   !pastedBase64.trim()
-                    ? "bg-bg-tertiary cursor-not-allowed text-brand-muted"
+                    ? "bg-bg-tertiary cursor-not-allowed text-t-secondary"
                     : "bg-accent hover:shadow-lg hover:shadow-sm hover:scale-[1.02] active:scale-[0.98]"
                 }`}
               >
@@ -265,7 +265,7 @@ export default function ImageToBase64Page() {
 
             {decodedPreview && (
               <div className="glass rounded-xl p-4 space-y-3">
-                <h3 className="text-[13px] font-semibold text-brand-text">
+                <h3 className="text-[13px] font-semibold text-t-primary">
                   {t("imgb64.decodedImage")}
                 </h3>
                 {/* eslint-disable-next-line @next/next/no-img-element */}

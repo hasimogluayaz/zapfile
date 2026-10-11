@@ -144,18 +144,18 @@ export default function ConvertImagePage() {
             {/* File list */}
             <div className="glass rounded-xl p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-brand-text font-medium">
+                <h3 className="text-t-primary font-medium">
                   {t("convimg.selected", { count: files.length })}
                 </h3>
-                <button onClick={reset} className="text-sm text-brand-muted hover:text-red-400 transition-colors">
+                <button onClick={reset} className="text-sm text-t-secondary hover:text-red-600 dark:hover:text-red-400 transition-colors">
                   {t("ui.clearAll")}
                 </button>
               </div>
               <div className="space-y-2 max-h-48 overflow-y-auto">
                 {files.map((file, i) => (
                   <div key={i} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-                    <span className="text-sm text-brand-text truncate max-w-[70%]">{file.name}</span>
-                    <span className="text-sm text-brand-muted">{formatFileSize(file.size)}</span>
+                    <span className="text-sm text-t-primary truncate max-w-[70%]">{file.name}</span>
+                    <span className="text-sm text-t-secondary">{formatFileSize(file.size)}</span>
                   </div>
                 ))}
               </div>
@@ -163,7 +163,7 @@ export default function ConvertImagePage() {
 
             {/* Format selection */}
             <div className="glass rounded-xl p-6 space-y-4">
-              <h3 className="font-semibold text-brand-text">{t("convimg.convertTo")}</h3>
+              <h3 className="font-semibold text-t-primary">{t("convimg.convertTo")}</h3>
               <div className="grid grid-cols-3 gap-3">
                 {formatOptions.map((opt) => (
                   <button
@@ -172,7 +172,7 @@ export default function ConvertImagePage() {
                     className={`py-3 px-4 rounded-xl text-sm font-bold transition-all ${
                       outputFormat === opt.value
                         ? "bg-accent text-on-accent shadow-sm"
-                        : "bg-bg-secondary text-brand-muted hover:bg-bg-tertiary hover:text-brand-text"
+                        : "bg-bg-secondary text-t-secondary hover:bg-bg-tertiary hover:text-t-primary"
                     }`}
                   >
                     {opt.label}
@@ -184,8 +184,8 @@ export default function ConvertImagePage() {
               {outputFormat !== "png" && (
                 <div>
                   <div className="flex justify-between mb-2">
-                    <span className="text-sm text-brand-muted">Quality</span>
-                    <span className="text-sm font-medium text-brand-text">{Math.round(quality * 100)}%</span>
+                    <span className="text-sm text-t-secondary">Quality</span>
+                    <span className="text-sm font-medium text-t-primary">{Math.round(quality * 100)}%</span>
                   </div>
                   <input
                     type="range"
@@ -194,7 +194,7 @@ export default function ConvertImagePage() {
                     step="0.05"
                     value={quality}
                     onChange={(e) => setQuality(parseFloat(e.target.value))}
-                    className="w-full accent-brand-indigo"
+                    className="w-full accent-accent"
                   />
                 </div>
               )}
@@ -215,14 +215,14 @@ export default function ConvertImagePage() {
             )}
 
             <div className="glass rounded-xl p-6">
-              <h3 className="text-brand-text font-medium mb-4">Results</h3>
+              <h3 className="text-t-primary font-medium mb-4">Results</h3>
               <div className="space-y-3">
                 {results.map((r, i) => (
                   <div key={i} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-                    <span className="text-sm text-brand-text truncate flex-1 min-w-0">
+                    <span className="text-sm text-t-primary truncate flex-1 min-w-0">
                       {getFileNameWithoutExtension(r.original.name)}{r.ext}
                     </span>
-                    <span className="text-sm text-brand-muted whitespace-nowrap ml-4">
+                    <span className="text-sm text-t-secondary whitespace-nowrap ml-4">
                       {formatFileSize(r.converted.size)}
                     </span>
                   </div>
@@ -246,7 +246,7 @@ export default function ConvertImagePage() {
               ) : null}
               <button
                 onClick={reset}
-                className="px-6 py-3 rounded-xl font-semibold text-brand-text bg-bg-secondary hover:bg-bg-tertiary transition-colors"
+                className="px-6 py-3 rounded-xl font-semibold text-t-primary bg-bg-secondary hover:bg-bg-tertiary transition-colors"
               >
                 {t("ui.convertMore")}
               </button>

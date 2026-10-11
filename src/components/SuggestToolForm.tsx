@@ -195,7 +195,7 @@ export default function SuggestToolForm() {
 
                 <div>
                   <label className="text-xs font-semibold text-t-secondary mb-1.5 block">
-                    Tool Name <span className="text-red-400">*</span>
+                    Tool Name <span className="text-red-700 dark:text-red-400">*</span>
                   </label>
                   <input
                     type="text"
