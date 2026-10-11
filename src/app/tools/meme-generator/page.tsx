@@ -63,17 +63,21 @@ const FONT_FAMILIES = [
   "Courier New",
 ];
 
+type PresetItem = Omit<TextItem, "id" | "text"> & { textKey: string };
+
 type PresetTemplate = {
   labelKey: string;
-  items: Omit<TextItem, "id">[];
+  items: PresetItem[];
 };
+
+type Translate = (key: string, params?: Record<string, string | number>) => string;
 
 const PRESETS: PresetTemplate[] = [
   {
     labelKey: "meme.preset.classic",
     items: [
       {
-        text: "TOP TEXT",
+        textKey: "meme.ui.topText",
         x: 50,
         y: 8,
         fontSize: 48,
@@ -90,7 +94,7 @@ const PRESETS: PresetTemplate[] = [
         backgroundOpacity: 0,
       },
       {
-        text: "BOTTOM TEXT",
+        textKey: "meme.ui.bottomText",
         x: 50,
         y: 92,
         fontSize: 48,
@@ -112,7 +116,7 @@ const PRESETS: PresetTemplate[] = [
     labelKey: "meme.preset.bottomCaption",
     items: [
       {
-        text: "Caption here",
+        textKey: "meme.ui.captionHere",
         x: 50,
         y: 90,
         fontSize: 44,
@@ -134,7 +138,7 @@ const PRESETS: PresetTemplate[] = [
     labelKey: "meme.preset.reaction",
     items: [
       {
-        text: "Me:",
+        textKey: "meme.ui.meColon",
         x: 20,
         y: 10,
         fontSize: 36,
@@ -151,7 +155,7 @@ const PRESETS: PresetTemplate[] = [
         backgroundOpacity: 0,
       },
       {
-        text: "Also me:",
+        textKey: "meme.ui.alsoMe",
         x: 70,
         y: 10,
         fontSize: 36,
@@ -173,7 +177,7 @@ const PRESETS: PresetTemplate[] = [
     labelKey: "meme.preset.distractedBoyfriend",
     items: [
       {
-        text: "New thing",
+        textKey: "meme.ui.newThing",
         x: 25,
         y: 88,
         fontSize: 32,
@@ -190,7 +194,7 @@ const PRESETS: PresetTemplate[] = [
         backgroundOpacity: 0,
       },
       {
-        text: "Old thing",
+        textKey: "meme.ui.oldThing",
         x: 75,
         y: 88,
         fontSize: 32,
@@ -207,7 +211,7 @@ const PRESETS: PresetTemplate[] = [
         backgroundOpacity: 0,
       },
       {
-        text: "Me",
+        textKey: "meme.ui.me",
         x: 50,
         y: 55,
         fontSize: 32,
@@ -231,11 +235,11 @@ function makeId() {
   return Math.random().toString(36).slice(2, 10);
 }
 
-function defaultItems(): TextItem[] {
+function defaultItems(t: Translate): TextItem[] {
   return [
     {
       id: makeId(),
-      text: "TOP TEXT",
+      text: t("meme.ui.topText"),
       x: 50,
       y: 8,
       fontSize: 48,
@@ -253,7 +257,7 @@ function defaultItems(): TextItem[] {
     },
     {
       id: makeId(),
-      text: "BOTTOM TEXT",
+      text: t("meme.ui.bottomText"),
       x: 50,
       y: 92,
       fontSize: 48,
@@ -274,37 +278,10 @@ function defaultItems(): TextItem[] {
 
 
 export default function MemeGeneratorPage() {
-  const { locale, t } = useI18n();
-  const editorCopy = locale === "tr"
-    ? {
-        newText: "Yeni Metin",
-        duplicate: "Kopyala",
-        bringForward: "Öne al",
-        sendBackward: "Arkaya al",
-        xPosition: "X Konumu",
-        yPosition: "Y Konumu",
-        opacity: "Saydamlık",
-        textBackground: "Metin Arka Planı",
-        backgroundOpacity: "Arka plan opaklığı",
-        layerTools: "Katman araçları",
-        quickMove: "İnce hareket",
-      }
-    : {
-        newText: "New Text",
-        duplicate: "Duplicate",
-        bringForward: "Bring forward",
-        sendBackward: "Send backward",
-        xPosition: "X Position",
-        yPosition: "Y Position",
-        opacity: "Opacity",
-        textBackground: "Text background",
-        backgroundOpacity: "Background opacity",
-        layerTools: "Layer tools",
-        quickMove: "Fine move",
-      };
+  const { t } = useI18n();
   const [file, setFile] = useState<File | null>(null);
   const [imgSrc, setImgSrc] = useState<string | null>(null);
-  const [textItems, setTextItems] = useState<TextItem[]>(defaultItems());
+  const [textItems, setTextItems] = useState<TextItem[]>(() => defaultItems(t));
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [undoStack, setUndoStack] = useState<TextItem[][]>([]);
   const [redoStack, setRedoStack] = useState<TextItem[][]>([]);
@@ -337,11 +314,17 @@ export default function MemeGeneratorPage() {
     };
     img.onerror = () => toast.error(t("meme.loadFail"));
     img.src = url;
-    setTextItems(defaultItems());
+    setTextItems(defaultItems(t));
     setSelectedId(null);
     setUndoStack([]);
     setRedoStack([]);
   }, [t]);
+
+  const alignLabels: Record<TextItem["align"], string> = {
+    left: t("meme.ui.alignLeft"),
+    center: t("meme.ui.alignCenter"),
+    right: t("meme.ui.alignRight"),
+  };
 
   const selectedItem = textItems.find((item) => item.id === selectedId) ?? null;
 
@@ -363,7 +346,7 @@ export default function MemeGeneratorPage() {
       ...prev,
       {
         id,
-        text: editorCopy.newText,
+        text: t("meme.ui.newText"),
         x: 50,
         y: 50,
         fontSize: 48,
@@ -391,7 +374,9 @@ export default function MemeGeneratorPage() {
 
   function applyPreset(preset: PresetTemplate) {
     pushHistorySnapshot();
-    setTextItems(preset.items.map((item) => ({ ...item, id: makeId() })));
+    setTextItems(
+      preset.items.map(({ textKey, ...item }) => ({ ...item, text: t(textKey), id: makeId() })),
+    );
     setSelectedId(null);
   }
 
@@ -645,7 +630,7 @@ export default function MemeGeneratorPage() {
     setFile(null);
     setImgSrc(null);
     imgRef.current = null;
-    setTextItems(defaultItems());
+    setTextItems(defaultItems(t));
     setSelectedId(null);
     setUndoStack([]);
     setRedoStack([]);
@@ -738,7 +723,7 @@ export default function MemeGeneratorPage() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={imgSrc!}
-                  alt="Meme base"
+                  alt={t("meme.ui.baseAlt")}
                   className="mx-auto block max-h-[calc(100vh-18rem)] max-w-full object-contain"
                   draggable={false}
                 />
@@ -1009,7 +994,7 @@ export default function MemeGeneratorPage() {
                               : "bg-bg-secondary border-border text-t-secondary hover:bg-bg-secondary"
                           }`}
                         >
-                          {a}
+                          {alignLabels[a]}
                         </button>
                       ))}
                     </div>
@@ -1017,7 +1002,7 @@ export default function MemeGeneratorPage() {
 
                   <div className="rounded-xl border border-border bg-bg-secondary/70 p-3 space-y-3">
                     <p className="text-[11px] font-semibold uppercase tracking-wide text-t-secondary">
-                      {editorCopy.layerTools}
+                      {t("meme.ui.layerTools")}
                     </p>
                     <div className="grid grid-cols-2 gap-2">
                       <button
@@ -1025,24 +1010,24 @@ export default function MemeGeneratorPage() {
                         onClick={() => duplicateItem(selectedItem.id)}
                         className="rounded-lg border border-border bg-bg-primary px-3 py-2 text-[12px] font-medium text-t-primary transition-colors hover:border-accent/40"
                       >
-                        {editorCopy.duplicate}
+                        {t("meme.ui.duplicate")}
                       </button>
                       <button
                         type="button"
                         onClick={() => moveLayer(selectedItem.id, "forward")}
                         className="rounded-lg border border-border bg-bg-primary px-3 py-2 text-[12px] font-medium text-t-primary transition-colors hover:border-accent/40"
                       >
-                        {editorCopy.bringForward}
+                        {t("meme.ui.bringForward")}
                       </button>
                       <button
                         type="button"
                         onClick={() => moveLayer(selectedItem.id, "backward")}
                         className="rounded-lg border border-border bg-bg-primary px-3 py-2 text-[12px] font-medium text-t-primary transition-colors hover:border-accent/40"
                       >
-                        {editorCopy.sendBackward}
+                        {t("meme.ui.sendBackward")}
                       </button>
                       <div className="rounded-lg border border-border bg-bg-primary px-3 py-2 text-[11px] text-t-secondary">
-                        {editorCopy.quickMove}
+                        {t("meme.ui.fineMove")}
                       </div>
                     </div>
                     <div className="mx-auto grid w-28 grid-cols-3 gap-2">
@@ -1105,7 +1090,7 @@ export default function MemeGeneratorPage() {
 
                   <div>
                     <div className="flex justify-between mb-1">
-                      <label className="text-[11px] text-t-secondary">{editorCopy.xPosition}</label>
+                      <label className="text-[11px] text-t-secondary">{t("meme.ui.xPosition")}</label>
                       <span className="text-[11px] font-mono text-t-secondary">{Math.round(selectedItem.x)}%</span>
                     </div>
                     <input
@@ -1121,7 +1106,7 @@ export default function MemeGeneratorPage() {
 
                   <div>
                     <div className="flex justify-between mb-1">
-                      <label className="text-[11px] text-t-secondary">{editorCopy.yPosition}</label>
+                      <label className="text-[11px] text-t-secondary">{t("meme.ui.yPosition")}</label>
                       <span className="text-[11px] font-mono text-t-secondary">{Math.round(selectedItem.y)}%</span>
                     </div>
                     <input
@@ -1137,7 +1122,7 @@ export default function MemeGeneratorPage() {
 
                   <div>
                     <div className="flex justify-between mb-1">
-                      <label className="text-[11px] text-t-secondary">{editorCopy.opacity}</label>
+                      <label className="text-[11px] text-t-secondary">{t("meme.ui.opacity")}</label>
                       <span className="text-[11px] font-mono text-t-secondary">{selectedItem.opacity}%</span>
                     </div>
                     <input
@@ -1153,7 +1138,7 @@ export default function MemeGeneratorPage() {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-[11px] text-t-secondary mb-1">{editorCopy.textBackground}</label>
+                      <label className="block text-[11px] text-t-secondary mb-1">{t("meme.ui.textBackground")}</label>
                       <div className="flex items-center gap-2">
                         <input
                           type="color"
@@ -1166,7 +1151,7 @@ export default function MemeGeneratorPage() {
                     </div>
                     <div>
                       <div className="flex justify-between mb-1">
-                        <label className="text-[11px] text-t-secondary">{editorCopy.backgroundOpacity}</label>
+                        <label className="text-[11px] text-t-secondary">{t("meme.ui.backgroundOpacity")}</label>
                         <span className="text-[11px] font-mono text-t-secondary">{selectedItem.backgroundOpacity}%</span>
                       </div>
                       <input
