@@ -4,10 +4,11 @@
  * Many PDFs are encrypted only to restrict printing/copying: they open
  * without a password but their content streams are encrypted. Editing them
  * with `ignoreEncryption` silently produces blank or garbled pages, so such
- * files are decrypted up front. Files that need a password to open are
- * reported with PdfLockedError so the UI can point to Protect PDF.
+ * files are decrypted up front (in a Web Worker, see pdf-security.ts). Files
+ * that need a password to open are reported with PdfLockedError so the UI can
+ * point to Protect PDF.
  */
-import { PdfPasswordError, inspectPdf, unlockPdf } from "./pdf-security";
+import { PdfPasswordError, editablePdfBytesOffThread } from "./pdf-security";
 
 export class PdfLockedError extends Error {
   constructor() {
@@ -19,25 +20,34 @@ export class PdfLockedError extends Error {
 /** Cheap pre-check: encrypted PDFs always reference /Encrypt in a trailer or XRef stream dict. */
 function mentionsEncrypt(bytes: Uint8Array): boolean {
   const needle = [0x2f, 0x45, 0x6e, 0x63, 0x72, 0x79, 0x70, 0x74]; // "/Encrypt"
-  outer: for (let i = 0; i <= bytes.length - needle.length; i++) {
-    if (bytes[i] !== 0x2f) continue;
-    for (let j = 1; j < needle.length; j++) if (bytes[i + j] !== needle[j]) continue outer;
-    return true;
+  const last = bytes.length - needle.length;
+  // indexOf is native and fast; only compare the tail at each "/" candidate.
+  for (let i = bytes.indexOf(0x2f); i !== -1 && i <= last; i = bytes.indexOf(0x2f, i + 1)) {
+    let match = true;
+    for (let j = 1; j < needle.length; j++) {
+      if (bytes[i + j] !== needle[j]) {
+        match = false;
+        break;
+      }
+    }
+    if (match) return true;
   }
   return false;
 }
 
 /** Decrypted bytes of a PDF, or the original bytes when it isn't encrypted. */
-export async function editablePdfBytes(input: Blob | ArrayBuffer | Uint8Array): Promise<Uint8Array> {
+export async function editablePdfBytes(
+  input: Blob | ArrayBuffer | Uint8Array,
+  options: { signal?: AbortSignal } = {},
+): Promise<Uint8Array> {
   const bytes =
     input instanceof Uint8Array
       ? input
       : new Uint8Array(input instanceof Blob ? await input.arrayBuffer() : input);
   if (!mentionsEncrypt(bytes)) return bytes;
-  const info = await inspectPdf(bytes);
-  if (!info.encrypted) return bytes;
   try {
-    return await unlockPdf(bytes, "");
+    const decrypted = await editablePdfBytesOffThread(bytes, options);
+    return decrypted ?? bytes;
   } catch (error) {
     if (error instanceof PdfPasswordError) throw new PdfLockedError();
     throw error;
@@ -45,9 +55,9 @@ export async function editablePdfBytes(input: Blob | ArrayBuffer | Uint8Array): 
 }
 
 /** Same as editablePdfBytes, returned as a File with the original name. */
-export async function toEditablePdf(file: File): Promise<File> {
+export async function toEditablePdf(file: File, options: { signal?: AbortSignal } = {}): Promise<File> {
   const original = new Uint8Array(await file.arrayBuffer());
-  const bytes = await editablePdfBytes(original);
+  const bytes = await editablePdfBytes(original, options);
   if (bytes === original) return file;
   return new File([bytes as BlobPart], file.name, { type: "application/pdf", lastModified: file.lastModified });
 }

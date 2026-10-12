@@ -32,16 +32,35 @@ export function loadPdfjs(): Promise<PdfjsModule> {
   return modulePromise;
 }
 
-/** Open a PDF from bytes with all asset URLs configured. */
+export interface OpenPdfBehaviour {
+  /**
+   * pdf.js transfers the buffer to its worker, detaching it. By default the
+   * bytes are copied so callers can keep using them (e.g. for pdf-lib). Pass
+   * `copy: false` when the caller hands over bytes it no longer needs, which
+   * avoids holding a second full copy of the file in memory.
+   */
+  copy?: boolean;
+}
+
+/**
+ * Open a PDF from bytes with all asset URLs configured.
+ * Call `destroy()` on the returned document when done with it, otherwise the
+ * worker keeps the whole file (and every parsed page) alive.
+ */
 export async function openPdf(
   data: ArrayBuffer | Uint8Array,
   options: Omit<DocumentInitParameters, "data"> = {},
+  { copy = true }: OpenPdfBehaviour = {},
 ) {
   const lib = await loadPdfjs();
   const base = assetBase(lib.version);
-  // pdf.js transfers the buffer to its worker; pass a copy so callers can
-  // keep using their original bytes (e.g. for pdf-lib afterwards).
-  const bytes = data instanceof Uint8Array ? data.slice() : new Uint8Array(data.slice(0));
+  const bytes = copy
+    ? data instanceof Uint8Array
+      ? data.slice()
+      : new Uint8Array(data.slice(0))
+    : data instanceof Uint8Array
+      ? data
+      : new Uint8Array(data);
   return lib.getDocument({
     data: bytes,
     cMapUrl: `${base}cmaps/`,

@@ -1,422 +1,619 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
+import type { MouseEvent as ReactMouseEvent } from "react";
 import toast from "react-hot-toast";
+import { Check, FileText, Minus, Plus, X } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
 import FileDropzone from "@/components/FileDropzone";
-import ProcessButton from "@/components/ProcessButton";
 import DownloadButton from "@/components/DownloadButton";
 import ProgressBar from "@/components/ProgressBar";
+import { Segmented, buttonPrimary, buttonSecondary, sectionTitle } from "@/components/ui/controls";
 import { formatFileSize, getFileNameWithoutExtension } from "@/lib/utils";
 import { pdfInputErrorKey, toEditablePdf } from "@/lib/pdf-input";
 import { useI18n } from "@/lib/i18n";
-import { pdfPageThumbnail } from "@/lib/pdf-thumb";
+import { PdfPageThumb, usePdfThumbnailer } from "@/lib/pdf-thumb-view";
+import {
+  compactPages,
+  formatPageRanges,
+  pagesInRanges,
+  parsePageRanges,
+  rangeLabel,
+  rangesToPages,
+  type PageRange,
+  type RangeIssue,
+} from "@/lib/split-pdf-ranges";
+import { runWorkerTask } from "../merge-pdf/worker-task";
 
-interface PageRange {
-  start: number;
-  end: number;
+type Mode = "extract" | "ranges" | "every";
+
+interface Group {
+  pages: number[]; // 1-based
+  name: string;
 }
 
-function parsePageRanges(input: string, totalPages: number): PageRange[] | null {
-  const ranges: PageRange[] = [];
-  const parts = input.split(",").map((s) => s.trim()).filter(Boolean);
+const THUMB_BOX = 150;
 
-  for (const part of parts) {
-    if (part.includes("-")) {
-      const [startStr, endStr] = part.split("-").map((s) => s.trim());
-      const start = parseInt(startStr, 10);
-      const end = parseInt(endStr, 10);
-
-      if (isNaN(start) || isNaN(end) || start < 1 || end < 1 || start > totalPages || end > totalPages || start > end) {
-        return null;
-      }
-
-      ranges.push({ start, end });
-    } else {
-      const page = parseInt(part, 10);
-      if (isNaN(page) || page < 1 || page > totalPages) {
-        return null;
-      }
-      ranges.push({ start: page, end: page });
+function uniqueName(name: string, used: Set<string>): string {
+  if (!used.has(name)) {
+    used.add(name);
+    return name;
+  }
+  const dot = name.lastIndexOf(".");
+  const stem = name.slice(0, dot);
+  const ext = name.slice(dot);
+  for (let n = 2; ; n++) {
+    const candidate = `${stem} (${n})${ext}`;
+    if (!used.has(candidate)) {
+      used.add(candidate);
+      return candidate;
     }
   }
-
-  return ranges.length > 0 ? ranges : null;
 }
 
-function formatRange(range: PageRange): string {
-  return range.start === range.end
-    ? `page-${range.start}`
-    : `pages-${range.start}-${range.end}`;
+function removePage(ranges: PageRange[], p: number): PageRange[] {
+  const out: PageRange[] = [];
+  for (const r of ranges) {
+    if (p < r.start || p > r.end) out.push(r);
+    else {
+      if (r.start <= p - 1) out.push({ start: r.start, end: p - 1 });
+      if (p + 1 <= r.end) out.push({ start: p + 1, end: r.end });
+    }
+  }
+  return out;
 }
 
 export default function SplitPdfPage() {
   const { t } = useI18n();
   const [file, setFile] = useState<File | null>(null);
-  const [totalPages, setTotalPages] = useState(0);
-  const [rangeInput, setRangeInput] = useState("");
+  const [opening, setOpening] = useState(false);
+  const [mode, setMode] = useState<Mode>("extract");
+  const [rangeText, setRangeText] = useState("");
+  const [everyText, setEveryText] = useState("1");
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [resultBlob, setResultBlob] = useState<Blob | null>(null);
-  const [resultFilename, setResultFilename] = useState("split-pdfs.zip");
-  const [pageThumbs, setPageThumbs] = useState<string[]>([]);
-  const [thumbsLoading, setThumbsLoading] = useState(false);
-  const pdfBufferRef = useRef<ArrayBuffer | null>(null);
+  const [result, setResult] = useState<{ blob: Blob; name: string; kind: "pdf" | "zip"; key: string } | null>(
+    null,
+  );
+  const [gridEl, setGridEl] = useState<HTMLDivElement | null>(null);
+  const anchorRef = useRef<number | null>(null);
+  const lastValid = useRef<PageRange[]>([]);
+  const runRef = useRef<AbortController | null>(null);
 
-  const handleFilesSelected = useCallback(async (files: File[]) => {
-    const picked = files[0];
-    if (!picked) return;
+  const thumbState = usePdfThumbnailer(file);
+  const thumbs = thumbState.thumbs;
+  const pageCount = thumbs?.pageCount ?? 0;
 
-    if (picked.type !== "application/pdf" && !picked.name.toLowerCase().endsWith(".pdf")) {
-      toast.error(t("split.invalidFile"));
-      return;
-    }
-    let selected: File;
-    try {
-      selected = await toEditablePdf(picked);
-    } catch (error) {
-      console.error(error);
-      toast.error(t(pdfInputErrorKey(error)));
-      return;
-    }
+  useEffect(() => () => runRef.current?.abort(), []);
 
-    try {
-      const arrayBuffer = await selected.arrayBuffer();
-      pdfBufferRef.current = arrayBuffer.slice(0);
-      const { PDFDocument } = await import("pdf-lib");
-      const doc = await PDFDocument.load(arrayBuffer);
-      const pageCount = doc.getPageCount();
-
-      setFile(selected);
-      setTotalPages(pageCount);
-      setRangeInput("");
-      setResultBlob(null);
-      setProgress(0);
-      setPageThumbs([]);
-      setThumbsLoading(true);
-
-      const buf = pdfBufferRef.current;
-      if (buf) {
-        const cap = Math.min(pageCount, 96);
-        const thumbs: string[] = [];
-        try {
-          for (let p = 1; p <= cap; p++) {
-            thumbs.push(await pdfPageThumbnail(buf, p, 108));
-          }
-          setPageThumbs(thumbs);
-        } catch (e) {
-          console.error(e);
-          setPageThumbs([]);
-        } finally {
-          setThumbsLoading(false);
-        }
-      } else {
-        setThumbsLoading(false);
-      }
-
-      toast.success(t("split.loaded", { count: pageCount }));
-    } catch (error) {
-      console.error("Error loading PDF:", error);
+  useEffect(() => {
+    if (thumbState.status === "error") {
+      console.error(thumbState.error);
       toast.error(t("split.loadFail"));
-      setThumbsLoading(false);
+      setFile(null);
+    } else if (thumbState.status === "ready") {
+      toast.success(t("split.loaded", { count: thumbState.thumbs.pageCount }));
     }
-  }, [t]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [thumbState.status]);
 
+  const handleFilesSelected = useCallback(
+    async (files: File[]) => {
+      const picked = files[0];
+      if (!picked) return;
+      if (picked.type !== "application/pdf" && !picked.name.toLowerCase().endsWith(".pdf")) {
+        toast.error(t("split.invalidFile"));
+        return;
+      }
+      setOpening(true);
+      try {
+        const editable = await toEditablePdf(picked);
+        runRef.current?.abort();
+        runRef.current = null;
+        setProcessing(false);
+        setFile(editable);
+        setMode("extract");
+        setRangeText("");
+        setEveryText("1");
+        setResult(null);
+        setProgress(0);
+        anchorRef.current = null;
+        lastValid.current = [];
+      } catch (error) {
+        console.error(error);
+        toast.error(t(pdfInputErrorKey(error)));
+      } finally {
+        setOpening(false);
+      }
+    },
+    [t],
+  );
+
+  const handleReset = useCallback(() => {
+    runRef.current?.abort();
+    runRef.current = null;
+    setProcessing(false);
+    setFile(null);
+    setRangeText("");
+    setResult(null);
+    setProgress(0);
+  }, []);
+
+  // ── Derived selection ────────────────────────────────────────
+  const parsed = useMemo(() => parsePageRanges(rangeText, pageCount), [rangeText, pageCount]);
+  if (!parsed.error) lastValid.current = parsed.ranges;
+
+  const everyN = /^\d+$/.test(everyText.trim()) ? Number(everyText.trim()) : NaN;
+  const everyValid = Number.isInteger(everyN) && everyN >= 1 && everyN <= Math.max(1, pageCount);
+
+  const baseName = file ? getFileNameWithoutExtension(file.name) : "document";
+
+  const groups: Group[] = useMemo(() => {
+    if (!pageCount) return [];
+    if (mode === "every") {
+      if (!everyValid) return [];
+      const out: Group[] = [];
+      const parts = Math.ceil(pageCount / everyN);
+      const pad = String(parts).length;
+      for (let i = 0, k = 1; i < pageCount; i += everyN, k++) {
+        const start = i + 1;
+        const end = Math.min(pageCount, i + everyN);
+        out.push({
+          pages: rangesToPages([{ start, end }]),
+          name:
+            parts === 1
+              ? `${baseName}.pdf`
+              : `${baseName}_part-${String(k).padStart(pad, "0")}_${rangeLabel({ start, end })}.pdf`,
+        });
+      }
+      return out;
+    }
+    if (parsed.error || parsed.ranges.length === 0) return [];
+    if (mode === "extract") {
+      const label = parsed.ranges.map((r) => (r.start === r.end ? `${r.start}` : `${r.start}-${r.end}`)).join("_");
+      const name = label.length <= 40 ? `${baseName}_pages-${label}.pdf` : `${baseName}_extract.pdf`;
+      return [{ pages: rangesToPages(parsed.ranges), name }];
+    }
+    const used = new Set<string>();
+    return parsed.ranges.map((r) => ({
+      pages: rangesToPages([r]),
+      name: uniqueName(`${baseName}_${rangeLabel(r)}.pdf`, used),
+    }));
+  }, [pageCount, mode, everyValid, everyN, parsed, baseName]);
+
+  /** page → 1-based group number (ranges/every) or 1 (extract). */
+  const pageGroup = useMemo(() => {
+    const map = new Map<number, number>();
+    if (mode === "every") {
+      groups.forEach((g, i) => g.pages.forEach((p) => map.set(p, i + 1)));
+    } else if (!parsed.error) {
+      parsed.ranges.forEach((r, i) => {
+        for (let p = r.start; p <= r.end; p++) if (!map.has(p)) map.set(p, mode === "ranges" ? i + 1 : 1);
+      });
+    }
+    return map;
+  }, [mode, groups, parsed]);
+
+  const settingsKey = JSON.stringify([mode, groups.map((g) => g.pages)]);
+  const currentResult = result && result.key === settingsKey ? result : null;
+
+  const rangeError: RangeIssue | null =
+    mode === "every"
+      ? everyValid
+        ? null
+        : { key: "splitpdf.v2.enterEvery", params: { max: pageCount } }
+      : parsed.error;
+
+  // ── Thumbnail clicks ↔ text field ────────────────────────────
+  const onPageClick = (p: number, e: ReactMouseEvent) => {
+    if (mode === "every" || processing) return;
+    const ranges = lastValid.current;
+    const anchor = anchorRef.current;
+    let next: PageRange[];
+    if (mode === "extract") {
+      const set = pagesInRanges(ranges);
+      if (e.shiftKey && anchor !== null) {
+        const [a, b] = anchor < p ? [anchor, p] : [p, anchor];
+        for (let i = a; i <= b; i++) set.add(i);
+      } else if (set.has(p)) set.delete(p);
+      else set.add(p);
+      next = compactPages(set);
+    } else if (e.shiftKey && anchor !== null) {
+      const [a, b] = anchor < p ? [anchor, p] : [p, anchor];
+      const last = ranges[ranges.length - 1];
+      const base = last && last.start === anchor && last.end === anchor ? ranges.slice(0, -1) : ranges;
+      next = [...base, { start: a, end: b }];
+    } else if (pagesInRanges(ranges).has(p)) {
+      next = removePage(ranges, p);
+    } else {
+      next = [...ranges, { start: p, end: p }];
+    }
+    anchorRef.current = p;
+    setRangeText(formatPageRanges(next));
+  };
+
+  const quick = (kind: "all" | "odd" | "even" | "each" | "half" | "clear") => {
+    anchorRef.current = null;
+    const all = Array.from({ length: pageCount }, (_, i) => i + 1);
+    let ranges: PageRange[] = [];
+    if (kind === "all") ranges = [{ start: 1, end: pageCount }];
+    else if (kind === "odd") ranges = all.filter((p) => p % 2 === 1).map((p) => ({ start: p, end: p }));
+    else if (kind === "even") ranges = all.filter((p) => p % 2 === 0).map((p) => ({ start: p, end: p }));
+    else if (kind === "each") ranges = all.map((p) => ({ start: p, end: p }));
+    else if (kind === "half") {
+      const mid = Math.ceil(pageCount / 2);
+      ranges = [
+        { start: 1, end: mid },
+        { start: mid + 1, end: pageCount },
+      ];
+    }
+    setRangeText(formatPageRanges(ranges));
+  };
+
+  const stepEvery = (delta: number) => {
+    const base = everyValid ? everyN : 1;
+    setEveryText(String(Math.max(1, Math.min(pageCount, base + delta))));
+  };
+
+  // ── Run ─────────────────────────────────────────────────────
   const handleSplit = useCallback(async () => {
-    if (!file || totalPages === 0) return;
-
-    const trimmed = rangeInput.trim();
-    if (!trimmed) {
-      toast.error(t("split.enterRanges"));
-      return;
-    }
-
-    const ranges = parsePageRanges(trimmed, totalPages);
-    if (!ranges) {
-      toast.error(t("split.invalidRanges"));
-      return;
-    }
-
+    if (!file || groups.length === 0) return;
+    const ac = new AbortController();
+    runRef.current?.abort();
+    runRef.current = ac;
+    const key = settingsKey;
+    const snapshot = groups;
     setProcessing(true);
     setProgress(0);
-    setResultBlob(null);
-
+    setResult(null);
     try {
-      const { PDFDocument } = await import("pdf-lib");
-      const JSZip = (await import("jszip")).default;
-      setProgress(10);
-
-      const arrayBuffer = await file.arrayBuffer();
-      const srcDoc = await PDFDocument.load(arrayBuffer);
-      setProgress(25);
-
-      const zip = new JSZip();
-      const baseName = getFileNameWithoutExtension(file.name);
-
-      for (let i = 0; i < ranges.length; i++) {
-        const range = ranges[i];
-        const newDoc = await PDFDocument.create();
-
-        // pdf-lib uses 0-based indexing; user input is 1-based
-        const pageIndices: number[] = [];
-        for (let p = range.start - 1; p <= range.end - 1; p++) {
-          pageIndices.push(p);
-        }
-
-        const copiedPages = await newDoc.copyPages(srcDoc, pageIndices);
-        for (const page of copiedPages) {
-          newDoc.addPage(page);
-        }
-
-        const pdfBytes = await newDoc.save({ useObjectStreams: true });
-        const rangeLabel = formatRange(range);
-        zip.file(`${baseName}_${rangeLabel}.pdf`, pdfBytes);
-
-        setProgress(25 + ((i + 1) / ranges.length) * 60);
-      }
-
-      setProgress(90);
-
-      if (ranges.length === 1) {
-        // One range: hand back the PDF itself rather than a ZIP with one file.
-        const only = Object.values(zip.files)[0];
-        const pdfBytes = await only.async("uint8array");
-        setResultBlob(new Blob([pdfBytes as BlobPart], { type: "application/pdf" }));
-        setResultFilename(only.name);
-      } else {
-        const zipBlob = await zip.generateAsync({
-          type: "blob",
-          compression: "DEFLATE",
-          compressionOptions: { level: 6 },
-        });
-        setResultBlob(zipBlob);
-        setResultFilename(`${baseName}-split.zip`);
-      }
+      const bytes = await file.arrayBuffer();
+      if (ac.signal.aborted) return;
+      const res = await runWorkerTask(
+        () => new Worker(new URL("./split.worker.ts", import.meta.url), { type: "module" }),
+        { bytes, groups: snapshot.map((g) => ({ name: g.name, pages: g.pages.map((p) => p - 1) })) },
+        [bytes],
+        (v) => runRef.current === ac && setProgress(Math.round(v * 100)),
+        ac.signal,
+      );
+      if (runRef.current !== ac) return;
+      const kind = res.kind === "zip" ? "zip" : "pdf";
+      const blob = new Blob([res.bytes as BlobPart], { type: kind === "zip" ? "application/zip" : "application/pdf" });
+      setResult({ blob, kind, key, name: kind === "zip" ? `${baseName}-split.zip` : (res.name ?? `${baseName}.pdf`) });
       setProgress(100);
-
-      toast.success(t("split.success", { count: ranges.length }));
+      toast.success(
+        kind === "zip"
+          ? t("split.success", { count: snapshot.length })
+          : t("splitpdf.v2.successOne", { n: snapshot[0].pages.length }),
+      );
     } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
       console.error("Split error:", error);
       toast.error(t("split.fail"));
     } finally {
-      setProcessing(false);
+      if (runRef.current === ac) {
+        runRef.current = null;
+        setProcessing(false);
+      }
     }
-  }, [file, totalPages, rangeInput, t]);
+  }, [file, groups, settingsKey, baseName, t]);
 
-  const handleReset = useCallback(() => {
-    setFile(null);
-    setTotalPages(0);
-    setRangeInput("");
-    setResultBlob(null);
+  const cancelSplit = () => {
+    runRef.current?.abort();
+    runRef.current = null;
+    setProcessing(false);
     setProgress(0);
-    setPageThumbs([]);
-    pdfBufferRef.current = null;
-  }, []);
+    toast(t("splitpdf.v2.cancelled"));
+  };
+
+  const summary = (() => {
+    if (groups.length === 0) return "";
+    if (mode === "extract") {
+      const n = groups[0].pages.length;
+      return n === 1 ? t("splitpdf.v2.summaryExtractOne") : t("splitpdf.v2.summaryExtractOther", { n });
+    }
+    return groups.length === 1 ? t("splitpdf.v2.summaryOneFile") : t("splitpdf.v2.summaryZip", { k: groups.length });
+  })();
+
+  const modeHint =
+    mode === "extract"
+      ? t("splitpdf.v2.modeExtractHint")
+      : mode === "ranges"
+        ? t("splitpdf.v2.modeRangesHint")
+        : t("splitpdf.v2.modeEveryHint");
+
+  const chip =
+    "inline-flex min-h-9 items-center rounded-lg border border-border bg-bg-secondary px-3 text-xs font-medium text-t-secondary transition-colors hover:border-accent/40 hover:text-t-primary";
 
   return (
-    <ToolLayout
-      toolName={t("tool.split-pdf.name")}
-      toolDescription={t("tool.split-pdf.desc")}
-    >
+    <ToolLayout toolName={t("tool.split-pdf.name")} toolDescription={t("tool.split-pdf.desc")}>
       <div className="space-y-6">
-        {/* File Drop Area */}
         {!file && (
-          <FileDropzone
-            onFilesSelected={handleFilesSelected}
-            accept={{ "application/pdf": [".pdf"] }}
-            multiple={false}
-            label={t("split.dropLabel")}
-            formats={["pdf"]}
-          />
+          <>
+            <FileDropzone
+              onFilesSelected={handleFilesSelected}
+              accept={{ "application/pdf": [".pdf"] }}
+              multiple={false}
+              label={t("split.dropLabel")}
+              formats={["pdf"]}
+            />
+            {opening && <p className="text-sm text-t-secondary">{t("splitpdf.v2.reading")}</p>}
+          </>
         )}
 
-        {/* File Info & Page Count */}
         {file && (
-          <div className="glass rounded-xl p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center">
-                  <svg
-                    className="w-6 h-6 text-red-700 dark:text-red-400"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={1.5}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"
-                    />
-                  </svg>
+          <div className="glass rounded-xl p-4 sm:p-6">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-bg-secondary">
+                  <FileText className="h-5 w-5 text-t-secondary" aria-hidden />
                 </div>
-                <div>
-                  <p className="text-t-primary font-medium">{file.name}</p>
-                  <p className="text-sm text-t-secondary">
-                    {formatFileSize(file.size)} &middot;{" "}
-                    {t("split.pagesCount", { count: totalPages })}
+                <div className="min-w-0">
+                  <p className="truncate font-medium text-t-primary" title={file.name}>
+                    {file.name}
+                  </p>
+                  <p className="text-sm text-t-secondary tabular-nums">
+                    {formatFileSize(file.size)}
+                    {pageCount > 0 && <> &middot; {t("split.pagesCount", { count: pageCount })}</>}
                   </p>
                 </div>
               </div>
               <button
-                onClick={handleReset}
-                className="text-t-secondary hover:text-t-primary transition-colors p-2 rounded-lg hover:bg-bg-secondary"
-                title={t("ui.remove")}
                 type="button"
+                onClick={handleReset}
+                className="flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-2.5 text-sm text-t-secondary transition-colors hover:bg-bg-secondary hover:text-t-primary"
               >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
+                <X className="h-4 w-4" aria-hidden />
+                {t("rotpdf.changeFile")}
               </button>
             </div>
 
-            {totalPages > 0 && (
-              <div className="mt-5 pt-5 border-t border-border space-y-3">
-                <p className="text-[13px] font-semibold text-t-primary">
-                  {t("split.pagePreview")}
-                  {thumbsLoading && (
-                    <span className="ml-2 text-[12px] font-normal text-t-secondary">
-                      {t("split.thumbsLoading")}
-                    </span>
-                  )}
-                </p>
-                {pageThumbs.length > 0 && (
-                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 max-h-[320px] overflow-y-auto pr-1">
-                    {pageThumbs.map((src, i) => (
-                      <div
-                        key={i}
-                        className="rounded-lg border border-border overflow-hidden bg-bg-secondary"
+            {thumbState.status === "loading" && (
+              <p className="mt-4 text-sm text-t-secondary">{t("split.thumbsLoading")}</p>
+            )}
+
+            {pageCount > 0 && (
+              <fieldset disabled={processing} className="mt-5 min-w-0 space-y-4 border-t border-border pt-5">
+                <div className="space-y-2">
+                  <Segmented<Mode>
+                    label={t("splitpdf.v2.modeLabel")}
+                    value={mode}
+                    onChange={(m) => {
+                      setMode(m);
+                      anchorRef.current = null;
+                    }}
+                    options={[
+                      { value: "extract", label: t("splitpdf.v2.modeExtract") },
+                      { value: "ranges", label: t("splitpdf.v2.modeRanges") },
+                      { value: "every", label: t("splitpdf.v2.modeEvery") },
+                    ]}
+                  />
+                  <p className="text-[13px] text-t-secondary">{modeHint}</p>
+                </div>
+
+                {mode !== "every" ? (
+                  <div className="space-y-2">
+                    <label htmlFor="pageRanges" className={sectionTitle}>
+                      {mode === "extract" ? t("splitpdf.v2.pagesToExtract") : t("split.pageRanges")}
+                    </label>
+                    <input
+                      id="pageRanges"
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="off"
+                      value={rangeText}
+                      onChange={(e) => {
+                        setRangeText(e.target.value);
+                        anchorRef.current = null;
+                      }}
+                      placeholder={pageCount > 2 ? `1-3, 5, ${Math.min(pageCount, 7)}-` : "1"}
+                      aria-invalid={Boolean(rangeError)}
+                      aria-describedby="range-help"
+                      className={`w-full rounded-xl border bg-bg-secondary px-4 py-3 text-t-primary placeholder:text-t-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 ${
+                        rangeError ? "border-red-500/70" : "border-border"
+                      }`}
+                    />
+                    <p
+                      id="range-help"
+                      role={rangeError ? "alert" : undefined}
+                      className={`text-xs ${rangeError ? "text-red-600 dark:text-red-400" : "text-t-tertiary"}`}
+                    >
+                      {rangeError ? t(rangeError.key, rangeError.params) : t("splitpdf.v2.rangesHelp")}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {mode === "extract" ? (
+                        <>
+                          <button type="button" className={chip} onClick={() => quick("all")}>
+                            {t("split.allPages")}
+                          </button>
+                          {pageCount > 1 && (
+                            <>
+                              <button type="button" className={chip} onClick={() => quick("odd")}>
+                                {t("rotatepdf.ui.quickOdd")}
+                              </button>
+                              <button type="button" className={chip} onClick={() => quick("even")}>
+                                {t("rotatepdf.ui.quickEven")}
+                              </button>
+                            </>
+                          )}
+                        </>
+                      ) : (
+                        pageCount > 1 && (
+                          <>
+                            <button type="button" className={chip} onClick={() => quick("each")}>
+                              {t("split.eachPage")}
+                            </button>
+                            <button type="button" className={chip} onClick={() => quick("half")}>
+                              {t("split.half")}
+                            </button>
+                          </>
+                        )
+                      )}
+                      {rangeText.trim() && (
+                        <button type="button" className={chip} onClick={() => quick("clear")}>
+                          {t("ui.clear")}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <label htmlFor="everyN" className={sectionTitle}>
+                      {t("splitpdf.v2.everyLabel")}
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => stepEvery(-1)}
+                        disabled={!everyValid || everyN <= 1}
+                        aria-label={t("splitpdf.v2.decrease")}
+                        className="flex h-11 w-11 items-center justify-center rounded-xl border border-border text-t-secondary hover:bg-bg-secondary hover:text-t-primary disabled:opacity-40"
                       >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={src}
-                          alt=""
-                          className="w-full h-auto object-cover aspect-[3/4]"
-                        />
-                        <p className="text-[10px] text-center py-1 text-t-secondary tabular-nums">
-                          {t("split.pageLabel", { n: i + 1 })}
-                        </p>
-                      </div>
-                    ))}
+                        <Minus className="h-4 w-4" aria-hidden />
+                      </button>
+                      <input
+                        id="everyN"
+                        type="text"
+                        inputMode="numeric"
+                        autoComplete="off"
+                        value={everyText}
+                        onChange={(e) => setEveryText(e.target.value.replace(/[^\d]/g, "").slice(0, 6))}
+                        aria-invalid={!everyValid}
+                        aria-describedby="every-help"
+                        className={`h-11 w-24 rounded-xl border bg-bg-secondary px-3 text-center text-t-primary tabular-nums focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 ${
+                          everyValid ? "border-border" : "border-red-500/70"
+                        }`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => stepEvery(1)}
+                        disabled={everyValid && everyN >= pageCount}
+                        aria-label={t("splitpdf.v2.increase")}
+                        className="flex h-11 w-11 items-center justify-center rounded-xl border border-border text-t-secondary hover:bg-bg-secondary hover:text-t-primary disabled:opacity-40"
+                      >
+                        <Plus className="h-4 w-4" aria-hidden />
+                      </button>
+                    </div>
+                    <p
+                      id="every-help"
+                      role={rangeError ? "alert" : undefined}
+                      className={`text-xs ${rangeError ? "text-red-600 dark:text-red-400" : "text-t-tertiary"}`}
+                    >
+                      {rangeError ? t(rangeError.key, rangeError.params) : summary}
+                    </p>
                   </div>
                 )}
-                {totalPages > pageThumbs.length && pageThumbs.length > 0 && (
-                  <p className="text-[11px] text-t-secondary">
-                    {t("split.thumbsPartial", {
-                      shown: pageThumbs.length,
-                      total: totalPages,
-                    })}
-                  </p>
-                )}
-              </div>
+
+                <div className="space-y-2">
+                  <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <p className={sectionTitle}>{t("split.pagePreview")}</p>
+                    {mode !== "every" && (
+                      <p className="text-xs text-t-tertiary">{t("splitpdf.v2.selectHint")}</p>
+                    )}
+                  </div>
+                  <div
+                    ref={setGridEl}
+                    className="max-h-[min(70vh,640px)] overflow-y-auto overscroll-contain rounded-xl border border-border bg-bg-secondary/50 p-2 sm:p-3"
+                  >
+                    <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 sm:gap-3 md:grid-cols-5">
+                      {Array.from({ length: pageCount }, (_, i) => {
+                        const p = i + 1;
+                        const g = pageGroup.get(p);
+                        const on = g !== undefined;
+                        const label =
+                          on && mode !== "extract"
+                            ? t("splitpdf.v2.pageInFile", { n: p, k: g })
+                            : t("split.pageLabel", { n: p });
+                        const body = (
+                          <>
+                            <PdfPageThumb
+                              thumbs={thumbs}
+                              page={p}
+                              box={THUMB_BOX}
+                              root={gridEl}
+                              className="flex aspect-[3/4] w-full items-center justify-center overflow-hidden rounded-md bg-surface"
+                              imgClassName="h-full w-full object-contain"
+                              placeholder={<span className="text-xs text-t-tertiary tabular-nums">{p}</span>}
+                            />
+                            <span className="mt-1 block text-center text-[11px] text-t-secondary tabular-nums">{p}</span>
+                            {on && (
+                              <span className="absolute end-1.5 top-1.5 flex h-6 min-w-6 items-center justify-center rounded-full bg-accent px-1.5 text-[11px] font-semibold text-on-accent tabular-nums">
+                                {mode === "extract" ? <Check className="h-3.5 w-3.5" aria-hidden /> : g}
+                              </span>
+                            )}
+                          </>
+                        );
+                        const cls = `relative block w-full rounded-lg border-2 p-1 text-start transition-colors ${
+                          on ? "border-accent" : "border-transparent"
+                        }`;
+                        return mode === "every" ? (
+                          <div key={p} className={cls} aria-label={label} role="img">
+                            {body}
+                          </div>
+                        ) : (
+                          <button
+                            key={p}
+                            type="button"
+                            aria-pressed={on}
+                            aria-label={label}
+                            onClick={(e) => onPageClick(p, e)}
+                            className={`${cls} hover:border-accent/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent`}
+                          >
+                            {body}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </fieldset>
             )}
           </div>
         )}
 
-        {/* Page Range Input */}
-        {file && totalPages > 0 && !resultBlob && (
-          <div className="glass rounded-xl p-6 space-y-4">
-            <div>
-              <label
-                htmlFor="pageRanges"
-                className="block text-sm font-medium text-t-primary mb-2"
-              >
-                {t("split.pageRanges")}
-              </label>
-              <input
-                id="pageRanges"
-                type="text"
-                value={rangeInput}
-                onChange={(e) => setRangeInput(e.target.value)}
-                placeholder={`e.g. 1-3, 5, 7-${totalPages}`}
-                className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border text-t-primary placeholder:text-t-secondary/60 focus:outline-none focus:border-accent/50 transition-colors"
-              />
-              <p className="text-xs text-t-secondary mt-2">
-                {t("split.rangesHelp")}
-              </p>
-            </div>
-
-            {/* Quick select buttons */}
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => setRangeInput(`1-${totalPages}`)}
-                className="px-3 py-1.5 text-xs rounded-lg bg-bg-secondary border border-border text-t-secondary hover:text-t-primary hover:border-accent/40 transition-colors"
-              >
-                {t("split.allPages")}
-              </button>
-              {totalPages > 1 && (
-                <button
-                  type="button"
-                  onClick={() =>
-                    setRangeInput(
-                      Array.from({ length: totalPages }, (_, i) => String(i + 1)).join(", ")
-                    )
-                  }
-                  className="px-3 py-1.5 text-xs rounded-lg bg-bg-secondary border border-border text-t-secondary hover:text-t-primary hover:border-accent/40 transition-colors"
-                >
-                  {t("split.eachPage")}
-                </button>
-              )}
-              {totalPages >= 2 && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    const mid = Math.ceil(totalPages / 2);
-                    setRangeInput(`1-${mid}, ${mid + 1}-${totalPages}`);
-                  }}
-                  className="px-3 py-1.5 text-xs rounded-lg bg-bg-secondary border border-border text-t-secondary hover:text-t-primary hover:border-accent/40 transition-colors"
-                >
-                  {t("split.half")}
-                </button>
-              )}
-            </div>
+        {processing && (
+          <div className="space-y-3">
+            <ProgressBar progress={progress} label={t("split.splittingPdf")} />
+            <button type="button" onClick={cancelSplit} className={buttonSecondary}>
+              {t("bg.cancel")}
+            </button>
           </div>
         )}
 
-        {/* Progress Bar */}
-        {processing && (
-          <ProgressBar progress={progress} label={t("split.splittingPdf")} />
+        {file && pageCount > 0 && !processing && (
+          <div className="flex flex-wrap items-center gap-3">
+            {currentResult ? (
+              <>
+                <DownloadButton
+                  blob={currentResult.blob}
+                  filename={currentResult.name}
+                  label={`${currentResult.kind === "zip" ? t("split.download") : t("ui.downloadPdf")} (${formatFileSize(currentResult.blob.size)})`}
+                />
+                <button type="button" onClick={handleReset} className={buttonSecondary}>
+                  {t("split.another")}
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={handleSplit}
+                  disabled={groups.length === 0}
+                  className={buttonPrimary}
+                >
+                  {mode === "extract" ? t("splitpdf.v2.buttonExtract") : t("split.button")}
+                </button>
+                <span className="text-sm text-t-secondary" role="status">
+                  {groups.length === 0
+                    ? rangeError
+                      ? ""
+                      : t("splitpdf.v2.noneSelected")
+                    : summary}
+                </span>
+              </>
+            )}
+          </div>
         )}
-
-        {/* Action Buttons */}
-        <div className="flex flex-wrap items-center gap-4">
-          {file && !resultBlob && (
-            <ProcessButton
-              onClick={handleSplit}
-              disabled={!file || !rangeInput.trim()}
-              loading={processing}
-              label={t("split.button")}
-              loadingLabel={t("split.splitting")}
-            />
-          )}
-          {resultBlob && (
-            <>
-              <DownloadButton
-                blob={resultBlob}
-                filename={resultFilename}
-                label={resultFilename.endsWith(".zip") ? t("split.download") : t("ui.download")}
-              />
-              <button
-                type="button"
-                onClick={handleReset}
-                className="px-6 py-3 rounded-xl font-semibold text-t-secondary border border-border hover:text-t-primary hover:border-accent/40 transition-all duration-300"
-              >
-                {t("split.another")}
-              </button>
-            </>
-          )}
-        </div>
       </div>
     </ToolLayout>
   );
