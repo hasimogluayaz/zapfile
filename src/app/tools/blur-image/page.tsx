@@ -1,645 +1,847 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
+import {
+  Brush,
+  Circle,
+  Download,
+  Eye,
+  ImagePlus,
+  Loader2,
+  Maximize,
+  Redo2,
+  ScanFace,
+  Square,
+  Trash2,
+  Undo2,
+  X,
+} from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
 import FileDropzone from "@/components/FileDropzone";
+import { Segmented, Slider, buttonPrimary, buttonSecondary, sectionTitle } from "@/components/ui/controls";
+import { AbortError, extensionFor } from "@/lib/image-engine";
 import {
-  formatFileSize,
-  getFileNameWithoutExtension,
-  downloadBlob,
-} from "@/lib/utils";
+  ctx2d,
+  decodeImage,
+  encodeCanvas,
+  makeCanvas,
+  makeProxy,
+  nextFrame,
+  releaseCanvas,
+  resolveFormat,
+  type DecodedImage,
+  type FormatChoice,
+} from "@/lib/image-editor-kit";
+import { ExportFormatPicker, formatLabel } from "@/lib/image-editor-kit-ui";
+import { downloadBlob, formatFileSize, getFileNameWithoutExtension } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n";
+import { hitTest, regionBox, renderRegion, type Effect, type Region, type Shape } from "./render";
 
-interface BlurArea {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
+type FaceDetectorLike = new (opts?: { fastMode?: boolean; maxDetectedFaces?: number }) => {
+  detect(source: ImageBitmapSource): Promise<{ boundingBox: DOMRectReadOnly }[]>;
+};
+
+function getFaceDetector(): FaceDetectorLike | null {
+  if (typeof window === "undefined") return null;
+  return (window as unknown as { FaceDetector?: FaceDetectorLike }).FaceDetector ?? null;
 }
 
-type BlurMode = "gaussian" | "pixelate" | "blackout";
+interface Loaded {
+  file: File;
+  decoded: DecodedImage;
+  proxy: ImageBitmap;
+}
+
+type Gesture =
+  | { kind: "draw"; id: string; sx: number; sy: number; before: Region[] }
+  | { kind: "brush"; id: string; lx: number; ly: number; before: Region[] }
+  | { kind: "move"; id: string; sx: number; sy: number; orig: Region; before: Region[] }
+  | { kind: "resize"; id: string; ax: number; ay: number; before: Region[] };
+
+const EFFECT_LABEL: Record<Effect, string> = {
+  blur: "blur.v2.effectBlur",
+  pixelate: "blur.pixelate",
+  blackout: "blur.blackout",
+};
+
+const ACCEPT_TYPES = ["image/jpeg", "image/png", "image/webp"];
+let idSeq = 0;
+const newId = () => `r${Date.now().toString(36)}${(idSeq++).toString(36)}`;
+const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 
 export default function BlurImagePage() {
-  const [file, setFile] = useState<File | null>(null);
-  const [blurMode, setBlurMode] = useState<BlurMode>("gaussian");
-  const [intensity, setIntensity] = useState(5);
-  const [blurAreas, setBlurAreas] = useState<BlurArea[]>([]);
-  const [redoAreas, setRedoAreas] = useState<BlurArea[]>([]);
-  const [feather, setFeather] = useState(0);
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [startPos, setStartPos] = useState<{ x: number; y: number } | null>(null);
-  const [processing, setProcessing] = useState(false);
-  const [showComparison, setShowComparison] = useState(false);
   const { t } = useI18n();
+  const [loaded, setLoaded] = useState<Loaded | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [regions, setRegions] = useState<Region[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [undo, setUndo] = useState<Region[][]>([]);
+  const [redo, setRedo] = useState<Region[][]>([]);
+  const [tool, setTool] = useState<Shape>("rect");
+  const [effect, setEffect] = useState<Effect>("blur");
+  const [strength, setStrength] = useState(60);
+  const [feather, setFeather] = useState(15);
+  const [brushSize, setBrushSize] = useState(5); // % of the long side
+  const [holding, setHolding] = useState(false);
+  const [format, setFormat] = useState<FormatChoice>("original");
+  const [quality, setQuality] = useState(0.9);
+  const [exportProgress, setExportProgress] = useState<number | null>(null);
+  const [faceSupported, setFaceSupported] = useState(false);
+  const [detecting, setDetecting] = useState(false);
+  const [displayScale, setDisplayScale] = useState(1); // proxy px per CSS px
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const originalCanvasRef = useRef<HTMLCanvasElement>(null);
-  const imgRef = useRef<HTMLImageElement | null>(null);
-  const originalDataRef = useRef<ImageData | null>(null);
+  const gestureRef = useRef<Gesture | null>(null);
+  const frameRef = useRef<number | null>(null);
+  const loadRunRef = useRef(0);
+  const abortRef = useRef<AbortController | null>(null);
+  const lastEditRef = useRef(0);
 
-  const getScale = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return 1;
-    const rect = canvas.getBoundingClientRect();
-    return canvas.width / rect.width;
-  }, []);
+  const regionsRef = useRef(regions);
+  regionsRef.current = regions;
+  const loadedRef = useRef(loaded);
+  loadedRef.current = loaded;
+  const holdingRef = useRef(holding);
+  holdingRef.current = holding;
 
-  function applyBlurToArea(
-    canvas: HTMLCanvasElement,
-    ctx: CanvasRenderingContext2D,
-    area: BlurArea,
-    mode: BlurMode,
-    value: number,
-    featherPx: number,
-    originalFull: ImageData | null,
-  ) {
-    const x = Math.max(0, Math.min(area.x, canvas.width));
-    const y = Math.max(0, Math.min(area.y, canvas.height));
-    const w = Math.min(area.w, canvas.width - x);
-    const h = Math.min(area.h, canvas.height - y);
-    if (w <= 0 || h <= 0) return;
-
-    if (mode === "blackout") {
-      ctx.fillStyle = "#000000";
-      ctx.fillRect(x, y, w, h);
-      return;
-    }
-
-    if (mode === "gaussian") {
-      const padding = value * 4;
-      const tempCanvas = document.createElement("canvas");
-      tempCanvas.width = w + padding * 2;
-      tempCanvas.height = h + padding * 2;
-      const tempCtx = tempCanvas.getContext("2d")!;
-
-      const srcX = Math.max(0, x - padding);
-      const srcY = Math.max(0, y - padding);
-      const srcW = Math.min(canvas.width - srcX, w + padding * 2);
-      const srcH = Math.min(canvas.height - srcY, h + padding * 2);
-
-      tempCtx.drawImage(canvas, srcX, srcY, srcW, srcH, 0, 0, srcW, srcH);
-      tempCtx.filter = `blur(${value}px)`;
-      tempCtx.drawImage(tempCanvas, 0, 0);
-      tempCtx.filter = "none";
-
-      const offsetX = x - srcX;
-      const offsetY = y - srcY;
-      ctx.drawImage(tempCanvas, offsetX, offsetY, w, h, x, y, w, h);
-
-      if (featherPx > 0 && originalFull) {
-        const patch = ctx.getImageData(x, y, w, h);
-        const od = originalFull.data;
-        const fw = originalFull.width;
-        for (let py = 0; py < h; py++) {
-          for (let px = 0; px < w; px++) {
-            const dist = Math.min(px, py, w - 1 - px, h - 1 - py);
-            let t = Math.min(1, dist / featherPx);
-            t = t * t;
-            const i = (py * w + px) * 4;
-            const j = ((y + py) * fw + (x + px)) * 4;
-            for (let c = 0; c < 4; c++) {
-              patch.data[i + c] = Math.round(
-                patch.data[i + c] * t + od[j + c] * (1 - t),
-              );
-            }
-          }
-        }
-        ctx.putImageData(patch, x, y);
-      }
-    } else {
-      // Pixelate
-      const blockSize = Math.max(1, value);
-      const imageData = ctx.getImageData(x, y, w, h);
-      const data = imageData.data;
-
-      for (let by = 0; by < h; by += blockSize) {
-        for (let bx = 0; bx < w; bx += blockSize) {
-          let r = 0, g = 0, b = 0, a = 0, count = 0;
-          const bw = Math.min(blockSize, w - bx);
-          const bh = Math.min(blockSize, h - by);
-
-          for (let py = by; py < by + bh; py++) {
-            for (let px = bx; px < bx + bw; px++) {
-              const i = (py * w + px) * 4;
-              r += data[i];
-              g += data[i + 1];
-              b += data[i + 2];
-              a += data[i + 3];
-              count++;
-            }
-          }
-
-          r = Math.round(r / count);
-          g = Math.round(g / count);
-          b = Math.round(b / count);
-          a = Math.round(a / count);
-
-          for (let py = by; py < by + bh; py++) {
-            for (let px = bx; px < bx + bw; px++) {
-              const i = (py * w + px) * 4;
-              data[i] = r;
-              data[i + 1] = g;
-              data[i + 2] = b;
-              data[i + 3] = a;
-            }
-          }
-        }
-      }
-
-      ctx.putImageData(imageData, x, y);
-
-      if (featherPx > 0 && originalFull) {
-        const patch = ctx.getImageData(x, y, w, h);
-        const od = originalFull.data;
-        const fw = originalFull.width;
-        for (let py = 0; py < h; py++) {
-          for (let px = 0; px < w; px++) {
-            const dist = Math.min(px, py, w - 1 - px, h - 1 - py);
-            let t = Math.min(1, dist / featherPx);
-            t = t * t;
-            const i = (py * w + px) * 4;
-            const j = ((y + py) * fw + (x + px)) * 4;
-            for (let c = 0; c < 4; c++) {
-              patch.data[i + c] = Math.round(
-                patch.data[i + c] * t + od[j + c] * (1 - t),
-              );
-            }
-          }
-        }
-        ctx.putImageData(patch, x, y);
-      }
-    }
-  }
-
-  const redraw = useCallback(
-    (areas: BlurArea[], selectionRect?: BlurArea | null) => {
-      const canvas = canvasRef.current;
-      if (!canvas || !originalDataRef.current) return;
-      const ctx = canvas.getContext("2d")!;
-      const orig = originalDataRef.current;
-
-      ctx.putImageData(orig, 0, 0);
-
-      for (const area of areas) {
-        applyBlurToArea(canvas, ctx, area, blurMode, intensity, feather, orig);
-      }
-
-      if (selectionRect) {
-        ctx.save();
-        ctx.strokeStyle = "#818cf8";
-        ctx.lineWidth = 2;
-        ctx.setLineDash([6, 4]);
-        ctx.strokeRect(selectionRect.x, selectionRect.y, selectionRect.w, selectionRect.h);
-        ctx.fillStyle = "rgba(129, 140, 248, 0.1)";
-        ctx.fillRect(selectionRect.x, selectionRect.y, selectionRect.w, selectionRect.h);
-        ctx.restore();
-      }
-    },
-    [blurMode, intensity, feather],
-  );
+  useEffect(() => setFaceSupported(!!getFaceDetector()), []);
 
   useEffect(() => {
-    if (imgRef.current && originalDataRef.current && blurAreas.length > 0) {
-      redraw(blurAreas);
-    }
-  }, [blurMode, intensity, feather, blurAreas, redraw]);
-
-  const handleFilesSelected = useCallback((files: File[]) => {
-    const f = files[0];
-    setFile(f);
-    setBlurAreas([]);
-    setRedoAreas([]);
-    setShowComparison(false);
-
-    const img = new window.Image();
-    img.onload = () => {
-      imgRef.current = img;
-
-      // Set up main canvas
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-      const ctx = canvas.getContext("2d")!;
-      ctx.drawImage(img, 0, 0);
-      originalDataRef.current = ctx.getImageData(0, 0, canvas.width, canvas.height);
-
-      // Set up original (comparison) canvas
-      const origCanvas = originalCanvasRef.current;
-      if (origCanvas) {
-        origCanvas.width = img.naturalWidth;
-        origCanvas.height = img.naturalHeight;
-        const origCtx = origCanvas.getContext("2d")!;
-        origCtx.drawImage(img, 0, 0);
-      }
+    return () => {
+      loaded?.decoded.bitmap.close();
+      loaded?.proxy.close();
     };
-    img.onerror = () => toast.error(t("ui.failedLoad"));
-    img.src = URL.createObjectURL(f);
-  }, [t]);
+  }, [loaded]);
 
-  const getCanvasCoords = useCallback(
-    (e: React.MouseEvent | React.TouchEvent) => {
-      const canvas = canvasRef.current;
-      if (!canvas) return { x: 0, y: 0 };
-      const rect = canvas.getBoundingClientRect();
-      const scale = getScale();
-      let clientX: number, clientY: number;
+  useEffect(
+    () => () => {
+      abortRef.current?.abort();
+      if (frameRef.current != null) cancelAnimationFrame(frameRef.current);
+    },
+    [],
+  );
 
-      if ("touches" in e) {
-        clientX = e.touches[0].clientX;
-        clientY = e.touches[0].clientY;
-      } else {
-        clientX = e.clientX;
-        clientY = e.clientY;
+  const handleFiles = useCallback(
+    async (files: File[]) => {
+      const f = files[0];
+      if (!f) return;
+      const run = ++loadRunRef.current;
+      abortRef.current?.abort();
+      setLoading(true);
+      try {
+        const decoded = await decodeImage(f);
+        const proxy = await makeProxy(decoded.bitmap);
+        if (run !== loadRunRef.current) {
+          decoded.bitmap.close();
+          proxy.close();
+          return;
+        }
+        setRegions([]);
+        setSelectedId(null);
+        setUndo([]);
+        setRedo([]);
+        setLoaded({ file: f, decoded, proxy });
+      } catch {
+        if (run === loadRunRef.current) toast.error(t("ui.failedLoad"));
+      } finally {
+        if (run === loadRunRef.current) setLoading(false);
       }
-
-      return {
-        x: (clientX - rect.left) * scale,
-        y: (clientY - rect.top) * scale,
-      };
     },
-    [getScale],
+    [t],
   );
 
-  const handlePointerDown = useCallback(
-    (e: React.MouseEvent | React.TouchEvent) => {
-      e.preventDefault();
-      setIsDrawing(true);
-      setStartPos(getCanvasCoords(e));
-    },
-    [getCanvasCoords],
-  );
-
-  const handlePointerMove = useCallback(
-    (e: React.MouseEvent | React.TouchEvent) => {
-      if (!isDrawing || !startPos) return;
-      e.preventDefault();
-      const coords = getCanvasCoords(e);
-      const rect: BlurArea = {
-        x: Math.min(startPos.x, coords.x),
-        y: Math.min(startPos.y, coords.y),
-        w: Math.abs(coords.x - startPos.x),
-        h: Math.abs(coords.y - startPos.y),
-      };
-      redraw(blurAreas, rect);
-    },
-    [isDrawing, startPos, getCanvasCoords, blurAreas, redraw],
-  );
-
-  const handlePointerUp = useCallback(
-    (e: React.MouseEvent | React.TouchEvent) => {
-      if (!isDrawing || !startPos) return;
-      e.preventDefault();
-      const coords = getCanvasCoords(e);
-      const area: BlurArea = {
-        x: Math.min(startPos.x, coords.x),
-        y: Math.min(startPos.y, coords.y),
-        w: Math.abs(coords.x - startPos.x),
-        h: Math.abs(coords.y - startPos.y),
-      };
-
-      if (area.w > 4 && area.h > 4) {
-        const newAreas = [...blurAreas, area];
-        setBlurAreas(newAreas);
-        setRedoAreas([]);
-        redraw(newAreas);
-        toast.success(t("blur.applied"));
-      }
-
-      setIsDrawing(false);
-      setStartPos(null);
-    },
-    [isDrawing, startPos, getCanvasCoords, blurAreas, redraw, t],
-  );
-
-  const handleUndo = () => {
-    if (blurAreas.length === 0) return;
-    const removed = blurAreas[blurAreas.length - 1]!;
-    const newAreas = blurAreas.slice(0, -1);
-    setRedoAreas((r) => [...r, removed]);
-    setBlurAreas(newAreas);
+  // ── Proxy rendering, one frame at a time ──
+  const paint = useCallback(() => {
+    frameRef.current = null;
+    const l = loadedRef.current;
     const canvas = canvasRef.current;
-    if (canvas && originalDataRef.current) {
-      const ctx = canvas.getContext("2d")!;
-      ctx.putImageData(originalDataRef.current, 0, 0);
-      if (newAreas.length > 0) redraw(newAreas);
+    if (!l || !canvas) return;
+    const W = l.proxy.width;
+    const H = l.proxy.height;
+    if (canvas.width !== W || canvas.height !== H) {
+      canvas.width = W;
+      canvas.height = H;
     }
-    toast(t("blur.undone"));
+    const ctx = ctx2d(canvas);
+    ctx.globalCompositeOperation = "source-over";
+    ctx.drawImage(l.proxy, 0, 0);
+    if (holdingRef.current) return;
+    for (const r of regionsRef.current) renderRegion(ctx, W, H, r);
+  }, []);
+
+  const schedulePaint = useCallback(() => {
+    if (frameRef.current == null) frameRef.current = requestAnimationFrame(paint);
+  }, [paint]);
+
+  useEffect(() => schedulePaint(), [loaded, regions, holding, schedulePaint]);
+
+  // Track on-screen size for hit tolerances and handle sizes.
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || !loaded) return;
+    const update = () => {
+      const w = canvas.getBoundingClientRect().width;
+      if (w > 0) setDisplayScale(loaded.proxy.width / w);
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(canvas);
+    return () => ro.disconnect();
+  }, [loaded]);
+
+  // ── History ──
+  const pushUndo = useCallback((before: Region[]) => {
+    setUndo((u) => [...u.slice(-79), before]);
+    setRedo([]);
+  }, []);
+
+  const doUndo = () => {
+    if (!undo.length) return;
+    const prev = undo[undo.length - 1];
+    setUndo(undo.slice(0, -1));
+    setRedo([...redo, regionsRef.current]);
+    setRegions(prev);
+    if (selectedId && !prev.some((r) => r.id === selectedId)) setSelectedId(null);
   };
 
-  const handleRedo = () => {
-    if (redoAreas.length === 0) return;
-    const last = redoAreas[redoAreas.length - 1]!;
-    const newAreas = [...blurAreas, last];
-    setRedoAreas((r) => r.slice(0, -1));
-    setBlurAreas(newAreas);
-    redraw(newAreas);
-    toast(t("blur.redone"));
+  const doRedo = () => {
+    if (!redo.length) return;
+    const next = redo[redo.length - 1];
+    setRedo(redo.slice(0, -1));
+    setUndo([...undo, regionsRef.current]);
+    setRegions(next);
+    if (selectedId && !next.some((r) => r.id === selectedId)) setSelectedId(null);
   };
 
-  const handleBlurEntire = () => {
+  /** For slider-style edits: one undo step per burst of changes. */
+  const beginEdit = () => {
+    const now = Date.now();
+    if (now - lastEditRef.current > 700) pushUndo(regionsRef.current);
+    lastEditRef.current = now;
+  };
+
+  const selected = regions.find((r) => r.id === selectedId) ?? null;
+
+  const updateSelected = (patch: Partial<Region>) => {
+    if (!selected) return;
+    beginEdit();
+    setRegions((rs) => rs.map((r) => (r.id === selected.id ? { ...r, ...patch } : r)));
+  };
+
+  const deleteRegion = (id: string) => {
+    pushUndo(regionsRef.current);
+    setRegions((rs) => rs.filter((r) => r.id !== id));
+    setSelectedId((s) => (s === id ? null : s));
+  };
+
+  // ── Pointer interaction (mouse, pen and touch) ──
+  const toProxy = (e: React.PointerEvent) => {
+    const canvas = canvasRef.current!;
+    const rect = canvas.getBoundingClientRect();
+    const W = canvas.width;
+    const H = canvas.height;
+    return {
+      x: clamp(((e.clientX - rect.left) / rect.width) * W, 0, W),
+      y: clamp(((e.clientY - rect.top) / rect.height) * H, 0, H),
+      W,
+      H,
+    };
+  };
+
+  const handleAt = (r: Region, x: number, y: number, W: number, H: number) => {
+    if (r.shape === "brush") return null;
+    const b = regionBox(r, W, H);
+    const tol = 22 * displayScale;
+    const corners = [
+      [b.x, b.y, b.x + b.w, b.y + b.h],
+      [b.x + b.w, b.y, b.x, b.y + b.h],
+      [b.x, b.y + b.h, b.x + b.w, b.y],
+      [b.x + b.w, b.y + b.h, b.x, b.y],
+    ];
+    for (const [cx, cy, ax, ay] of corners) if (Math.hypot(x - cx, y - cy) <= tol) return { ax, ay };
+    return null;
+  };
+
+  const onPointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!loaded || exportProgress != null || holding) return;
+    if (e.button !== 0 && e.pointerType === "mouse") return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    e.currentTarget.focus({ preventScroll: true });
+    const { x, y, W, H } = toProxy(e);
+    const before = regionsRef.current;
+    const sel = before.find((r) => r.id === selectedId);
+    const handle = sel ? handleAt(sel, x, y, W, H) : null;
+    if (sel && handle) {
+      gestureRef.current = { kind: "resize", id: sel.id, ax: handle.ax, ay: handle.ay, before };
+      return;
+    }
+    if (tool !== "brush") {
+      const tol = 4 * displayScale;
+      const hit = [...before].reverse().find((r) => hitTest(r, x, y, W, H, tol));
+      if (hit) {
+        setSelectedId(hit.id);
+        setEffect(hit.effect);
+        setStrength(hit.strength);
+        setFeather(hit.feather);
+        gestureRef.current = { kind: "move", id: hit.id, sx: x, sy: y, orig: hit, before };
+        return;
+      }
+    }
+    const id = newId();
+    const base = { id, effect, strength, feather };
+    if (tool === "brush") {
+      const region: Region = { ...base, shape: "brush", x: 0, y: 0, w: 0, h: 0, points: [x / W, y / H], size: brushSize / 100 };
+      setRegions([...before, region]);
+      gestureRef.current = { kind: "brush", id, lx: x, ly: y, before };
+    } else {
+      const region: Region = { ...base, shape: tool, x: x / W, y: y / H, w: 0, h: 0 };
+      setRegions([...before, region]);
+      gestureRef.current = { kind: "draw", id, sx: x, sy: y, before };
+    }
+    setSelectedId(id);
+  };
+
+  const onPointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    const g = gestureRef.current;
+    if (!g) return;
+    const { x, y, W, H } = toProxy(e);
+    if (g.kind === "draw" || g.kind === "resize") {
+      const ox = g.kind === "draw" ? g.sx : g.ax;
+      const oy = g.kind === "draw" ? g.sy : g.ay;
+      const box = { x: Math.min(ox, x) / W, y: Math.min(oy, y) / H, w: Math.abs(x - ox) / W, h: Math.abs(y - oy) / H };
+      setRegions((rs) => rs.map((r) => (r.id === g.id ? { ...r, ...box } : r)));
+    } else if (g.kind === "brush") {
+      if (Math.hypot(x - g.lx, y - g.ly) < 3 * displayScale) return;
+      g.lx = x;
+      g.ly = y;
+      setRegions((rs) => rs.map((r) => (r.id === g.id ? { ...r, points: [...(r.points ?? []), x / W, y / H] } : r)));
+    } else {
+      const o = g.orig;
+      let dx = (x - g.sx) / W;
+      let dy = (y - g.sy) / H;
+      if (o.shape === "brush" && o.points) {
+        const b = regionBox(o, 1, 1);
+        dx = clamp(dx, -(b.x + b.w * 0.5), 1 - (b.x + b.w * 0.5));
+        dy = clamp(dy, -(b.y + b.h * 0.5), 1 - (b.y + b.h * 0.5));
+        const pts = o.points.map((v, i) => (i % 2 === 0 ? v + dx : v + dy));
+        setRegions((rs) => rs.map((r) => (r.id === g.id ? { ...r, points: pts } : r)));
+      } else {
+        const nx = clamp(o.x + dx, 0, 1 - o.w);
+        const ny = clamp(o.y + dy, 0, 1 - o.h);
+        setRegions((rs) => rs.map((r) => (r.id === g.id ? { ...r, x: nx, y: ny } : r)));
+      }
+    }
+  };
+
+  const onPointerUp = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    const g = gestureRef.current;
+    gestureRef.current = null;
+    if (!g) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const area: BlurArea = { x: 0, y: 0, w: canvas.width, h: canvas.height };
-    const newAreas = [...blurAreas, area];
-    setBlurAreas(newAreas);
-    setRedoAreas([]);
-    redraw(newAreas);
-    toast.success(t("blur.entireDone"));
-  };
-
-  const handleReset = () => {
-    setBlurAreas([]);
-    setRedoAreas([]);
-    const canvas = canvasRef.current;
-    if (canvas && originalDataRef.current) {
-      const ctx = canvas.getContext("2d")!;
-      ctx.putImageData(originalDataRef.current, 0, 0);
+    const W = canvas.width;
+    const H = canvas.height;
+    const current = regionsRef.current.find((r) => r.id === g.id);
+    if (g.kind === "draw") {
+      const minPx = 8 * displayScale;
+      if (!current || current.w * W < minPx || current.h * H < minPx) {
+        // A tap on empty space: discard the empty region and deselect.
+        setRegions(g.before);
+        setSelectedId(null);
+        return;
+      }
     }
-    toast(t("blur.resetDone"));
+    if (g.kind === "move" && current && current.x === g.orig.x && current.y === g.orig.y && current.points === g.orig.points) return;
+    if (e.type === "pointercancel" && g.kind !== "brush") {
+      setRegions(g.before);
+      return;
+    }
+    pushUndo(g.before);
   };
 
-  const handleDownload = () => {
-    const canvas = canvasRef.current;
-    if (!canvas || !file) return;
-    setProcessing(true);
-    canvas.toBlob(
-      (blob) => {
-        setProcessing(false);
-        if (blob) {
-          const baseName = getFileNameWithoutExtension(file.name);
-          downloadBlob(blob, `${baseName}-blurred.png`);
-          toast.success(t("blur.downloaded"));
-        } else {
-          toast.error(t("ui.failedExport"));
-        }
-      },
-      "image/png",
-    );
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    const mod = e.metaKey || e.ctrlKey;
+    if (mod && e.key.toLowerCase() === "z") {
+      e.preventDefault();
+      if (e.shiftKey) doRedo();
+      else doUndo();
+      return;
+    }
+    if (mod && e.key.toLowerCase() === "y") {
+      e.preventDefault();
+      doRedo();
+      return;
+    }
+    if (!selected) return;
+    if (e.key === "Delete" || e.key === "Backspace") {
+      e.preventDefault();
+      deleteRegion(selected.id);
+    } else if (e.key === "Escape") {
+      setSelectedId(null);
+    } else if (e.key.startsWith("Arrow") && selected.shape !== "brush") {
+      e.preventDefault();
+      const step = e.shiftKey ? 0.02 : 0.005;
+      const dx = e.key === "ArrowLeft" ? -step : e.key === "ArrowRight" ? step : 0;
+      const dy = e.key === "ArrowUp" ? -step : e.key === "ArrowDown" ? step : 0;
+      updateSelected({ x: clamp(selected.x + dx, 0, 1 - selected.w), y: clamp(selected.y + dy, 0, 1 - selected.h) });
+    }
   };
 
-  const reset = () => {
-    setFile(null);
-    setBlurAreas([]);
-    setRedoAreas([]);
-    setIsDrawing(false);
-    setStartPos(null);
-    setProcessing(false);
-    setShowComparison(false);
-    imgRef.current = null;
-    originalDataRef.current = null;
+  // ── Panel actions ──
+  const changeEffect = (v: Effect) => {
+    setEffect(v);
+    if (selected) updateSelected({ effect: v });
+  };
+  const changeStrength = (v: number) => {
+    setStrength(v);
+    if (selected) updateSelected({ strength: v });
+  };
+  const changeFeather = (v: number) => {
+    setFeather(v);
+    if (selected) updateSelected({ feather: v });
+  };
+  const changeBrushSize = (v: number) => {
+    setBrushSize(v);
+    if (selected?.shape === "brush") updateSelected({ size: v / 100 });
   };
 
-  const modeConfig: { key: BlurMode; label: string }[] = [
-    { key: "gaussian", label: t("blur.gaussian") },
-    { key: "pixelate", label: t("blur.pixelate") },
-    { key: "blackout", label: t("blur.blackout") },
+  const blurWhole = () => {
+    pushUndo(regionsRef.current);
+    const id = newId();
+    setRegions((rs) => [...rs, { id, shape: "rect", effect, strength, feather: 0, x: 0, y: 0, w: 1, h: 1 }]);
+    setSelectedId(id);
+  };
+
+  const detectFaces = async () => {
+    const FD = getFaceDetector();
+    if (!FD || !loaded) return;
+    setDetecting(true);
+    try {
+      const faces = await new FD({ fastMode: false, maxDetectedFaces: 50 }).detect(loaded.proxy);
+      const W = loaded.proxy.width;
+      const H = loaded.proxy.height;
+      if (!faces.length) {
+        toast(t("blur.v2.noFaces"));
+        return;
+      }
+      pushUndo(regionsRef.current);
+      const added: Region[] = faces.map(({ boundingBox: b }) => {
+        const w = b.width * 1.3;
+        const h = b.height * 1.55;
+        const x = clamp(b.x + b.width / 2 - w / 2, 0, W);
+        const y = clamp(b.y + b.height * 0.45 - h / 2, 0, H);
+        return {
+          id: newId(),
+          shape: "ellipse",
+          effect,
+          strength: Math.max(strength, 50),
+          feather,
+          x: x / W,
+          y: y / H,
+          w: Math.min(w, W - x) / W,
+          h: Math.min(h, H - y) / H,
+        };
+      });
+      setRegions((rs) => [...rs, ...added]);
+      setSelectedId(null);
+      toast.success(t("blur.v2.facesFound", { count: added.length }));
+    } catch {
+      toast.error(t("blur.v2.faceFailed"));
+    } finally {
+      setDetecting(false);
+    }
+  };
+
+  const exportImage = async () => {
+    if (!loaded || !regions.length) return;
+    abortRef.current?.abort();
+    const ac = new AbortController();
+    abortRef.current = ac;
+    const snapshot = regions;
+    const outType = resolveFormat(loaded.file.type, format);
+    setExportProgress(0);
+    const { width: W, height: H, bitmap } = loaded.decoded;
+    const canvas = makeCanvas(W, H);
+    try {
+      const ctx = ctx2d(canvas);
+      ctx.drawImage(bitmap, 0, 0);
+      for (let i = 0; i < snapshot.length; i++) {
+        await nextFrame();
+        if (ac.signal.aborted) throw new AbortError();
+        renderRegion(ctx, W, H, snapshot[i]);
+        setExportProgress(((i + 1) / snapshot.length) * 0.85);
+      }
+      const blob = await encodeCanvas(canvas, outType, quality, ac.signal);
+      if (ac.signal.aborted) throw new AbortError();
+      downloadBlob(blob, `${getFileNameWithoutExtension(loaded.file.name)}-blurred.${extensionFor(outType)}`);
+    } catch (err) {
+      if (!(err instanceof AbortError) && !ac.signal.aborted) {
+        console.error(err);
+        toast.error(t("ui.failedExport"));
+      }
+    } finally {
+      releaseCanvas(canvas);
+      if (abortRef.current === ac) {
+        abortRef.current = null;
+        setExportProgress(null);
+      }
+    }
+  };
+
+  const cancelExport = () => {
+    abortRef.current?.abort();
+    abortRef.current = null;
+    setExportProgress(null);
+  };
+
+  const changeImage = () => {
+    cancelExport();
+    loadRunRef.current++;
+    setLoaded(null);
+    setLoading(false);
+    setRegions([]);
+    setSelectedId(null);
+    setUndo([]);
+    setRedo([]);
+  };
+
+  const holdOn = () => setHolding(true);
+  const holdOff = () => setHolding(false);
+
+  // ── Overlay geometry (proxy pixel space) ──
+  const W = loaded?.proxy.width ?? 1;
+  const H = loaded?.proxy.height ?? 1;
+  const handleR = 7 * displayScale;
+  const busy = exportProgress != null;
+
+  const toolOptions = [
+    { value: "rect" as Shape, label: t("blur.v2.rect"), icon: <Square className="h-4 w-4" aria-hidden="true" /> },
+    { value: "ellipse" as Shape, label: t("blur.v2.ellipse"), icon: <Circle className="h-4 w-4" aria-hidden="true" /> },
+    { value: "brush" as Shape, label: t("blur.v2.brush"), icon: <Brush className="h-4 w-4" aria-hidden="true" /> },
   ];
 
   return (
-    <ToolLayout
-      toolName="Blur Image"
-      toolDescription="Blur or pixelate areas of an image for privacy"
-    >
+    <ToolLayout toolName="Blur Image" toolDescription="Blur or pixelate areas of an image for privacy">
       <div className="space-y-6">
-        {!file ? (
-          <FileDropzone
-            onFilesSelected={handleFilesSelected}
-            accept={{
-              "image/jpeg": [".jpg", ".jpeg"],
-              "image/png": [".png"],
-              "image/webp": [".webp"],
-            }}
-            formats={["JPG", "PNG", "WEBP"]}
-            label={t("ui.dropImage")}
-          />
+        {!loaded ? (
+          loading ? (
+            <div className="glass flex h-64 items-center justify-center gap-2 text-[14px] text-t-secondary" role="status">
+              <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+              {t("ui.loading")}
+            </div>
+          ) : (
+            <FileDropzone
+              onFilesSelected={handleFiles}
+              accept={{
+                "image/jpeg": [".jpg", ".jpeg"],
+                "image/png": [".png"],
+                "image/webp": [".webp"],
+              }}
+              multiple={false}
+              formats={["JPG", "PNG", "WEBP"]}
+              label={t("ui.dropImage")}
+            />
+          )
         ) : (
-          <>
-            {/* File info card */}
-            <div className="glass rounded-xl p-4">
-              <div className="flex items-center justify-between mb-3">
-                <div>
-                  <p className="text-[13px] font-medium text-t-primary truncate max-w-[260px]">
-                    {file.name}
-                  </p>
-                  <p className="text-[12px] text-t-secondary">
-                    {formatFileSize(file.size)}
-                    {imgRef.current && (
-                      <> &middot; {imgRef.current.naturalWidth} &times; {imgRef.current.naturalHeight}px</>
-                    )}
-                  </p>
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
+            {/* Canvas */}
+            <div className="glass space-y-3 p-4 lg:sticky lg:top-20">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <Segmented<Shape> label={t("blur.v2.tool")} size="sm" value={tool} onChange={setTool} options={toolOptions} />
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={doUndo}
+                    disabled={!undo.length || busy}
+                    aria-label={t("blur.undo")}
+                    title={t("blur.undo")}
+                    className={`${buttonSecondary} h-10 w-10 !px-0`}
+                  >
+                    <Undo2 className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={doRedo}
+                    disabled={!redo.length || busy}
+                    aria-label={t("blur.redo")}
+                    title={t("blur.redo")}
+                    className={`${buttonSecondary} h-10 w-10 !px-0`}
+                  >
+                    <Redo2 className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                  <button
+                    type="button"
+                    onPointerDown={(e) => {
+                      e.currentTarget.setPointerCapture(e.pointerId);
+                      holdOn();
+                    }}
+                    onPointerUp={holdOff}
+                    onPointerCancel={holdOff}
+                    onLostPointerCapture={holdOff}
+                    onKeyDown={(e) => {
+                      if (e.key === " " || e.key === "Enter") {
+                        e.preventDefault();
+                        holdOn();
+                      }
+                    }}
+                    onKeyUp={holdOff}
+                    onBlur={holdOff}
+                    onContextMenu={(e) => e.preventDefault()}
+                    disabled={!regions.length}
+                    aria-pressed={holding}
+                    aria-label={t("blur.v2.holdOriginal")}
+                    title={t("blur.v2.holdOriginal")}
+                    className={`${buttonSecondary} h-10 w-10 !px-0 touch-none select-none`}
+                  >
+                    <Eye className="h-4 w-4" aria-hidden="true" />
+                  </button>
                 </div>
-                <button
-                  onClick={reset}
-                  className="text-[12px] text-t-secondary hover:text-red-600 dark:hover:text-red-400 transition-colors flex-shrink-0"
-                >
-                  {t("ui.remove")}
-                </button>
               </div>
 
-              {/* Before/after toggle */}
-              <div className="flex items-center gap-2 mb-3">
-                <button
-                  onClick={() => setShowComparison(false)}
-                  className={`text-[12px] px-3 py-1.5 rounded-lg font-medium transition-all ${
-                    !showComparison
-                      ? "bg-accent text-on-accent"
-                      : "bg-bg-secondary text-t-secondary hover:text-t-primary"
-                  }`}
-                >
-                  {t("blur.edited")}
-                </button>
-                <button
-                  onClick={() => setShowComparison(true)}
-                  disabled={blurAreas.length === 0}
-                  className={`text-[12px] px-3 py-1.5 rounded-lg font-medium transition-all ${
-                    showComparison
-                      ? "bg-accent text-on-accent"
-                      : blurAreas.length === 0
-                      ? "bg-bg-secondary text-t-secondary/40 cursor-not-allowed"
-                      : "bg-bg-secondary text-t-secondary hover:text-t-primary"
-                  }`}
-                >
-                  {t("blur.viewOriginalBtn")}
-                </button>
-                {blurAreas.length > 0 && (
-                  <span className="text-[11px] text-t-secondary ml-auto">
-                    {t("blur.regionsApplied", { count: blurAreas.length })}
-                  </span>
-                )}
+              <div className="flex justify-center overflow-hidden rounded-xl border border-border bg-bg-secondary">
+                <div className="relative">
+                  <canvas
+                    ref={canvasRef}
+                    tabIndex={0}
+                    role="application"
+                    aria-label={t("blur.v2.canvasLabel")}
+                    onPointerDown={onPointerDown}
+                    onPointerMove={onPointerMove}
+                    onPointerUp={onPointerUp}
+                    onPointerCancel={onPointerUp}
+                    onKeyDown={onKeyDown}
+                    className="block h-auto max-h-[min(72vh,680px)] w-auto max-w-full cursor-crosshair touch-none select-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-volt"
+                  />
+                  {!holding && (
+                    <svg
+                      className="pointer-events-none absolute inset-0 h-full w-full"
+                      viewBox={`0 0 ${W} ${H}`}
+                      preserveAspectRatio="none"
+                      aria-hidden="true"
+                    >
+                      {regions.map((r) => {
+                        const b = regionBox(r, W, H);
+                        const isSel = r.id === selectedId;
+                        const common = {
+                          fill: "none",
+                          vectorEffect: "non-scaling-stroke" as const,
+                          strokeWidth: isSel ? 2 : 1,
+                          strokeDasharray: isSel ? undefined : "4 4",
+                          className: isSel ? "text-volt" : "text-white/70",
+                          stroke: "currentColor",
+                        };
+                        return (
+                          <g key={r.id}>
+                            {r.shape === "ellipse" ? (
+                              <ellipse cx={b.x + b.w / 2} cy={b.y + b.h / 2} rx={b.w / 2} ry={b.h / 2} {...common} />
+                            ) : (
+                              <rect x={b.x} y={b.y} width={b.w} height={b.h} {...common} />
+                            )}
+                            {isSel &&
+                              r.shape !== "brush" &&
+                              [
+                                [b.x, b.y],
+                                [b.x + b.w, b.y],
+                                [b.x, b.y + b.h],
+                                [b.x + b.w, b.y + b.h],
+                              ].map(([cx, cy], i) => (
+                                <circle
+                                  key={i}
+                                  cx={cx}
+                                  cy={cy}
+                                  r={handleR}
+                                  className="text-volt"
+                                  fill="currentColor"
+                                  stroke="#16181d"
+                                  strokeWidth={1}
+                                  vectorEffect="non-scaling-stroke"
+                                />
+                              ))}
+                          </g>
+                        );
+                      })}
+                    </svg>
+                  )}
+                </div>
               </div>
 
-              {/* Canvas area */}
-              <div className="relative flex justify-center">
-                {/* Original comparison canvas */}
-                <canvas
-                  ref={originalCanvasRef}
-                  className={`max-w-full max-h-[500px] rounded-lg border border-border object-contain ${
-                    showComparison ? "block" : "hidden"
-                  }`}
-                  style={{ width: "100%", height: "auto" }}
-                />
-                {/* Editable canvas */}
-                <canvas
-                  ref={canvasRef}
-                  className={`max-w-full max-h-[500px] rounded-lg border border-border object-contain cursor-crosshair touch-none ${
-                    showComparison ? "hidden" : "block"
-                  }`}
-                  style={{ width: "100%", height: "auto" }}
-                  onMouseDown={handlePointerDown}
-                  onMouseMove={handlePointerMove}
-                  onMouseUp={handlePointerUp}
-                  onMouseLeave={(e) => { if (isDrawing) handlePointerUp(e); }}
-                  onTouchStart={handlePointerDown}
-                  onTouchMove={handlePointerMove}
-                  onTouchEnd={handlePointerUp}
-                />
-              </div>
-
-              {!showComparison && (
-                <p className="text-[11px] text-t-secondary text-center mt-2">
-                  {t("blur.clickDrag")}
+              <p className="text-center text-[12.5px] text-t-tertiary">
+                {tool === "brush" ? t("blur.v2.hintBrush") : t("blur.v2.hintShape")}
+              </p>
+              <p className="truncate text-[12px] text-t-tertiary">
+                {loaded.file.name} · {loaded.decoded.naturalWidth}×{loaded.decoded.naturalHeight} · {formatFileSize(loaded.file.size)}
+              </p>
+              {loaded.decoded.capped && (
+                <p className="text-[12px] text-t-tertiary">
+                  {t("imgedit.v2.cappedNote", { w: loaded.decoded.width, h: loaded.decoded.height })}
                 </p>
               )}
             </div>
 
-            {/* Blur controls */}
-            <div className="glass rounded-xl p-6 space-y-5">
-              {/* Mode toggle */}
-              <div>
-                <span className="text-[13px] text-t-secondary font-medium block mb-2">
-                  {t("blur.mode")}
-                </span>
-                <div className="flex gap-2">
-                  {modeConfig.map(({ key, label }) => (
+            {/* Controls */}
+            <div className="space-y-4">
+              <div className="glass space-y-4 p-5">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-[15px] font-semibold text-t-primary">
+                    {selected ? t("blur.v2.selectedRegion") : t("blur.v2.newRegions")}
+                  </p>
+                  {selected && (
                     <button
-                      key={key}
-                      onClick={() => {
-                        setBlurMode(key);
-                        setIntensity(key === "pixelate" ? 10 : 5);
-                      }}
-                      className={`flex-1 py-2.5 rounded-xl text-[12px] font-medium transition-all ${
-                        blurMode === key
-                          ? "bg-accent text-on-accent"
-                          : "bg-bg-secondary hover:bg-bg-tertiary text-t-secondary hover:text-t-primary"
-                      }`}
+                      type="button"
+                      onClick={() => deleteRegion(selected.id)}
+                      className="inline-flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-[13px] font-medium text-t-secondary transition hover:bg-bg-secondary hover:text-t-primary"
                     >
-                      {label}
+                      <Trash2 className="h-4 w-4" aria-hidden="true" />
+                      {t("ui.remove")}
                     </button>
-                  ))}
+                  )}
+                </div>
+                <Segmented<Effect>
+                  label={t("blur.mode")}
+                  value={effect}
+                  onChange={changeEffect}
+                  options={(["blur", "pixelate", "blackout"] as Effect[]).map((v) => ({ value: v, label: t(EFFECT_LABEL[v]) }))}
+                />
+                {effect !== "blackout" && (
+                  <Slider
+                    label={t("blur.v2.strength")}
+                    value={strength}
+                    min={1}
+                    max={100}
+                    onChange={changeStrength}
+                    display={`${strength}%`}
+                  />
+                )}
+                <Slider
+                  label={t("blur.feather")}
+                  value={feather}
+                  min={0}
+                  max={100}
+                  onChange={changeFeather}
+                  display={`${feather}%`}
+                />
+                {(tool === "brush" || selected?.shape === "brush") && (
+                  <Slider
+                    label={t("blur.v2.brushSize")}
+                    value={selected?.shape === "brush" ? Math.round((selected.size ?? 0.05) * 100) : brushSize}
+                    min={1}
+                    max={20}
+                    onChange={changeBrushSize}
+                    display={`${selected?.shape === "brush" ? Math.round((selected.size ?? 0.05) * 100) : brushSize}%`}
+                  />
+                )}
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  <button type="button" onClick={blurWhole} className={buttonSecondary}>
+                    <Maximize className="h-4 w-4" aria-hidden="true" />
+                    {t("blur.v2.wholeImage")}
+                  </button>
+                  {faceSupported && (
+                    <button type="button" onClick={detectFaces} disabled={detecting} className={buttonSecondary}>
+                      {detecting ? (
+                        <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                      ) : (
+                        <ScanFace className="h-4 w-4" aria-hidden="true" />
+                      )}
+                      {t("blur.v2.detectFaces")}
+                    </button>
+                  )}
                 </div>
               </div>
 
-              {/* Intensity slider — hidden for blackout */}
-              {blurMode !== "blackout" && (
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[13px] text-t-secondary font-medium">
-                      {blurMode === "gaussian" ? t("blur.radius") : t("blur.blockSize")}
-                    </span>
-                    <span className="text-[12px] font-mono px-2.5 py-1 rounded-lg bg-bg-secondary text-t-secondary border border-border">
-                      {intensity}px
-                    </span>
+              {regions.length > 0 && (
+                <div className="glass space-y-2 p-5">
+                  <div className="flex items-center justify-between">
+                    <p className={sectionTitle}>{t("blur.regionsApplied", { count: regions.length })}</p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        pushUndo(regionsRef.current);
+                        setRegions([]);
+                        setSelectedId(null);
+                      }}
+                      className="rounded-lg px-2.5 py-2 text-[13px] font-medium text-t-secondary transition hover:bg-bg-secondary hover:text-t-primary"
+                    >
+                      {t("ui.clearAll")}
+                    </button>
                   </div>
-                  <input
-                    type="range"
-                    min={blurMode === "gaussian" ? 1 : 5}
-                    max={blurMode === "gaussian" ? 20 : 50}
-                    value={intensity}
-                    onChange={(e) => setIntensity(Number(e.target.value))}
-                    className="w-full accent-accent"
-                  />
+                  <ul className="space-y-1">
+                    {regions.map((r, i) => (
+                      <li key={r.id} className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedId(r.id);
+                            setEffect(r.effect);
+                            setStrength(r.strength);
+                            setFeather(r.feather);
+                          }}
+                          aria-pressed={r.id === selectedId}
+                          className={`flex min-h-[40px] flex-1 items-center gap-2 rounded-lg px-3 text-start text-[13px] transition ${
+                            r.id === selectedId ? "bg-accent/10 font-medium text-t-primary" : "text-t-secondary hover:bg-bg-secondary"
+                          }`}
+                        >
+                          {r.shape === "rect" ? (
+                            <Square className="h-3.5 w-3.5" aria-hidden="true" />
+                          ) : r.shape === "ellipse" ? (
+                            <Circle className="h-3.5 w-3.5" aria-hidden="true" />
+                          ) : (
+                            <Brush className="h-3.5 w-3.5" aria-hidden="true" />
+                          )}
+                          {t("blur.v2.regionN", { n: i + 1 })} · {t(EFFECT_LABEL[r.effect])}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => deleteRegion(r.id)}
+                          aria-label={t("blur.v2.deleteRegion", { n: i + 1 })}
+                          className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-t-tertiary transition hover:bg-bg-secondary hover:text-t-primary"
+                        >
+                          <Trash2 className="h-4 w-4" aria-hidden="true" />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               )}
 
-              {blurMode !== "blackout" && (
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[13px] text-t-secondary font-medium">
-                      {t("blur.feather")}
-                    </span>
-                    <span className="text-[12px] font-mono px-2.5 py-1 rounded-lg bg-bg-secondary text-t-secondary border border-border">
-                      {feather}px
-                    </span>
+              <div className="glass space-y-4 p-5">
+                <ExportFormatPicker
+                  value={format}
+                  onChange={setFormat}
+                  quality={quality}
+                  onQualityChange={setQuality}
+                  sourceType={ACCEPT_TYPES.includes(loaded.file.type) ? loaded.file.type : "image/png"}
+                />
+                {busy ? (
+                  <div className="space-y-2" aria-live="polite">
+                    <div className="flex items-center justify-between text-[13px] text-t-secondary">
+                      <span className="flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                        {t("ui.processing")}
+                      </span>
+                      <span className="tabular-nums">{Math.round((exportProgress ?? 0) * 100)}%</span>
+                    </div>
+                    <div className="h-2 overflow-hidden rounded-full bg-bg-tertiary">
+                      <div className="h-full bg-accent transition-[width]" style={{ width: `${Math.round((exportProgress ?? 0) * 100)}%` }} />
+                    </div>
+                    <button type="button" onClick={cancelExport} className={`${buttonSecondary} w-full`}>
+                      <X className="h-4 w-4" aria-hidden="true" />
+                      {t("imgedit.v2.cancel")}
+                    </button>
                   </div>
-                  <input
-                    type="range"
-                    min={0}
-                    max={48}
-                    value={feather}
-                    onChange={(e) => setFeather(Number(e.target.value))}
-                    className="w-full accent-accent"
-                  />
-                  <p className="text-[11px] text-t-tertiary mt-1.5">{t("blur.featherHint")}</p>
-                </div>
-              )}
-
-              {/* Action buttons */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <button
-                  type="button"
-                  onClick={handleUndo}
-                  disabled={blurAreas.length === 0}
-                  className={`flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl text-[12px] font-medium transition-all ${
-                    blurAreas.length === 0
-                      ? "bg-bg-secondary text-t-secondary/50 cursor-not-allowed"
-                      : "bg-bg-secondary hover:bg-bg-tertiary text-t-secondary hover:text-t-primary"
-                  }`}
-                >
-                  <span className="text-lg leading-none">&#x21A9;</span>
-                  <span>{t("blur.undo")}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={handleRedo}
-                  disabled={redoAreas.length === 0}
-                  className={`flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl text-[12px] font-medium transition-all ${
-                    redoAreas.length === 0
-                      ? "bg-bg-secondary text-t-secondary/50 cursor-not-allowed"
-                      : "bg-bg-secondary hover:bg-bg-tertiary text-t-secondary hover:text-t-primary"
-                  }`}
-                >
-                  <span className="text-lg leading-none">&#x21AA;</span>
-                  <span>{t("blur.redo")}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={handleBlurEntire}
-                  className="flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl bg-bg-secondary hover:bg-bg-tertiary text-t-secondary hover:text-t-primary transition-all text-[12px] font-medium"
-                >
-                  <span className="text-lg leading-none">&#x25A3;</span>
-                  <span>{t("blur.blurEntire")}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={handleReset}
-                  disabled={blurAreas.length === 0}
-                  className={`flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl text-[12px] font-medium transition-all ${
-                    blurAreas.length === 0
-                      ? "bg-bg-secondary text-t-secondary/50 cursor-not-allowed"
-                      : "bg-bg-secondary hover:bg-bg-tertiary text-t-secondary hover:text-t-primary"
-                  }`}
-                >
-                  <span className="text-lg leading-none">&#x21BA;</span>
-                  <span>{t("ui.reset")}</span>
+                ) : (
+                  <button type="button" onClick={exportImage} disabled={!regions.length} className={`${buttonPrimary} w-full`}>
+                    <Download className="h-4 w-4" aria-hidden="true" />
+                    {t("imgedit.v2.downloadAs", { format: formatLabel(resolveFormat(loaded.file.type, format)) })}
+                  </button>
+                )}
+                <button type="button" onClick={changeImage} className={`${buttonSecondary} w-full`}>
+                  <ImagePlus className="h-4 w-4" aria-hidden="true" />
+                  {t("blur.v2.newImage")}
                 </button>
               </div>
             </div>
-
-            {/* Download */}
-            <button
-              onClick={handleDownload}
-              disabled={processing || blurAreas.length === 0}
-              className={`w-full py-3 rounded-xl font-semibold text-[14px] text-on-accent transition-all ${
-                processing || blurAreas.length === 0
-                  ? "bg-bg-tertiary cursor-not-allowed text-t-secondary"
-                  : "bg-accent hover:shadow-lg hover:shadow-sm hover:scale-[1.02] active:scale-[0.98]"
-              }`}
-            >
-              {processing ? t("ui.processing") : t("ui.downloadPNG")}
-            </button>
-          </>
+          </div>
         )}
       </div>
     </ToolLayout>

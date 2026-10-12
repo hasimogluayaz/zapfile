@@ -1,631 +1,640 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
+import { Download, Eye, ImagePlus, Loader2, RotateCcw, X } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
 import FileDropzone from "@/components/FileDropzone";
-import { downloadBlob, getFileNameWithoutExtension } from "@/lib/utils";
-import ImageCompareSlider from "@/components/ImageCompareSlider";
+import { buttonPrimary, buttonSecondary, sectionTitle } from "@/components/ui/controls";
+import { AbortError, extensionFor } from "@/lib/image-engine";
+import {
+  ctx2d,
+  decodeImage,
+  encodeBitmap,
+  makeCanvas,
+  makeProxy,
+  nextFrame,
+  proxyLongSide,
+  releaseCanvas,
+  resolveFormat,
+  type DecodedImage,
+  type FormatChoice,
+} from "@/lib/image-editor-kit";
+import { ExportFormatPicker, formatLabel } from "@/lib/image-editor-kit-ui";
+import { downloadBlob, formatFileSize, getFileNameWithoutExtension } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n";
+import {
+  ADJUST_KEYS,
+  PRESETS,
+  ZERO_ADJUST,
+  isIdentity,
+  processAll,
+  processSteps,
+  type Adjust,
+  type FilterSettings,
+  type PresetKey,
+} from "./pipeline";
 
-// ─── Canvas-based pixel manipulation ──────────────────────────────
+const PRESET_NAME: Record<PresetKey, string> = {
+  original: "photofilter.filter.original",
+  grayscale: "photofilter.filter.grayscale",
+  sepia: "photofilter.filter.sepia",
+  vintage: "photofilter.filter.vintage",
+  bright: "photofilter.filter.bright",
+  contrast: "photofilter.filter.contrast",
+  warm: "photofilter.filter.warm",
+  cold: "photofilter.filter.cold",
+  fade: "photofilter.filter.fade",
+  saturate: "photofilter.filter.saturate",
+  invert: "photofilter.filter.invert",
+  blur: "photofilter.filter.blur",
+};
 
-function applyGrayscale(data: Uint8ClampedArray) {
-  for (let i = 0; i < data.length; i += 4) {
-    const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
-    data[i] = data[i + 1] = data[i + 2] = avg;
-  }
-}
+const ADJUST_NAME: Record<keyof Adjust, string> = {
+  exposure: "pf.v2.exposure",
+  contrast: "pf.v2.contrast",
+  highlights: "pf.v2.highlights",
+  shadows: "pf.v2.shadows",
+  saturation: "pf.v2.saturation",
+  warmth: "pf.v2.warmth",
+  tint: "pf.v2.tint",
+  vignette: "pf.v2.vignette",
+  sharpen: "pf.v2.sharpen",
+};
 
-function applySepia(data: Uint8ClampedArray) {
-  for (let i = 0; i < data.length; i += 4) {
-    const r = data[i], g = data[i + 1], b = data[i + 2];
-    data[i]     = Math.min(255, r * 0.393 + g * 0.769 + b * 0.189);
-    data[i + 1] = Math.min(255, r * 0.349 + g * 0.686 + b * 0.168);
-    data[i + 2] = Math.min(255, r * 0.272 + g * 0.534 + b * 0.131);
-  }
-}
-
-function applyVintage(data: Uint8ClampedArray, w: number, h: number) {
-  applySepia(data);
-  // Vignette
-  const cx = w / 2, cy = h / 2;
-  const maxDist = Math.sqrt(cx * cx + cy * cy);
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      const i = (y * w + x) * 4;
-      const dist = Math.sqrt((x - cx) ** 2 + (y - cy) ** 2);
-      const factor = 1 - 0.5 * (dist / maxDist) ** 2;
-      data[i]     = Math.min(255, data[i] * factor);
-      data[i + 1] = Math.min(255, data[i + 1] * factor);
-      data[i + 2] = Math.min(255, data[i + 2] * factor);
-    }
-  }
-}
-
-function applyBright(data: Uint8ClampedArray) {
-  for (let i = 0; i < data.length; i += 4) {
-    data[i]     = Math.min(255, data[i] * 1.3);
-    data[i + 1] = Math.min(255, data[i + 1] * 1.3);
-    data[i + 2] = Math.min(255, data[i + 2] * 1.3);
-  }
-}
-
-function applyContrast(data: Uint8ClampedArray) {
-  const factor = 1.8;
-  for (let i = 0; i < data.length; i += 4) {
-    data[i]     = Math.min(255, Math.max(0, (data[i]     - 128) * factor + 128));
-    data[i + 1] = Math.min(255, Math.max(0, (data[i + 1] - 128) * factor + 128));
-    data[i + 2] = Math.min(255, Math.max(0, (data[i + 2] - 128) * factor + 128));
-  }
-}
-
-function applyInvert(data: Uint8ClampedArray) {
-  for (let i = 0; i < data.length; i += 4) {
-    data[i]     = 255 - data[i];
-    data[i + 1] = 255 - data[i + 1];
-    data[i + 2] = 255 - data[i + 2];
-  }
-}
-
-function applyWarm(data: Uint8ClampedArray) {
-  for (let i = 0; i < data.length; i += 4) {
-    data[i]     = Math.min(255, data[i] * 1.2);
-    data[i + 2] = Math.max(0, data[i + 2] * 0.8);
-  }
-}
-
-function applyCold(data: Uint8ClampedArray) {
-  for (let i = 0; i < data.length; i += 4) {
-    data[i]     = Math.max(0, data[i] * 0.8);
-    data[i + 2] = Math.min(255, data[i + 2] * 1.2);
-  }
-}
-
-function applyFade(data: Uint8ClampedArray) {
-  for (let i = 0; i < data.length; i += 4) {
-    data[i]     = data[i]     * 0.7 + 40;
-    data[i + 1] = data[i + 1] * 0.7 + 40;
-    data[i + 2] = data[i + 2] * 0.7 + 40;
-  }
-}
-
-function applySaturate(data: Uint8ClampedArray) {
-  for (let i = 0; i < data.length; i += 4) {
-    const r = data[i], g = data[i + 1], b = data[i + 2];
-    const gray = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-    data[i]     = Math.min(255, Math.max(0, gray + (r - gray) * 2.5));
-    data[i + 1] = Math.min(255, Math.max(0, gray + (g - gray) * 2.5));
-    data[i + 2] = Math.min(255, Math.max(0, gray + (b - gray) * 2.5));
-  }
-}
-
-// Interpolate pixel data between original and filtered at a given intensity (0–1)
-function blendPixels(
-  orig: Uint8ClampedArray,
-  filtered: Uint8ClampedArray,
-  intensity: number,
-): Uint8ClampedArray {
-  const out = new Uint8ClampedArray(orig.length);
-  for (let i = 0; i < orig.length; i += 4) {
-    out[i]     = orig[i]     + (filtered[i]     - orig[i])     * intensity;
-    out[i + 1] = orig[i + 1] + (filtered[i + 1] - orig[i + 1]) * intensity;
-    out[i + 2] = orig[i + 2] + (filtered[i + 2] - orig[i + 2]) * intensity;
-    out[i + 3] = orig[i + 3];
-  }
-  return out;
-}
-
-type FilterKey =
-  | "original"
-  | "grayscale"
-  | "sepia"
-  | "vintage"
-  | "bright"
-  | "contrast"
-  | "invert"
-  | "warm"
-  | "cold"
-  | "fade"
-  | "saturate"
-  | "blur";
-
-interface FilterPreset {
-  key: FilterKey;
-  nameKey: string;
-  // Returns a new array of pixel data (modifies copy, not in-place)
-  apply: (data: Uint8ClampedArray, w: number, h: number) => Uint8ClampedArray;
-}
-
-function cloneAndApply(
-  orig: Uint8ClampedArray,
-  fn: (d: Uint8ClampedArray, w: number, h: number) => void,
-  w: number,
-  h: number,
-): Uint8ClampedArray {
-  const copy = new Uint8ClampedArray(orig);
-  fn(copy, w, h);
-  return copy;
-}
-
-const FILTERS: FilterPreset[] = [
-  {
-    key: "original",
-    nameKey: "photofilter.filter.original",
-    apply: (d) => new Uint8ClampedArray(d),
-  },
-  {
-    key: "grayscale",
-    nameKey: "photofilter.filter.grayscale",
-    apply: (d, w, h) => cloneAndApply(d, applyGrayscale, w, h),
-  },
-  {
-    key: "sepia",
-    nameKey: "photofilter.filter.sepia",
-    apply: (d, w, h) => cloneAndApply(d, applySepia, w, h),
-  },
-  {
-    key: "vintage",
-    nameKey: "photofilter.filter.vintage",
-    apply: (d, w, h) => {
-      const c = new Uint8ClampedArray(d);
-      applyVintage(c, w, h);
-      return c;
-    },
-  },
-  {
-    key: "bright",
-    nameKey: "photofilter.filter.bright",
-    apply: (d, w, h) => cloneAndApply(d, applyBright, w, h),
-  },
-  {
-    key: "contrast",
-    nameKey: "photofilter.filter.contrast",
-    apply: (d, w, h) => cloneAndApply(d, applyContrast, w, h),
-  },
-  {
-    key: "invert",
-    nameKey: "photofilter.filter.invert",
-    apply: (d, w, h) => cloneAndApply(d, applyInvert, w, h),
-  },
-  {
-    key: "warm",
-    nameKey: "photofilter.filter.warm",
-    apply: (d, w, h) => cloneAndApply(d, applyWarm, w, h),
-  },
-  {
-    key: "cold",
-    nameKey: "photofilter.filter.cold",
-    apply: (d, w, h) => cloneAndApply(d, applyCold, w, h),
-  },
-  {
-    key: "fade",
-    nameKey: "photofilter.filter.fade",
-    apply: (d, w, h) => cloneAndApply(d, applyFade, w, h),
-  },
-  {
-    key: "saturate",
-    nameKey: "photofilter.filter.saturate",
-    apply: (d, w, h) => cloneAndApply(d, applySaturate, w, h),
-  },
-  {
-    key: "blur",
-    nameKey: "photofilter.filter.blur",
-    apply: (d) => new Uint8ClampedArray(d), // handled via CSS filter separately
-  },
+const GROUPS: { titleKey: string; keys: (keyof Adjust)[] }[] = [
+  { titleKey: "pf.v2.groupLight", keys: ["exposure", "contrast", "highlights", "shadows"] },
+  { titleKey: "pf.v2.groupColor", keys: ["saturation", "warmth", "tint"] },
+  { titleKey: "pf.v2.groupDetail", keys: ["vignette", "sharpen"] },
 ];
 
-// ─── Component ────────────────────────────────────────────────────
+const UNSIGNED: (keyof Adjust)[] = ["vignette", "sharpen"];
+const ACCEPT_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
+// ─── Full-resolution export (worker when OffscreenCanvas works there) ─────────
+
+let workerOffscreen: Promise<boolean> | null = null;
+
+function newWorker() {
+  return new Worker(new URL("./filter.worker.ts", import.meta.url), { type: "module" });
+}
+
+function canUseWorker(): Promise<boolean> {
+  if (!workerOffscreen) {
+    workerOffscreen = new Promise<boolean>((resolve) => {
+      if (typeof Worker === "undefined") return resolve(false);
+      let w: Worker;
+      try {
+        w = newWorker();
+      } catch {
+        return resolve(false);
+      }
+      const timer = setTimeout(() => {
+        w.terminate();
+        resolve(false);
+      }, 5000);
+      w.onmessage = (e) => {
+        clearTimeout(timer);
+        w.terminate();
+        resolve(!!e.data?.offscreen);
+      };
+      w.onerror = () => {
+        clearTimeout(timer);
+        w.terminate();
+        resolve(false);
+      };
+      w.postMessage({ op: "ping" });
+    });
+  }
+  return workerOffscreen;
+}
+
+function renderInWorker(
+  bitmap: ImageBitmap,
+  settings: FilterSettings,
+  onProgress: (p: number) => void,
+  signal: AbortSignal,
+): Promise<ImageBitmap> {
+  return new Promise((resolve, reject) => {
+    const w = newWorker();
+    const stop = () => {
+      w.terminate();
+      reject(new AbortError());
+    };
+    signal.addEventListener("abort", stop, { once: true });
+    w.onmessage = (e) => {
+      const msg = e.data;
+      if (msg.type === "progress") onProgress(msg.progress);
+      else if (msg.type === "done") {
+        signal.removeEventListener("abort", stop);
+        w.terminate();
+        resolve(msg.bitmap as ImageBitmap);
+      } else if (msg.type === "error") {
+        signal.removeEventListener("abort", stop);
+        w.terminate();
+        reject(new Error(msg.error));
+      }
+    };
+    w.onerror = (e) => {
+      e.preventDefault();
+      signal.removeEventListener("abort", stop);
+      w.terminate();
+      reject(new Error(e.message || "Worker failed"));
+    };
+    w.postMessage({ op: "run", bitmap, settings }, [bitmap]);
+  });
+}
+
+async function renderOnMain(
+  bitmap: ImageBitmap,
+  settings: FilterSettings,
+  onProgress: (p: number) => void,
+  signal: AbortSignal,
+): Promise<ImageBitmap> {
+  const canvas = makeCanvas(bitmap.width, bitmap.height);
+  try {
+    const ctx = ctx2d(canvas, { willReadFrequently: true });
+    ctx.drawImage(bitmap, 0, 0);
+    bitmap.close();
+    const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    let t0 = performance.now();
+    const steps = processSteps(img.data, canvas.width, canvas.height, settings);
+    for (let step = steps.next(); !step.done; step = steps.next()) {
+      const p = step.value;
+      if (performance.now() - t0 > 40) {
+        onProgress(p);
+        await nextFrame();
+        if (signal.aborted) throw new AbortError();
+        t0 = performance.now();
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+    return await createImageBitmap(canvas);
+  } finally {
+    releaseCanvas(canvas);
+  }
+}
+
+// ─── Small controls ───────────────────────────────────────────────────────────
+
+function AdjustSlider({
+  label,
+  value,
+  min,
+  onChange,
+  resetLabel,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  onChange: (v: number) => void;
+  resetLabel: string;
+}) {
+  return (
+    <div>
+      <div className="mb-1 flex items-center justify-between gap-2 text-[13px] text-t-secondary">
+        <span>{label}</span>
+        <span className="flex items-center gap-1">
+          <span className="tabular-nums font-medium text-t-primary">
+            {value > 0 && min < 0 ? `+${value}` : value}
+          </span>
+          <button
+            type="button"
+            onClick={() => onChange(0)}
+            disabled={value === 0}
+            aria-label={resetLabel}
+            title={resetLabel}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-t-tertiary transition hover:bg-bg-secondary hover:text-t-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-volt disabled:invisible"
+          >
+            <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
+          </button>
+        </span>
+      </div>
+      <input
+        type="range"
+        min={min}
+        max={100}
+        step={1}
+        value={value}
+        aria-label={label}
+        onChange={(e) => onChange(Number(e.target.value))}
+        onDoubleClick={() => onChange(0)}
+        className="w-full accent-accent"
+      />
+    </div>
+  );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
+interface Loaded {
+  file: File;
+  decoded: DecodedImage;
+  proxy: ImageBitmap;
+  original: ImageData;
+}
 
 export default function PhotoFilterPage() {
   const { t } = useI18n();
-  const [file, setFile] = useState<File | null>(null);
-  const [imgUrl, setImgUrl] = useState<string | null>(null);
-  const [selectedFilter, setSelectedFilter] = useState<FilterKey>("original");
+  const [loaded, setLoaded] = useState<Loaded | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [preset, setPreset] = useState<PresetKey>("original");
   const [intensity, setIntensity] = useState(100);
-  const [showOriginal, setShowOriginal] = useState(false);
-  const [previewMode, setPreviewMode] = useState<"tabs" | "slider">("tabs");
-  const [sliderAfterUrl, setSliderAfterUrl] = useState<string | null>(null);
-  const [downloading, setDownloading] = useState(false);
-  /** Bumped when a new image's pixels are ready, so previews re-render. */
-  const [loadedVersion, setLoadedVersion] = useState(0);
+  const [adjust, setAdjust] = useState<Adjust>(ZERO_ADJUST);
+  const [holding, setHolding] = useState(false);
+  const [thumbs, setThumbs] = useState<Partial<Record<PresetKey, string>>>({});
+  const [format, setFormat] = useState<FormatChoice>("original");
+  const [quality, setQuality] = useState(0.9);
+  const [exportProgress, setExportProgress] = useState<number | null>(null);
 
-  const imgRef = useRef<HTMLImageElement>(null);
-  const previewCanvasRef = useRef<HTMLCanvasElement>(null);
-  const thumbCanvasesRef = useRef<Map<FilterKey, HTMLCanvasElement>>(new Map());
-  const origPixelsRef = useRef<{ data: Uint8ClampedArray; w: number; h: number } | null>(null);
-  /** Small centre-cropped square of the image, used for the filter thumbnails. */
-  const thumbPixelsRef = useRef<{ data: Uint8ClampedArray; size: number; canvas: HTMLCanvasElement } | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const loadRunRef = useRef(0);
+  const abortRef = useRef<AbortController | null>(null);
+  const frameRef = useRef<number | null>(null);
+  const workRef = useRef<ImageData | null>(null);
 
-  const handleFilesSelected = useCallback((files: File[]) => {
-    const f = files[0];
-    if (!f) return;
-    setFile(f);
-    setImgUrl(URL.createObjectURL(f));
-    setSelectedFilter("original");
-    setIntensity(100);
-    setShowOriginal(false);
-    setPreviewMode("tabs");
-    setSliderAfterUrl(null);
-    origPixelsRef.current = null;
-    thumbPixelsRef.current = null;
-    thumbCanvasesRef.current.clear();
-  }, []);
+  const settings: FilterSettings = { preset, intensity, adjust };
+  const settingsRef = useRef(settings);
+  settingsRef.current = settings;
+  const holdingRef = useRef(holding);
+  holdingRef.current = holding;
+  const loadedRef = useRef(loaded);
+  loadedRef.current = loaded;
 
-  // When image loads, store original pixels
-  const handleImageLoad = useCallback(() => {
-    const img = imgRef.current;
-    if (!img) return;
-    const tmpCanvas = document.createElement("canvas");
-    tmpCanvas.width = img.naturalWidth;
-    tmpCanvas.height = img.naturalHeight;
-    const ctx = tmpCanvas.getContext("2d")!;
-    ctx.drawImage(img, 0, 0);
-    const imageData = ctx.getImageData(0, 0, img.naturalWidth, img.naturalHeight);
-    origPixelsRef.current = {
-      data: imageData.data,
-      w: img.naturalWidth,
-      h: img.naturalHeight,
-    };
-
-    // Thumbnails filter a 160 px centre crop instead of the full photo:
-    // undistorted, and N filters stay fast on 12 MP images.
-    const size = 160;
-    const side = Math.min(img.naturalWidth, img.naturalHeight);
-    const thumb = document.createElement("canvas");
-    thumb.width = size;
-    thumb.height = size;
-    const tctx = thumb.getContext("2d")!;
-    tctx.imageSmoothingQuality = "high";
-    tctx.drawImage(
-      img,
-      (img.naturalWidth - side) / 2,
-      (img.naturalHeight - side) / 2,
-      side,
-      side,
-      0,
-      0,
-      size,
-      size,
-    );
-    thumbPixelsRef.current = { data: tctx.getImageData(0, 0, size, size).data, size, canvas: thumb };
-    setLoadedVersion((v) => v + 1);
-  }, []);
-
-  // Re-render preview canvas when filter/intensity/mode changes; sync slider strip
+  // Free bitmaps when replaced or on unmount.
   useEffect(() => {
-    const orig = origPixelsRef.current;
-    const canvas = previewCanvasRef.current;
-    if (!orig || !canvas) return;
+    return () => {
+      loaded?.decoded.bitmap.close();
+      loaded?.proxy.close();
+    };
+  }, [loaded]);
 
-    const syncSliderStrip = () => {
-      if (previewMode !== "slider" || selectedFilter === "original") {
-        setSliderAfterUrl(null);
-        return;
-      }
-      requestAnimationFrame(() => {
-        try {
-          setSliderAfterUrl(canvas.toDataURL("image/jpeg", 0.88));
-        } catch {
-          setSliderAfterUrl(null);
+  useEffect(() => () => abortRef.current?.abort(), []);
+
+  const handleFiles = useCallback(
+    async (files: File[]) => {
+      const f = files[0];
+      if (!f) return;
+      const run = ++loadRunRef.current;
+      abortRef.current?.abort();
+      setLoading(true);
+      setThumbs({});
+      try {
+        const decoded = await decodeImage(f);
+        const proxy = await makeProxy(decoded.bitmap, proxyLongSide(1600));
+        const c = makeCanvas(proxy.width, proxy.height);
+        const ctx = ctx2d(c, { willReadFrequently: true });
+        ctx.drawImage(proxy, 0, 0);
+        const original = ctx.getImageData(0, 0, c.width, c.height);
+        releaseCanvas(c);
+        if (run !== loadRunRef.current) {
+          decoded.bitmap.close();
+          proxy.close();
+          return;
         }
-      });
-    };
+        workRef.current = new ImageData(proxy.width, proxy.height);
+        setPreset("original");
+        setIntensity(100);
+        setAdjust(ZERO_ADJUST);
+        setLoaded({ file: f, decoded, proxy, original });
+      } catch {
+        if (run === loadRunRef.current) toast.error(t("ui.failedLoad"));
+      } finally {
+        if (run === loadRunRef.current) setLoading(false);
+      }
+    },
+    [t],
+  );
 
-    const { data, w, h } = orig;
-    canvas.width = w;
-    canvas.height = h;
-    const ctx = canvas.getContext("2d")!;
-
-    if (selectedFilter === "original") {
-      const imgData = new ImageData(new Uint8ClampedArray(data), w, h);
-      ctx.putImageData(imgData, 0, 0);
-      setSliderAfterUrl(null);
+  // ── Real-time preview on the proxy, coalesced to one render per frame ──
+  const paint = useCallback(() => {
+    frameRef.current = null;
+    const l = loadedRef.current;
+    const canvas = canvasRef.current;
+    const work = workRef.current;
+    if (!l || !canvas || !work) return;
+    if (canvas.width !== l.original.width || canvas.height !== l.original.height) {
+      canvas.width = l.original.width;
+      canvas.height = l.original.height;
+    }
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    if (holdingRef.current || isIdentity(settingsRef.current)) {
+      ctx.putImageData(l.original, 0, 0);
       return;
     }
-
-    if (selectedFilter === "blur") {
-      const img = imgRef.current;
-      if (!img) return;
-      const blurPx = Math.round((intensity / 100) * 10);
-      ctx.filter = blurPx > 0 ? `blur(${blurPx}px)` : "none";
-      ctx.drawImage(img, 0, 0);
-      ctx.filter = "none";
-      syncSliderStrip();
-      return;
-    }
-
-    const preset = FILTERS.find((f) => f.key === selectedFilter)!;
-    const filtered = preset.apply(data, w, h);
-    const int01 = intensity / 100;
-    const blended = int01 >= 1 ? filtered : blendPixels(data, filtered, int01);
-    ctx.putImageData(new ImageData(blended.slice() as unknown as Uint8ClampedArray<ArrayBuffer>, w, h), 0, 0);
-    syncSliderStrip();
-  }, [selectedFilter, intensity, previewMode, loadedVersion]);
-
-  // Render a thumbnail for a given filter into a small canvas
-  const renderThumb = useCallback((key: FilterKey, thumbCanvas: HTMLCanvasElement) => {
-    const thumb = thumbPixelsRef.current;
-    if (!thumb) return;
-    const { data, size, canvas: source } = thumb;
-    thumbCanvas.width = size;
-    thumbCanvas.height = size;
-    const ctx = thumbCanvas.getContext("2d")!;
-    if (key === "original") {
-      ctx.putImageData(new ImageData(data.slice() as unknown as Uint8ClampedArray<ArrayBuffer>, size, size), 0, 0);
-    } else if (key === "blur") {
-      ctx.filter = "blur(2px)";
-      ctx.drawImage(source, 0, 0);
-      ctx.filter = "none";
-    } else {
-      const preset = FILTERS.find((f) => f.key === key)!;
-      const filtered = preset.apply(data, size, size);
-      ctx.putImageData(new ImageData(filtered.slice() as unknown as Uint8ClampedArray<ArrayBuffer>, size, size), 0, 0);
-    }
+    work.data.set(l.original.data);
+    processAll(work.data, work.width, work.height, settingsRef.current);
+    ctx.putImageData(work, 0, 0);
   }, []);
 
-  // Render all thumbnails after image loads
-  useEffect(() => {
-    if (!thumbPixelsRef.current) return;
-    thumbCanvasesRef.current.forEach((canvas, key) => {
-      renderThumb(key, canvas);
-    });
-  }, [loadedVersion, renderThumb]);
+  const schedulePaint = useCallback(() => {
+    if (frameRef.current == null) frameRef.current = requestAnimationFrame(paint);
+  }, [paint]);
 
-  const handleDownload = useCallback(async () => {
-    if (!file || !previewCanvasRef.current) return;
-    setDownloading(true);
-    try {
-      previewCanvasRef.current.toBlob(
-        (blob) => {
-          if (blob) {
-            downloadBlob(blob, `${getFileNameWithoutExtension(file.name)}-filtered.png`);
-            toast.success(t("photofilter.downloaded"));
-          } else {
-            toast.error(t("photofilter.exportFail"));
-          }
-          setDownloading(false);
-        },
-        "image/png",
+  useEffect(() => {
+    schedulePaint();
+  }, [loaded, preset, intensity, adjust, holding, schedulePaint]);
+
+  useEffect(
+    () => () => {
+      if (frameRef.current != null) cancelAnimationFrame(frameRef.current);
+    },
+    [],
+  );
+
+  // ── Preset thumbnails from a small centre crop, built a few per frame ──
+  useEffect(() => {
+    if (!loaded) return;
+    let cancelled = false;
+    (async () => {
+      const size = 112;
+      const side = Math.min(loaded.proxy.width, loaded.proxy.height);
+      const base = makeCanvas(size, size);
+      const bctx = ctx2d(base, { willReadFrequently: true });
+      bctx.drawImage(
+        loaded.proxy,
+        (loaded.proxy.width - side) / 2,
+        (loaded.proxy.height - side) / 2,
+        side,
+        side,
+        0,
+        0,
+        size,
+        size,
       );
+      const src = bctx.getImageData(0, 0, size, size);
+      const out = makeCanvas(size, size);
+      const octx = ctx2d(out);
+      for (const key of PRESETS) {
+        if (cancelled) break;
+        const img = new ImageData(new Uint8ClampedArray(src.data), size, size);
+        processAll(img.data, size, size, { preset: key, intensity: key === "blur" ? 40 : 100, adjust: ZERO_ADJUST });
+        octx.putImageData(img, 0, 0);
+        const url = out.toDataURL("image/jpeg", 0.82); // 112 px thumbnail only
+        setThumbs((prev) => ({ ...prev, [key]: url }));
+        await nextFrame();
+      }
+      releaseCanvas(base);
+      releaseCanvas(out);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [loaded]);
+
+  const setAdj = (key: keyof Adjust, v: number) => setAdjust((a) => ({ ...a, [key]: v }));
+  const adjustDirty = ADJUST_KEYS.some((k) => adjust[k] !== 0);
+  const anyChange = !isIdentity(settings);
+
+  const exportImage = async () => {
+    if (!loaded) return;
+    abortRef.current?.abort();
+    const ac = new AbortController();
+    abortRef.current = ac;
+    const snapshot: FilterSettings = { preset, intensity, adjust: { ...adjust } };
+    const outType = resolveFormat(loaded.file.type, format);
+    setExportProgress(0);
+    try {
+      const copy = await createImageBitmap(loaded.decoded.bitmap);
+      let rendered: ImageBitmap;
+      if (isIdentity(snapshot)) rendered = copy;
+      else {
+        const onProgress = (p: number) => {
+          if (!ac.signal.aborted) setExportProgress(Math.min(0.9, p * 0.9));
+        };
+        rendered = (await canUseWorker())
+          ? await renderInWorker(copy, snapshot, onProgress, ac.signal)
+          : await renderOnMain(copy, snapshot, onProgress, ac.signal);
+      }
+      if (ac.signal.aborted) {
+        rendered.close();
+        throw new AbortError();
+      }
+      setExportProgress(0.92);
+      const blob = await encodeBitmap(rendered, outType, quality, ac.signal);
+      if (ac.signal.aborted) throw new AbortError();
+      downloadBlob(blob, `${getFileNameWithoutExtension(loaded.file.name)}-filtered.${extensionFor(outType)}`);
+      toast.success(t("photofilter.downloaded"));
     } catch (err) {
-      console.error(err);
-      toast.error(t("photofilter.exportFail"));
-      setDownloading(false);
+      if (!(err instanceof AbortError) && !ac.signal.aborted) {
+        console.error(err);
+        toast.error(t("photofilter.exportFail"));
+      }
+    } finally {
+      if (abortRef.current === ac) {
+        abortRef.current = null;
+        setExportProgress(null);
+      }
     }
-  }, [file, t]);
+  };
+
+  const cancelExport = () => {
+    abortRef.current?.abort();
+    abortRef.current = null;
+    setExportProgress(null);
+  };
+
+  const changeImage = () => {
+    cancelExport();
+    loadRunRef.current++;
+    setLoaded(null);
+    setLoading(false);
+    setThumbs({});
+  };
+
+  const holdOn = () => setHolding(true);
+  const holdOff = () => setHolding(false);
 
   return (
-    <ToolLayout
-      toolName={t("tool.photo-filter.name")}
-      toolDescription={t("tool.photo-filter.desc")}
-    >
+    <ToolLayout toolName={t("tool.photo-filter.name")} toolDescription={t("tool.photo-filter.desc")}>
       <div className="space-y-6">
-        {!file && (
-          <FileDropzone
-            onFilesSelected={handleFilesSelected}
-            accept={{
-              "image/jpeg": [".jpg", ".jpeg"],
-              "image/png": [".png"],
-              "image/webp": [".webp"],
-            }}
-            multiple={false}
-            label={t("tool.dropLabel")}
-            formats={["jpg", "png", "webp"]}
-          />
-        )}
-
-        {file && imgUrl && (
-          <>
-            {/* Hidden source image for pixel reading */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              ref={imgRef}
-              src={imgUrl}
-              alt={t("photofilter.altSource")}
-              crossOrigin="anonymous"
-              className="hidden"
-              onLoad={handleImageLoad}
-            />
-
-            {/* Preview */}
-            <div className="glass rounded-xl p-4">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-t-primary">
-                    {t("photofilter.filterLabel")}:{" "}
-                    <span className="text-accent">
-                      {t(FILTERS.find((f) => f.key === selectedFilter)!.nameKey)}
-                    </span>
-                  </span>
-                  {selectedFilter !== "original" && (
-                    <span className="text-xs text-t-secondary">{intensity}%</span>
-                  )}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => { setFile(null); setImgUrl(null); }}
-                  className="text-xs text-t-secondary hover:text-t-primary transition-colors border border-border px-3 py-1 rounded-lg"
-                >
-                  {t("photofilter.changeImage")}
-                </button>
-              </div>
-
-              <div className="flex flex-wrap gap-2 mb-3">
-                <span className="text-[11px] text-t-tertiary self-center me-1">{t("ui.preview")}</span>
-                <button
-                  type="button"
-                  onClick={() => setPreviewMode("tabs")}
-                  className={`text-[12px] px-3 py-1.5 rounded-lg font-medium transition-all ${
-                    previewMode === "tabs"
-                      ? "bg-accent text-on-accent"
-                      : "bg-bg-secondary text-t-secondary hover:text-t-primary"
-                  }`}
-                >
-                  {t("photofilter.previewTabs")}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPreviewMode("slider")}
-                  disabled={selectedFilter === "original"}
-                  className={`text-[12px] px-3 py-1.5 rounded-lg font-medium transition-all ${
-                    previewMode === "slider"
-                      ? "bg-accent text-on-accent"
-                      : selectedFilter === "original"
-                        ? "bg-bg-secondary text-t-secondary/40 cursor-not-allowed"
-                        : "bg-bg-secondary text-t-secondary hover:text-t-primary"
-                  }`}
-                >
-                  {t("photofilter.previewSlider")}
-                </button>
-              </div>
-
-              {previewMode === "slider" &&
-                selectedFilter !== "original" &&
-                imgUrl &&
-                sliderAfterUrl && (
-                  <div className="mb-4">
-                    <ImageCompareSlider
-                      beforeSrc={imgUrl}
-                      afterSrc={sliderAfterUrl}
-                      beforeLabel={t("ui.original")}
-                      afterLabel={t("photofilter.filtered")}
-                      frameClassName="w-full max-h-[min(28rem,72vh)] aspect-[4/3]"
-                      dragHandleAriaLabel={t("photofilter.compareDrag")}
-                      rangeAriaLabel={t("photofilter.compareRange")}
-                    />
-                  </div>
-                )}
-
-              {previewMode === "tabs" && (
-                <>
-                  <div className="flex gap-2 mb-3">
-                    <button
-                      type="button"
-                      onClick={() => setShowOriginal(false)}
-                      className={`text-[12px] px-3 py-1.5 rounded-lg font-medium transition-all ${
-                        !showOriginal
-                          ? "bg-accent text-on-accent"
-                          : "bg-bg-secondary text-t-secondary hover:text-t-primary"
-                      }`}
-                    >
-                      {t("photofilter.filtered")}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowOriginal(true)}
-                      className={`text-[12px] px-3 py-1.5 rounded-lg font-medium transition-all ${
-                        showOriginal
-                          ? "bg-accent text-on-accent"
-                          : "bg-bg-secondary text-t-secondary hover:text-t-primary"
-                      }`}
-                    >
-                      {t("ui.original")}
-                    </button>
-                  </div>
-
-                  <div className={showOriginal ? "hidden" : "block"}>
-                    <canvas
-                      ref={previewCanvasRef}
-                      className="w-full max-h-80 object-contain rounded-xl mx-auto block"
-                      style={{ imageRendering: "auto" }}
-                    />
-                  </div>
-
-                  {showOriginal && (
-                    /* eslint-disable-next-line @next/next/no-img-element */
-                    <img
-                      src={imgUrl}
-                      alt={t("photofilter.altOriginalPreview")}
-                      className="w-full max-h-80 object-contain rounded-xl mx-auto block"
-                    />
-                  )}
-                </>
-              )}
-
-              {previewMode === "slider" && (
-                <div className={selectedFilter === "original" ? "block" : "sr-only"} aria-hidden={selectedFilter !== "original"}>
-                  <canvas
-                    ref={previewCanvasRef}
-                    className="w-full max-h-80 object-contain rounded-xl mx-auto block"
-                    style={{ imageRendering: "auto" }}
-                  />
-                </div>
-              )}
+        {!loaded ? (
+          loading ? (
+            <div className="glass flex h-64 items-center justify-center gap-2 text-[14px] text-t-secondary" role="status">
+              <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+              {t("ui.loading")}
             </div>
-
-            {/* Filter Presets Grid */}
-            <div className="glass rounded-xl p-6 space-y-3">
-              <h3 className="text-sm font-medium text-t-primary">{t("photofilter.filtersHeading")}</h3>
-              <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
-                {FILTERS.map((preset) => (
-                  <button
-                    key={preset.key}
-                    onClick={() => {
-                      setSelectedFilter(preset.key);
-                      if (preset.key === "original") setIntensity(100);
-                    }}
-                    className={`relative rounded-xl overflow-hidden border-2 transition-all aspect-square ${
-                      selectedFilter === preset.key
-                        ? "border-accent shadow-[0_0_0_2px] shadow-sm"
-                        : "border-transparent hover:border-border"
-                    }`}
-                  >
-                    <canvas
-                      ref={(el) => {
-                        if (el) {
-                          thumbCanvasesRef.current.set(preset.key, el);
-                          if (thumbPixelsRef.current) renderThumb(preset.key, el);
+          ) : (
+            <FileDropzone
+              onFilesSelected={handleFiles}
+              accept={{
+                "image/jpeg": [".jpg", ".jpeg"],
+                "image/png": [".png"],
+                "image/webp": [".webp"],
+              }}
+              multiple={false}
+              label={t("tool.dropLabel")}
+              formats={["jpg", "png", "webp"]}
+            />
+          )
+        ) : (
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
+            {/* Preview */}
+            <div className="space-y-3 lg:sticky lg:top-20">
+              <div className="glass space-y-3 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="min-w-0 truncate text-[13px] text-t-secondary">
+                    <span className="font-medium text-t-primary">{loaded.file.name}</span> ·{" "}
+                    {loaded.decoded.naturalWidth}×{loaded.decoded.naturalHeight} · {formatFileSize(loaded.file.size)}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onPointerDown={(e) => {
+                        e.currentTarget.setPointerCapture(e.pointerId);
+                        holdOn();
+                      }}
+                      onPointerUp={holdOff}
+                      onPointerCancel={holdOff}
+                      onLostPointerCapture={holdOff}
+                      onKeyDown={(e) => {
+                        if (e.key === " " || e.key === "Enter") {
+                          e.preventDefault();
+                          holdOn();
                         }
                       }}
-                      width={80}
-                      height={80}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-x-0 bottom-0 bg-black/60 py-1 px-1">
-                      <p className="text-[9px] text-white text-center font-medium truncate">
-                        {t(preset.nameKey)}
-                      </p>
-                    </div>
-                  </button>
-                ))}
+                      onKeyUp={holdOff}
+                      onBlur={holdOff}
+                      onContextMenu={(e) => e.preventDefault()}
+                      disabled={!anyChange}
+                      aria-pressed={holding}
+                      className={`${buttonSecondary} touch-none select-none`}
+                    >
+                      <Eye className="h-4 w-4" aria-hidden="true" />
+                      {t("pf.v2.holdCompare")}
+                    </button>
+                    <button type="button" onClick={changeImage} className={buttonSecondary}>
+                      <ImagePlus className="h-4 w-4" aria-hidden="true" />
+                      {t("photofilter.changeImage")}
+                    </button>
+                  </div>
+                </div>
+                <div className="relative flex items-center justify-center overflow-hidden rounded-xl border border-border bg-bg-secondary">
+                  <canvas
+                    ref={canvasRef}
+                    className="block h-auto max-h-[min(70vh,640px)] w-auto max-w-full"
+                    aria-label={t("photofilter.altSource")}
+                    role="img"
+                  />
+                  {holding && (
+                    <span className="pointer-events-none absolute start-3 top-3 rounded-md bg-black/60 px-2 py-1 text-[12px] font-medium text-white">
+                      {t("ui.original")}
+                    </span>
+                  )}
+                </div>
+                {loaded.decoded.capped && (
+                  <p className="text-[12px] text-t-tertiary">
+                    {t("imgedit.v2.cappedNote", { w: loaded.decoded.width, h: loaded.decoded.height })}
+                  </p>
+                )}
+              </div>
+
+              {/* Preset strip */}
+              <div className="glass space-y-3 p-4">
+                <p className={sectionTitle}>{t("photofilter.filtersHeading")}</p>
+                <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1" role="radiogroup" aria-label={t("photofilter.filtersHeading")}>
+                  {PRESETS.map((key) => (
+                    <button
+                      key={key}
+                      type="button"
+                      role="radio"
+                      aria-checked={preset === key}
+                      onClick={() => {
+                        setPreset(key);
+                        if (key !== preset) setIntensity(key === "blur" ? 30 : 100);
+                      }}
+                      className={`w-[76px] shrink-0 rounded-xl p-1 text-center transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-volt ${
+                        preset === key ? "bg-accent/10 ring-2 ring-accent" : "hover:bg-bg-secondary"
+                      }`}
+                    >
+                      <span className="block aspect-square w-full overflow-hidden rounded-lg bg-bg-tertiary">
+                        {thumbs[key] && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={thumbs[key]} alt="" className="h-full w-full object-cover" draggable={false} />
+                        )}
+                      </span>
+                      <span className="mt-1 block truncate text-[12px] font-medium text-t-primary">{t(PRESET_NAME[key])}</span>
+                    </button>
+                  ))}
+                </div>
+                {preset !== "original" && (
+                  <AdjustSlider
+                    label={preset === "blur" ? t("pf.v2.blurStrength") : t("photofilter.intensity")}
+                    value={intensity}
+                    min={0}
+                    onChange={setIntensity}
+                    resetLabel={t("pf.v2.resetValue", { name: preset === "blur" ? t("pf.v2.blurStrength") : t("photofilter.intensity") })}
+                  />
+                )}
               </div>
             </div>
 
-            {/* Intensity Slider */}
-            {selectedFilter !== "original" && (
-              <div className="glass rounded-xl p-6 space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-medium text-t-primary">{t("photofilter.intensity")}</h3>
-                  <span className="text-xs font-mono px-2.5 py-1 rounded-lg bg-bg-secondary text-t-secondary border border-border">
-                    {intensity}%
-                  </span>
+            {/* Controls */}
+            <div className="space-y-4">
+              <div className="glass space-y-5 p-5">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-[15px] font-semibold text-t-primary">{t("pf.v2.adjust")}</p>
+                  <button
+                    type="button"
+                    onClick={() => setAdjust(ZERO_ADJUST)}
+                    disabled={!adjustDirty}
+                    className="rounded-lg px-2.5 py-2 text-[13px] font-medium text-t-secondary transition hover:bg-bg-secondary hover:text-t-primary disabled:opacity-40"
+                  >
+                    {t("pf.v2.resetAll")}
+                  </button>
                 </div>
-                <input
-                  type="range"
-                  min={0}
-                  max={100}
-                  value={intensity}
-                  onChange={(e) => setIntensity(Number(e.target.value))}
-                  className="w-full h-2 rounded-full appearance-none cursor-pointer bg-bg-tertiary accent-accent"
-                />
-                <div className="flex justify-between text-[10px] text-t-secondary">
-                  <span>{t("photofilter.intensityMin")}</span>
-                  <span>{t("photofilter.intensityMax")}</span>
-                </div>
+                {GROUPS.map((g) => (
+                  <div key={g.titleKey} className="space-y-2">
+                    <p className={sectionTitle}>{t(g.titleKey)}</p>
+                    {g.keys.map((k) => (
+                      <AdjustSlider
+                        key={k}
+                        label={t(ADJUST_NAME[k])}
+                        value={adjust[k]}
+                        min={UNSIGNED.includes(k) ? 0 : -100}
+                        onChange={(v) => setAdj(k, v)}
+                        resetLabel={t("pf.v2.resetValue", { name: t(ADJUST_NAME[k]) })}
+                      />
+                    ))}
+                  </div>
+                ))}
               </div>
-            )}
 
-            {/* Download */}
-            <button
-              type="button"
-              onClick={handleDownload}
-              disabled={downloading}
-              className="w-full px-6 py-3 rounded-xl font-semibold text-on-accent bg-accent hover:opacity-90 transition-all disabled:opacity-50"
-            >
-              {downloading ? t("photofilter.exporting") : t("photofilter.downloadPng")}
-            </button>
-          </>
+              <div className="glass space-y-4 p-5">
+                <ExportFormatPicker
+                  value={format}
+                  onChange={setFormat}
+                  quality={quality}
+                  onQualityChange={setQuality}
+                  sourceType={ACCEPT_TYPES.includes(loaded.file.type) ? loaded.file.type : "image/png"}
+                />
+                {exportProgress == null ? (
+                  <button type="button" onClick={exportImage} className={`${buttonPrimary} w-full`}>
+                    <Download className="h-4 w-4" aria-hidden="true" />
+                    {t("imgedit.v2.downloadAs", { format: formatLabel(resolveFormat(loaded.file.type, format)) })}
+                  </button>
+                ) : (
+                  <div className="space-y-2" aria-live="polite">
+                    <div className="flex items-center justify-between text-[13px] text-t-secondary">
+                      <span className="flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                        {t("photofilter.exporting")}
+                      </span>
+                      <span className="tabular-nums">{Math.round(exportProgress * 100)}%</span>
+                    </div>
+                    <div className="h-2 overflow-hidden rounded-full bg-bg-tertiary">
+                      <div className="h-full bg-accent transition-[width]" style={{ width: `${Math.round(exportProgress * 100)}%` }} />
+                    </div>
+                    <button type="button" onClick={cancelExport} className={`${buttonSecondary} w-full`}>
+                      <X className="h-4 w-4" aria-hidden="true" />
+                      {t("imgedit.v2.cancel")}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </ToolLayout>
