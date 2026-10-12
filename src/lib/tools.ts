@@ -610,7 +610,7 @@ export const tools: Tool[] = [
   {
     slug: "text-to-speech",
     name: "Text to Speech",
-    description: "Convert text to spoken audio in Turkish and English",
+    description: "Read text aloud with every voice your device offers",
     emoji: "🔊",
     category: "video",
     acceptedFormats: [],

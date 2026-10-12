@@ -1,1034 +1,700 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
+import { AlertCircle, Download, Film, Loader2, RefreshCw, Sparkles, X } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
 import FileDropzone from "@/components/FileDropzone";
 import ProgressBar from "@/components/ProgressBar";
+import { Segmented, Toggle, buttonPrimary, buttonSecondary, sectionTitle } from "@/components/ui/controls";
+import { downloadBlob, formatFileSize, getFileNameWithoutExtension } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n";
+import Timeline, { formatClock } from "./Timeline";
+import { frameDelaysCs, repeatFor, type GifJob, type PaletteMode } from "./gif-core";
+import type { GifWorkerIn, GifWorkerOut } from "./gif.worker";
 
 // ---------------------------------------------------------------------------
-// Utility helpers
+// Formats: only offer what this browser can actually decode.
 // ---------------------------------------------------------------------------
 
-function formatBytes(bytes: number): string {
-  if (bytes === 0) return "0 B";
-  const k = 1024;
-  const sizes = ["B", "KB", "MB", "GB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
+const CANDIDATES: { mime: string; probe: string[]; exts: string[]; label: string }[] = [
+  { mime: "video/mp4", probe: ["video/mp4"], exts: [".mp4", ".m4v"], label: "MP4" },
+  { mime: "video/webm", probe: ["video/webm"], exts: [".webm"], label: "WebM" },
+  // Most .mov files are H.264 in an ISO-BMFF container that MP4-capable browsers decode.
+  { mime: "video/quicktime", probe: ["video/quicktime", "video/mp4"], exts: [".mov"], label: "MOV" },
+  { mime: "video/ogg", probe: ["video/ogg"], exts: [".ogv"], label: "OGV" },
+  { mime: "video/x-matroska", probe: ["video/x-matroska", 'video/webm; codecs="vp9"'], exts: [".mkv"], label: "MKV" },
+];
+const DEFAULT_FORMATS = CANDIDATES.slice(0, 3);
+
+const FPS_OPTIONS = [5, 10, 15, 20, 25] as const;
+const SPEED_OPTIONS = [0.5, 0.75, 1, 1.5, 2] as const;
+const WIDTH_PRESETS = [240, 320, 480, 640] as const;
+const COLOR_OPTIONS = [64, 128, 256] as const;
+const MAX_FRAMES = 400;
+const MAX_CLIP = 30; // seconds of source video
+const IN_FLIGHT = 6; // frames sent to the worker but not yet encoded
+
+type Loop = "forever" | "once" | 2 | 3;
+
+interface Meta {
+  duration: number;
+  width: number;
+  height: number;
 }
 
-function formatTime(seconds: number): string {
-  const m = Math.floor(seconds / 60);
-  const s = Math.floor(seconds % 60);
-  const ms = Math.floor((seconds % 1) * 10);
-  return `${m}:${s.toString().padStart(2, "0")}.${ms}`;
+interface Output {
+  blob: Blob;
+  url: string;
+  sig: string;
+  width: number;
+  height: number;
+  frames: number;
 }
 
-// ---------------------------------------------------------------------------
-// NeuQuant – neural-net color quantizer (adapted from Anthony Dekker / jnordberg)
-// Reduces RGBA pixels to a 256-color palette.
-// ---------------------------------------------------------------------------
-
-function neuquant(pixels: Uint8ClampedArray, colorCount: number): Uint8Array {
-  const netsize = colorCount;
-  const maxnetpos = netsize - 1;
-  const netbiasshift = 4;
-  const ncycles = 100;
-  const intbiasshift = 16;
-  const intbias = 1 << intbiasshift;
-  const gammashift = 10;
-  const betashift = 10;
-  const beta = intbias >> betashift;
-  const betagamma = intbias << (gammashift - betashift);
-  const initrad = netsize >> 3;
-  const radiusbiasshift = 6;
-  const radiusbias = 1 << radiusbiasshift;
-  const initradius = initrad * radiusbias;
-  const radiusdec = 30;
-  const alphabiasshift = 10;
-  const initalpha = 1 << alphabiasshift;
-  const radbiasshift = 8;
-  const radbias = 1 << radbiasshift;
-  const alpharadbshift = alphabiasshift + radbiasshift;
-
-  const network: number[][] = [];
-  const netindex = new Int32Array(256);
-  const bias = new Int32Array(netsize);
-  const freq = new Int32Array(netsize);
-  const radpower = new Int32Array(initrad);
-
-  for (let i = 0; i < netsize; i++) {
-    const v = (i << (netbiasshift + 8)) / netsize;
-    network[i] = [v, v, v, 0];
-    freq[i] = intbias / netsize;
-    bias[i] = 0;
-  }
-
-  const pixelCount = pixels.length / 4;
-  const samplefac = Math.max(1, Math.floor(pixelCount / (netsize * 30)));
-  const alphadec = 30 + Math.floor((samplefac - 1) / 3);
-
-  let alpha = initalpha;
-  let radius = initradius;
-  let rad = radius >> radiusbiasshift;
-  if (rad <= 1) rad = 0;
-  for (let i = 0; i < rad; i++) {
-    radpower[i] = Math.floor(alpha * (((rad * rad - i * i) * radbias) / (rad * rad)));
-  }
-
-  const step = samplefac === 1 ? 4 : samplefac % 2 === 0 ? samplefac * 2 : samplefac * 4;
-
-  let delta = Math.floor(pixelCount / (ncycles * samplefac));
-  if (delta < 1) delta = 1;
-
-  let i = 0;
-  let pix = 0;
-
-  for (let learn = 0; learn < ncycles * samplefac; ) {
-    const b = pixels[pix] << netbiasshift;
-    const g = pixels[pix + 1] << netbiasshift;
-    const r = pixels[pix + 2] << netbiasshift;
-
-    // find closest neuron
-    let bestd = ~(1 << 31);
-    let bestbiasd = bestd;
-    let bestpos = -1;
-    let bestbiaspos = bestpos;
-
-    for (let j = 0; j < netsize; j++) {
-      const n = network[j];
-      const dist = Math.abs(n[2] - r) + Math.abs(n[1] - g) + Math.abs(n[0] - b);
-      if (dist < bestd) { bestd = dist; bestpos = j; }
-      const biasdist = dist - (bias[j] >> (intbiasshift - netbiasshift));
-      if (biasdist < bestbiasd) { bestbiasd = biasdist; bestbiaspos = j; }
-      freq[j] -= freq[j] >> 5;
-      bias[j] += freq[j] << gammashift;
-    }
-    freq[bestpos] += beta;
-    bias[bestpos] -= betagamma;
-
-    // alter winner
-    const n0 = network[bestbiaspos];
-    n0[0] += (alpha * (b - n0[0])) >> alphabiasshift;
-    n0[1] += (alpha * (g - n0[1])) >> alphabiasshift;
-    n0[2] += (alpha * (r - n0[2])) >> alphabiasshift;
-
-    if (rad !== 0) {
-      const lo = Math.max(bestbiaspos - rad, 0);
-      const hi = Math.min(bestbiaspos + rad, maxnetpos);
-      let jj = bestbiaspos + 1;
-      let k = bestbiaspos - 1;
-      let q = 0;
-      while (jj <= hi || k >= lo) {
-        const a = radpower[++q];
-        if (jj <= hi) {
-          const p = network[jj++];
-          p[0] -= (a * (p[0] - b)) >> alpharadbshift;
-          p[1] -= (a * (p[1] - g)) >> alpharadbshift;
-          p[2] -= (a * (p[2] - r)) >> alpharadbshift;
-        }
-        if (k >= lo) {
-          const p = network[k--];
-          p[0] -= (a * (p[0] - b)) >> alpharadbshift;
-          p[1] -= (a * (p[1] - g)) >> alpharadbshift;
-          p[2] -= (a * (p[2] - r)) >> alpharadbshift;
-        }
-      }
-    }
-
-    pix += step * 4;
-    if (pix >= pixels.length) pix -= pixels.length;
-
-    i++;
-    if (i % delta === 0) {
-      alpha -= Math.floor(alpha / alphadec);
-      radius -= Math.floor(radius / radiusdec);
-      rad = radius >> radiusbiasshift;
-      if (rad <= 1) rad = 0;
-      for (let jj = 0; jj < rad; jj++) {
-        radpower[jj] = Math.floor(alpha * (((rad * rad - jj * jj) * radbias) / (rad * rad)));
-      }
-    }
-    learn++;
-  }
-
-  // Build sorted palette by blue channel for fast lookup
-  const map: Uint8Array = new Uint8Array(netsize * 3);
-  const index: number[] = new Array(netsize);
-  for (let jj = 0; jj < netsize; jj++) index[jj] = jj;
-  index.sort((a, b_) => network[a][0] - network[b_][0]);
-
-  for (let jj = 0; jj < netsize; jj++) {
-    const n = network[index[jj]];
-    map[jj * 3] = n[2] >> netbiasshift;
-    map[jj * 3 + 1] = n[1] >> netbiasshift;
-    map[jj * 3 + 2] = n[0] >> netbiasshift;
-    netindex[index[jj]] = jj;
-  }
-
-  // Build blue lookup for fast nearest-neighbor
-  const blookup = new Int32Array(256).fill(netsize);
-  let prev = 0;
-  for (let jj = 0; jj < netsize; jj++) {
-    const cur = map[jj * 3 + 2]; // blue channel
-    for (let bb = prev; bb <= cur; bb++) {
-      if (blookup[bb] === netsize) blookup[bb] = jj;
-    }
-    prev = cur + 1;
-  }
-  for (let bb = prev; bb < 256; bb++) {
-    if (blookup[bb] === netsize) blookup[bb] = netsize - 1;
-  }
-
-  return map;
+interface Progress {
+  extracted: number;
+  encoded: number;
+  total: number;
 }
 
-// Map every pixel to its nearest palette index
-function mapPixels(
-  pixels: Uint8ClampedArray,
-  palette: Uint8Array,
-  colorCount: number
-): Uint8Array {
-  const out = new Uint8Array(pixels.length / 4);
-  for (let i = 0, p = 0; i < pixels.length; i += 4, p++) {
-    const r = pixels[i];
-    const g = pixels[i + 1];
-    const b = pixels[i + 2];
-    let best = 0;
-    let bestDist = Infinity;
-    for (let j = 0; j < colorCount; j++) {
-      const dr = r - palette[j * 3];
-      const dg = g - palette[j * 3 + 1];
-      const db = b - palette[j * 3 + 2];
-      const d = dr * dr + dg * dg + db * db;
-      if (d < bestDist) { bestDist = d; best = j; }
-    }
-    out[p] = best;
-  }
-  return out;
+class Cancelled extends Error {}
+
+function seekTo(video: HTMLVideoElement, time: number, signal: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal.aborted) return reject(new Cancelled());
+    if (!video.seeking && Math.abs(video.currentTime - time) < 0.0005 && video.readyState >= 2) return resolve();
+    const cleanup = () => {
+      clearTimeout(timer);
+      video.removeEventListener("seeked", onSeeked);
+      video.removeEventListener("error", onError);
+      signal.removeEventListener("abort", onAbort);
+    };
+    const onSeeked = () => {
+      cleanup();
+      resolve();
+    };
+    const onError = () => {
+      cleanup();
+      reject(new Error("decode"));
+    };
+    const onAbort = () => {
+      cleanup();
+      reject(new Cancelled());
+    };
+    const timer = setTimeout(onError, 10000);
+    video.addEventListener("seeked", onSeeked);
+    video.addEventListener("error", onError);
+    signal.addEventListener("abort", onAbort);
+    video.currentTime = time;
+  });
 }
 
-// ---------------------------------------------------------------------------
-// LZW encoder for GIF
-// ---------------------------------------------------------------------------
-
-function lzwEncode(indexedPixels: Uint8Array, minCodeSize: number): Uint8Array {
-  const clearCode = 1 << minCodeSize;
-  const eofCode = clearCode + 1;
-  const tableSize = 4096;
-
-  const table = new Map<number, number>();
-  const resetTable = () => {
-    table.clear();
-    for (let i = 0; i < clearCode; i++) table.set(i, i);
-  };
-
-  resetTable();
-  let nextCode = eofCode + 1;
-  let codeSize = minCodeSize + 1;
-  let maxCode = 1 << codeSize;
-
-  // bit packing
-  const out: number[] = [];
-  let bitBuf = 0;
-  let bitLen = 0;
-
-  const emit = (code: number) => {
-    bitBuf |= code << bitLen;
-    bitLen += codeSize;
-    while (bitLen >= 8) {
-      out.push(bitBuf & 0xff);
-      bitBuf >>= 8;
-      bitLen -= 8;
-    }
-  };
-
-  emit(clearCode);
-
-  let prefix = indexedPixels[0];
-  for (let i = 1; i < indexedPixels.length; i++) {
-    const suffix = indexedPixels[i];
-    const key = prefix * 256 + suffix; // works because suffix < 256
-    if (table.has(key)) {
-      prefix = table.get(key)!;
-    } else {
-      emit(prefix);
-      if (nextCode < tableSize) {
-        table.set(key, nextCode++);
-        if (nextCode > maxCode && codeSize < 12) {
-          codeSize++;
-          maxCode <<= 1;
-        }
-      } else {
-        // reset
-        emit(clearCode);
-        resetTable();
-        nextCode = eofCode + 1;
-        codeSize = minCodeSize + 1;
-        maxCode = 1 << codeSize;
-      }
-      prefix = suffix;
-    }
-  }
-  emit(prefix);
-  emit(eofCode);
-
-  if (bitLen > 0) out.push(bitBuf & 0xff);
-
-  return new Uint8Array(out);
+function openVideo(src: string, signal: AbortSignal): Promise<HTMLVideoElement> {
+  return new Promise((resolve, reject) => {
+    const video = document.createElement("video");
+    video.muted = true;
+    video.playsInline = true;
+    video.preload = "auto";
+    const done = () => {
+      video.removeEventListener("loadeddata", done);
+      video.removeEventListener("error", fail);
+      resolve(video);
+    };
+    const fail = () => {
+      video.removeEventListener("loadeddata", done);
+      video.removeEventListener("error", fail);
+      reject(signal.aborted ? new Cancelled() : new Error("decode"));
+    };
+    video.addEventListener("loadeddata", done);
+    video.addEventListener("error", fail);
+    signal.addEventListener("abort", fail, { once: true });
+    video.src = src;
+  });
 }
 
-// ---------------------------------------------------------------------------
-// GIF89a binary writer
-// ---------------------------------------------------------------------------
-
-function writeGIF(
-  frames: { indexed: Uint8Array; palette: Uint8Array }[],
-  width: number,
-  height: number,
-  delayCs: number,        // hundredths of a second per frame
-  colorCount: number,
-  /** 0 = infinite loop (GIF convention); otherwise repeat count */
-  netscapeLoopCount: number,
-): Uint8Array {
-  const colorBits = Math.ceil(Math.log2(colorCount)) - 1; // packed field bits
-
-  const bufs: Uint8Array[] = [];
-  const push = (arr: Uint8Array | number[]) => {
-    bufs.push(arr instanceof Uint8Array ? arr : new Uint8Array(arr));
-  };
-
-  // --- GIF89a header ---
-  push([0x47, 0x49, 0x46, 0x38, 0x39, 0x61]); // "GIF89a"
-
-  // Logical screen descriptor (use first frame palette as global)
-  const globalPalette = frames[0].palette;
-  push([
-    width & 0xff, (width >> 8) & 0xff,
-    height & 0xff, (height >> 8) & 0xff,
-    0x80 | colorBits,  // global color table flag + size
-    0,                  // background color index
-    0,                  // pixel aspect ratio
-  ]);
-  push(globalPalette);
-  // Pad palette to exact 2^(colorBits+1) entries if needed
-  const declaredColors = 1 << (colorBits + 1);
-  if (declaredColors > colorCount) {
-    push(new Uint8Array((declaredColors - colorCount) * 3));
-  }
-
-  // --- Netscape looping extension ---
-  const lc = Math.max(0, Math.min(65535, netscapeLoopCount));
-  push([
-    0x21, 0xff, 0x0b,
-    0x4e, 0x45, 0x54, 0x53, 0x43, 0x41, 0x50, 0x45, 0x32, 0x2e, 0x30, // "NETSCAPE2.0"
-    0x03, 0x01,
-    lc & 0xff,
-    (lc >> 8) & 0xff,
-    0x00,
-  ]);
-
-  const minCodeSize = Math.max(2, colorBits + 1);
-
-  for (const frame of frames) {
-    // Graphic control extension
-    push([
-      0x21, 0xf9, 0x04,
-      0x04,                              // dispose = do not dispose
-      delayCs & 0xff, (delayCs >> 8) & 0xff,
-      0x00,                              // transparent color index (none)
-      0x00,                              // block terminator
-    ]);
-
-    // Image descriptor
-    push([
-      0x2c,
-      0, 0, 0, 0,                        // left, top
-      width & 0xff, (width >> 8) & 0xff,
-      height & 0xff, (height >> 8) & 0xff,
-      0x00,                              // no local color table, no interlace
-    ]);
-
-    // Image data
-    const lzw = lzwEncode(frame.indexed, minCodeSize);
-
-    push([minCodeSize]);
-
-    // Split LZW into sub-blocks (max 255 bytes each)
-    for (let off = 0; off < lzw.length; off += 255) {
-      const chunk = lzw.subarray(off, off + 255);
-      push([chunk.length]);
-      push(chunk);
-    }
-    push([0x00]); // block terminator
-  }
-
-  // GIF trailer
-  push([0x3b]);
-
-  // Concatenate all buffers
-  let totalLen = 0;
-  for (const b of bufs) totalLen += b.length;
-  const result = new Uint8Array(totalLen);
-  let offset = 0;
-  for (const b of bufs) {
-    result.set(b, offset);
-    offset += b.length;
-  }
-  return result;
+function releaseVideo(video: HTMLVideoElement | null) {
+  if (!video) return;
+  video.removeAttribute("src");
+  video.load();
 }
 
-// ---------------------------------------------------------------------------
-// Main encoder: frames → real GIF89a binary
-// ---------------------------------------------------------------------------
-
-async function framesToGIF(
-  frames: ImageData[],
-  width: number,
-  height: number,
-  fps: number,
-  colorCount: number,
-  netscapeLoopCount: number,
-  onProgress: (pct: number) => void
-): Promise<Uint8Array> {
-  const delayCs = Math.round(100 / fps); // centiseconds per frame
-
-  const encodedFrames: { indexed: Uint8Array; palette: Uint8Array }[] = [];
-
-  for (let i = 0; i < frames.length; i++) {
-    // Allow the browser to breathe between frames
-    await new Promise<void>((r) => setTimeout(r, 0));
-
-    const { data } = frames[i];
-    const palette = neuquant(data, colorCount);
-    const indexed = mapPixels(data, palette, colorCount);
-    encodedFrames.push({ indexed, palette });
-
-    onProgress(Math.round(((i + 1) / frames.length) * 100));
-  }
-
-  return writeGIF(encodedFrames, width, height, delayCs, colorCount, netscapeLoopCount);
+/** Rough bytes/pixel after LZW, by colour count; dithering adds noise that compresses worse. */
+function estimateBytes(w: number, h: number, frames: number, colors: number, dither: boolean, mode: PaletteMode) {
+  const perPixel = colors <= 64 ? 0.3 : colors <= 128 ? 0.38 : 0.46;
+  const palettes = mode === "local" ? frames * colors * 3 : colors * 3;
+  return Math.round(w * h * frames * perPixel * (dither ? 1.35 : 1) + palettes + frames * 20);
 }
-
-// ---------------------------------------------------------------------------
-// Estimated output size (very rough: ~1 bit/pixel per frame after LZW)
-// ---------------------------------------------------------------------------
-
-function estimateSize(
-  width: number,
-  height: number,
-  frameCount: number
-): number {
-  // Empirical: roughly 0.5–1 byte per pixel per frame after LZW
-  return Math.round(width * height * frameCount * 0.75);
-}
-
-// ---------------------------------------------------------------------------
-// Settings constants
-// ---------------------------------------------------------------------------
-
-const FPS_OPTIONS = [5, 10, 15, 20] as const;
-const WIDTH_OPTIONS = [240, 320, 480] as const;
-const COLOR_OPTIONS = [
-  { value: 64 },
-  { value: 128 },
-  { value: 256 },
-] as const;
-
-type FpsValue = (typeof FPS_OPTIONS)[number];
-type WidthValue = (typeof WIDTH_OPTIONS)[number];
-
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
 
 export default function VideoToGifPage() {
   const { t } = useI18n();
+
+  const [formats, setFormats] = useState(DEFAULT_FORMATS);
   const [file, setFile] = useState<File | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
-  const [videoDuration, setVideoDuration] = useState(0);
+  const [meta, setMeta] = useState<Meta | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [playhead, setPlayhead] = useState(-1);
 
-  // Settings
-  const [startTime, setStartTime] = useState(0);
-  const [endTime, setEndTime] = useState(5);
-  const [fps, setFps] = useState<FpsValue>(10);
-  const [outputWidth, setOutputWidth] = useState<WidthValue>(320);
-  const [colorCount, setColorCount] = useState(128);
-  const [gifLoop, setGifLoop] = useState<"forever" | "once" | "three">("forever");
+  const [start, setStart] = useState(0);
+  const [end, setEnd] = useState(0);
+  const [fps, setFps] = useState<number>(10);
+  const [speed, setSpeed] = useState<number>(1);
+  const [widthChoice, setWidthChoice] = useState<number | "custom">(480);
+  const [customWidth, setCustomWidth] = useState("400");
+  const [colors, setColors] = useState<number>(256);
+  const [paletteMode, setPaletteMode] = useState<PaletteMode>("global");
+  const [dither, setDither] = useState(false);
+  const [loop, setLoop] = useState<Loop>("forever");
 
-  // Processing state
-  const [processing, setProcessing] = useState(false);
-  const [progressLabel, setProgressLabel] = useState("");
-  const [extractProgress, setExtractProgress] = useState(0);
-  const [encodeProgress, setEncodeProgress] = useState(0);
-
-  // Output
-  const [outputUrl, setOutputUrl] = useState<string | null>(null);
-  const [outputBlob, setOutputBlob] = useState<Blob | null>(null);
-  const [outputSize, setOutputSize] = useState(0);
+  const [progress, setProgress] = useState<Progress | null>(null);
+  const [output, setOutput] = useState<Output | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
-  const prevVideoUrlRef = useRef<string | null>(null);
-  const prevOutputUrlRef = useRef<string | null>(null);
+  const urlRef = useRef<string | null>(null);
+  const outputUrlRef = useRef<string | null>(null);
+  const runRef = useRef<{ ac: AbortController; worker: Worker | null } | null>(null);
 
-  // Cleanup on unmount
+  // Feature-detect decodable containers after mount (SSR renders the defaults).
   useEffect(() => {
-    return () => {
-      if (prevVideoUrlRef.current) URL.revokeObjectURL(prevVideoUrlRef.current);
-      if (prevOutputUrlRef.current) URL.revokeObjectURL(prevOutputUrlRef.current);
-    };
+    const probe = document.createElement("video");
+    const ok = CANDIDATES.filter((c) => c.probe.some((m) => probe.canPlayType(m) !== ""));
+    if (ok.length) setFormats(ok);
   }, []);
 
-  const handleFiles = useCallback((files: File[]) => {
-    const f = files[0];
-    if (!f) return;
+  const accept = useMemo(() => Object.fromEntries(formats.map((f) => [f.mime, f.exts])), [formats]);
 
-    if (prevVideoUrlRef.current) URL.revokeObjectURL(prevVideoUrlRef.current);
-    if (prevOutputUrlRef.current) {
-      URL.revokeObjectURL(prevOutputUrlRef.current);
-      prevOutputUrlRef.current = null;
-    }
-
-    const url = URL.createObjectURL(f);
-    prevVideoUrlRef.current = url;
-    setFile(f);
-    setVideoUrl(url);
-    setOutputUrl(null);
-    setOutputBlob(null);
-    setOutputSize(0);
-    setExtractProgress(0);
-    setEncodeProgress(0);
-    setStartTime(0);
-    setEndTime(5);
+  const cancelRun = useCallback(() => {
+    const run = runRef.current;
+    if (!run) return;
+    run.ac.abort();
+    run.worker?.terminate();
+    runRef.current = null;
+    setProgress(null);
   }, []);
 
-  const handleVideoLoaded = useCallback(() => {
-    const video = videoRef.current;
-    if (!video) return;
-    const dur = video.duration;
-    const safeDur = isFinite(dur) ? dur : 0;
-    setVideoDuration(safeDur);
-    if (safeDur > 0) {
-      setEndTime(Math.min(5, safeDur));
-    }
+  const clearOutput = useCallback(() => {
+    if (outputUrlRef.current) URL.revokeObjectURL(outputUrlRef.current);
+    outputUrlRef.current = null;
+    setOutput(null);
   }, []);
 
-  const handleReset = useCallback(() => {
-    if (prevVideoUrlRef.current) {
-      URL.revokeObjectURL(prevVideoUrlRef.current);
-      prevVideoUrlRef.current = null;
-    }
-    if (prevOutputUrlRef.current) {
-      URL.revokeObjectURL(prevOutputUrlRef.current);
-      prevOutputUrlRef.current = null;
-    }
-    setFile(null);
-    setVideoUrl(null);
-    setOutputUrl(null);
-    setOutputBlob(null);
-    setVideoDuration(0);
-    setExtractProgress(0);
-    setEncodeProgress(0);
-  }, []);
-
-  // Derived values
-  const clipDuration = Math.max(0, endTime - startTime);
-  const totalFrames = Math.max(1, Math.ceil(clipDuration * fps));
-  const estimatedBytes = estimateSize(outputWidth, Math.round(outputWidth * 0.5625), totalFrames);
-
-  const clampEndTime = useCallback(
-    (val: number) => {
-      const clipped = Math.min(val, videoDuration > 0 ? videoDuration : val);
-      const limited = Math.min(clipped, startTime + 10);
-      return Math.max(limited, startTime + 0.1);
+  useEffect(
+    () => () => {
+      runRef.current?.ac.abort();
+      runRef.current?.worker?.terminate();
+      if (urlRef.current) URL.revokeObjectURL(urlRef.current);
+      if (outputUrlRef.current) URL.revokeObjectURL(outputUrlRef.current);
     },
-    [startTime, videoDuration]
+    [],
   );
 
-  // Seek video and capture a frame
-  const seekAndCapture = (
-    video: HTMLVideoElement,
-    ctx: CanvasRenderingContext2D,
-    time: number,
-    outW: number,
-    outH: number
-  ): Promise<ImageData> => {
-    return new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => {
-        video.removeEventListener("seeked", onSeeked);
-        reject(new Error(`Seek timeout at ${time}`));
-      }, 5000);
+  const handleFiles = useCallback(
+    (files: File[]) => {
+      const f = files[0];
+      if (!f) return;
+      cancelRun();
+      clearOutput();
+      if (urlRef.current) URL.revokeObjectURL(urlRef.current);
+      const url = URL.createObjectURL(f);
+      urlRef.current = url;
+      setFile(f);
+      setVideoUrl(url);
+      setMeta(null);
+      setLoadError(null);
+      setPlayhead(-1);
+      setStart(0);
+      setEnd(0);
+    },
+    [cancelRun, clearOutput],
+  );
 
-      const onSeeked = () => {
-        clearTimeout(timeout);
-        ctx.drawImage(video, 0, 0, outW, outH);
-        resolve(ctx.getImageData(0, 0, outW, outH));
-      };
+  const handleReset = useCallback(() => {
+    cancelRun();
+    clearOutput();
+    if (urlRef.current) URL.revokeObjectURL(urlRef.current);
+    urlRef.current = null;
+    setFile(null);
+    setVideoUrl(null);
+    setMeta(null);
+    setLoadError(null);
+  }, [cancelRun, clearOutput]);
 
-      video.addEventListener("seeked", onSeeked, { once: true });
-      video.currentTime = time;
-    });
-  };
+  const onLoadedMetadata = useCallback(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (!v.videoWidth || !v.videoHeight) {
+      setLoadError(t("vid2gif.v2.noVideoTrack"));
+      return;
+    }
+    const duration = Number.isFinite(v.duration) ? v.duration : 0;
+    if (!(duration > 0)) {
+      setLoadError(t("vid2gif.v2.noDuration"));
+      return;
+    }
+    setMeta({ duration, width: v.videoWidth, height: v.videoHeight });
+    setStart(0);
+    setEnd(Math.min(duration, 5));
+  }, [t]);
+
+  const onVideoError = useCallback(() => {
+    setLoadError(t("vid2gif.v2.decodeError"));
+  }, [t]);
+
+  // Preview: play at the chosen speed and loop inside the selection.
+  useEffect(() => {
+    if (videoRef.current) videoRef.current.playbackRate = speed;
+  }, [speed, meta]);
+
+  const onTimeUpdate = useCallback(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (!v.paused && (v.currentTime >= end || v.currentTime < start - 0.3)) v.currentTime = start;
+    setPlayhead(v.currentTime);
+  }, [start, end]);
+
+  const scrubTo = useCallback((time: number) => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (!v.paused) v.pause();
+    const fast = (v as HTMLVideoElement & { fastSeek?: (t: number) => void }).fastSeek;
+    if (fast) fast.call(v, time);
+    else v.currentTime = time;
+    setPlayhead(time);
+  }, []);
+
+  // ---- Derived output geometry ----
+  const requestedWidth = widthChoice === "custom" ? Math.round(Number(customWidth)) : widthChoice;
+  const customInvalid = widthChoice === "custom" && !(requestedWidth >= 64 && requestedWidth <= 1280);
+  const outW = meta ? Math.max(16, Math.min(Number.isFinite(requestedWidth) ? requestedWidth : 480, meta.width)) : 0;
+  const outH = meta ? Math.max(1, Math.round((outW * meta.height) / meta.width)) : 0;
+  const clipLength = Math.max(0, end - start);
+  const frameCount = Math.max(1, Math.round((clipLength / speed) * fps));
+  const tooManyFrames = frameCount > MAX_FRAMES;
+  const gifSeconds = frameCount / fps;
+  const estimate = meta ? estimateBytes(outW, outH, frameCount, colors, dither, paletteMode) : 0;
+
+  const signature = JSON.stringify([start, end, fps, speed, outW, outH, colors, paletteMode, dither, loop]);
+  const outputStale = !!output && output.sig !== signature;
 
   const convert = useCallback(async () => {
-    const video = videoRef.current;
-    if (!video || !file) return;
-
-    if (clipDuration <= 0) {
+    const v = videoRef.current;
+    if (!v || !meta || !videoUrl || !file) return;
+    if (clipLength < 0.1) {
       toast.error(t("gif.ui.endAfterStart"));
       return;
     }
-    if (clipDuration > 10) {
-      toast.error(t("gif.ui.maxClip"));
-      return;
-    }
+    cancelRun();
+    clearOutput();
+    v.pause();
 
-    setProcessing(true);
-    setExtractProgress(0);
-    setEncodeProgress(0);
+    const ac = new AbortController();
+    const run: { ac: AbortController; worker: Worker | null } = { ac, worker: null };
+    runRef.current = run;
+    const total = frameCount;
+    const sig = signature;
+    const width = outW;
+    const height = outH;
+    const step = speed / fps; // seconds of source video per GIF frame
+    const times = Array.from({ length: total }, (_, i) => Math.min(meta.duration - 0.01, start + i * step));
+    setProgress({ extracted: 0, encoded: 0, total });
 
-    if (prevOutputUrlRef.current) {
-      URL.revokeObjectURL(prevOutputUrlRef.current);
-      prevOutputUrlRef.current = null;
-    }
-    setOutputUrl(null);
-    setOutputBlob(null);
-
+    let extractor: HTMLVideoElement | null = null;
     try {
-      const naturalW = video.videoWidth;
-      const naturalH = video.videoHeight;
-      const outW = outputWidth;
-      const outH = Math.max(1, Math.round(outW * (naturalH / naturalW)));
+      const worker = new Worker(new URL("./gif.worker.ts", import.meta.url), { type: "module" });
+      run.worker = worker;
+      let encoded = 0;
+      let wake: (() => void) | null = null;
+      let finished!: (buffer: ArrayBuffer) => void;
+      let failed!: (err: Error) => void;
+      const result = new Promise<ArrayBuffer>((res, rej) => {
+        finished = res;
+        failed = rej;
+      });
+      result.catch(() => undefined);
+      ac.signal.addEventListener("abort", () => wake?.(), { once: true });
+      worker.onmessage = (event: MessageEvent<GifWorkerOut>) => {
+        const msg = event.data;
+        if (msg.type === "frameDone") {
+          encoded = msg.count;
+          if (runRef.current === run) setProgress((p) => (p ? { ...p, encoded } : p));
+          wake?.();
+          wake = null;
+        } else if (msg.type === "done") finished(msg.buffer);
+        else failed(new Error(msg.message));
+        if (msg.type !== "frameDone") {
+          wake?.();
+          wake = null;
+        }
+      };
+      worker.onerror = (event) => {
+        event.preventDefault();
+        failed(new Error(event.message || "worker"));
+        wake?.();
+      };
+      const post = (msg: GifWorkerIn, transfer: Transferable[] = []) => worker.postMessage(msg, transfer);
 
+      const job: GifJob = {
+        width,
+        height,
+        colors,
+        mode: paletteMode,
+        dither,
+        repeat: repeatFor(loop),
+        delaysCs: frameDelaysCs(total, fps),
+      };
+      post({ type: "init", job });
+
+      extractor = await openVideo(videoUrl, ac.signal);
       const canvas = document.createElement("canvas");
-      canvas.width = outW;
-      canvas.height = outH;
+      canvas.width = width;
+      canvas.height = height;
       const ctx = canvas.getContext("2d", { willReadFrequently: true });
-      if (!ctx) throw new Error("Canvas 2D context unavailable");
+      if (!ctx) throw new Error("canvas");
+      const grab = async (time: number) => {
+        await seekTo(extractor!, time, ac.signal);
+        ctx.drawImage(extractor!, 0, 0, width, height);
+        return ctx.getImageData(0, 0, width, height).data.buffer as ArrayBuffer;
+      };
 
-      const frameCount = Math.ceil(clipDuration * fps);
-      const frameInterval = 1 / fps;
-      const frames: ImageData[] = [];
-
-      // ---- Phase 1: Extract frames ----
-      setProgressLabel(t("gif.ui.extractingFrames"));
-      for (let i = 0; i < frameCount; i++) {
-        const frameTime = startTime + i * frameInterval;
-        const frame = await seekAndCapture(
-          video,
-          ctx,
-          Math.min(frameTime, endTime - 0.001),
-          outW,
-          outH
-        );
-        frames.push(frame);
-        setExtractProgress(Math.round(((i + 1) / frameCount) * 100));
+      // One palette for the whole GIF, learned from frames spread over the clip.
+      if (paletteMode === "global") {
+        const n = Math.min(8, total);
+        const buffers: ArrayBuffer[] = [];
+        for (let k = 0; k < n; k++) {
+          buffers.push(await grab(times[Math.floor(((k + 0.5) / n) * total)]));
+        }
+        post({ type: "samples", buffers }, buffers);
       }
 
-      // ---- Phase 2: Encode GIF ----
-      setProgressLabel(t("gif.ui.encodingGif"));
-      const netscapeLoopCount =
-        gifLoop === "forever" ? 0 : gifLoop === "once" ? 1 : 3;
-      const gifBytes = await framesToGIF(
-        frames,
-        outW,
-        outH,
-        fps,
-        colorCount,
-        netscapeLoopCount,
-        (pct) => setEncodeProgress(pct)
-      );
-
-      const blob = new Blob([gifBytes.buffer as ArrayBuffer], { type: "image/gif" });
+      for (let i = 0; i < total; i++) {
+        if (ac.signal.aborted) throw new Cancelled();
+        while (i - encoded >= IN_FLIGHT) {
+          await new Promise<void>((res) => {
+            wake = res;
+          });
+          if (ac.signal.aborted) throw new Cancelled();
+        }
+        const buffer = await grab(times[i]);
+        post({ type: "frame", buffer }, [buffer]);
+        if (runRef.current === run) setProgress((p) => (p ? { ...p, extracted: i + 1 } : p));
+      }
+      post({ type: "finish" });
+      const bytes = await Promise.race([
+        result,
+        new Promise<never>((_, rej) => ac.signal.addEventListener("abort", () => rej(new Cancelled()), { once: true })),
+      ]);
+      if (runRef.current !== run) return;
+      worker.terminate();
+      runRef.current = null;
+      const blob = new Blob([bytes], { type: "image/gif" });
       const url = URL.createObjectURL(blob);
-      prevOutputUrlRef.current = url;
-      setOutputBlob(blob);
-      setOutputUrl(url);
-      setOutputSize(blob.size);
-
+      outputUrlRef.current = url;
+      setOutput({ blob, url, sig, width, height, frames: total });
+      setProgress(null);
       toast.success(t("gif.ui.created"));
     } catch (err) {
+      if (err instanceof Cancelled || runRef.current !== run) return;
       console.error(err);
-      toast.error(t("gif.ui.conversionFailed"));
+      run.worker?.terminate();
+      runRef.current = null;
+      setProgress(null);
+      toast.error(err instanceof Error && err.message === "decode" ? t("vid2gif.v2.decodeError") : t("gif.ui.conversionFailed"));
     } finally {
-      setProcessing(false);
-      setProgressLabel("");
+      releaseVideo(extractor);
     }
-  }, [file, startTime, endTime, fps, outputWidth, colorCount, clipDuration, gifLoop, t]);
+  }, [meta, videoUrl, file, clipLength, cancelRun, clearOutput, frameCount, signature, outW, outH, speed, fps, start, colors, paletteMode, dither, loop, t]);
 
-  const handleDownload = useCallback(() => {
-    if (!outputUrl || !file) return;
-    const baseName = file.name.replace(/\.[^.]+$/, "");
-    const a = document.createElement("a");
-    a.href = outputUrl;
-    a.download = `${baseName}.gif`;
-    a.click();
-  }, [outputUrl, file]);
+  const download = () => {
+    if (!output || !file) return;
+    downloadBlob(output.blob, `${getFileNameWithoutExtension(file.name)}.gif`);
+  };
 
-  const colorLabels: Record<(typeof COLOR_OPTIONS)[number]["value"], string> = {
+  const busy = progress !== null;
+  const pctExtract = progress ? (progress.extracted / progress.total) * 100 : 0;
+  const pctEncode = progress ? (progress.encoded / progress.total) * 100 : 0;
+
+  const loopOptions: { value: string; label: string }[] = [
+    { value: "forever", label: t("vid2gif.loopForever") },
+    { value: "once", label: t("vid2gif.loopOnce") },
+    { value: "2", label: t("vid2gif.loopNTimes", { n: 2 }) },
+    { value: "3", label: t("vid2gif.loopNTimes", { n: 3 }) },
+  ];
+  const colorLabels: Record<number, string> = {
     64: t("gif.ui.colorLow"),
     128: t("gif.ui.colorMedium"),
     256: t("gif.ui.colorHigh"),
   };
 
-  // Overall progress for single combined bar
-  const overallProgress = processing
-    ? Math.round((extractProgress + encodeProgress) / 2)
-    : 0;
-
   return (
-    <ToolLayout
-      toolName={t("tool.video-to-gif.name")}
-      toolDescription={t("tool.video-to-gif.desc")}
-    >
-      <div className="space-y-6">
+    <ToolLayout toolName={t("tool.video-to-gif.name")} toolDescription={t("tool.video-to-gif.desc")}>
+      <div className="space-y-5">
         {!file ? (
           <FileDropzone
             onFilesSelected={handleFiles}
-            accept={{
-              "video/mp4": [".mp4"],
-              "video/webm": [".webm"],
-              "video/quicktime": [".mov"],
-              "video/x-msvideo": [".avi"],
-            }}
+            accept={accept}
             multiple={false}
             label={t("vid2gif.dropLabel")}
-            formats={["mp4", "webm", "mov", "avi"]}
+            formats={formats.map((f) => f.label)}
           />
         ) : (
           <>
-            {/* Video preview card */}
-            <div className="glass rounded-xl p-4 space-y-3">
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-sm font-medium text-t-primary truncate">
-                  {file.name}
-                </p>
-                <span className="text-xs text-t-secondary shrink-0">
-                  {formatBytes(file.size)}
-                </span>
-              </div>
-
-              {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-              <video
-                ref={videoRef}
-                src={videoUrl ?? undefined}
-                onLoadedMetadata={handleVideoLoaded}
-                controls
-                className="w-full rounded-lg max-h-64 bg-black"
-                preload="metadata"
-              />
-
-              {videoDuration > 0 && (
-                <p className="text-xs text-t-secondary">
-                  {t("gif.ui.duration", { time: formatTime(videoDuration) })}
-                </p>
-              )}
-            </div>
-
-            {/* Trim range slider */}
-            {videoDuration > 0 && (
-              <div className="glass rounded-xl p-5 space-y-4">
-                <h3 className="text-sm font-semibold text-t-primary">{t("gif.ui.trimClip")}</h3>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-xs text-t-secondary">
-                    <span>{t("gif.ui.startAt", { time: formatTime(startTime) })}</span>
-                    <span>{t("gif.ui.endAt", { time: formatTime(endTime) })}</span>
-                  </div>
-
-                  {/* Start time slider */}
-                  <div className="space-y-1">
-                    <label className="text-xs text-t-secondary">
-                      {t("gif.ui.startTime")}
-                    </label>
-                    <input
-                      type="range"
-                      min={0}
-                      max={videoDuration}
-                      step={0.1}
-                      value={startTime}
-                      onChange={(e) => {
-                        const v = parseFloat(e.target.value);
-                        setStartTime(v);
-                        if (endTime <= v + 0.1) {
-                          setEndTime(clampEndTime(v + 1));
-                        }
-                      }}
-                      className="w-full accent-accent"
-                    />
-                  </div>
-
-                  {/* End time slider */}
-                  <div className="space-y-1">
-                    <label className="text-xs text-t-secondary">
-                      {t("gif.ui.endTime")}{" "}
-                      <span className="text-t-secondary font-normal opacity-60">
-                        {t("gif.ui.max10s")}
-                      </span>
-                    </label>
-                    <input
-                      type="range"
-                      min={startTime + 0.1}
-                      max={Math.min(videoDuration, startTime + 10)}
-                      step={0.1}
-                      value={endTime}
-                      onChange={(e) =>
-                        setEndTime(clampEndTime(parseFloat(e.target.value)))
-                      }
-                      className="w-full accent-accent"
-                    />
-                  </div>
-
-                  {/* Fine-grained numeric inputs */}
-                  <div className="grid grid-cols-2 gap-3 pt-1">
-                    <div className="space-y-1">
-                      <label className="text-xs text-t-secondary block">
-                        {t("gif.ui.startSeconds")}
-                      </label>
-                      <input
-                        type="number"
-                        min={0}
-                        max={videoDuration}
-                        step={0.1}
-                        value={parseFloat(startTime.toFixed(1))}
-                        onChange={(e) => {
-                          const v = Math.max(
-                            0,
-                            Math.min(videoDuration, parseFloat(e.target.value) || 0)
-                          );
-                          setStartTime(v);
-                          if (endTime <= v + 0.1) setEndTime(clampEndTime(v + 1));
-                        }}
-                        className="w-full px-3 py-2 rounded-lg border border-border bg-bg-secondary text-t-primary text-sm focus:outline-none focus:border-accent"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-xs text-t-secondary block">
-                        {t("gif.ui.endSeconds")}
-                      </label>
-                      <input
-                        type="number"
-                        min={startTime + 0.1}
-                        max={Math.min(videoDuration, startTime + 10)}
-                        step={0.1}
-                        value={parseFloat(endTime.toFixed(1))}
-                        onChange={(e) =>
-                          setEndTime(clampEndTime(parseFloat(e.target.value) || startTime + 1))
-                        }
-                        className="w-full px-3 py-2 rounded-lg border border-border bg-bg-secondary text-t-primary text-sm focus:outline-none focus:border-accent"
-                      />
-                    </div>
-                  </div>
+            {/* Source */}
+            <div className="glass space-y-4 p-4 sm:p-5">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-2.5">
+                  <Film className="h-4 w-4 shrink-0 text-t-tertiary" aria-hidden="true" />
+                  <p className="truncate text-[14px] font-medium text-t-primary">{file.name}</p>
+                  <span className="shrink-0 text-[12.5px] text-t-tertiary">{formatFileSize(file.size)}</span>
                 </div>
-              </div>
-            )}
-
-            {/* Settings card */}
-            <div className="glass rounded-xl p-6 space-y-5">
-              <h3 className="text-sm font-semibold text-t-primary">{t("ui.settings")}</h3>
-
-              {/* FPS */}
-              <div className="space-y-2">
-                <label className="text-xs font-medium text-t-secondary block">
-                  {t("vid2gif.frameRate")}
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {FPS_OPTIONS.map((f) => (
-                    <button
-                      key={f}
-                      type="button"
-                      onClick={() => setFps(f)}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
-                        fps === f
-                          ? "bg-accent text-on-accent border-accent"
-                          : "border-border text-t-secondary hover:bg-bg-secondary"
-                      }`}
-                    >
-                      {t("gif.ui.fps", { n: f })}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Loop count */}
-              <div className="space-y-2">
-                <label className="text-xs font-medium text-t-secondary block">
-                  {t("vid2gif.loop")}
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {(
-                    [
-                      { key: "forever" as const, label: t("vid2gif.loopForever") },
-                      { key: "once" as const, label: t("vid2gif.loopOnce") },
-                      { key: "three" as const, label: t("vid2gif.loopNTimes", { n: 3 }) },
-                    ]
-                  ).map(({ key, label }) => (
-                    <button
-                      key={key}
-                      type="button"
-                      onClick={() => setGifLoop(key)}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
-                        gifLoop === key
-                          ? "bg-accent text-on-accent border-accent"
-                          : "border-border text-t-secondary hover:bg-bg-secondary"
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Width */}
-              <div className="space-y-2">
-                <label className="text-xs font-medium text-t-secondary block">
-                  {t("gifmaker.outputWidth")}
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {WIDTH_OPTIONS.map((w) => (
-                    <button
-                      key={w}
-                      type="button"
-                      onClick={() => setOutputWidth(w)}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
-                        outputWidth === w
-                          ? "bg-accent text-on-accent border-accent"
-                          : "border-border text-t-secondary hover:bg-bg-secondary"
-                      }`}
-                    >
-                      {w}px
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Quality / color count */}
-              <div className="space-y-2">
-                <label className="text-xs font-medium text-t-secondary block">
-                  {t("gif.ui.colorQuality")}
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {COLOR_OPTIONS.map(({ value }) => (
-                    <button
-                      key={value}
-                      type="button"
-                      onClick={() => setColorCount(value)}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
-                        colorCount === value
-                          ? "bg-accent text-on-accent border-accent"
-                          : "border-border text-t-secondary hover:bg-bg-secondary"
-                      }`}
-                    >
-                      {colorLabels[value]}
-                      <span className="ml-1 opacity-60 text-xs">({value})</span>
-                    </button>
-                  ))}
-                </div>
-                <p className="text-xs text-t-secondary opacity-60">
-                  {t("gif.ui.qualityHint")}
-                </p>
-              </div>
-
-              {/* Summary row */}
-              <div className="rounded-lg border border-border bg-bg-secondary px-4 py-3 text-xs text-t-secondary space-y-1">
-                <div className="flex flex-wrap gap-x-4 gap-y-1">
-                  <span>
-                    {t("gif.ui.clip")}{" "}
-                    <span className="text-t-primary font-medium">
-                      {formatTime(startTime)} → {formatTime(endTime)} ({clipDuration.toFixed(1)}s)
-                    </span>
-                  </span>
-                  <span>
-                    {t("gif.ui.frames")}{" "}
-                    <span className="text-t-primary font-medium">{totalFrames}</span>
-                  </span>
-                  <span>
-                    {t("gif.ui.estSize")}{" "}
-                    <span className="text-t-primary font-medium">
-                      ~{formatBytes(estimatedBytes)}
-                    </span>
-                  </span>
-                </div>
-              </div>
-
-              {/* Action buttons */}
-              <div className="flex flex-wrap gap-3">
-                <button
-                  type="button"
-                  onClick={convert}
-                  disabled={processing || clipDuration <= 0}
-                  className="px-6 py-3 rounded-xl font-semibold text-on-accent bg-accent hover:opacity-90 disabled:opacity-60 transition-opacity"
-                >
-                  {processing ? t("gif.ui.creating") : t("vid2gif.create")}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleReset}
-                  disabled={processing}
-                  className="px-4 py-3 rounded-xl text-sm border border-border text-t-secondary hover:bg-bg-secondary disabled:opacity-60 transition-colors"
-                >
+                <button type="button" onClick={handleReset} className={`${buttonSecondary} min-h-[36px] px-3 py-1.5`}>
+                  <RefreshCw className="h-4 w-4" aria-hidden="true" />
                   {t("gif.ui.newFile")}
                 </button>
               </div>
+
+              {loadError ? (
+                <div role="alert" className="flex items-start gap-3 rounded-xl border border-border bg-bg-secondary p-4">
+                  <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-600 dark:text-red-400" aria-hidden="true" />
+                  <p className="text-[14px] text-t-primary">{loadError}</p>
+                </div>
+              ) : (
+                <>
+                  {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+                  <video
+                    ref={videoRef}
+                    src={videoUrl ?? undefined}
+                    onLoadedMetadata={onLoadedMetadata}
+                    onError={onVideoError}
+                    onTimeUpdate={onTimeUpdate}
+                    onSeeked={onTimeUpdate}
+                    controls
+                    playsInline
+                    muted
+                    preload="metadata"
+                    className="max-h-72 w-full rounded-xl bg-ink"
+                  />
+                  {meta && (
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap items-baseline justify-between gap-2">
+                        <p className={sectionTitle}>{t("gif.ui.trimClip")}</p>
+                        <p className="text-[13px] tabular-nums text-t-secondary">
+                          {formatClock(start)} – {formatClock(end)}{" "}
+                          <span className="text-t-tertiary">({t("vid2gif.v2.seconds", { n: clipLength.toFixed(1) })})</span>
+                        </p>
+                      </div>
+                      <Timeline
+                        src={videoUrl!}
+                        duration={meta.duration}
+                        aspect={meta.width / meta.height}
+                        start={start}
+                        end={end}
+                        maxLength={MAX_CLIP}
+                        playhead={playhead}
+                        onChange={(s, e) => {
+                          setStart(s);
+                          setEnd(e);
+                        }}
+                        onScrub={scrubTo}
+                        labels={{ start: t("gif.ui.startTime"), end: t("gif.ui.endTime"), range: t("vid2gif.v2.selection") }}
+                      />
+                      <p className="text-[12.5px] text-t-tertiary">{t("vid2gif.v2.trimHint")}</p>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
 
-            {/* Progress */}
-            {processing && (
-              <div className="glass rounded-xl p-5 space-y-3">
-                <p className="text-sm font-medium text-t-primary">{progressLabel}</p>
-                <ProgressBar
-                  progress={extractProgress}
-                  label={t("gif.ui.extractProgress", { n: Math.round(extractProgress) })}
-                />
-                <ProgressBar
-                  progress={encodeProgress}
-                  label={t("gif.ui.encodeProgress", { n: Math.round(encodeProgress) })}
-                />
-                <ProgressBar
-                  progress={overallProgress}
-                  label={t("gif.ui.overallProgress", { n: overallProgress })}
-                />
-                <p className="text-xs text-t-secondary opacity-60">
-                  {t("gif.ui.cpuNote")}
-                </p>
-              </div>
-            )}
+            {meta && !loadError && (
+              <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+                {/* Settings */}
+                <div className="glass space-y-5 p-5">
+                  <div className="space-y-2">
+                    <p className={sectionTitle}>{t("vid2gif.v2.speed")}</p>
+                    <Segmented
+                      label={t("vid2gif.v2.speed")}
+                      size="sm"
+                      value={speed}
+                      onChange={setSpeed}
+                      options={SPEED_OPTIONS.map((s) => ({ value: s, label: `${s}×` }))}
+                    />
+                  </div>
 
-            {/* Output */}
-            {outputUrl && outputBlob && !processing && (
-              <div className="glass rounded-xl p-6 space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-t-primary">
-                    {t("gif.ui.animatedGif")}
-                  </h3>
-                  <span className="text-xs text-t-secondary">
-                    {formatBytes(outputSize)}
-                  </span>
+                  <div className="space-y-2">
+                    <p className={sectionTitle}>{t("vid2gif.frameRate")}</p>
+                    <Segmented
+                      label={t("vid2gif.frameRate")}
+                      size="sm"
+                      value={fps}
+                      onChange={setFps}
+                      options={FPS_OPTIONS.map((f) => ({ value: f, label: t("gif.ui.fps", { n: f }) }))}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <p className={sectionTitle}>{t("gifmaker.outputWidth")}</p>
+                    <Segmented
+                      label={t("gifmaker.outputWidth")}
+                      size="sm"
+                      value={widthChoice}
+                      onChange={setWidthChoice}
+                      options={[
+                        ...WIDTH_PRESETS.map((w) => ({ value: w as number | "custom", label: `${w}`, disabled: w > meta.width })),
+                        { value: "custom" as const, label: t("vid2gif.v2.custom") },
+                      ]}
+                    />
+                    {widthChoice === "custom" && (
+                      <label className="flex items-center gap-2 text-[13px] text-t-secondary">
+                        <input
+                          type="number"
+                          inputMode="numeric"
+                          min={64}
+                          max={1280}
+                          step={10}
+                          value={customWidth}
+                          onChange={(e) => setCustomWidth(e.target.value)}
+                          aria-invalid={customInvalid}
+                          aria-label={t("vid2gif.v2.customWidth")}
+                          className="w-28 rounded-lg border border-border bg-bg-secondary px-3 py-2 text-[14px] text-t-primary focus:border-accent focus:outline-none"
+                        />
+                        px
+                      </label>
+                    )}
+                    {customInvalid && <p className="text-[12.5px] text-red-700 dark:text-red-400">{t("vid2gif.v2.widthRange")}</p>}
+                    <p className="text-[12.5px] tabular-nums text-t-tertiary">
+                      {t("vid2gif.v2.outputDims", { w: outW, h: outH })}
+                      {requestedWidth > meta.width && !customInvalid ? ` · ${t("vid2gif.v2.noUpscale")}` : ""}
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <p className={sectionTitle}>{t("gif.ui.colorQuality")}</p>
+                    <Segmented
+                      label={t("gif.ui.colorQuality")}
+                      size="sm"
+                      value={colors}
+                      onChange={setColors}
+                      options={COLOR_OPTIONS.map((c) => ({ value: c, label: `${colorLabels[c]} · ${c}` }))}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <p className={sectionTitle}>{t("vid2gif.loop")}</p>
+                    <Segmented
+                      label={t("vid2gif.loop")}
+                      size="sm"
+                      value={String(loop)}
+                      onChange={(v) => setLoop(v === "forever" || v === "once" ? v : (Number(v) as 2 | 3))}
+                      options={loopOptions}
+                    />
+                  </div>
+
+                  <div className="space-y-4 border-t border-border pt-4">
+                    <Toggle
+                      checked={paletteMode === "local"}
+                      onChange={(on) => setPaletteMode(on ? "local" : "global")}
+                      label={t("vid2gif.v2.localPalette")}
+                      description={t("vid2gif.v2.localPaletteHint")}
+                    />
+                    <Toggle checked={dither} onChange={setDither} label={t("vid2gif.v2.dither")} description={t("vid2gif.v2.ditherHint")} />
+                  </div>
                 </div>
 
-                {/* Preview — use <img> so the GIF animates natively */}
-                <div className="rounded-lg border border-border overflow-hidden bg-black flex items-center justify-center">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={outputUrl}
-                    alt={t("gif.ui.previewAlt")}
-                    className="max-w-full max-h-64 object-contain"
-                  />
+                {/* Summary, progress, result */}
+                <div className="space-y-5">
+                  <div className="glass space-y-4 p-5" aria-live="polite">
+                    <dl className="grid grid-cols-2 gap-3 text-[13px]">
+                      <div className="rounded-xl bg-bg-secondary p-3">
+                        <dt className="text-t-tertiary">{t("gif.ui.frames")}</dt>
+                        <dd className="mt-0.5 font-semibold tabular-nums text-t-primary">{frameCount}</dd>
+                      </div>
+                      <div className="rounded-xl bg-bg-secondary p-3">
+                        <dt className="text-t-tertiary">{t("vid2gif.v2.gifLength")}</dt>
+                        <dd className="mt-0.5 font-semibold tabular-nums text-t-primary">{t("vid2gif.v2.seconds", { n: gifSeconds.toFixed(1) })}</dd>
+                      </div>
+                      <div className="rounded-xl bg-bg-secondary p-3">
+                        <dt className="text-t-tertiary">{t("vid2gif.v2.dimensions")}</dt>
+                        <dd className="mt-0.5 font-semibold tabular-nums text-t-primary">
+                          {outW} × {outH}
+                        </dd>
+                      </div>
+                      <div className="rounded-xl bg-bg-secondary p-3">
+                        <dt className="text-t-tertiary">{output && !outputStale ? t("vid2gif.v2.fileSize") : t("gif.ui.estSize")}</dt>
+                        <dd className="mt-0.5 font-semibold tabular-nums text-t-primary">
+                          {output && !outputStale ? formatFileSize(output.blob.size) : `~${formatFileSize(estimate)}`}
+                        </dd>
+                      </div>
+                    </dl>
+
+                    {tooManyFrames && (
+                      <p role="alert" className="flex items-start gap-2 text-[13px] text-red-700 dark:text-red-400">
+                        <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                        {t("vid2gif.v2.tooManyFrames", { n: frameCount, max: MAX_FRAMES })}
+                      </p>
+                    )}
+
+                    {busy ? (
+                      <div className="space-y-3">
+                        <ProgressBar progress={pctExtract} label={t("gif.ui.extractProgress", { n: Math.round(pctExtract) })} />
+                        <ProgressBar progress={pctEncode} label={t("gif.ui.encodeProgress", { n: Math.round(pctEncode) })} />
+                        <button type="button" onClick={cancelRun} className={`${buttonSecondary} w-full`}>
+                          <X className="h-4 w-4" aria-hidden="true" />
+                          {t("vid2gif.v2.cancel")}
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={convert}
+                        disabled={tooManyFrames || customInvalid || clipLength < 0.1}
+                        className={`${buttonPrimary} w-full`}
+                      >
+                        <Sparkles className="h-4 w-4" aria-hidden="true" />
+                        {output ? t("vid2gif.v2.recreate") : t("vid2gif.create")}
+                      </button>
+                    )}
+                  </div>
+
+                  {busy && !output && (
+                    <div className="glass flex items-center justify-center gap-2 p-6 text-[13px] text-t-secondary">
+                      <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                      {progress && progress.extracted < progress.total ? t("gif.ui.extractingFrames") : t("gif.ui.encodingGif")}
+                    </div>
+                  )}
+
+                  {output && (
+                    <div className="glass space-y-4 p-5">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className={sectionTitle}>{t("gif.ui.animatedGif")}</p>
+                        <span className="text-[13px] font-semibold tabular-nums text-t-primary">{formatFileSize(output.blob.size)}</span>
+                      </div>
+                      <div className="flex items-center justify-center overflow-hidden rounded-xl border border-border bg-bg-secondary">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={output.url}
+                          alt={t("gif.ui.previewAlt")}
+                          width={output.width}
+                          height={output.height}
+                          className={`max-h-80 w-auto max-w-full object-contain transition-opacity ${outputStale ? "opacity-40" : ""}`}
+                        />
+                      </div>
+                      <p className="text-[12.5px] tabular-nums text-t-tertiary">
+                        {output.width} × {output.height} · {t("vid2gif.v2.framesCount", { n: output.frames })}
+                      </p>
+                      {outputStale ? (
+                        <p className="flex items-start gap-2 rounded-xl bg-bg-secondary p-3 text-[13px] text-t-secondary">
+                          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                          {t("vid2gif.v2.stale")}
+                        </p>
+                      ) : (
+                        <button type="button" onClick={download} className={`${buttonPrimary} w-full`}>
+                          <Download className="h-4 w-4" aria-hidden="true" />
+                          {t("gif.ui.downloadGif")}
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
-
-                <p className="text-xs text-t-secondary opacity-70">
-                  {t("gif.ui.formatNote")}
-                </p>
-
-                <button
-                  type="button"
-                  onClick={handleDownload}
-                  className="w-full px-6 py-3 rounded-xl font-semibold text-on-accent bg-accent hover:opacity-90 transition-opacity"
-                >
-                  {t("gif.ui.downloadGif")}
-                </button>
               </div>
             )}
           </>
