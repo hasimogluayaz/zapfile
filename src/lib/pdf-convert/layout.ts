@@ -442,7 +442,7 @@ function hexOk(c: string): string {
 }
 
 /** Styled runs of a line (or of several lines joined into one paragraph). */
-function runsOf(lines: Line[], fonts: FontInfo[], joinWith: (prev: Line, next: Line) => string): TextRun[] {
+export function runsOf(lines: Line[], fonts: FontInfo[], joinWith: (prev: Line, next: Line) => string): TextRun[] {
   const runs: TextRun[] = [];
   const push = (text: string, g: Glyph | null, lineSize: number, baseline: number) => {
     if (!text) return;
@@ -524,7 +524,7 @@ function joinLines(prev: Line, next: Line): string {
   return " ";
 }
 
-function finishRuns(runs: TextRun[]): TextRun[] {
+export function finishRuns(runs: TextRun[]): TextRun[] {
   // Apply de-hyphenation markers.
   for (let i = 0; i < runs.length; i++) {
     const r = runs[i]!;

@@ -24,7 +24,7 @@ export interface ConvertProgress {
 }
 
 export interface ConvertJob {
-  kind: "docx" | "xlsx";
+  kind: "docx" | "xlsx" | "pptx";
   /** 1-based page numbers, or null for all pages. */
   pages: number[] | null;
   keepPageBreaks?: boolean;
@@ -63,7 +63,7 @@ export async function convertPdf(
   const numbers = job.pages ?? Array.from({ length: pdf.numPages }, (_, i) => i + 1);
   const pages: PageModel[] = [];
   const assets: ImageAsset[] = [];
-  const withImages = job.kind === "docx";
+  const withImages = job.kind !== "xlsx";
   for (let i = 0; i < numbers.length; i++) {
     if (signal.aborted) throw abortError();
     onProgress({ phase: "reading", done: i, total: numbers.length });
@@ -114,10 +114,11 @@ export async function convertPdf(
     worker.onmessage = (e: MessageEvent<ConvertResponse>) => {
       cleanup();
       if (e.data.type === "done") {
-        const mime =
-          job.kind === "docx"
-            ? "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+        const mime = {
+          docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        }[job.kind];
         resolve({ blob: new Blob([e.data.bytes], { type: mime }), stats: e.data.stats });
       } else {
         reject(new Error(e.data.message));
@@ -130,7 +131,9 @@ export async function convertPdf(
     const msg: ConvertRequest =
       job.kind === "docx"
         ? { kind: "docx", pages, assets: keep, title: job.title, keepPageBreaks: job.keepPageBreaks !== false }
-        : { kind: "xlsx", pages, title: job.title, options: job.xlsx ?? { layout: "page", tablesOnly: false, numbers: true } };
+        : job.kind === "pptx"
+          ? { kind: "pptx", pages, assets: keep, title: job.title }
+          : { kind: "xlsx", pages, title: job.title, options: job.xlsx ?? { layout: "page", tablesOnly: false, numbers: true } };
     worker.postMessage(msg, keep.map((a) => a.bytes));
   });
 }

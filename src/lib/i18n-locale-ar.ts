@@ -5,6 +5,14 @@
 
 export const arLocaleStrings: Record<string, string> = {
   "nav.allTools": "جميع الأدوات",
+  "tool.pdf-to-powerpoint.name": "PDF إلى PowerPoint",
+  "tool.pdf-to-powerpoint.desc": "حوّل صفحات PDF إلى شرائح PowerPoint قابلة للتحرير (PPTX)",
+  "p2o.writingPptx": "جارٍ إنشاء العرض التقديمي…",
+  "p2o.downloadPptx": "تنزيل PPTX",
+  "p2o.statSlides": "{n} شرائح",
+  "p2o.statSlidesOne": "{n} شريحة",
+  "p2o.statTextBoxes": "{n} مربعات نص",
+  "p2o.statTextBoxesOne": "{n} مربع نص",
   "tool.word-to-pdf.name": "Word إلى PDF",
   "tool.word-to-pdf.desc": "حوّل مستندات Word (DOCX وDOC وODT وRTF) إلى PDF مع الحفاظ على التنسيق",
   "tool.excel-to-pdf.name": "Excel إلى PDF",

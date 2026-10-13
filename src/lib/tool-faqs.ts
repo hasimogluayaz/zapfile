@@ -86,6 +86,20 @@ const toolFaqs: Record<string, FaqItem[]> = {
       answer: "Yes. Drop as many files as you like: they are converted one after another and you can download each PDF, all of them as a ZIP, or combine them into one PDF.",
     },
   ],
+  "pdf-to-powerpoint": [
+    {
+      question: "How do I convert a PDF to PowerPoint?",
+      answer: "Drop the PDF into ZapFile's PDF to PowerPoint tool. Each page becomes one slide in a PPTX file, built in your browser in a few seconds. Nothing is uploaded and there is no watermark.",
+    },
+    {
+      question: "Can I edit the slides?",
+      answer: "Yes. Text is placed in real text boxes with its fonts, sizes, colors and line breaks, so you can change the wording right away. Pictures, colored boxes and lines are separate objects you can move or delete. Charts and diagrams are kept as sharp pictures.",
+    },
+    {
+      question: "What happens with scanned PDFs?",
+      answer: "A scanned page has no text layer, so it becomes a full-slide picture. If the scan already contains an OCR text layer, that text is used and becomes editable.",
+    },
+  ],
   "pdf-to-word": [
     {
       question: "How do I convert a PDF to Word for free?",

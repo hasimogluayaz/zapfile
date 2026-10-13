@@ -6,11 +6,14 @@
 import { buildDocument } from "./layout";
 import { writeDocx } from "./docx";
 import { writeXlsx, type XlsxOptions } from "./xlsx";
+import { writePptx } from "./pptx";
+import { buildSlide } from "./slides";
 import type { ImageAsset, PageModel } from "./model";
 
 export type ConvertRequest =
   | { kind: "docx"; pages: PageModel[]; assets: ImageAsset[]; title: string; keepPageBreaks: boolean }
-  | { kind: "xlsx"; pages: PageModel[]; title: string; options: XlsxOptions };
+  | { kind: "xlsx"; pages: PageModel[]; title: string; options: XlsxOptions }
+  | { kind: "pptx"; pages: PageModel[]; assets: ImageAsset[]; title: string };
 
 export type ConvertResponse =
   | { type: "done"; bytes: ArrayBuffer; stats: ConvertStats }
@@ -27,6 +30,8 @@ export interface ConvertStats {
   scannedPages: number;
   sheets?: number;
   rows?: number;
+  slides?: number;
+  textBoxes?: number;
 }
 
 const ctx = self as unknown as DedicatedWorkerGlobalScope;
@@ -50,6 +55,11 @@ ctx.onmessage = async (event: MessageEvent<ConvertRequest>) => {
       }
       const bytes = await writeDocx(doc, req.assets, { keepPageBreaks: req.keepPageBreaks });
       const buffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
+      ctx.postMessage({ type: "done", bytes: buffer, stats } satisfies ConvertResponse, [buffer]);
+    } else if (req.kind === "pptx") {
+      const { bytes, stats: s } = await writePptx(req.pages.map(buildSlide), req.assets, req.title);
+      const buffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
+      const stats: ConvertStats = { paragraphs: 0, headings: 0, tables: 0, images: s.images, lists: 0, header: false, footer: false, scannedPages: req.pages.filter((p) => p.scanned).length, slides: s.slides, textBoxes: s.textBoxes };
       ctx.postMessage({ type: "done", bytes: buffer, stats } satisfies ConvertResponse, [buffer]);
     } else {
       const { bytes, sheets, rows, tables } = await writeXlsx(req.pages, req.title, req.options);

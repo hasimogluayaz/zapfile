@@ -585,6 +585,17 @@ export const tools: Tool[] = [
       "Convert PDF tables to Excel (XLSX) with real numbers, merged cells and one sheet per page or table. Free, private, no uploads.",
   },
   {
+    slug: "pdf-to-powerpoint",
+    name: "PDF to PowerPoint",
+    description: "Turn PDF pages into editable PowerPoint slides (PPTX)",
+    emoji: "📽️",
+    category: "pdf",
+    acceptedFormats: [".pdf"],
+    metaTitle: "PDF to PowerPoint Converter - Free, Editable PPTX | ZapFile",
+    metaDescription:
+      "Convert PDF to PowerPoint in your browser: every page becomes a slide with editable text boxes, pictures, shapes and charts in place. Free, private, no upload, no watermark.",
+  },
+  {
     slug: "word-to-pdf",
     name: "Word to PDF",
     description: "Convert Word documents (DOCX, DOC, ODT, RTF) to PDF with the layout intact",

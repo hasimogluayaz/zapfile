@@ -25,7 +25,7 @@ src/
 │   ├── terms/page.tsx
 │   └── tools/
 │       ├── page.tsx         # Browse all tools
-│       └── [slug]/page.tsx  # 55 individual tool pages
+│       └── [slug]/page.tsx  # 59 individual tool pages
 ├── components/
 │   ├── Header.tsx           # Sticky header, language switcher, category dropdown
 │   ├── Footer.tsx           # Multi-column footer
@@ -38,7 +38,7 @@ src/
 │   ├── ErrorBoundary.tsx    # Catches render errors, shows refresh button
 │   └── AdPlaceholder.tsx    # Placeholder for future ads
 ├── lib/
-│   ├── tools.ts             # 55 tools registry (slug, name, description, category, acceptedFormats)
+│   ├── tools.ts             # 59 tools registry (slug, name, description, category, acceptedFormats)
 │   ├── tool-i18n.ts         # toolField() helper for localized tool names/descriptions
 │   ├── file-handoff.ts      # Home drop pad → tool page file handoff (in-memory)
 │   ├── search.ts            # searchTools(): diacritic-insensitive ranked tool search (header modal, home, /tools)
@@ -60,7 +60,7 @@ src/
 
 ## Tools
 
-Canonical list: `src/lib/tools.ts` — 55 tools across 4 categories (PDF, Image, Video/Audio, Utility). FFmpeg/AI/browser-fetch tools were removed in v1.4.0. v2.0 retired 13 off-brand or third-party-dependent tools and merged 5 duplicates; their URLs 301-redirect via `redirects()` in `next.config.mjs` — add a redirect whenever a tool slug is removed or renamed.
+Canonical list: `src/lib/tools.ts` — 59 tools across 4 categories (PDF, Image, Video/Audio, Utility). FFmpeg/AI/browser-fetch tools were removed in v1.4.0. v2.0 retired 13 off-brand or third-party-dependent tools and merged 5 duplicates; their URLs 301-redirect via `redirects()` in `next.config.mjs` — add a redirect whenever a tool slug is removed or renamed.
 
 ## Design System ("Voltage")
 
@@ -100,6 +100,14 @@ Workers/wasm that libraries load at runtime are copied from `node_modules` into 
 - `docx.ts` / `xlsx.ts` write OOXML with JSZip (mind the strict child order of `w:pPr` / `w:rPr`). Excel numbers are parsed with decimal-comma detection, currency, percentages and ISO dates.
 - UI: `components/pdf-convert/PdfConvertTool.tsx` (`kind: "docx" | "xlsx"`). Converts automatically on drop and on option changes; a password-protected PDF links to Protect PDF.
 - Check layout changes with a LibreOffice round trip (DOCX → PDF → compare with the source PDF) on multi-column, table, chart and scanned samples.
+
+## Office → PDF (`src/lib/office/`)
+
+- Word / Excel / PowerPoint → PDF run LibreOffice compiled to WebAssembly (`@matbee/libreoffice-converter`, MPL-2.0) in the browser: `engine.ts` (download, cache, start, `officeToPdf`), UI `components/office/OfficeToPdfTool.tsx` (`kind: "word" | "excel" | "powerpoint"`; batch, ZIP, combine, PDF/A, passwords).
+- `soffice.wasm` / `soffice.data` (~77 MB gzipped) live in `models/libreoffice-<version>/` as ≤19 MB parts and are fetched from a **pinned commit** via jsDelivr (fallback raw.githubusercontent), SHA-256 checked, kept in Cache Storage, unpacked with `DecompressionStream`. Small loader scripts are copied to `public/vendor/libreoffice-<version>/` (the worker's console logging is stripped there). `NEXT_PUBLIC_OFFICE_ENGINE_URL` overrides the parts' base URL (local testing / self-hosting).
+- LibreOffice needs threads (SharedArrayBuffer): the three tool pages and `/vendor/libreoffice-*` get COOP/COEP headers in `next.config.mjs`. Client-side navigation can't isolate a page, so the tool reloads itself once (handed-off files survive via `persistPendingFiles`). Keep those pages free of cross-origin subresources.
+- To upgrade: add the new parts in one commit, then point `COMMIT`, hashes and sizes in `engine.ts` at it.
+- PDF → PowerPoint is our own converter: `slides.ts` (positioned text boxes, rectangles, lines, pictures, rendered figures) + `pptx.ts` (OOXML writer), via `PdfConvertTool kind="pptx"`.
 
 ## File handoff
 

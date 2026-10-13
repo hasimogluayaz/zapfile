@@ -18,6 +18,7 @@ import {
   List,
   Loader2,
   PanelTop,
+  Presentation,
   RefreshCw,
   Table2,
   X,
@@ -33,7 +34,7 @@ import { parsePageRanges, rangesToPages } from "@/lib/split-pdf-ranges";
 import { convertPdf, openForConversion, type ConvertProgress, type ConvertStats, type XlsxOptions } from "@/lib/pdf-convert/client";
 import { renderRegion } from "@/lib/pdf-convert/extract";
 
-type Kind = "docx" | "xlsx";
+type Kind = "docx" | "xlsx" | "pptx";
 
 interface Loaded {
   file: File;
@@ -205,7 +206,7 @@ export default function PdfConvertTool({ kind }: { kind: Kind }) {
     toast(t("p2o.cancelled"));
   };
 
-  const Icon = kind === "docx" ? FileText : FileSpreadsheet;
+  const Icon = kind === "docx" ? FileText : kind === "pptx" ? Presentation : FileSpreadsheet;
   const stats = fresh?.stats;
 
   return (
@@ -303,7 +304,7 @@ export default function PdfConvertTool({ kind }: { kind: Kind }) {
                 label={t("p2o.keepBreaks")}
                 description={t("p2o.keepBreaksHint")}
               />
-            ) : (
+            ) : kind === "pptx" ? null : (
               <>
                 <div className="space-y-2">
                   <p className={sectionTitle}>{t("p2o.sheets")}</p>
@@ -343,7 +344,9 @@ export default function PdfConvertTool({ kind }: { kind: Kind }) {
                     progress!.phase === "writing"
                       ? kind === "docx"
                         ? t("p2o.writingDocx")
-                        : t("p2o.writingXlsx")
+                        : kind === "pptx"
+                          ? t("p2o.writingPptx")
+                          : t("p2o.writingXlsx")
                       : t("p2o.reading", { done: Math.min(progress!.done + 1, progress!.total), total: progress!.total })
                   }
                 />
@@ -361,7 +364,7 @@ export default function PdfConvertTool({ kind }: { kind: Kind }) {
                     <p className="truncate text-[15px] font-semibold text-t-primary" title={fresh.name}>{fresh.name}</p>
                     <p className="text-[13px] tabular-nums text-t-tertiary">{formatFileSize(fresh.blob.size)}</p>
                   </div>
-                  <DownloadButton blob={fresh.blob} filename={fresh.name} label={kind === "docx" ? t("p2o.downloadDocx") : t("p2o.downloadXlsx")} />
+                  <DownloadButton blob={fresh.blob} filename={fresh.name} label={kind === "docx" ? t("p2o.downloadDocx") : kind === "pptx" ? t("p2o.downloadPptx") : t("p2o.downloadXlsx")} />
                 </div>
                 {stats && (
                   <ul className="flex flex-wrap gap-2 text-[12.5px] text-t-secondary">
@@ -373,6 +376,12 @@ export default function PdfConvertTool({ kind }: { kind: Kind }) {
                         {stats.tables > 0 && <Chip icon={<Table2 className="h-3.5 w-3.5" />} text={tn("p2o.statTables", stats.tables)} />}
                         {stats.images > 0 && <Chip icon={<ImageIcon className="h-3.5 w-3.5" />} text={tn("p2o.statImages", stats.images)} />}
                         {(stats.header || stats.footer) && <Chip icon={<PanelTop className="h-3.5 w-3.5" />} text={t("p2o.statHeaderFooter")} />}
+                      </>
+                    ) : kind === "pptx" ? (
+                      <>
+                        <Chip icon={<Presentation className="h-3.5 w-3.5" />} text={tn("p2o.statSlides", stats.slides ?? 0)} />
+                        {(stats.textBoxes ?? 0) > 0 && <Chip icon={<FileText className="h-3.5 w-3.5" />} text={tn("p2o.statTextBoxes", stats.textBoxes ?? 0)} />}
+                        {stats.images > 0 && <Chip icon={<ImageIcon className="h-3.5 w-3.5" />} text={tn("p2o.statImages", stats.images)} />}
                       </>
                     ) : (
                       <>
@@ -386,7 +395,7 @@ export default function PdfConvertTool({ kind }: { kind: Kind }) {
                 {stats && stats.scannedPages > 0 && (
                   <p className="flex items-start gap-2 rounded-xl border border-amber-500/25 bg-amber-500/10 p-3 text-[13px] text-t-secondary">
                     <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden="true" />
-                    {tn(kind === "docx" ? "p2o.scannedDocx" : "p2o.scannedXlsx", stats.scannedPages)}
+                    {tn(kind === "xlsx" ? "p2o.scannedXlsx" : "p2o.scannedDocx", stats.scannedPages)}
                   </p>
                 )}
                 {kind === "xlsx" && stats && stats.tables === 0 && (

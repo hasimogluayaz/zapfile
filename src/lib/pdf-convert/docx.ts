@@ -14,7 +14,7 @@ const EMU = 12700; // EMU per point
 // XML 1.0 allows only these characters.
 const INVALID_XML = /[^\u0009\u000A\u000D -퟿-�\u{10000}-\u{10FFFF}]/gu;
 
-function esc(text: string): string {
+export function esc(text: string): string {
   return text
     .replace(INVALID_XML, "")
     .replace(/&/g, "&amp;")
@@ -23,7 +23,7 @@ function esc(text: string): string {
     .replace(/"/g, "&quot;");
 }
 
-function hex(color: string): string {
+export function hex(color: string): string {
   const c = color.replace("#", "").toUpperCase();
   return /^[0-9A-F]{6}$/.test(c) ? c : "000000";
 }

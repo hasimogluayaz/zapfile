@@ -1,4 +1,5 @@
 import {
+  MonitorPlay,
   Presentation,
   Sheet,
   AlignLeft,
@@ -76,6 +77,7 @@ const toolIcons: Record<string, LucideIcon> = {
   "word-to-pdf": FileType,
   "excel-to-pdf": Sheet,
   "powerpoint-to-pdf": Presentation,
+  "pdf-to-powerpoint": MonitorPlay,
   "pdf-compress": FileArchive,
   // Image
   "compress-image": ImageDown,
