@@ -5,6 +5,15 @@
 
 export const arLocaleStrings: Record<string, string> = {
   "nav.allTools": "جميع الأدوات",
+  "tool.pdf-to-markdown.name": "PDF إلى Markdown",
+  "tool.pdf-to-markdown.desc": "حوّل PDF إلى Markdown نظيف بالعناوين والقوائم والجداول والصور",
+  "p2o.writingMd": "جارٍ كتابة Markdown…",
+  "p2o.downloadMd": "تنزيل ‎.md",
+  "p2o.downloadMdZip": "تنزيل ZIP (‎.md + صور)",
+  "p2o.mdImages": "تضمين الصور",
+  "p2o.mdImagesHint": "يُنزّل ملف ZIP يحتوي ملف Markdown ومجلد صور",
+  "p2o.scannedMd": "{n} صفحات ممسوحة دون طبقة نص، فلا نص لتحويله.",
+  "p2o.scannedMdOne": "{n} صفحة ممسوحة دون طبقة نص، فلا نص لتحويله.",
   "tool.crop-pdf.name": "قص PDF",
   "tool.crop-pdf.desc": "قص صفحات PDF إلى منطقة أو أزل الهوامش البيضاء تلقائيًا",
   "croppdf.drop": "أفلت ملف PDF لقصه",

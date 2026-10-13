@@ -24,7 +24,9 @@ export interface ConvertProgress {
 }
 
 export interface ConvertJob {
-  kind: "docx" | "xlsx" | "pptx";
+  kind: "docx" | "xlsx" | "pptx" | "md";
+  /** Markdown: put pictures in a ZIP next to the .md. */
+  mdImages?: boolean;
   /** 1-based page numbers, or null for all pages. */
   pages: number[] | null;
   keepPageBreaks?: boolean;
@@ -35,6 +37,9 @@ export interface ConvertJob {
 export interface ConvertResult {
   blob: Blob;
   stats: ConvertStats;
+  /** Markdown only: the result is a ZIP (document.md + images/). */
+  zip?: boolean;
+  preview?: string;
 }
 
 function abortError(): DOMException {
@@ -63,7 +68,7 @@ export async function convertPdf(
   const numbers = job.pages ?? Array.from({ length: pdf.numPages }, (_, i) => i + 1);
   const pages: PageModel[] = [];
   const assets: ImageAsset[] = [];
-  const withImages = job.kind !== "xlsx";
+  const withImages = job.kind === "docx" || job.kind === "pptx" || (job.kind === "md" && !!job.mdImages);
   for (let i = 0; i < numbers.length; i++) {
     if (signal.aborted) throw abortError();
     onProgress({ phase: "reading", done: i, total: numbers.length });
@@ -118,8 +123,9 @@ export async function convertPdf(
           docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
           xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
           pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+          md: e.data.zip ? "application/zip" : "text/markdown;charset=utf-8",
         }[job.kind];
-        resolve({ blob: new Blob([e.data.bytes], { type: mime }), stats: e.data.stats });
+        resolve({ blob: new Blob([e.data.bytes], { type: mime }), stats: e.data.stats, zip: e.data.zip, preview: e.data.preview });
       } else {
         reject(new Error(e.data.message));
       }
@@ -133,6 +139,8 @@ export async function convertPdf(
         ? { kind: "docx", pages, assets: keep, title: job.title, keepPageBreaks: job.keepPageBreaks !== false }
         : job.kind === "pptx"
           ? { kind: "pptx", pages, assets: keep, title: job.title }
+          : job.kind === "md"
+            ? { kind: "md", pages, assets: keep, title: job.title, images: !!job.mdImages }
           : { kind: "xlsx", pages, title: job.title, options: job.xlsx ?? { layout: "page", tablesOnly: false, numbers: true } };
     worker.postMessage(msg, keep.map((a) => a.bytes));
   });

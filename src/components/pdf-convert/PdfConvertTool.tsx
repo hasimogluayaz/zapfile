@@ -34,7 +34,7 @@ import { parsePageRanges, rangesToPages } from "@/lib/split-pdf-ranges";
 import { convertPdf, openForConversion, type ConvertProgress, type ConvertStats, type XlsxOptions } from "@/lib/pdf-convert/client";
 import { renderRegion } from "@/lib/pdf-convert/extract";
 
-type Kind = "docx" | "xlsx" | "pptx";
+type Kind = "docx" | "xlsx" | "pptx" | "md";
 
 interface Loaded {
   file: File;
@@ -48,6 +48,7 @@ interface Result {
   stats: ConvertStats;
   key: string;
   name: string;
+  preview?: string;
 }
 
 export default function PdfConvertTool({ kind }: { kind: Kind }) {
@@ -63,6 +64,7 @@ export default function PdfConvertTool({ kind }: { kind: Kind }) {
   const [sheetLayout, setSheetLayout] = useState<XlsxOptions["layout"]>("page");
   const [tablesOnly, setTablesOnly] = useState(false);
   const [numbers, setNumbers] = useState(true);
+  const [mdImages, setMdImages] = useState(false);
   const [progress, setProgress] = useState<ConvertProgress | null>(null);
   const [result, setResult] = useState<Result | null>(null);
   const [failed, setFailed] = useState(false);
@@ -91,7 +93,7 @@ export default function PdfConvertTool({ kind }: { kind: Kind }) {
     return pages.length ? { pages, error: null } : { pages: null, error: t("p2o.rangeEmpty") };
   }, [loaded, pageMode, rangeText, t]);
 
-  const settingsKey = JSON.stringify([kind, range.pages, keepPageBreaks, sheetLayout, tablesOnly, numbers]);
+  const settingsKey = JSON.stringify([kind, range.pages, keepPageBreaks, sheetLayout, tablesOnly, numbers, mdImages]);
   const fresh = result && result.key === settingsKey ? result : null;
   const running = progress !== null;
 
@@ -111,6 +113,7 @@ export default function PdfConvertTool({ kind }: { kind: Kind }) {
             pages: range.pages,
             keepPageBreaks,
             xlsx: { layout: sheetLayout, tablesOnly, numbers },
+            mdImages,
             title,
           },
           (p) => {
@@ -119,7 +122,7 @@ export default function PdfConvertTool({ kind }: { kind: Kind }) {
           ac.signal,
         );
         if (runRef.current !== ac) return;
-        setResult({ blob: res.blob, stats: res.stats, key, name: `${title}.${kind}` });
+        setResult({ blob: res.blob, stats: res.stats, key, name: `${title}.${kind === "md" ? (res.zip ? "zip" : "md") : kind}`, preview: res.preview });
       } catch (error) {
         if ((error as { name?: string })?.name === "AbortError") return;
         console.error(error);
@@ -134,7 +137,7 @@ export default function PdfConvertTool({ kind }: { kind: Kind }) {
         }
       }
     },
-    [kind, keepPageBreaks, numbers, range.pages, sheetLayout, tablesOnly, t],
+    [kind, keepPageBreaks, numbers, mdImages, range.pages, sheetLayout, tablesOnly, t],
   );
 
   const handleFiles = useCallback(
@@ -206,7 +209,7 @@ export default function PdfConvertTool({ kind }: { kind: Kind }) {
     toast(t("p2o.cancelled"));
   };
 
-  const Icon = kind === "docx" ? FileText : kind === "pptx" ? Presentation : FileSpreadsheet;
+  const Icon = kind === "docx" || kind === "md" ? FileText : kind === "pptx" ? Presentation : FileSpreadsheet;
   const stats = fresh?.stats;
 
   return (
@@ -304,7 +307,9 @@ export default function PdfConvertTool({ kind }: { kind: Kind }) {
                 label={t("p2o.keepBreaks")}
                 description={t("p2o.keepBreaksHint")}
               />
-            ) : kind === "pptx" ? null : (
+            ) : kind === "pptx" ? null : kind === "md" ? (
+              <Toggle checked={mdImages} onChange={setMdImages} label={t("p2o.mdImages")} description={t("p2o.mdImagesHint")} />
+            ) : (
               <>
                 <div className="space-y-2">
                   <p className={sectionTitle}>{t("p2o.sheets")}</p>
@@ -346,6 +351,8 @@ export default function PdfConvertTool({ kind }: { kind: Kind }) {
                         ? t("p2o.writingDocx")
                         : kind === "pptx"
                           ? t("p2o.writingPptx")
+                          : kind === "md"
+                            ? t("p2o.writingMd")
                           : t("p2o.writingXlsx")
                       : t("p2o.reading", { done: Math.min(progress!.done + 1, progress!.total), total: progress!.total })
                   }
@@ -364,11 +371,11 @@ export default function PdfConvertTool({ kind }: { kind: Kind }) {
                     <p className="truncate text-[15px] font-semibold text-t-primary" title={fresh.name}>{fresh.name}</p>
                     <p className="text-[13px] tabular-nums text-t-tertiary">{formatFileSize(fresh.blob.size)}</p>
                   </div>
-                  <DownloadButton blob={fresh.blob} filename={fresh.name} label={kind === "docx" ? t("p2o.downloadDocx") : kind === "pptx" ? t("p2o.downloadPptx") : t("p2o.downloadXlsx")} />
+                  <DownloadButton blob={fresh.blob} filename={fresh.name} label={kind === "docx" ? t("p2o.downloadDocx") : kind === "pptx" ? t("p2o.downloadPptx") : kind === "md" ? t(fresh.name.endsWith(".zip") ? "p2o.downloadMdZip" : "p2o.downloadMd") : t("p2o.downloadXlsx")} />
                 </div>
                 {stats && (
                   <ul className="flex flex-wrap gap-2 text-[12.5px] text-t-secondary">
-                    {kind === "docx" ? (
+                    {kind === "docx" || kind === "md" ? (
                       <>
                         {stats.headings > 0 && <Chip icon={<Heading className="h-3.5 w-3.5" />} text={tn("p2o.statHeadings", stats.headings)} />}
                         {stats.paragraphs > 0 && <Chip icon={<FileText className="h-3.5 w-3.5" />} text={tn("p2o.statParagraphs", stats.paragraphs)} />}
@@ -395,8 +402,30 @@ export default function PdfConvertTool({ kind }: { kind: Kind }) {
                 {stats && stats.scannedPages > 0 && (
                   <p className="flex items-start gap-2 rounded-xl border border-amber-500/25 bg-amber-500/10 p-3 text-[13px] text-t-secondary">
                     <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden="true" />
-                    {tn(kind === "xlsx" ? "p2o.scannedXlsx" : "p2o.scannedDocx", stats.scannedPages)}
+                    {tn(kind === "xlsx" ? "p2o.scannedXlsx" : kind === "md" ? "p2o.scannedMd" : "p2o.scannedDocx", stats.scannedPages)}
                   </p>
+                )}
+                {kind === "md" && fresh.preview && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className={sectionTitle}>{t("meme.preview")}</p>
+                      <button
+                        type="button"
+                        className={buttonSecondary}
+                        onClick={async () => {
+                          try {
+                            await navigator.clipboard.writeText(fresh.preview ?? "");
+                            toast.success(t("ui.copied"));
+                          } catch {
+                            toast.error(t("ui.copyFailed"));
+                          }
+                        }}
+                      >
+                        {t("ui.copy")}
+                      </button>
+                    </div>
+                    <pre dir="auto" className="max-h-96 overflow-auto whitespace-pre-wrap rounded-xl bg-bg-secondary p-3 font-mono text-[12.5px] leading-5 text-t-primary">{fresh.preview}</pre>
+                  </div>
                 )}
                 {kind === "xlsx" && stats && stats.tables === 0 && (
                   <p className="text-[13px] text-t-tertiary">{t("p2o.noTables")}</p>

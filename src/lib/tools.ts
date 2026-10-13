@@ -629,6 +629,17 @@ export const tools: Tool[] = [
       "Convert PDF tables to Excel (XLSX) with real numbers, merged cells and one sheet per page or table. Free, private, no uploads.",
   },
   {
+    slug: "pdf-to-markdown",
+    name: "PDF to Markdown",
+    description: "Turn a PDF into clean Markdown with headings, lists, tables and images",
+    emoji: "📝",
+    category: "pdf",
+    acceptedFormats: [".pdf"],
+    metaTitle: "PDF to Markdown Converter - Free, Tables & Headings | ZapFile",
+    metaDescription:
+      "Convert PDF to Markdown in your browser: headings, bold and italic, lists, GitHub tables and images kept. Ready for docs, wikis, notes and LLM prompts. No upload.",
+  },
+  {
     slug: "pdf-to-powerpoint",
     name: "PDF to PowerPoint",
     description: "Turn PDF pages into editable PowerPoint slides (PPTX)",

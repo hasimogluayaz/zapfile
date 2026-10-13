@@ -1,4 +1,5 @@
 import {
+  FileCode2,
   Droplets,
   Signature,
   LayoutGrid,
@@ -85,6 +86,7 @@ const toolIcons: Record<string, LucideIcon> = {
   "watermark-pdf": Droplets,
   "sign-pdf": Signature,
   "crop-pdf": Crop,
+  "pdf-to-markdown": FileCode2,
   "pdf-compress": FileArchive,
   // Image
   "compress-image": ImageDown,

@@ -86,6 +86,20 @@ const toolFaqs: Record<string, FaqItem[]> = {
       answer: "Yes. Drop as many files as you like: they are converted one after another and you can download each PDF, all of them as a ZIP, or combine them into one PDF.",
     },
   ],
+  "pdf-to-markdown": [
+    {
+      question: "How do I convert a PDF to Markdown?",
+      answer: "Drop the PDF into ZapFile's PDF to Markdown tool. Headings, paragraphs, bold and italic text, lists and tables are rebuilt as GitHub-flavored Markdown in your browser. Copy it or download the .md file.",
+    },
+    {
+      question: "Are tables and images kept?",
+      answer: "Tables become Markdown pipe tables. Turn on Include images to get a ZIP with the Markdown file and an images folder it links to; charts and diagrams are saved as pictures too.",
+    },
+    {
+      question: "Is it good for ChatGPT, Claude or other AI tools?",
+      answer: "Yes. Markdown keeps the document's structure with far fewer tokens than raw PDF text, so models read headings, lists and tables correctly. Nothing is uploaded while converting.",
+    },
+  ],
   "crop-pdf": [
     {
       question: "How do I crop a PDF?",

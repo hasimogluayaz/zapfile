@@ -8,15 +8,17 @@ import { writeDocx } from "./docx";
 import { writeXlsx, type XlsxOptions } from "./xlsx";
 import { writePptx } from "./pptx";
 import { buildSlide } from "./slides";
+import { writeMarkdown } from "./markdown";
 import type { ImageAsset, PageModel } from "./model";
 
 export type ConvertRequest =
   | { kind: "docx"; pages: PageModel[]; assets: ImageAsset[]; title: string; keepPageBreaks: boolean }
   | { kind: "xlsx"; pages: PageModel[]; title: string; options: XlsxOptions }
-  | { kind: "pptx"; pages: PageModel[]; assets: ImageAsset[]; title: string };
+  | { kind: "pptx"; pages: PageModel[]; assets: ImageAsset[]; title: string }
+  | { kind: "md"; pages: PageModel[]; assets: ImageAsset[]; title: string; images: boolean };
 
 export type ConvertResponse =
-  | { type: "done"; bytes: ArrayBuffer; stats: ConvertStats }
+  | { type: "done"; bytes: ArrayBuffer; stats: ConvertStats; zip?: boolean; preview?: string }
   | { type: "error"; message: string };
 
 export interface ConvertStats {
@@ -39,7 +41,7 @@ const ctx = self as unknown as DedicatedWorkerGlobalScope;
 ctx.onmessage = async (event: MessageEvent<ConvertRequest>) => {
   const req = event.data;
   try {
-    if (req.kind === "docx") {
+    if (req.kind === "docx" || req.kind === "md") {
       const doc = buildDocument(req.pages, req.title, { mode: "word" });
       const stats: ConvertStats = { paragraphs: 0, headings: 0, tables: 0, images: 0, lists: 0, header: !!doc.header, footer: !!doc.footer || doc.footerPageNumbers, scannedPages: 0 };
       for (const s of doc.sections) {
@@ -52,6 +54,12 @@ ctx.onmessage = async (event: MessageEvent<ConvertRequest>) => {
           } else if (b.kind === "table") stats.tables++;
           else stats.images += b.items.length;
         }
+      }
+      if (req.kind === "md") {
+        const md = await writeMarkdown(doc, req.assets, req.images);
+        const buffer = md.bytes.buffer.slice(md.bytes.byteOffset, md.bytes.byteOffset + md.bytes.byteLength) as ArrayBuffer;
+        ctx.postMessage({ type: "done", bytes: buffer, stats, zip: md.zip, preview: md.preview } satisfies ConvertResponse, [buffer]);
+        return;
       }
       const bytes = await writeDocx(doc, req.assets, { keepPageBreaks: req.keepPageBreaks });
       const buffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
