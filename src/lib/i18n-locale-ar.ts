@@ -5,6 +5,9 @@
 
 export const arLocaleStrings: Record<string, string> = {
   "nav.allTools": "جميع الأدوات",
+  "lorem.v2.chars": "أحرف",
+  "lorem.v2.format": "التنسيق",
+  "lorem.v2.plain": "نص عادي",
   "unit.v2.volume": "الحجم",
   "unit.v2.area": "المساحة",
   "unit.v2.speed": "السرعة",
