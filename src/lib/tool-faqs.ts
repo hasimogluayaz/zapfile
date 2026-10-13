@@ -40,6 +40,42 @@ const toolFaqs: Record<string, FaqItem[]> = {
       answer: "Yes. Turn on Restrict printing, copying and editing to choose what readers may do. Keep the permissions password so you can lift the restrictions later.",
     },
   ],
+  "pdf-to-word": [
+    {
+      question: "How do I convert a PDF to Word for free?",
+      answer: "Drop your PDF into ZapFile's PDF to Word tool. It is converted in your browser in a few seconds and you download an editable DOCX file. Nothing is uploaded and there is no sign-up or watermark.",
+    },
+    {
+      question: "Does the Word file keep the layout?",
+      answer: "ZapFile rebuilds real Word structure rather than placing text boxes: headings, paragraphs with their fonts, sizes, colors and alignment, bulleted and numbered lists, tables with merged cells and shading, images, headers, footers and page numbers. Multi-column pages flow into one column so the text stays easy to edit, and charts or diagrams are kept as sharp pictures.",
+    },
+    {
+      question: "Can it convert a scanned PDF?",
+      answer: "A scanned page has no text layer, so it is placed in the document as a high-resolution picture. If the scan already contains an OCR text layer, that text is used and becomes editable.",
+    },
+    {
+      question: "What about password-protected PDFs?",
+      answer: "Remove the password first with the Protect PDF tool (you need to know it), then convert the unlocked copy.",
+    },
+  ],
+  "pdf-to-excel": [
+    {
+      question: "How do I convert a PDF table to Excel?",
+      answer: "Drop the PDF into ZapFile's PDF to Excel tool. Tables are detected from their ruling lines or from aligned columns of text and written to an XLSX file in your browser. Nothing is uploaded.",
+    },
+    {
+      question: "Are numbers converted to real Excel numbers?",
+      answer: "Yes. Amounts with thousands separators, decimal commas, currency signs, percentages, negatives in parentheses and ISO dates become numeric cells you can sum and sort. Leading-zero codes such as postcodes stay text. You can turn number detection off to keep everything as text.",
+    },
+    {
+      question: "Can I get one sheet per table?",
+      answer: "Yes. Choose one sheet per page, everything on one sheet, or one sheet per table. You can also leave out the text around the tables so only the data is exported.",
+    },
+    {
+      question: "Are merged cells and header rows kept?",
+      answer: "Merged cells in ruled tables become merged cells in Excel, header rows stay bold, and in the one-sheet-per-table layout the header row is frozen so it stays visible while you scroll.",
+    },
+  ],
   "merge-pdf": [
     {
       question: "Is this PDF merge tool free?",

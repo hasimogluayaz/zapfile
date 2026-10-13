@@ -25,7 +25,7 @@ src/
 │   ├── terms/page.tsx
 │   └── tools/
 │       ├── page.tsx         # Browse all tools
-│       └── [slug]/page.tsx  # 53 individual tool pages
+│       └── [slug]/page.tsx  # 55 individual tool pages
 ├── components/
 │   ├── Header.tsx           # Sticky header, language switcher, category dropdown
 │   ├── Footer.tsx           # Multi-column footer
@@ -38,7 +38,7 @@ src/
 │   ├── ErrorBoundary.tsx    # Catches render errors, shows refresh button
 │   └── AdPlaceholder.tsx    # Placeholder for future ads
 ├── lib/
-│   ├── tools.ts             # 53 tools registry (slug, name, description, category, acceptedFormats)
+│   ├── tools.ts             # 55 tools registry (slug, name, description, category, acceptedFormats)
 │   ├── tool-i18n.ts         # toolField() helper for localized tool names/descriptions
 │   ├── file-handoff.ts      # Home drop pad → tool page file handoff (in-memory)
 │   ├── search.ts            # searchTools(): diacritic-insensitive ranked tool search (header modal, home, /tools)
@@ -60,7 +60,7 @@ src/
 
 ## Tools
 
-Canonical list: `src/lib/tools.ts` — 53 tools across 4 categories (PDF, Image, Video/Audio, Utility). FFmpeg/AI/browser-fetch tools were removed in v1.4.0. v2.0 retired 13 off-brand or third-party-dependent tools and merged 5 duplicates; their URLs 301-redirect via `redirects()` in `next.config.mjs` — add a redirect whenever a tool slug is removed or renamed.
+Canonical list: `src/lib/tools.ts` — 55 tools across 4 categories (PDF, Image, Video/Audio, Utility). FFmpeg/AI/browser-fetch tools were removed in v1.4.0. v2.0 retired 13 off-brand or third-party-dependent tools and merged 5 duplicates; their URLs 301-redirect via `redirects()` in `next.config.mjs` — add a redirect whenever a tool slug is removed or renamed.
 
 ## Design System ("Voltage")
 
@@ -92,6 +92,14 @@ Workers/wasm that libraries load at runtime are copied from `node_modules` into 
 - Encoders: JPEG = MozJPEG, WebP = libwebp (quality 1 = lossless), PNG = OxiPNG; `pngLossy` = 256-colour palette PNG (fast, `palette-png.ts`). `targetBytes` binary-searches quality; `keepOriginalIfLarger` returns the input when re-encoding would grow it. Re-encoding strips EXIF/GPS.
 - Never call `canvas.toDataURL` on full-size images or loop over full-res pixels on the main thread; preview on a downscaled proxy and export through the engine.
 - Shared Voltage controls for tool UIs: `components/ui/controls.tsx` (`Segmented`, `Toggle`, `Slider`, button/section classes). `ImageCompareSlider` is the before/after component.
+
+## PDF → Word / Excel (`src/lib/pdf-convert/`)
+
+- `extract.ts` (main thread, pdf.js operator list) turns a page into a `PageModel` (`model.ts`): glyphs with real font/size/colour/baseline, ruling lines, filled boxes, vector shapes and placed images (re-encoded through the image engine). `client.ts` renders scanned pages and vector figures (`findFigureRegions`: charts, diagrams) to pictures, then hands everything to `convert.worker.ts`.
+- `layout.ts` is pure and runs in the worker: ruled tables (union-find grid, merged cells, shading), whitespace-aligned tables, column gutters and reading order (columns reflow into one), paragraphs (alignment, indents, spacing, de-hyphenation, cross-column joins), headings, lists, sub/superscript, underline, running headers/footers. `sheetItems()` is the Excel view of a page.
+- `docx.ts` / `xlsx.ts` write OOXML with JSZip (mind the strict child order of `w:pPr` / `w:rPr`). Excel numbers are parsed with decimal-comma detection, currency, percentages and ISO dates.
+- UI: `components/pdf-convert/PdfConvertTool.tsx` (`kind: "docx" | "xlsx"`). Converts automatically on drop and on option changes; a password-protected PDF links to Protect PDF.
+- Check layout changes with a LibreOffice round trip (DOCX → PDF → compare with the source PDF) on multi-column, table, chart and scanned samples.
 
 ## File handoff
 

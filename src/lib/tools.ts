@@ -563,6 +563,28 @@ export const tools: Tool[] = [
       "Password-protect a PDF with AES-256, restrict printing and copying, or remove a password you know. Runs in your browser; your file is never uploaded.",
   },
   {
+    slug: "pdf-to-word",
+    name: "PDF to Word",
+    description: "Convert PDF to an editable Word document (DOCX)",
+    emoji: "📄",
+    category: "pdf",
+    acceptedFormats: [".pdf"],
+    metaTitle: "PDF to Word Converter - Free, Editable DOCX | ZapFile",
+    metaDescription:
+      "Convert PDF to editable Word (DOCX) with headings, lists, tables, images and page layout kept. Free, private, runs in your browser.",
+  },
+  {
+    slug: "pdf-to-excel",
+    name: "PDF to Excel",
+    description: "Extract PDF tables into an Excel spreadsheet (XLSX)",
+    emoji: "📊",
+    category: "pdf",
+    acceptedFormats: [".pdf"],
+    metaTitle: "PDF to Excel Converter - Tables to XLSX | ZapFile",
+    metaDescription:
+      "Convert PDF tables to Excel (XLSX) with real numbers, merged cells and one sheet per page or table. Free, private, no uploads.",
+  },
+  {
     slug: "pdf-text-extractor",
     name: "PDF Text Extractor",
     description: "Extract and copy all text content from PDF files",
@@ -571,7 +593,7 @@ export const tools: Tool[] = [
     acceptedFormats: [".pdf"],
     metaTitle: "PDF Text Extractor - Copy Text from PDF | ZapFile",
     metaDescription:
-      "Extract and copy all text from PDF files, with OCR for scanned pages. Free, browser-based, no uploads.",
+      "Extract and copy all text from PDF files with columns and reading order kept. Free, browser-based, no uploads.",
   },
   {
     slug: "pdf-compress",

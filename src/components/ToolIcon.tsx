@@ -16,6 +16,8 @@ import {
   FileImage,
   FileJson,
   FileLock,
+  FilePen,
+  FileSpreadsheet,
   FileStack,
   FileText,
   FileType,
@@ -67,6 +69,8 @@ const toolIcons: Record<string, LucideIcon> = {
   "pdf-page-numbers": ListOrdered,
   "pdf-encrypt": FileLock,
   "pdf-text-extractor": ScanText,
+  "pdf-to-word": FilePen,
+  "pdf-to-excel": FileSpreadsheet,
   "pdf-compress": FileArchive,
   // Image
   "compress-image": ImageDown,
