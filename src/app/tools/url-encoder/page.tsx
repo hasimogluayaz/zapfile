@@ -1,227 +1,222 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import toast from "react-hot-toast";
+import { useMemo, useState } from "react";
+import { AlertTriangle, ArrowDownUp, Link2, Plus, Trash2 } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
+import { Segmented, Toggle, sectionTitle } from "@/components/ui/controls";
 import { useI18n } from "@/lib/i18n";
+import { useStoredPref, useStoredText } from "@/lib/text-tools/hooks";
+import { CopyButton, smallButton } from "@/lib/text-tools/ui";
 
-type EncodingMode = "encodeURIComponent" | "encodeURI";
-type ActiveField = "decoded" | "encoded" | null;
+type Scope = "component" | "uri";
 
-function encode(text: string, mode: EncodingMode): string {
+function encodeText(text: string, scope: Scope, plus: boolean): string {
+  let out = scope === "component" ? encodeURIComponent(text) : encodeURI(text);
+  // encodeURIComponent leaves !'()* alone; RFC 3986 reserves them.
+  if (scope === "component") out = out.replace(/[!'()*]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`);
+  if (plus) out = out.replace(/%20/g, "+");
+  return out;
+}
+
+/** Decode, reporting the first malformed escape instead of silently giving up. */
+function decodeText(text: string, plus: boolean): { ok: true; value: string } | { ok: false; at: number; seq: string } {
+  const src = plus ? text.replace(/\+/g, " ") : text;
   try {
-    return mode === "encodeURIComponent"
-      ? encodeURIComponent(text)
-      : encodeURI(text);
+    return { ok: true, value: decodeURIComponent(src) };
   } catch {
-    return text;
+    const re = /%(?:[0-9a-fA-F]{2})+|%.{0,2}/g;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(src))) {
+      try {
+        decodeURIComponent(m[0]);
+      } catch {
+        return { ok: false, at: m.index + 1, seq: m[0] };
+      }
+    }
+    return { ok: false, at: 1, seq: src.slice(0, 6) };
   }
 }
 
-function decode(text: string, mode: EncodingMode): string {
-  try {
-    return mode === "encodeURIComponent"
-      ? decodeURIComponent(text)
-      : decodeURI(text);
-  } catch {
-    return text;
-  }
+interface Param {
+  key: string;
+  value: string;
 }
 
 export default function UrlEncoderPage() {
   const { t } = useI18n();
-  const [decoded, setDecoded] = useState("");
-  const [encoded, setEncoded] = useState("");
-  const [mode, setMode] = useState<EncodingMode>("encodeURIComponent");
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [_activeField, setActiveField] = useState<ActiveField>(null);
+  const [text, setText] = useStoredText("url-encoder");
+  const [direction, setDirection] = useStoredPref<"encode" | "decode">("url.dir", "encode", ["encode", "decode"]);
+  const [scope, setScope] = useStoredPref<Scope>("url.scope", "component", ["component", "uri"]);
+  const [plus, setPlus] = useStoredPref<boolean>("url.plus", false);
 
-  const handleDecodedChange = useCallback(
-    (value: string) => {
-      setDecoded(value);
-      setEncoded(encode(value, mode));
-    },
-    [mode]
-  );
+  const result = useMemo(() => {
+    if (!text) return { ok: true as const, value: "" };
+    return direction === "encode" ? { ok: true as const, value: encodeText(text, scope, plus) } : decodeText(text, plus);
+  }, [text, direction, scope, plus]);
 
-  const handleEncodedChange = useCallback(
-    (value: string) => {
-      setEncoded(value);
-      setDecoded(decode(value, mode));
-    },
-    [mode]
-  );
-
-  // Re-encode/decode when mode changes
-  useEffect(() => {
-    if (decoded) {
-      setEncoded(encode(decoded, mode));
-    }
-  }, [mode, decoded]);
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const copyToClipboard = async (text: string, _label?: string) => {
-    if (!text) return;
+  // URL breakdown for whatever full URL is on either side.
+  const urlSource = /^[a-z][a-z0-9+.-]*:\/\//i.test(text.trim()) ? text.trim() : result.ok && /^[a-z][a-z0-9+.-]*:\/\//i.test(result.value.trim()) ? result.value.trim() : "";
+  const parsed = useMemo(() => {
+    if (!urlSource) return null;
     try {
-      await navigator.clipboard.writeText(text);
-      toast.success(t("ui.copied"));
+      return new URL(urlSource);
     } catch {
-      toast.error(t("ui.copyFailed"));
+      return null;
     }
+  }, [urlSource]);
+
+  const [params, setParams] = useState<Param[] | null>(null);
+  const shownParams: Param[] = params ?? (parsed ? Array.from(parsed.searchParams, ([key, value]) => ({ key, value })) : []);
+  const rebuilt = useMemo(() => {
+    if (!parsed || !params) return null;
+    const u = new URL(parsed.href);
+    u.search = "";
+    for (const p of params) if (p.key) u.searchParams.append(p.key, p.value);
+    return u.href;
+  }, [parsed, params]);
+
+  const setParam = (i: number, patch: Partial<Param>) => setParams(shownParams.map((p, j) => (j === i ? { ...p, ...patch } : p)));
+
+  const swap = () => {
+    if (!result.ok) return;
+    setText(result.value);
+    setDirection(direction === "encode" ? "decode" : "encode");
+    setParams(null);
   };
 
-  const clearAll = () => {
-    setDecoded("");
-    setEncoded("");
-    setActiveField(null);
-  };
-
-  const swapContent = () => {
-    const prevDecoded = decoded;
-    const prevEncoded = encoded;
-    setDecoded(prevEncoded);
-    setEncoded(prevDecoded);
-  };
-
-  const modes: { value: EncodingMode; label: string }[] = [
-    { value: "encodeURIComponent", label: "encodeURIComponent" },
-    { value: "encodeURI", label: "encodeURI" },
-  ];
+  const field =
+    "block w-full resize-y rounded-xl border border-border bg-bg-secondary px-3 py-3 font-mono text-[13.5px] leading-5 text-t-primary placeholder:text-t-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40";
 
   return (
-    <ToolLayout
-      toolName="URL Encoder/Decoder"
-      toolDescription="Encode or decode URL strings instantly. Supports full URL and component encoding. Everything runs in your browser."
-    >
-      <div className="space-y-6">
-        {/* Mode Selector */}
-        <div className="glass rounded-2xl p-6">
-          <label className="text-sm font-medium text-t-secondary mb-3 block">
-            {t("urlenc.encodingMode")}
-          </label>
-          <div className="flex gap-2">
-            {modes.map(({ value, label }) => (
-              <button
-                key={value}
-                onClick={() => setMode(value)}
-                className={`px-5 py-2.5 rounded-xl text-sm font-medium transition-all font-mono ${
-                  mode === value
-                    ? "bg-accent/20 border border-accent text-t-primary"
-                    : "bg-bg-secondary border border-border text-t-secondary hover:border-t-primary/20"
-                }`}
-              >
-                {label}
+    <ToolLayout toolName={t("tool.url-encoder.name")} toolDescription={t("tool.url-encoder.desc")}>
+      <div className="space-y-5">
+        <div className="glass flex flex-wrap items-center gap-x-5 gap-y-3 p-4">
+          <Segmented<"encode" | "decode">
+            label={t("b64.v2.direction")}
+            value={direction}
+            onChange={(d) => {
+              setDirection(d);
+              setParams(null);
+            }}
+            options={[
+              { value: "encode", label: t("b64.v2.encode") },
+              { value: "decode", label: t("b64.v2.decode") },
+            ]}
+          />
+          {direction === "encode" && (
+            <Segmented<Scope>
+              label={t("urlenc.encodingMode")}
+              size="sm"
+              value={scope}
+              onChange={setScope}
+              options={[
+                { value: "component", label: t("urlenc.v2.component") },
+                { value: "uri", label: t("urlenc.v2.fullUrl") },
+              ]}
+            />
+          )}
+          <Toggle checked={plus} onChange={setPlus} label={t("urlenc.v2.plus")} />
+        </div>
+
+        <div className="glass space-y-3 p-4 sm:p-5">
+          <div className="flex items-center justify-between">
+            <span className="text-[13px] font-medium text-t-secondary">{direction === "encode" ? t("urlenc.decoded") : t("urlenc.encoded")}</span>
+            {text && (
+              <button type="button" className={smallButton} onClick={() => setText("")}>
+                {t("ui.clear")}
               </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Decoded Input */}
-        <div className="glass rounded-2xl p-6">
-          <div className="flex items-center justify-between mb-3">
-            <label className="text-sm font-medium text-t-secondary">
-              {t("urlenc.decoded")}
-            </label>
-            <button
-              onClick={() => copyToClipboard(decoded, "Decoded text")}
-              disabled={!decoded}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-t-secondary bg-bg-secondary border border-border hover:bg-bg-tertiary hover:text-t-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <svg
-                className="w-3.5 h-3.5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                />
-              </svg>
-              {t("ui.copy")}
-            </button>
+            )}
           </div>
           <textarea
-            value={decoded}
-            onChange={(e) => handleDecodedChange(e.target.value)}
-            onFocus={() => setActiveField("decoded")}
-            onBlur={() => setActiveField(null)}
-            placeholder={t("urlenc.enterPlain")}
-            rows={5}
-            className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border text-t-primary placeholder:text-t-tertiary focus:outline-none focus:border-accent text-sm leading-relaxed resize-none font-mono transition-colors"
+            value={text}
+            onChange={(e) => {
+              setText(e.target.value);
+              setParams(null);
+            }}
+            rows={4}
+            spellCheck={false}
+            dir="ltr"
+            placeholder={direction === "encode" ? t("urlenc.enterPlain") : t("urlenc.enterEncoded")}
+            className={field}
           />
-        </div>
-
-        {/* Swap / Clear Buttons */}
-        <div className="flex items-center justify-center gap-3">
-          <button
-            onClick={swapContent}
-            disabled={!decoded && !encoded}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium text-t-secondary bg-bg-secondary border border-border hover:bg-bg-tertiary hover:text-t-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
-              />
-            </svg>
-            {t("ui.swap")}
-          </button>
-          <button
-            onClick={clearAll}
-            disabled={!decoded && !encoded}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium text-t-secondary bg-bg-secondary border border-border hover:bg-bg-tertiary hover:text-t-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {t("ui.clear")}
-          </button>
-        </div>
-
-        {/* Encoded Output */}
-        <div className="glass rounded-2xl p-6">
-          <div className="flex items-center justify-between mb-3">
-            <label className="text-sm font-medium text-t-secondary">
-              {t("urlenc.encoded")}
-            </label>
-            <button
-              onClick={() => copyToClipboard(encoded, "Encoded text")}
-              disabled={!encoded}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-t-secondary bg-bg-secondary border border-border hover:bg-bg-tertiary hover:text-t-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <svg
-                className="w-3.5 h-3.5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                />
-              </svg>
-              {t("ui.copy")}
+          <div className="flex justify-center">
+            <button type="button" className={smallButton} onClick={swap} disabled={!text || !result.ok}>
+              <ArrowDownUp className="h-4 w-4" aria-hidden="true" />
+              {t("b64.v2.swap")}
             </button>
           </div>
-          <textarea
-            value={encoded}
-            onChange={(e) => handleEncodedChange(e.target.value)}
-            onFocus={() => setActiveField("encoded")}
-            onBlur={() => setActiveField(null)}
-            placeholder={t("urlenc.enterEncoded")}
-            rows={5}
-            className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border text-t-primary placeholder:text-t-tertiary focus:outline-none focus:border-accent text-sm leading-relaxed resize-none font-mono transition-colors"
-          />
+          <div className="flex items-center justify-between">
+            <span className="text-[13px] font-medium text-t-secondary">{direction === "encode" ? t("urlenc.encoded") : t("urlenc.decoded")}</span>
+            <CopyButton getText={() => (result.ok ? result.value : "")} disabled={!text || !result.ok} />
+          </div>
+          {result.ok ? (
+            <textarea readOnly value={result.value} rows={4} dir="ltr" className={field} aria-label={t("ui.output")} />
+          ) : (
+            <p className="flex items-start gap-2 rounded-xl border border-red-500/25 bg-red-500/10 p-3 text-[13px] text-red-800 dark:text-red-300">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+              {t("urlenc.v2.malformed", { seq: result.seq, pos: result.at })}
+            </p>
+          )}
+          {direction === "encode" && <p className="text-[12.5px] text-t-tertiary">{scope === "component" ? t("urlenc.v2.componentHint") : t("urlenc.v2.fullUrlHint")}</p>}
         </div>
+
+        {parsed && (
+          <div className="glass space-y-4 p-4 sm:p-5">
+            <p className={`${sectionTitle} flex items-center gap-2`}>
+              <Link2 className="h-4 w-4" aria-hidden="true" />
+              {t("urlenc.v2.breakdown")}
+            </p>
+            <dl className="grid gap-x-4 gap-y-2 text-[13.5px] sm:grid-cols-[140px_1fr]">
+              {(
+                [
+                  ["urlenc.v2.protocol", parsed.protocol],
+                  ["urlenc.v2.host", parsed.hostname],
+                  ["urlenc.v2.port", parsed.port],
+                  ["urlenc.v2.path", decodeURIComponent(parsed.pathname)],
+                  ["urlenc.v2.fragment", parsed.hash ? decodeURIComponent(parsed.hash.slice(1)) : ""],
+                ] as const
+              )
+                .filter(([, v]) => v)
+                .map(([k, v]) => (
+                  <div key={k} className="contents">
+                    <dt className="text-t-tertiary">{t(k)}</dt>
+                    <dd className="break-all font-mono text-t-primary" dir="ltr">
+                      {v}
+                    </dd>
+                  </div>
+                ))}
+            </dl>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[13px] font-medium text-t-secondary">{t("urlenc.v2.params", { n: shownParams.length })}</span>
+                <button type="button" className={smallButton} onClick={() => setParams([...shownParams, { key: "", value: "" }])}>
+                  <Plus className="h-4 w-4" aria-hidden="true" />
+                  {t("urlenc.v2.addParam")}
+                </button>
+              </div>
+              {shownParams.map((p, i) => (
+                <div key={i} className="flex gap-2">
+                  <input value={p.key} onChange={(e) => setParam(i, { key: e.target.value })} aria-label={t("urlenc.v2.key")} placeholder={t("urlenc.v2.key")} dir="ltr" className="h-10 w-1/3 min-w-0 rounded-lg border border-border bg-bg-secondary px-2.5 font-mono text-[13px] text-t-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40" />
+                  <input value={p.value} onChange={(e) => setParam(i, { value: e.target.value })} aria-label={t("urlenc.v2.value")} placeholder={t("urlenc.v2.value")} dir="ltr" className="h-10 min-w-0 flex-1 rounded-lg border border-border bg-bg-secondary px-2.5 font-mono text-[13px] text-t-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40" />
+                  <button type="button" onClick={() => setParams(shownParams.filter((_, j) => j !== i))} aria-label={t("ui.remove")} className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-t-tertiary hover:bg-bg-secondary hover:text-t-primary">
+                    <Trash2 className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                </div>
+              ))}
+            </div>
+            {rebuilt && (
+              <div className="space-y-2 border-t border-border pt-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[13px] font-medium text-t-secondary">{t("urlenc.v2.rebuilt")}</span>
+                  <CopyButton getText={() => rebuilt} />
+                </div>
+                <p className="break-all rounded-xl bg-bg-secondary p-3 font-mono text-[13px] text-t-primary" dir="ltr">
+                  {rebuilt}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </ToolLayout>
   );
