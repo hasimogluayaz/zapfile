@@ -264,13 +264,13 @@ export const tools: Tool[] = [
   {
     slug: "color-picker",
     name: "Color Picker",
-    description: "Pick, convert and randomize colors with harmonies",
+    description: "Pick colors from a picker, the screen or an image; convert HEX, RGB, HSL, OKLCH and build scales",
     emoji: "\ud83c\udfa8",
     category: "utility",
     acceptedFormats: [],
-    metaTitle: "Color Picker, Random Color & Harmonies - Free | ZapFile",
+    metaTitle: "Color Picker: HEX, RGB, HSL, OKLCH & Image Picker - Free | ZapFile",
     metaDescription:
-      "Pick colors, convert between HEX, RGB and HSL, generate random colors and complementary, triadic and analogous harmonies.",
+      "Pick colors with a precise picker, from your screen or from an image. Convert HEX, RGB, HSL, HWB, OKLCH and CMYK, check WCAG contrast, build 50–950 tint scales and harmonies.",
   },
   {
     slug: "json-formatter",
