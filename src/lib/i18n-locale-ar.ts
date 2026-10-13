@@ -5,6 +5,18 @@
 
 export const arLocaleStrings: Record<string, string> = {
   "nav.allTools": "جميع الأدوات",
+  "md.v2.strike": "يتوسطه خط",
+  "md.v2.numbered": "قائمة مرقمة",
+  "md.v2.tasks": "قائمة مهام",
+  "md.v2.table": "جدول",
+  "md.v2.column": "عمود",
+  "md.v2.formatting": "التنسيق",
+  "md.v2.layout": "التخطيط",
+  "md.v2.split": "جنبًا إلى جنب",
+  "md.v2.stats": "{words} كلمة · {chars} حرفًا · قراءة {min} دقيقة",
+  "md.v2.copyRich": "نسخ منسق",
+  "md.v2.richHint": "الصق في Gmail أو Outlook أو Word أو مستندات Google مع الحفاظ على العناوين والقوائم والجداول",
+  "md.v2.richCopied": "نُسخ مع التنسيق: الصقه في بريد أو مستند",
   "csvjson.v2.typed": "اكتشاف الأرقام وقيم true/false",
   "csvjson.v2.typedHint": "تبقى الرموز ذات الأصفار البادئة (الرموز البريدية والمعرّفات) نصًا؛ وتصبح الخلايا الفارغة null.",
   "csvjson.v2.jsonLines": "JSON Lines (كائن في كل سطر)",

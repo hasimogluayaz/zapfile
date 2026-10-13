@@ -1,366 +1,321 @@
 "use client";
 
-import { useState, useRef, useCallback, useMemo } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
+import { Bold, Code, Columns2, Download, Eye, FileCode2, FileUp, Heading, Italic, Link2, List, ListChecks, ListOrdered, Pencil, Quote, Strikethrough, Table, Clipboard } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
+import { Segmented } from "@/components/ui/controls";
+import { downloadBlob } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n";
+import { useStoredText } from "@/lib/text-tools/hooks";
+import { SavedNote, baseName, readTextFile, smallButton } from "@/lib/text-tools/ui";
 
-/* ------------------------------------------------------------------ */
-/*  Markdown parser - regex-based, no external dependencies           */
-/* ------------------------------------------------------------------ */
+type View = "split" | "edit" | "preview";
 
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+const SAMPLE = `# Project notes
+
+Write **bold**, *italic*, ~~strikethrough~~ and \`inline code\`. Links work too: [ZapFile](https://zapfile.xyz).
+
+## Tasks
+- [x] Draft the outline
+- [ ] Review with the team
+- [ ] Publish
+
+## Comparison
+
+| Feature | Free | Pro |
+| :-- | :-: | --: |
+| Markdown | ✓ | ✓ |
+| Export to HTML | ✓ | ✓ |
+
+> Tip: copy the preview as rich text and paste it straight into an email or a document.
+
+\`\`\`js
+function hello(name) {
+  return \`Hello, \${name}!\`;
 }
+\`\`\`
+`;
 
-function parseMarkdown(raw: string): string {
-  // Escape HTML entities first (XSS prevention)
-  let html = escapeHtml(raw);
+const EXPORT_CSS = `body{font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;color:#16181d;max-width:760px;margin:40px auto;padding:0 20px}h1,h2,h3{line-height:1.25}h2{border-bottom:1px solid #e2e5ea;padding-bottom:.25em}code{font-family:ui-monospace,Menlo,Consolas,monospace;background:#eef0f3;padding:.15em .4em;border-radius:6px;font-size:.88em}pre{background:#eef0f3;padding:1em;border-radius:10px;overflow:auto}pre code{background:none;padding:0}blockquote{border-left:3px solid #e2e5ea;margin:0;padding:.1em 1em;color:#525761}table{border-collapse:collapse}th,td{border:1px solid #e2e5ea;padding:.4em .75em}th{background:#eef0f3}img{max-width:100%}`;
 
-  // Code blocks (``` ... ```)
-  html = html.replace(
-    /```([\s\S]*?)```/g,
-    (_match, code: string) =>
-      `<pre class="md-code-block">${code.replace(/^\n/, "")}</pre>`
-  );
-
-  // Inline code
-  html = html.replace(
-    /`([^`\n]+)`/g,
-    '<code class="md-inline-code">$1</code>'
-  );
-
-  // Headings
-  html = html.replace(
-    /^### (.+)$/gm,
-    '<h3 class="md-h3">$1</h3>'
-  );
-  html = html.replace(
-    /^## (.+)$/gm,
-    '<h2 class="md-h2">$1</h2>'
-  );
-  html = html.replace(
-    /^# (.+)$/gm,
-    '<h1 class="md-h1">$1</h1>'
-  );
-
-  // Horizontal rule
-  html = html.replace(/^---$/gm, '<hr class="md-hr" />');
-
-  // Images (must come before links)
-  html = html.replace(
-    /!\[([^\]]*)\]\(([^)]+)\)/g,
-    '<img src="$2" alt="$1" class="md-img" />'
-  );
-
-  // Links
-  html = html.replace(
-    /\[([^\]]+)\]\(([^)]+)\)/g,
-    '<a href="$2" class="md-link" target="_blank" rel="noopener noreferrer">$1</a>'
-  );
-
-  // Bold and italic
-  html = html.replace(
-    /\*\*\*(.+?)\*\*\*/g,
-    "<strong><em>$1</em></strong>"
-  );
-  html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-  html = html.replace(/\*(.+?)\*/g, "<em>$1</em>");
-
-  // Blockquotes (consecutive lines starting with >)
-  html = html.replace(
-    /^(?:&gt; .+\n?)+/gm,
-    (block) => {
-      const inner = block
-        .replace(/^&gt; /gm, "")
-        .trim();
-      return `<blockquote class="md-blockquote">${inner}</blockquote>\n`;
-    }
-  );
-
-  // Unordered lists (consecutive lines starting with -)
-  html = html.replace(
-    /^(?:- .+\n?)+/gm,
-    (block) => {
-      const items = block
-        .split("\n")
-        .filter((l) => l.startsWith("- "))
-        .map((l) => `<li>${l.slice(2)}</li>`)
-        .join("");
-      return `<ul class="md-ul">${items}</ul>\n`;
-    }
-  );
-
-  // Ordered lists (consecutive lines starting with digits.)
-  html = html.replace(
-    /^(?:\d+\. .+\n?)+/gm,
-    (block) => {
-      const items = block
-        .split("\n")
-        .filter((l) => /^\d+\. /.test(l))
-        .map((l) => `<li>${l.replace(/^\d+\. /, "")}</li>`)
-        .join("");
-      return `<ol class="md-ol">${items}</ol>\n`;
-    }
-  );
-
-  // Paragraphs: split on double newlines, wrap loose text
-  html = html
-    .split(/\n{2,}/)
-    .map((block) => {
-      const trimmed = block.trim();
-      if (!trimmed) return "";
-      // Don't wrap blocks that already start with an HTML tag
-      if (/^<(h[1-6]|ul|ol|pre|blockquote|hr|img|div)/.test(trimmed)) {
-        return trimmed;
-      }
-      // Replace single newlines with <br>
-      return `<p class="md-p">${trimmed.replace(/\n/g, "<br />")}</p>`;
-    })
-    .join("\n");
-
-  return html;
+interface Rendered {
+  html: string;
 }
-
-/* ------------------------------------------------------------------ */
-/*  Toolbar button definitions                                        */
-/* ------------------------------------------------------------------ */
-
-interface ToolbarAction {
-  label: string;
-  icon: string;
-  prefix: string;
-  suffix: string;
-  placeholder: string;
-  block?: boolean;
-}
-
-// toolbarActions are defined inside the component to access t()
-
-/* ------------------------------------------------------------------ */
-/*  Component                                                         */
-/* ------------------------------------------------------------------ */
 
 export default function MarkdownEditorPage() {
   const { t } = useI18n();
-  const [markdown, setMarkdown] = useState("");
+  const [text, setText, store] = useStoredText("markdown-editor");
+  const [view, setView] = useState<View>("split");
+  const [fileBase, setFileBase] = useState("document");
+  const [rendered, setRendered] = useState<Rendered>({ html: "" });
+  const taRef = useRef<HTMLTextAreaElement>(null);
+  const previewRef = useRef<HTMLDivElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const syncing = useRef(false);
+  const deferred = useDeferredValue(text);
 
-  const toolbarActions: ToolbarAction[] = [
-    { label: t("md.bold"), icon: "B", prefix: "**", suffix: "**", placeholder: "bold text" },
-    { label: t("md.italic"), icon: "I", prefix: "*", suffix: "*", placeholder: "italic text" },
-    { label: t("md.heading"), icon: "H", prefix: "# ", suffix: "", placeholder: "Heading", block: true },
-    { label: t("md.link"), icon: "🔗", prefix: "[", suffix: "](url)", placeholder: "link text" },
-    { label: t("md.code"), icon: "<>", prefix: "`", suffix: "`", placeholder: "code" },
-    { label: t("md.list"), icon: "- ", prefix: "- ", suffix: "", placeholder: "list item", block: true },
-    { label: t("md.quote"), icon: ">", prefix: "> ", suffix: "", placeholder: "quote", block: true },
-  ];
-  const [mobileTab, setMobileTab] = useState<"edit" | "preview">("edit");
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  // marked (GitHub-flavoured) + DOMPurify, loaded on demand; output is always sanitized.
+  useEffect(() => {
+    let live = true;
+    (async () => {
+      const [{ marked }, { default: DOMPurify }] = await Promise.all([import("marked"), import("dompurify")]);
+      const raw = await marked.parse(deferred, { gfm: true, breaks: false });
+      const html = DOMPurify.sanitize(raw, { ADD_ATTR: ["target"] });
+      if (live) setRendered({ html });
+    })();
+    return () => {
+      live = false;
+    };
+  }, [deferred]);
 
-  const renderedHtml = useMemo(() => parseMarkdown(markdown), [markdown]);
+  // Links in the preview open in a new tab.
+  useEffect(() => {
+    previewRef.current?.querySelectorAll("a[href]").forEach((a) => {
+      a.setAttribute("target", "_blank");
+      a.setAttribute("rel", "noopener noreferrer nofollow");
+    });
+  }, [rendered, view]);
 
-  const wordCount = useMemo(() => {
-    const trimmed = markdown.trim();
-    if (!trimmed) return 0;
-    return trimmed.split(/\s+/).length;
-  }, [markdown]);
+  const stats = useMemo(() => {
+    const words = deferred.trim() ? deferred.trim().split(/\s+/).length : 0;
+    return { words, chars: deferred.length, minutes: Math.max(1, Math.round(words / 238)) };
+  }, [deferred]);
 
-  const insertMarkdown = useCallback(
-    (action: ToolbarAction) => {
-      const textarea = textareaRef.current;
-      if (!textarea) return;
-
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-      const selected = markdown.slice(start, end);
-      const text = selected || action.placeholder;
-
-      let insertion: string;
-      if (action.block) {
-        // For block-level syntax, ensure it starts on a new line
-        const before = markdown.slice(0, start);
-        const needsNewline = before.length > 0 && !before.endsWith("\n");
-        insertion =
-          (needsNewline ? "\n" : "") + action.prefix + text + action.suffix;
-      } else {
-        insertion = action.prefix + text + action.suffix;
+  // ── Editing helpers ──
+  const edit = useCallback(
+    (fn: (sel: string, before: string, after: string) => { text: string; select?: [number, number] }) => {
+      const ta = taRef.current;
+      if (!ta) return;
+      const { selectionStart: s, selectionEnd: e, value } = ta;
+      const res = fn(value.slice(s, e), value.slice(0, s), value.slice(e));
+      // execCommand keeps the browser's own undo stack working.
+      ta.focus();
+      ta.setSelectionRange(s, e);
+      if (!document.execCommand("insertText", false, res.text)) {
+        setText(value.slice(0, s) + res.text + value.slice(e));
       }
-
-      const newMarkdown =
-        markdown.slice(0, start) + insertion + markdown.slice(end);
-      setMarkdown(newMarkdown);
-
-      // Restore cursor position after the inserted text
-      requestAnimationFrame(() => {
-        textarea.focus();
-        const cursorPos = start + insertion.length;
-        textarea.setSelectionRange(cursorPos, cursorPos);
-      });
+      if (res.select) requestAnimationFrame(() => ta.setSelectionRange(s + res.select![0], s + res.select![1]));
     },
-    [markdown]
+    [setText],
   );
 
-  const copyHtml = async () => {
-    if (!renderedHtml.trim()) {
-      toast.error(t("md.nothingCopy"));
+  const wrap = (mark: string, placeholder: string) =>
+    edit((sel) => {
+      const body = sel || placeholder;
+      return { text: `${mark}${body}${mark}`, select: [mark.length, mark.length + body.length] };
+    });
+
+  const linePrefix = (prefix: string | ((i: number) => string)) =>
+    edit((sel, before) => {
+      const atLineStart = before === "" || before.endsWith("\n");
+      const lines = (sel || "").split("\n");
+      const out = lines.map((l, i) => (typeof prefix === "function" ? prefix(i) : prefix) + l).join("\n");
+      return { text: (atLineStart ? "" : "\n") + out };
+    });
+
+  const actions: { icon: typeof Bold; label: string; key?: string; run: () => void }[] = [
+    { icon: Bold, label: t("md.bold"), key: "b", run: () => wrap("**", t("md.bold")) },
+    { icon: Italic, label: t("md.italic"), key: "i", run: () => wrap("*", t("md.italic")) },
+    { icon: Strikethrough, label: t("md.v2.strike"), run: () => wrap("~~", t("md.v2.strike")) },
+    { icon: Heading, label: t("md.heading"), run: () => linePrefix("## ") },
+    {
+      icon: Link2,
+      label: t("md.link"),
+      key: "k",
+      run: () =>
+        edit((sel) => {
+          const label = sel || t("md.link");
+          // Select the URL part so it can be typed over.
+          return { text: `[${label}](https://)`, select: [label.length + 3, label.length + 11] };
+        }),
+    },
+    { icon: Code, label: t("md.code"), run: () => edit((sel) => (sel.includes("\n") ? { text: "```\n" + sel + "\n```" } : { text: "`" + (sel || "code") + "`", select: [1, 1 + (sel || "code").length] })) },
+    { icon: Quote, label: t("md.quote"), run: () => linePrefix("> ") },
+    { icon: List, label: t("md.list"), run: () => linePrefix("- ") },
+    { icon: ListOrdered, label: t("md.v2.numbered"), run: () => linePrefix((i) => `${i + 1}. `) },
+    { icon: ListChecks, label: t("md.v2.tasks"), run: () => linePrefix("- [ ] ") },
+    { icon: Table, label: t("md.v2.table"), run: () => edit((_, before) => ({ text: `${before && !before.endsWith("\n\n") ? "\n\n" : ""}| ${t("md.v2.column")} 1 | ${t("md.v2.column")} 2 |\n| --- | --- |\n|  |  |\n` })) },
+  ];
+
+  const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.metaKey || e.ctrlKey) {
+      const a = actions.find((x) => x.key === e.key.toLowerCase());
+      if (a) {
+        e.preventDefault();
+        a.run();
+      }
       return;
     }
+    // Continue lists on Enter.
+    if (e.key === "Enter" && !e.shiftKey) {
+      const ta = e.currentTarget;
+      const before = ta.value.slice(0, ta.selectionStart);
+      const line = before.slice(before.lastIndexOf("\n") + 1);
+      const m = /^(\s*)([-*+] \[[ x]\] |[-*+] |(\d+)\. |> )(.*)$/.exec(line);
+      if (!m) return;
+      e.preventDefault();
+      if (!m[4]) {
+        // Empty item: end the list.
+        ta.setSelectionRange(ta.selectionStart - line.length, ta.selectionStart);
+        document.execCommand("insertText", false, "");
+        return;
+      }
+      const marker = m[3] ? `${Number(m[3]) + 1}. ` : m[2]!.replace("[x]", "[ ]");
+      document.execCommand("insertText", false, `\n${m[1]}${marker}`);
+    }
+    if (e.key === "Tab") {
+      e.preventDefault();
+      document.execCommand("insertText", false, "  ");
+    }
+  };
+
+  // Proportional scroll sync between editor and preview.
+  const sync = (from: HTMLElement | null, to: HTMLElement | null) => {
+    if (!from || !to || syncing.current) return;
+    syncing.current = true;
+    const k = from.scrollTop / Math.max(1, from.scrollHeight - from.clientHeight);
+    to.scrollTop = k * (to.scrollHeight - to.clientHeight);
+    requestAnimationFrame(() => (syncing.current = false));
+  };
+
+  const fullHtml = () =>
+    `<!doctype html>\n<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${fileBase}</title><style>${EXPORT_CSS}</style></head><body>\n${rendered.html}\n</body></html>\n`;
+
+  const copyRich = async () => {
     try {
-      await navigator.clipboard.writeText(renderedHtml);
-      toast.success(t("md.htmlCopied"));
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          "text/html": new Blob([rendered.html], { type: "text/html" }),
+          "text/plain": new Blob([previewRef.current?.innerText ?? text], { type: "text/plain" }),
+        }),
+      ]);
+      toast.success(t("md.v2.richCopied"));
     } catch {
       toast.error(t("ui.copyFailed"));
     }
   };
 
-  const copyMarkdown = async () => {
-    if (!markdown.trim()) {
-      toast.error(t("md.nothingCopy"));
-      return;
-    }
+  const copy = async (value: string, msg: string) => {
     try {
-      await navigator.clipboard.writeText(markdown);
-      toast.success(t("md.mdCopied"));
+      await navigator.clipboard.writeText(value);
+      toast.success(msg);
     } catch {
       toast.error(t("ui.copyFailed"));
     }
   };
 
-  const handleClear = () => {
-    setMarkdown("");
-    toast.success(t("md.cleared"));
+  const openFile = async (file: File | undefined) => {
+    if (!file) return;
+    const content = await readTextFile(file, t);
+    if (content === null) return;
+    setText(content);
+    setFileBase(baseName(file.name) || "document");
   };
 
-  /* ---------------------------------------------------------------- */
-  /*  Preview styles (inline CSS-in-Tailwind via wrapper classes)      */
-  /* ---------------------------------------------------------------- */
-  const previewWrapperClass = [
-    "[&_.md-h1]:text-2xl [&_.md-h1]:font-bold [&_.md-h1]:text-t-primary [&_.md-h1]:mb-3 [&_.md-h1]:mt-4",
-    "[&_.md-h2]:text-xl [&_.md-h2]:font-bold [&_.md-h2]:text-t-primary [&_.md-h2]:mb-2 [&_.md-h2]:mt-3",
-    "[&_.md-h3]:text-lg [&_.md-h3]:font-semibold [&_.md-h3]:text-t-primary [&_.md-h3]:mb-2 [&_.md-h3]:mt-3",
-    "[&_.md-p]:text-t-primary [&_.md-p]:leading-relaxed [&_.md-p]:mb-3",
-    "[&_.md-link]:text-accent [&_.md-link]:underline [&_.md-link]:hover:text-accent",
-    "[&_.md-code-block]:block [&_.md-code-block]:bg-bg-secondary [&_.md-code-block]:rounded-lg [&_.md-code-block]:p-4 [&_.md-code-block]:my-3 [&_.md-code-block]:text-sm [&_.md-code-block]:font-mono [&_.md-code-block]:text-t-primary [&_.md-code-block]:overflow-x-auto [&_.md-code-block]:whitespace-pre",
-    "[&_.md-inline-code]:bg-bg-secondary [&_.md-inline-code]:rounded [&_.md-inline-code]:px-1.5 [&_.md-inline-code]:py-0.5 [&_.md-inline-code]:text-sm [&_.md-inline-code]:font-mono [&_.md-inline-code]:text-accent",
-    "[&_.md-blockquote]:border-l-4 [&_.md-blockquote]:border-accent [&_.md-blockquote]:pl-4 [&_.md-blockquote]:my-3 [&_.md-blockquote]:text-t-secondary [&_.md-blockquote]:italic",
-    "[&_.md-ul]:list-disc [&_.md-ul]:pl-6 [&_.md-ul]:my-3 [&_.md-ul]:text-t-primary [&_.md-ul]:space-y-1",
-    "[&_.md-ol]:list-decimal [&_.md-ol]:pl-6 [&_.md-ol]:my-3 [&_.md-ol]:text-t-primary [&_.md-ol]:space-y-1",
-    "[&_.md-hr]:border-border [&_.md-hr]:my-4",
-    "[&_.md-img]:max-w-full [&_.md-img]:rounded-lg [&_.md-img]:my-3",
-    "[&_strong]:font-bold [&_em]:italic",
-  ].join(" ");
+  const height = "h-[min(70vh,640px)]";
 
   return (
-    <ToolLayout
-      toolName="Markdown Editor"
-      toolDescription="Write and preview Markdown with live rendering"
-    >
+    <ToolLayout toolName={t("tool.markdown-editor.name")} toolDescription={t("tool.markdown-editor.desc")}>
       <div className="space-y-4">
-        {/* Toolbar */}
-        <div className="glass rounded-xl p-4">
-          <div className="flex flex-wrap items-center gap-2">
-            {toolbarActions.map((action) => (
+        <div className="glass flex flex-wrap items-center gap-2 p-3">
+          <div className="flex flex-wrap items-center gap-1" role="toolbar" aria-label={t("md.v2.formatting")}>
+            {actions.map((a) => (
               <button
-                key={action.label}
-                onClick={() => insertMarkdown(action)}
-                title={action.label}
-                className="px-3 py-1.5 rounded-lg text-sm font-medium text-t-secondary bg-bg-secondary border border-border hover:text-t-primary hover:bg-bg-secondary/80 transition-colors"
+                key={a.label}
+                type="button"
+                onClick={a.run}
+                disabled={view === "preview"}
+                title={a.key ? `${a.label} (Ctrl+${a.key.toUpperCase()})` : a.label}
+                aria-label={a.label}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-t-secondary transition hover:bg-bg-secondary hover:text-t-primary disabled:opacity-35"
               >
-                {action.icon}
+                <a.icon className="h-4 w-4" aria-hidden="true" />
               </button>
             ))}
+          </div>
+          <div className="ms-auto flex flex-wrap items-center gap-2">
+            <Segmented<View>
+              label={t("md.v2.layout")}
+              size="sm"
+              value={view}
+              onChange={setView}
+              options={[
+                { value: "edit", label: <Pencil className="h-4 w-4" aria-label={t("md.edit")} /> },
+                { value: "split", label: <Columns2 className="h-4 w-4" aria-label={t("md.v2.split")} /> },
+                { value: "preview", label: <Eye className="h-4 w-4" aria-label={t("md.preview")} /> },
+              ]}
+            />
+          </div>
+        </div>
 
-            <div className="flex-1" />
+        <div className={`grid gap-4 ${view === "split" ? "lg:grid-cols-2" : ""}`}>
+          {view !== "preview" && (
+            <div className="glass flex flex-col p-3">
+              <textarea
+                ref={taRef}
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                onKeyDown={onKeyDown}
+                onScroll={(e) => view === "split" && sync(e.currentTarget, previewRef.current)}
+                placeholder={t("md.placeholder")}
+                spellCheck
+                aria-label={t("md.markdown")}
+                className={`${height} w-full resize-none rounded-xl border border-border bg-bg-secondary px-4 py-3 font-mono text-[14px] leading-6 text-t-primary placeholder:text-t-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40`}
+              />
+            </div>
+          )}
+          {view !== "edit" && (
+            <div className="glass flex flex-col p-3">
+              <div
+                ref={previewRef}
+                onScroll={(e) => view === "split" && sync(e.currentTarget, taRef.current)}
+                className={`${height} overflow-auto rounded-xl border border-border bg-surface px-5 py-4`}
+              >
+                {text.trim() ? <div className="md-preview" dangerouslySetInnerHTML={{ __html: rendered.html }} /> : <p className="text-[14px] text-t-tertiary">{t("textkit.v2.outputPlaceholder")}</p>}
+              </div>
+            </div>
+          )}
+        </div>
 
-            <button
-              onClick={copyHtml}
-              className="px-4 py-2 rounded-lg text-t-secondary bg-bg-secondary border border-border hover:text-t-primary transition-colors text-sm"
-            >
-              {t("md.copyHtml")}
+        <div className="glass flex flex-wrap items-center gap-2 p-3">
+          <span className="me-auto text-[12.5px] tabular-nums text-t-tertiary">
+            {t("md.v2.stats", { words: stats.words.toLocaleString(), chars: stats.chars.toLocaleString(), min: stats.minutes })} · <SavedNote tooBig={store.tooBigToStore} />
+          </span>
+          <input ref={fileRef} type="file" accept=".md,.markdown,.mdx,.txt,text/markdown" className="sr-only" onChange={(e) => {
+              openFile(e.target.files?.[0]);
+              e.target.value = "";
+            }} />
+          <button type="button" className={smallButton} onClick={() => fileRef.current?.click()}>
+            <FileUp className="h-4 w-4" aria-hidden="true" />
+            {t("textkit.v2.openFile")}
+          </button>
+          {!text.trim() && (
+            <button type="button" className={smallButton} onClick={() => setText(SAMPLE)}>
+              {t("json.sample")}
             </button>
-            <button
-              onClick={copyMarkdown}
-              className="px-4 py-2 rounded-lg text-t-secondary bg-bg-secondary border border-border hover:text-t-primary transition-colors text-sm"
-            >
-              {t("md.copyMd")}
-            </button>
-            <button
-              onClick={handleClear}
-              className="px-4 py-2 rounded-lg text-t-secondary bg-bg-secondary border border-border hover:text-t-primary transition-colors text-sm"
-            >
+          )}
+          <button type="button" className={smallButton} onClick={copyRich} disabled={!text.trim()} title={t("md.v2.richHint")}>
+            <Clipboard className="h-4 w-4" aria-hidden="true" />
+            {t("md.v2.copyRich")}
+          </button>
+          <button type="button" className={smallButton} onClick={() => copy(rendered.html, t("md.htmlCopied"))} disabled={!text.trim()}>
+            <FileCode2 className="h-4 w-4" aria-hidden="true" />
+            {t("md.copyHtml")}
+          </button>
+          <button type="button" className={smallButton} onClick={() => downloadBlob(new Blob([text], { type: "text/markdown" }), `${fileBase}.md`)} disabled={!text.trim()}>
+            <Download className="h-4 w-4" aria-hidden="true" />
+            .md
+          </button>
+          <button type="button" className={smallButton} onClick={() => downloadBlob(new Blob([fullHtml()], { type: "text/html" }), `${fileBase}.html`)} disabled={!text.trim()}>
+            <Download className="h-4 w-4" aria-hidden="true" />
+            .html
+          </button>
+          {text.trim() && (
+            <button type="button" className={smallButton} onClick={() => setText("")}>
               {t("ui.clear")}
             </button>
-          </div>
-        </div>
-
-        {/* Mobile tabs */}
-        <div className="flex gap-2 md:hidden">
-          {(["edit", "preview"] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setMobileTab(tab)}
-              className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all capitalize ${
-                mobileTab === tab
-                  ? "bg-accent text-on-accent"
-                  : "bg-bg-secondary border border-border text-t-secondary hover:text-t-primary"
-              }`}
-            >
-              {tab === "edit" ? t("md.edit") : t("md.preview")}
-            </button>
-          ))}
-        </div>
-
-        {/* Editor + Preview */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Editor panel */}
-          <div
-            className={`glass rounded-xl p-6 ${
-              mobileTab !== "edit" ? "hidden md:block" : ""
-            }`}
-          >
-            <label className="block text-sm font-medium text-t-secondary mb-2">
-              {t("md.markdown")}
-            </label>
-            <textarea
-              ref={textareaRef}
-              value={markdown}
-              onChange={(e) => setMarkdown(e.target.value)}
-              placeholder={t("md.placeholder")}
-              rows={20}
-              spellCheck={false}
-              className="w-full bg-bg-secondary border border-border rounded-lg px-4 py-3 text-t-primary placeholder-t-tertiary focus:outline-none focus:ring-2 focus:ring-accent/50 font-mono text-sm resize-y leading-relaxed"
-            />
-          </div>
-
-          {/* Preview panel */}
-          <div
-            className={`glass rounded-xl p-6 ${
-              mobileTab !== "preview" ? "hidden md:block" : ""
-            }`}
-          >
-            <label className="block text-sm font-medium text-t-secondary mb-2">
-              {t("ui.preview")}
-            </label>
-            <div
-              className={`min-h-[480px] bg-bg-secondary border border-border rounded-lg px-4 py-3 overflow-auto text-sm ${previewWrapperClass}`}
-              dangerouslySetInnerHTML={{ __html: renderedHtml }}
-            />
-          </div>
-        </div>
-
-        {/* Word count */}
-        <div className="glass rounded-xl p-4 flex items-center justify-between text-sm">
-          <span className="text-t-secondary">
-            {wordCount.toLocaleString()} {t("ui.words")}
-          </span>
-          <span className="text-t-tertiary">
-            {markdown.length.toLocaleString()} {t("ui.characters")}
-          </span>
+          )}
         </div>
       </div>
     </ToolLayout>
