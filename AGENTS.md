@@ -8,7 +8,7 @@ ZapFile (zapfile.xyz) is a free, browser-based file processing tool suite. All p
 
 - **Framework**: Next.js 14 (App Router), TypeScript
 - **Styling**: Tailwind CSS with CSS custom properties (light/dark theme), Lucide icons (`lucide-react`)
-- **Key deps**: `pdf-lib`, `@cantoo/pdf-lib` (PDF encryption), `pdfjs-dist`, `onnxruntime-web` (background remover), `@jsquash/*` + `image-q` (image engine codecs), `gifenc`, `yaml`, `papaparse`, `marked` + `dompurify`, `diff`, `hash-wasm`, `jszip`, `qrcode`, `jsqr`, `react-dropzone`, `react-hot-toast`
+- **Key deps**: `pdf-lib`, `@cantoo/pdf-lib` (PDF encryption), `pdfjs-dist`, `onnxruntime-web` (background remover), `@jsquash/*` + `image-q` (image engine codecs), `gifenc`, `yaml`, `papaparse`, `csso`, `marked` + `dompurify`, `diff`, `hash-wasm`, `jszip`, `qrcode`, `jsqr`, `react-dropzone`, `react-hot-toast`
 - **Analytics**: `@vercel/analytics`, `@vercel/speed-insights`
 
 ## Architecture
@@ -75,7 +75,7 @@ Canonical list: `src/lib/tools.ts` — 55 tools across 4 categories (PDF, Image,
 
 ## Runtime assets (`public/vendor/`)
 
-Workers/wasm that libraries load at runtime are copied from `node_modules` into `public/vendor/<lib>-<version>/` by `scripts/copy-vendor-assets.mjs` (runs on `predev`/`prebuild`, output git-ignored). Never load them from a third-party CDN. pdf.js goes through `src/lib/pdfjs.ts` (`openPdf`).
+Workers/wasm that libraries load at runtime are copied from `node_modules` into `public/vendor/<lib>-<version>/` by `scripts/copy-vendor-assets.mjs` (runs on `predev`/`prebuild`, output git-ignored). Never load them from a third-party CDN. The meme generator's font (Anton, `@fontsource/anton`, OFL) is served the same way from `/vendor/anton-<version>/`. pdf.js goes through `src/lib/pdfjs.ts` (`openPdf`).
 
 ## Background remover (`src/lib/bg-removal/`)
 

@@ -2,9 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { Copy, Pipette, Trash2, X } from "lucide-react";
+import Link from "next/link";
+import { Copy, Palette, Pipette, Trash2, X } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
 import FileDropzone from "@/components/FileDropzone";
+import { decodeImage } from "@/lib/image-editor-kit";
 import { useI18n } from "@/lib/i18n";
 
 interface PickedColor {
@@ -101,26 +103,15 @@ export default function ColorDropperPage() {
   const loadImage = useCallback(
     async (f: File) => {
       try {
-        let bitmap: ImageBitmap | HTMLImageElement;
-        try {
-          bitmap = await createImageBitmap(f, { imageOrientation: "from-image" });
-        } catch {
-          const url = URL.createObjectURL(f);
-          const img = new Image();
-          img.src = url;
-          await img.decode();
-          URL.revokeObjectURL(url);
-          bitmap = img;
-        }
-        const w = "naturalWidth" in bitmap ? bitmap.naturalWidth : bitmap.width;
-        const h = "naturalHeight" in bitmap ? bitmap.naturalHeight : bitmap.height;
+        // EXIF-oriented and capped to the canvas budget (iOS), so huge photos still load.
+        const { bitmap, width: w, height: h } = await decodeImage(f);
         const canvas = document.createElement("canvas");
         canvas.width = w;
         canvas.height = h;
         const ctx = canvas.getContext("2d", { willReadFrequently: true });
         if (!ctx) throw new Error("no 2d context");
         ctx.drawImage(bitmap, 0, 0);
-        if ("close" in bitmap) bitmap.close();
+        bitmap.close();
         sourceRef.current = canvas;
         setImageSize({ w, h });
         setCursor({ x: Math.floor(w / 2), y: Math.floor(h / 2) });
@@ -341,10 +332,7 @@ export default function ColorDropperPage() {
     "inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-[13px] font-medium text-t-secondary transition-colors hover:bg-bg-secondary hover:text-t-primary";
 
   return (
-    <ToolLayout
-      toolName="Color Dropper"
-      toolDescription="Pick colors from any image. Hover to preview, click to pick. Get HEX, RGB, and HSL values."
-    >
+    <ToolLayout toolName={t("tool.color-dropper.name")} toolDescription={t("tool.color-dropper.desc")}>
       <div className="space-y-5">
         {!file && (
           <>
@@ -355,6 +343,8 @@ export default function ColorDropperPage() {
                 "image/png": [".png"],
                 "image/webp": [".webp"],
                 "image/gif": [".gif"],
+                "image/avif": [".avif"],
+                "image/bmp": [".bmp"],
               }}
               multiple={false}
               label={t("dropper.drop")}
@@ -489,6 +479,14 @@ export default function ColorDropperPage() {
                         </button>
                       ))}
                     </div>
+                    <Link
+                      href={`/tools/color-picker#${color.hex.slice(1).toLowerCase()}`}
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-t-tertiary hover:bg-bg-tertiary hover:text-t-primary"
+                      aria-label={t("dropper.v2.openPicker", { hex: color.hex })}
+                      title={t("dropper.v2.openPicker", { hex: color.hex })}
+                    >
+                      <Palette className="h-4 w-4" aria-hidden="true" />
+                    </Link>
                     <button
                       type="button"
                       onClick={() => setPicked((prev) => prev.filter((c) => c.hex !== color.hex))}

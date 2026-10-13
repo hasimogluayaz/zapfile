@@ -5,6 +5,7 @@
 
 export const arLocaleStrings: Record<string, string> = {
   "nav.allTools": "جميع الأدوات",
+  "dropper.v2.openPicker": "افتح {hex} في منتقي الألوان (تدرجات وتباين وتنسيقات)",
   "meme.v2.addText": "إضافة نص",
   "meme.v2.hint": "اسحب النص لتحريكه والزاوية الصفراء لتغيير حجمه. انقر مرتين للتحرير. تحرّك الأسهم النص، ويحذفه Delete، ويتراجع Ctrl+Z.",
   "meme.v2.preset.band": "شريط تعليق",
