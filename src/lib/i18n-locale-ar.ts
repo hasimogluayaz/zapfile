@@ -5,6 +5,16 @@
 
 export const arLocaleStrings: Record<string, string> = {
   "nav.allTools": "جميع الأدوات",
+  "imgb64.v2.drop": "أسقط الصور لتضمينها (PNG وJPG وWebP وSVG وGIF…)",
+  "imgb64.v2.output": "الناتج",
+  "imgb64.v2.optimize": "قبل الترميز",
+  "imgb64.v2.asIs": "الإبقاء على الملف",
+  "imgb64.v2.compress": "ضغط",
+  "imgb64.v2.maxWidth": "أقصى عرض",
+  "imgb64.v2.keepSize": "الإبقاء على الحجم",
+  "imgb64.v2.optimizeHint": "يزيد Base64 الحجم بمقدار الثلث، لذا التصغير أولًا يُبقي HTML وCSS خفيفين. تُرمَّز ملفات SVG كرابط وهو أصغر، ولا يُعاد ترميز صور GIF المتحركة.",
+  "imgb64.v2.asText": "كنص",
+  "imgb64.v2.bigWarn": "أكبر من 20 كيلوبايت: عادةً يُحمَّل ملف صورة منفصل أسرع.",
   "md.v2.strike": "يتوسطه خط",
   "md.v2.numbered": "قائمة مرقمة",
   "md.v2.tasks": "قائمة مهام",
