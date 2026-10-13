@@ -197,13 +197,13 @@ export const tools: Tool[] = [
   {
     slug: "image-collage",
     name: "Image Collage",
-    description: "Create photo collages with multiple layout options",
+    description: "Arrange photos in grids, feature layouts or a mosaic; reframe, swap and export in high resolution",
     emoji: "\ud83d\uddbc\ufe0f",
     category: "image",
-    acceptedFormats: [".jpg", ".jpeg", ".png", ".webp"],
-    metaTitle: "Image Collage Maker - Free Online Tool | ZapFile",
+    acceptedFormats: [".jpg", ".jpeg", ".png", ".webp", ".avif"],
+    metaTitle: "Photo Collage Maker: Grid, Mosaic & Instagram Sizes - Free | ZapFile",
     metaDescription:
-      "Create beautiful photo collages. Multiple layouts, adjustable spacing. Free, private, browser-based.",
+      "Make photo collages in your browser: grid, feature and mosaic layouts, 1:1, 4:5 and 9:16 sizes, drag to swap and reframe, rounded corners, up to 4096 px. Nothing is uploaded.",
   },
   {
     slug: "meme-generator",
