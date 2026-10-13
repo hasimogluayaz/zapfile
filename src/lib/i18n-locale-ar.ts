@@ -5,6 +5,9 @@
 
 export const arLocaleStrings: Record<string, string> = {
   "nav.allTools": "جميع الأدوات",
+  "palette.v2.share": "{pct}% من الصورة",
+  "palette.v2.export": "تصدير",
+  "palette.v2.how": "تُجمَّع الألوان كما تراها العين (OKLab)، فتندمج الدرجات المتقاربة ويكون كل لون مميزًا، ومرتبة حسب مساحتها في الصورة.",
   "imgb64.v2.drop": "أسقط الصور لتضمينها (PNG وJPG وWebP وSVG وGIF…)",
   "imgb64.v2.output": "الناتج",
   "imgb64.v2.optimize": "قبل الترميز",
