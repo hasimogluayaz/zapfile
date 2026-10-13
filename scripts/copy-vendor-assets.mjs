@@ -107,4 +107,29 @@ fs.rmSync(vendorRoot, { recursive: true, force: true });
   fs.copyFileSync(path.join(dir, "LICENSE"), path.join(out, "LICENSE"));
 }
 
+// ── PDF text fonts (DejaVu, Bitstream Vera licence) and signature fonts (OFL) ──
+{
+  const dir = pkgDir("dejavu-fonts-ttf");
+  const out = path.join(vendorRoot, `dejavu-${pkgVersion("dejavu-fonts-ttf")}`);
+  fs.mkdirSync(out, { recursive: true });
+  for (const f of ["DejaVuSans.ttf", "DejaVuSans-Bold.ttf", "DejaVuSerif.ttf", "DejaVuSerif-Bold.ttf", "DejaVuSansMono.ttf"]) {
+    fs.copyFileSync(path.join(dir, "ttf", f), path.join(out, f));
+  }
+  fs.copyFileSync(path.join(dir, "LICENSE"), path.join(out, "LICENSE"));
+  for (const [pkg, file] of [
+    ["@fontsource/dancing-script", "dancing-script"],
+    ["@fontsource/great-vibes", "great-vibes"],
+    ["@fontsource/caveat", "caveat"],
+  ]) {
+    const fdir = pkgDir(pkg);
+    const fout = path.join(vendorRoot, `${file}-${pkgVersion(pkg)}`);
+    fs.mkdirSync(fout, { recursive: true });
+    for (const subset of ["latin", "latin-ext"]) {
+      const name = `${file}-${subset}-400-normal.woff2`;
+      fs.copyFileSync(path.join(fdir, "files", name), path.join(fout, name));
+    }
+    fs.copyFileSync(path.join(fdir, "LICENSE"), path.join(fout, "LICENSE"));
+  }
+}
+
 console.log("vendor assets copied to public/vendor");

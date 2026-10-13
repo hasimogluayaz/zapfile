@@ -1,4 +1,5 @@
 import {
+  Droplets,
   LayoutGrid,
   MonitorPlay,
   Presentation,
@@ -80,6 +81,7 @@ const toolIcons: Record<string, LucideIcon> = {
   "powerpoint-to-pdf": Presentation,
   "pdf-to-powerpoint": MonitorPlay,
   "organize-pdf": LayoutGrid,
+  "watermark-pdf": Droplets,
   "pdf-compress": FileArchive,
   // Image
   "compress-image": ImageDown,

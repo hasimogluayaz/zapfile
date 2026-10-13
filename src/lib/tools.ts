@@ -83,6 +83,17 @@ export const tools: Tool[] = [
       "Rotate PDF pages 90, 180 or 270 degrees. Rotate individual pages or all at once. Free online tool.",
   },
   {
+    slug: "watermark-pdf",
+    name: "Watermark PDF",
+    description: "Stamp text or a logo on PDF pages: position, tiling, rotation and opacity",
+    emoji: "💧",
+    category: "pdf",
+    acceptedFormats: [".pdf"],
+    metaTitle: "Add Watermark to PDF - Text or Logo, Free | ZapFile",
+    metaDescription:
+      "Add a text or image watermark to PDF pages in your browser: CONFIDENTIAL stamps, logos, tiled patterns, any angle and opacity, chosen pages. Real text, no upload.",
+  },
+  {
     slug: "pdf-page-numbers",
     name: "PDF Page Numbers",
     description: "Add page numbers to your PDF document",

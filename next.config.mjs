@@ -24,6 +24,9 @@ const ISOLATION_HEADERS = [
 ];
 const OFFICE_TOOL_PATHS = ["/tools/word-to-pdf", "/tools/excel-to-pdf", "/tools/powerpoint-to-pdf"];
 
+const pkgVersion = (name) =>
+  JSON.parse(fs.readFileSync(new URL(`./node_modules/${name}/package.json`, import.meta.url), "utf8")).version;
+
 const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === "true",
 });
@@ -34,6 +37,12 @@ const nextConfig = {
     NEXT_PUBLIC_ORT_VERSION: ortVersion,
     NEXT_PUBLIC_ANTON_VERSION: antonVersion,
     NEXT_PUBLIC_LIBREOFFICE_VERSION: libreofficeVersion,
+    NEXT_PUBLIC_DEJAVU_VERSION: pkgVersion("dejavu-fonts-ttf"),
+    NEXT_PUBLIC_SIGFONT_VERSIONS: JSON.stringify({
+      "dancing-script": pkgVersion("@fontsource/dancing-script"),
+      "great-vibes": pkgVersion("@fontsource/great-vibes"),
+      caveat: pkgVersion("@fontsource/caveat"),
+    }),
   },
   transpilePackages: ["lamejs"],
   // Exclude onnxruntime-node from server-side bundling (native Node addon)

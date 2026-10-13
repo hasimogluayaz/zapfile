@@ -86,6 +86,20 @@ const toolFaqs: Record<string, FaqItem[]> = {
       answer: "Yes. Drop as many files as you like: they are converted one after another and you can download each PDF, all of them as a ZIP, or combine them into one PDF.",
     },
   ],
+  "watermark-pdf": [
+    {
+      question: "How do I add a watermark to a PDF?",
+      answer: "Drop the PDF into ZapFile's Watermark PDF tool, type your text (for example CONFIDENTIAL) or choose a logo, and adjust size, color, opacity, angle and position while the preview updates. Then download the stamped PDF. Nothing is uploaded.",
+    },
+    {
+      question: "Can the watermark repeat across the page?",
+      answer: "Yes. Turn on Tile to repeat the text or logo in a staggered pattern over the whole page, which is harder to crop out. You can also stamp only some pages, for example 2-end or odd.",
+    },
+    {
+      question: "Is the watermark text real text?",
+      answer: "Yes. Text is written with an embedded font (DejaVu, covering Turkish, Greek and Cyrillic letters), so it stays sharp at any zoom and is searchable.",
+    },
+  ],
   "organize-pdf": [
     {
       question: "How do I rearrange pages in a PDF?",
