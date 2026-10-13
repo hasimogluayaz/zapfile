@@ -418,7 +418,7 @@ export const tools: Tool[] = [
   {
     slug: "unit-converter",
     name: "Unit Converter",
-    description: "Convert between px, rem, cm, inches and more",
+    description: "Convert length, weight, temperature, volume, area, speed, data, CSS units and more",
     emoji: "\ud83d\udccf",
     category: "utility",
     acceptedFormats: [],
