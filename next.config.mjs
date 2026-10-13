@@ -22,7 +22,7 @@ const ISOLATION_HEADERS = [
   { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
   { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
 ];
-const OFFICE_TOOL_PATHS = ["/tools/word-to-pdf", "/tools/excel-to-pdf", "/tools/powerpoint-to-pdf"];
+const OFFICE_TOOL_PATHS = ["/tools/word-to-pdf", "/tools/excel-to-pdf", "/tools/powerpoint-to-pdf", "/tools/html-to-pdf"];
 
 const pkgVersion = (name) =>
   JSON.parse(fs.readFileSync(new URL(`./node_modules/${name}/package.json`, import.meta.url), "utf8")).version;
@@ -64,7 +64,6 @@ const nextConfig = {
       { source: "/tools/ip-address", destination: "/tools", permanent: true },
       { source: "/tools/internet-speed", destination: "/tools", permanent: true },
       { source: "/tools/fake-identity", destination: "/tools", permanent: true },
-      { source: "/tools/html-to-pdf", destination: "/tools", permanent: true },
       { source: "/tools/typing-speed-test", destination: "/tools", permanent: true },
       { source: "/tools/pomodoro-timer", destination: "/tools", permanent: true },
       { source: "/tools/stopwatch", destination: "/tools", permanent: true },

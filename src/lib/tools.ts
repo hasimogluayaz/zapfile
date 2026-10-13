@@ -607,6 +607,17 @@ export const tools: Tool[] = [
       "Password-protect a PDF with AES-256, restrict printing and copying, or remove a password you know. Runs in your browser; your file is never uploaded.",
   },
   {
+    slug: "html-to-pdf",
+    name: "HTML to PDF",
+    description: "Convert HTML files to PDF with headings, tables, links and embedded images",
+    emoji: "🌐",
+    category: "pdf",
+    acceptedFormats: [".html", ".htm", ".xhtml"],
+    metaTitle: "HTML to PDF Converter - Free, Private | ZapFile",
+    metaDescription:
+      "Convert saved web pages and HTML files to PDF in your browser with LibreOffice: headings, tables, lists, links and embedded images. Batch convert, no upload.",
+  },
+  {
     slug: "pdf-to-word",
     name: "PDF to Word",
     description: "Convert PDF to an editable Word document (DOCX)",

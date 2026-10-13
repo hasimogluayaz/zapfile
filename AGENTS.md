@@ -103,9 +103,9 @@ Workers/wasm that libraries load at runtime are copied from `node_modules` into 
 
 ## Office → PDF (`src/lib/office/`)
 
-- Word / Excel / PowerPoint → PDF run LibreOffice compiled to WebAssembly (`@matbee/libreoffice-converter`, MPL-2.0) in the browser: `engine.ts` (download, cache, start, `officeToPdf`), UI `components/office/OfficeToPdfTool.tsx` (`kind: "word" | "excel" | "powerpoint"`; batch, ZIP, combine, PDF/A, passwords).
+- Word / Excel / PowerPoint → PDF run LibreOffice compiled to WebAssembly (`@matbee/libreoffice-converter`, MPL-2.0) in the browser: `engine.ts` (download, cache, start, `officeToPdf`), UI `components/office/OfficeToPdfTool.tsx` (`kind: "word" | "excel" | "powerpoint" | "html"`; batch, ZIP, combine, PDF/A, passwords).
 - `soffice.wasm` / `soffice.data` (~77 MB gzipped) live in `models/libreoffice-<version>/` as ≤19 MB parts and are fetched from a **pinned commit** via jsDelivr (fallback raw.githubusercontent), SHA-256 checked, kept in Cache Storage, unpacked with `DecompressionStream`. Small loader scripts are copied to `public/vendor/libreoffice-<version>/` (the worker's console logging is stripped there). `NEXT_PUBLIC_OFFICE_ENGINE_URL` overrides the parts' base URL (local testing / self-hosting).
-- LibreOffice needs threads (SharedArrayBuffer): the three tool pages and `/vendor/libreoffice-*` get COOP/COEP headers in `next.config.mjs`. Client-side navigation can't isolate a page, so the tool reloads itself once (handed-off files survive via `persistPendingFiles`). Keep those pages free of cross-origin subresources.
+- LibreOffice needs threads (SharedArrayBuffer): the tool pages (`OFFICE_TOOL_PATHS`) and `/vendor/libreoffice-*` get COOP/COEP headers in `next.config.mjs`. Client-side navigation can't isolate a page, so the tool reloads itself once (handed-off files survive via `persistPendingFiles`). Keep those pages free of cross-origin subresources.
 - To upgrade: add the new parts in one commit, then point `COMMIT`, hashes and sizes in `engine.ts` at it.
 - PDF → PowerPoint is our own converter: `slides.ts` (positioned text boxes, rectangles, lines, pictures, rendered figures) + `pptx.ts` (OOXML writer), via `PdfConvertTool kind="pptx"`.
 

@@ -5,6 +5,10 @@
 
 export const arLocaleStrings: Record<string, string> = {
   "nav.allTools": "جميع الأدوات",
+  "tool.html-to-pdf.name": "HTML إلى PDF",
+  "tool.html-to-pdf.desc": "حوّل ملفات HTML إلى PDF مع العناوين والجداول والروابط والصور المضمّنة",
+  "office.drop.html": "أفلت ملفات HTML هنا (يمكن عدة ملفات)",
+  "office.htmlNote": "يعمل التحويل دون اتصال: تُتجاهل الصور والأنماط المرتبطة بمواقع أخرى، وتُحفظ المضمّنة.",
   "tool.pdf-to-markdown.name": "PDF إلى Markdown",
   "tool.pdf-to-markdown.desc": "حوّل PDF إلى Markdown نظيف بالعناوين والقوائم والجداول والصور",
   "p2o.writingMd": "جارٍ كتابة Markdown…",
@@ -2217,8 +2221,6 @@ export const arLocaleStrings: Record<string, string> = {
   "tool.pomodoro-timer.desc": "مؤقت تركيز مع فترات عمل واستراحة",
   "tool.qr-scanner.name": "ماسح رمز QR",
   "tool.qr-scanner.desc": "مسح رموز QR من الصور أو الكاميرا",
-  "tool.html-to-pdf.name": "HTML إلى PDF",
-  "tool.html-to-pdf.desc": "تحويل HTML المنسوخ إلى PDF في المتصفح",
   "tool.jwt-decoder.name": "فك ترميز JWT",
   "tool.jwt-decoder.desc": "فك رموز JWT لفحص الرأس والحمولة والتوقيع",
   "tool.uuid-generator.name": "مولّد UUID",

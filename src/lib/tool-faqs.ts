@@ -86,6 +86,16 @@ const toolFaqs: Record<string, FaqItem[]> = {
       answer: "Yes. Drop as many files as you like: they are converted one after another and you can download each PDF, all of them as a ZIP, or combine them into one PDF.",
     },
   ],
+  "html-to-pdf": [
+    {
+      question: "How do I convert an HTML file to PDF?",
+      answer: "Drop .html files into ZapFile's HTML to PDF tool. LibreOffice, running in your browser, lays out the page and you download the PDF. Nothing is uploaded.",
+    },
+    {
+      question: "Why are some pictures or styles missing?",
+      answer: "The converter works offline and can't download files from the internet, so images and stylesheets linked from other websites are skipped. Pictures embedded in the HTML (data: URLs) and inline styles are kept. Saving the page as \"Web Page, Single File\" or printing it to PDF from your browser keeps everything.",
+    },
+  ],
   "pdf-to-markdown": [
     {
       question: "How do I convert a PDF to Markdown?",

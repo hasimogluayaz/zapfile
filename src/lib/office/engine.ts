@@ -234,6 +234,7 @@ const EXT_FORMAT: Record<string, string> = {
   doc: "doc", docx: "docx", odt: "odt", rtf: "rtf", txt: "txt",
   xls: "xls", xlsx: "xlsx", ods: "ods", csv: "csv",
   ppt: "ppt", pptx: "pptx", odp: "odp",
+  html: "html", htm: "html", xhtml: "html",
 };
 
 export interface OfficePdfOptions {

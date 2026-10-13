@@ -6,7 +6,7 @@
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { AlertTriangle, Check, Combine, Download, FileText, KeyRound, Loader2, Presentation, RefreshCw, Sheet, Trash2, X } from "lucide-react";
+import { AlertTriangle, Check, Code2, Combine, Download, FileText, KeyRound, Loader2, Presentation, RefreshCw, Sheet, Trash2, X } from "lucide-react";
 import FileDropzone from "@/components/FileDropzone";
 import ProgressBar from "@/components/ProgressBar";
 import { Toggle, buttonPrimary, buttonSecondary, sectionTitle } from "@/components/ui/controls";
@@ -15,7 +15,7 @@ import { useI18n } from "@/lib/i18n";
 import { downloadBlob, formatFileSize, getFileNameWithoutExtension } from "@/lib/utils";
 import { ENGINE_DOWNLOAD_BYTES, OfficeEngineError, canRunOfficeEngine, engineCached, getOfficeEngine, offProgress, officeToPdf, type EngineProgress } from "@/lib/office/engine";
 
-export type OfficeKind = "word" | "excel" | "powerpoint";
+export type OfficeKind = "word" | "excel" | "powerpoint" | "html";
 
 const ACCEPT: Record<OfficeKind, { accept: Record<string, string[]>; formats: string[] }> = {
   word: {
@@ -45,9 +45,13 @@ const ACCEPT: Record<OfficeKind, { accept: Record<string, string[]>; formats: st
     },
     formats: ["PPTX", "PPT", "ODP"],
   },
+  html: {
+    accept: { "text/html": [".html", ".htm", ".xhtml"] },
+    formats: ["HTML", "HTM"],
+  },
 };
 
-const ICON = { word: FileText, excel: Sheet, powerpoint: Presentation };
+const ICON = { word: FileText, excel: Sheet, powerpoint: Presentation, html: Code2 };
 
 type Status = "queued" | "converting" | "done" | "error" | "password";
 
@@ -243,6 +247,8 @@ export default function OfficeToPdfTool({ kind }: { kind: OfficeKind }) {
   return (
     <div className="space-y-5">
       <FileDropzone onFilesSelected={addFiles} accept={accept} multiple formats={formats} label={t(`office.drop.${kind}`)} />
+
+      {kind === "html" && jobs.length === 0 && <p className="text-[13px] text-t-tertiary">{t("office.htmlNote")}</p>}
 
       {jobs.length === 0 && cached === false && (
         <p className="flex items-start gap-2 text-[13px] text-t-tertiary">
