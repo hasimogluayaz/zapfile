@@ -607,6 +607,17 @@ export const tools: Tool[] = [
   },
   // ── New PDF Tools ──
   {
+    slug: "redact-pdf",
+    name: "Redact PDF",
+    description: "Black out names, numbers and other sensitive text for good: search, patterns or drawn boxes",
+    emoji: "⬛",
+    category: "pdf",
+    acceptedFormats: [".pdf"],
+    metaTitle: "Redact PDF - Permanently Black Out Text, Free | ZapFile",
+    metaDescription:
+      "Redact PDFs in your browser: search words, find emails, phone numbers, IBANs, ID and card numbers, or draw boxes. Redacted text is truly removed, not just covered. No upload.",
+  },
+  {
     slug: "pdf-encrypt",
     name: "Protect PDF",
     description: "Add or remove a PDF password with AES-256 encryption",

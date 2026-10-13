@@ -86,6 +86,20 @@ const toolFaqs: Record<string, FaqItem[]> = {
       answer: "Yes. Drop as many files as you like: they are converted one after another and you can download each PDF, all of them as a ZIP, or combine them into one PDF.",
     },
   ],
+  "redact-pdf": [
+    {
+      question: "How do I redact a PDF?",
+      answer: "Open the PDF in ZapFile's Redact PDF tool, then search for words, use a ready pattern (emails, phone numbers, IBANs, ID or card numbers, dates) or drag boxes over anything else. Click Redact and download. Everything runs in your browser.",
+    },
+    {
+      question: "Is the hidden text really gone?",
+      answer: "Yes. Pages with redactions are rebuilt as images with the black boxes burned in, and the new file is assembled from scratch, so the original text, drawings and annotations of those pages are not in it. A black rectangle drawn in an ordinary editor only covers text, which can still be copied out.",
+    },
+    {
+      question: "What happens to the other pages?",
+      answer: "Pages without redactions are copied unchanged, with selectable text. Redacted pages are high-resolution images (200 dpi), so their remaining text can't be selected; run OCR afterwards if you need it searchable.",
+    },
+  ],
   "compare-pdf": [
     {
       question: "How do I compare two PDF files?",

@@ -5,21 +5,9 @@
  */
 import { diffArrays } from "diff";
 
-export interface Word {
-  text: string;
-  page: number;
-  /** Box in points, page's visible frame, origin top-left. */
-  x0: number;
-  x1: number;
-  top: number;
-  bottom: number;
-}
+import type { DocText, Word } from "@/lib/pdf-convert/words";
 
-export interface DocText {
-  words: Word[];
-  /** Word index ranges [start, end) per text line, in reading order. */
-  lines: [number, number][];
-}
+export type { DocText, Word };
 
 export interface Change {
   /** Word ranges [start, end) in A (removed) and B (added); empty range = nothing on that side. */

@@ -11,52 +11,16 @@ import { Toggle, buttonSecondary, sectionTitle } from "@/components/ui/controls"
 import { formatFileSize } from "@/lib/utils";
 import { PdfLockedError } from "@/lib/pdf-input";
 import { openPdf } from "@/lib/pdfjs";
-import { extractPage } from "@/lib/pdf-convert/extract";
-import { groupLines, usableGlyphs } from "@/lib/pdf-convert/layout";
+import { readWords } from "@/lib/pdf-convert/words";
 import { renderPagePreview, type PagePreview } from "@/lib/pdf-stamp/preview";
 import { useI18n } from "@/lib/i18n";
-import { compareDocs, highlightBoxes, type Comparison, type DocText, type Word } from "./compare-core";
+import { compareDocs, highlightBoxes, type Comparison, type DocText } from "./compare-core";
 
 interface Side {
   file: File;
   pdf: PDFDocumentProxy;
   pages: number;
   text: DocText;
-}
-
-/** Words with boxes, in reading order, from every page. */
-async function readText(pdf: PDFDocumentProxy, onPage: (n: number) => void): Promise<DocText> {
-  const words: Word[] = [];
-  const lines: [number, number][] = [];
-  for (let n = 1; n <= pdf.numPages; n++) {
-    onPage(n);
-    const { page } = await extractPage(pdf, n, { images: false });
-    for (const line of groupLines(usableGlyphs(page).glyphs)) {
-      const start = words.length;
-      let cur: Word | null = null;
-      let last: { x1: number; size: number } | null = null;
-      for (const g of line.glyphs) {
-        const gap = last ? g.x0 - last.x1 : 0;
-        if (g.space || (last && gap > Math.max(g.size, last.size) * 0.2)) {
-          if (cur) words.push(cur);
-          cur = null;
-        }
-        if (!g.space && g.text.trim()) {
-          if (cur) {
-            cur.text += g.text;
-            cur.x1 = Math.max(cur.x1, g.x1);
-            cur.top = Math.min(cur.top, g.y - g.size * 0.82);
-            cur.bottom = Math.max(cur.bottom, g.y + g.size * 0.24);
-          } else cur = { text: g.text, page: n, x0: g.x0, x1: g.x1, top: g.y - g.size * 0.82, bottom: g.y + g.size * 0.24 };
-        }
-        last = { x1: g.x1, size: g.size };
-      }
-      if (cur) words.push(cur);
-      if (words.length > start) lines.push([start, words.length]);
-    }
-    await new Promise((r) => setTimeout(r, 0));
-  }
-  return { words, lines };
 }
 
 function PageView({ side, page, mark, tone, label }: { side: Side; page: number; mark: Uint8Array | null; tone: "removed" | "added"; label: string }) {
@@ -137,7 +101,7 @@ export default function ComparePdfPage() {
         for (let i = 0; i < 2; i++) {
           const file = list[i]!;
           const pdf = await openPdf(new Uint8Array(await file.arrayBuffer()), {}, { copy: false });
-          const text = await readText(pdf, (n) => setProgress({ which: (i + 1) as 1 | 2, page: n, total: pdf.numPages }));
+          const text = await readWords(pdf, (n) => setProgress({ which: (i + 1) as 1 | 2, page: n, total: pdf.numPages }));
           sides.push({ file, pdf, pages: pdf.numPages, text });
         }
         setA(sides[0]!);
