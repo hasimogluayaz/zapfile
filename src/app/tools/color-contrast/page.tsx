@@ -1,143 +1,222 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { ArrowLeftRight, Check, Link2, Star, Wand2, X } from "lucide-react";
+import toast from "react-hot-toast";
 import ToolLayout from "@/components/ToolLayout";
+import { sectionTitle } from "@/components/ui/controls";
 import { useI18n } from "@/lib/i18n";
-import {
-  contrastRatio,
-  parseHex,
-  wcagChecks,
-} from "@/lib/color-contrast-wcag";
+import { smallButton } from "@/lib/text-tools/ui";
+import { blend, nearestPassing, parseCssColor, ratioOf, toHex } from "@/lib/color-contrast-wcag";
+
+const CHECKS = [
+  { key: "aaNormal", min: 4.5, label: "AA", sub: "contrast.v2.normalText" },
+  { key: "aaLarge", min: 3, label: "AA", sub: "contrast.v2.largeText" },
+  { key: "aaaNormal", min: 7, label: "AAA", sub: "contrast.v2.normalText" },
+  { key: "aaaLarge", min: 4.5, label: "AAA", sub: "contrast.v2.largeText" },
+  { key: "ui", min: 3, label: "AA", sub: "contrast.v2.uiParts" },
+] as const;
+
+const PRESETS: [string, string][] = [
+  ["#16181d", "#ffffff"],
+  ["#ffd60a", "#16181d"],
+  ["#6b7280", "#ffffff"],
+  ["#ffffff", "#2563eb"],
+  ["#b91c1c", "#fef2f2"],
+];
+
+function ColorField({ id, label, value, onChange, valid }: { id: string; label: string; value: string; onChange: (v: string) => void; valid: boolean }) {
+  const { t } = useI18n();
+  const parsed = parseCssColor(value);
+  return (
+    <div className="space-y-2">
+      <label htmlFor={id} className="text-[13px] font-medium text-t-secondary">
+        {label}
+      </label>
+      <div className="flex gap-2">
+        <input type="color" value={parsed ? toHex(parsed) : "#000000"} onChange={(e) => onChange(e.target.value)} aria-label={label} className="h-11 w-12 shrink-0 cursor-pointer rounded-xl border border-border bg-bg-secondary p-1" />
+        <input
+          id={id}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          spellCheck={false}
+          dir="ltr"
+          aria-invalid={!valid}
+          className={`h-11 min-w-0 flex-1 rounded-xl border bg-bg-secondary px-3 font-mono text-[14px] text-t-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-volt/60 ${valid ? "border-border" : "border-red-500/60"}`}
+        />
+      </div>
+      {!valid && <p className="text-[12.5px] text-red-700 dark:text-red-400">{t("contrast.v2.badColor")}</p>}
+    </div>
+  );
+}
 
 export default function ColorContrastPage() {
   const { t } = useI18n();
-  const [fg, setFg] = useState("#1a1d2e");
+  const [fg, setFg] = useState("#6b7280");
   const [bg, setBg] = useState("#ffffff");
 
-  const result = useMemo(() => {
-    const r = contrastRatio(fg, bg);
-    if (r === null) return null;
-    return { ratio: r, checks: wcagChecks(r) };
-  }, [fg, bg]);
+  // Shareable: ?fg=…&bg=… (read once, written on change).
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search);
+    if (q.get("fg")) setFg(q.get("fg")!);
+    if (q.get("bg")) setBg(q.get("bg")!);
+  }, []);
 
-  const validFg = parseHex(fg) !== null;
-  const validBg = parseHex(bg) !== null;
+  const fgC = useMemo(() => parseCssColor(fg), [fg]);
+  const bgRaw = useMemo(() => parseCssColor(bg), [bg]);
+  // A translucent background is judged on white, a translucent text on its background.
+  const bgC = bgRaw ? blend(bgRaw, { r: 255, g: 255, b: 255, a: 1 }) : null;
+  const fgEff = fgC && bgC ? blend(fgC, bgC) : null;
+  const ratio = fgEff && bgC ? ratioOf(fgEff, bgC) : null;
+  // WCAG: never round up (4.499 fails AA).
+  const shown = ratio === null ? "—" : (Math.floor(ratio * 100) / 100).toFixed(2);
 
-  const swap = () => {
-    setFg(bg);
-    setBg(fg);
+  const fixes = useMemo(() => {
+    if (!fgEff || !bgC || !ratio) return [];
+    const out: { target: number; label: string; fg: string | null; bg: string | null }[] = [];
+    for (const [target, label] of [
+      [4.5, "AA"],
+      [7, "AAA"],
+    ] as const) {
+      if (ratio >= target) continue;
+      out.push({ target, label, fg: nearestPassing(fgEff, bgC, target), bg: nearestPassing(bgC, fgEff, target) });
+    }
+    return out;
+  }, [fgEff, bgC, ratio]);
+
+  const share = async () => {
+    const url = new URL(window.location.href);
+    url.searchParams.set("fg", fg);
+    url.searchParams.set("bg", bg);
+    try {
+      await navigator.clipboard.writeText(url.toString());
+      toast.success(t("contrast.v2.linkCopied"));
+    } catch {
+      toast.error(t("ui.copyFailed"));
+    }
   };
 
-  return (
-    <ToolLayout
-      toolName="Color Contrast Checker"
-      toolDescription="Check WCAG contrast ratios for text and UI colors"
-    >
-      <div className="space-y-6">
-        <p className="text-sm text-t-secondary">{t("contrast.largeDef")}</p>
+  const fgCss = fgC ? `rgb(${fgC.r} ${fgC.g} ${fgC.b} / ${fgC.a})` : "#000";
+  const bgCss = bgRaw ? `rgb(${bgRaw.r} ${bgRaw.g} ${bgRaw.b} / ${bgRaw.a})` : "#fff";
+  const grade = ratio === null ? null : ratio >= 7 ? "AAA" : ratio >= 4.5 ? "AA" : ratio >= 3 ? "AA Large" : null;
 
-        <div className="grid sm:grid-cols-2 gap-4">
-          <div className="glass rounded-xl p-4 space-y-2">
-            <label className="text-sm font-medium text-t-secondary" htmlFor="fg">
-              {t("contrast.fg")}
-            </label>
-            <div className="flex gap-2">
-              <input
-                id="fg"
-                type="color"
-                value={validFg ? (fg.startsWith("#") ? fg : `#${fg}`) : "#000000"}
-                onChange={(e) => setFg(e.target.value)}
-                className="h-10 w-14 rounded border border-border cursor-pointer"
-              />
-              <input
-                type="text"
-                value={fg}
-                onChange={(e) => setFg(e.target.value)}
-                spellCheck={false}
-                className="flex-1 font-mono text-sm px-3 py-2 rounded-lg bg-bg-secondary border border-border text-t-primary"
-                aria-invalid={!validFg}
-              />
+  return (
+    <ToolLayout toolName={t("tool.color-contrast.name")} toolDescription={t("tool.color-contrast.desc")}>
+      <div className="space-y-5">
+        <div className="glass space-y-4 p-5">
+          <div className="grid items-end gap-4 sm:grid-cols-[1fr_auto_1fr]">
+            <ColorField id="fg" label={t("contrast.fg")} value={fg} onChange={setFg} valid={!!fgC} />
+            <button
+              type="button"
+              onClick={() => {
+                setFg(bg);
+                setBg(fg);
+              }}
+              aria-label={t("contrast.swap")}
+              title={t("contrast.swap")}
+              className={`${smallButton} mb-0.5 !h-11 !w-11 justify-center !px-0`}
+            >
+              <ArrowLeftRight className="h-4 w-4" aria-hidden="true" />
+            </button>
+            <ColorField id="bg" label={t("contrast.bg")} value={bg} onChange={setBg} valid={!!bgRaw} />
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[12.5px] text-t-tertiary">{t("contrast.v2.try")}</span>
+            {PRESETS.map(([f, b]) => (
+              <button key={f + b} type="button" onClick={() => (setFg(f), setBg(b))} className="h-8 rounded-lg border border-border px-2.5 text-[13px] font-semibold" style={{ color: f, background: b }} aria-label={`${f} / ${b}`}>
+                Aa
+              </button>
+            ))}
+            <button type="button" className={`${smallButton} ms-auto`} onClick={share}>
+              <Link2 className="h-4 w-4" aria-hidden="true" />
+              {t("contrast.v2.share")}
+            </button>
+          </div>
+          <p className="text-[12.5px] text-t-tertiary">{t("contrast.v2.formats")}</p>
+        </div>
+
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
+          {/* Live preview */}
+          <div className="overflow-hidden rounded-2xl border border-border" style={{ background: bgCss }}>
+            <div className="space-y-4 p-6 sm:p-8" style={{ color: fgCss }}>
+              <p className="text-[30px] font-bold leading-tight">{t("contrast.ui.sampleHeading")}</p>
+              <p className="text-[18.66px] font-bold">{t("contrast.v2.sampleLarge")}</p>
+              <p className="text-[16px] leading-relaxed">{t("contrast.ui.sampleBody")}</p>
+              <p className="text-[13px]">{t("contrast.v2.sampleSmall")}</p>
+              <div className="flex items-center gap-3">
+                <span className="inline-flex h-10 items-center rounded-lg border-2 px-4 text-[14px] font-semibold" style={{ borderColor: fgCss }}>
+                  {t("contrast.v2.button")}
+                </span>
+                <Star className="h-6 w-6" style={{ color: fgCss }} aria-hidden="true" />
+                <span className="h-5 w-10 rounded-full" style={{ background: fgCss }} />
+              </div>
             </div>
           </div>
-          <div className="glass rounded-xl p-4 space-y-2">
-            <label className="text-sm font-medium text-t-secondary" htmlFor="bg">
-              {t("contrast.bg")}
-            </label>
-            <div className="flex gap-2">
-              <input
-                id="bg"
-                type="color"
-                value={validBg ? (bg.startsWith("#") ? bg : `#${bg}`) : "#ffffff"}
-                onChange={(e) => setBg(e.target.value)}
-                className="h-10 w-14 rounded border border-border cursor-pointer"
-              />
-              <input
-                type="text"
-                value={bg}
-                onChange={(e) => setBg(e.target.value)}
-                spellCheck={false}
-                className="flex-1 font-mono text-sm px-3 py-2 rounded-lg bg-bg-secondary border border-border text-t-primary"
-                aria-invalid={!validBg}
-              />
+
+          {/* Score */}
+          <div className="glass space-y-4 p-5">
+            <div>
+              <p className={sectionTitle}>{t("contrast.ratio")}</p>
+              <p className="mt-1 text-[44px] font-bold tabular-nums leading-none text-t-primary">
+                {shown}
+                <span className="text-[22px] font-semibold text-t-tertiary">:1</span>
+              </p>
+              {grade && <p className="mt-1 text-[13px] font-medium text-t-secondary">{t("contrast.v2.grade", { grade })}</p>}
             </div>
+            <ul className="divide-y divide-border">
+              {CHECKS.map((c) => {
+                const pass = ratio !== null && ratio >= c.min;
+                return (
+                  <li key={c.key} className="flex items-center gap-3 py-2">
+                    <span className={`flex h-6 w-6 items-center justify-center rounded-full ${pass ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400" : "bg-red-500/15 text-red-700 dark:text-red-400"}`}>
+                      {pass ? <Check className="h-3.5 w-3.5" aria-hidden="true" /> : <X className="h-3.5 w-3.5" aria-hidden="true" />}
+                    </span>
+                    <span className="flex-1 text-[13.5px] text-t-primary">
+                      <span className="font-semibold">{c.label}</span> · {t(c.sub)}
+                    </span>
+                    <span className="text-[12.5px] tabular-nums text-t-tertiary">{c.min}:1</span>
+                    <span className="sr-only">{pass ? t("contrast.pass") : t("contrast.fail")}</span>
+                  </li>
+                );
+              })}
+            </ul>
+            <p className="text-[12px] leading-snug text-t-tertiary">{t("contrast.largeDef")}</p>
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={swap}
-          className="px-4 py-2 rounded-lg text-sm font-medium border border-border bg-bg-secondary hover:bg-bg-tertiary transition-colors"
-        >
-          {t("contrast.swap")}
-        </button>
-
-        {result && validFg && validBg && (
-          <>
-            <div
-              className="rounded-xl p-8 text-center border border-border"
-              style={{ backgroundColor: bg, color: fg }}
-            >
-              <p className="text-lg font-semibold">{t("contrast.ui.sampleHeading")}</p>
-              <p className="text-sm mt-2 opacity-90">
-                {t("contrast.ui.sampleBody")}
-              </p>
+        {fixes.length > 0 && (
+          <div className="glass space-y-3 p-5">
+            <p className={`${sectionTitle} flex items-center gap-2`}>
+              <Wand2 className="h-4 w-4" aria-hidden="true" />
+              {t("contrast.v2.fixTitle")}
+            </p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {fixes.flatMap((f) =>
+                (["fg", "bg"] as const).map((which) => {
+                  const hex = f[which];
+                  if (!hex) return null;
+                  const sample = which === "fg" ? { color: hex, background: bgCss } : { color: fgCss, background: hex };
+                  return (
+                    <button
+                      key={f.label + which}
+                      type="button"
+                      onClick={() => (which === "fg" ? setFg(hex) : setBg(hex))}
+                      className="flex items-center gap-3 rounded-xl border border-border p-3 text-start transition hover:bg-bg-secondary"
+                    >
+                      <span className="flex h-10 w-14 shrink-0 items-center justify-center rounded-lg border border-border text-[15px] font-semibold" style={sample}>
+                        Aa
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-[13.5px] font-medium text-t-primary">{t(which === "fg" ? "contrast.v2.useText" : "contrast.v2.useBg", { level: f.label })}</span>
+                        <span className="block font-mono text-[12.5px] text-t-tertiary">{hex}</span>
+                      </span>
+                    </button>
+                  );
+                }),
+              )}
             </div>
-
-            <div className="glass rounded-xl p-6 space-y-4">
-              <p className="text-2xl font-bold text-t-primary">
-                {t("contrast.ratio")}:{" "}
-                <span className="text-accent">
-                  {result.ratio.toFixed(2)}:1
-                </span>
-              </p>
-              <ul className="space-y-2 text-sm">
-                {(
-                  [
-                    ["contrast.aaNormal", result.checks.aaNormal],
-                    ["contrast.aaLarge", result.checks.aaLarge],
-                    ["contrast.aaaNormal", result.checks.aaaNormal],
-                    ["contrast.aaaLarge", result.checks.aaaLarge],
-                  ] as const
-                ).map(([key, pass]) => (
-                  <li
-                    key={key}
-                    className={`flex justify-between gap-4 ${
-                      pass ? "text-emerald-700 dark:text-emerald-400" : "text-red-700 dark:text-red-400"
-                    }`}
-                  >
-                    <span>{t(key as "contrast.aaNormal")}</span>
-                    <span>{pass ? t("contrast.pass") : t("contrast.fail")}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </>
-        )}
-
-        {(!validFg || !validBg) && (
-          <p className="text-sm text-amber-500" role="status">
-            {t("contrast.invalidHex")}
-          </p>
+            <p className="text-[12.5px] text-t-tertiary">{t("contrast.v2.fixHint")}</p>
+          </div>
         )}
       </div>
     </ToolLayout>
