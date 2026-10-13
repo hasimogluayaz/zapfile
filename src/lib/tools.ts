@@ -208,13 +208,13 @@ export const tools: Tool[] = [
   {
     slug: "meme-generator",
     name: "Meme Generator",
-    description: "Add text to images to create memes",
+    description: "Add meme text, caption bars and labels to any image; preview matches the download exactly",
     emoji: "\ud83d\ude02",
     category: "image",
-    acceptedFormats: [".jpg", ".jpeg", ".png", ".webp"],
-    metaTitle: "Meme Generator - Free Online Tool | ZapFile",
+    acceptedFormats: [".jpg", ".jpeg", ".png", ".webp", ".gif", ".avif"],
+    metaTitle: "Meme Generator: Classic Meme Font, Caption Bars & Labels - Free | ZapFile",
     metaDescription:
-      "Create memes by adding text to images. Customize font, size, and position. Free online meme maker.",
+      "Make memes in your browser: classic outlined meme text with auto wrapping, modern caption bars, labels and shadows. Drag, resize, rotate, undo, and download at full resolution. No watermark, no upload.",
   },
   {
     slug: "image-to-base64",

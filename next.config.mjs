@@ -7,6 +7,11 @@ const ortVersion = JSON.parse(
   fs.readFileSync(new URL("./node_modules/onnxruntime-web/package.json", import.meta.url), "utf8"),
 ).version;
 
+// The meme font (Anton, OFL) is served from /vendor/anton-<version>/.
+const antonVersion = JSON.parse(
+  fs.readFileSync(new URL("./node_modules/@fontsource/anton/package.json", import.meta.url), "utf8"),
+).version;
+
 const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === "true",
 });
@@ -15,6 +20,7 @@ const withBundleAnalyzer = bundleAnalyzer({
 const nextConfig = {
   env: {
     NEXT_PUBLIC_ORT_VERSION: ortVersion,
+    NEXT_PUBLIC_ANTON_VERSION: antonVersion,
   },
   transpilePackages: ["lamejs"],
   // Exclude onnxruntime-node from server-side bundling (native Node addon)

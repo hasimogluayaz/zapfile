@@ -72,4 +72,16 @@ fs.rmSync(vendorRoot, { recursive: true, force: true });
   }
 }
 
+// ── Anton (meme generator's Impact-style font, SIL OFL) ─────────────────────
+{
+  const dir = pkgDir("@fontsource/anton");
+  const out = path.join(vendorRoot, `anton-${pkgVersion("@fontsource/anton")}`);
+  fs.mkdirSync(out, { recursive: true });
+  for (const subset of ["latin", "latin-ext"]) {
+    const file = `anton-${subset}-400-normal.woff2`;
+    fs.copyFileSync(path.join(dir, "files", file), path.join(out, file));
+  }
+  fs.copyFileSync(path.join(dir, "LICENSE"), path.join(out, "LICENSE"));
+}
+
 console.log("vendor assets copied to public/vendor");

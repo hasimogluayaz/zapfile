@@ -16,6 +16,7 @@
   "dependencies": {
     "@breezystack/lamejs": "^1.2.7",
     "@cantoo/pdf-lib": "^2.11.1",
+    "@fontsource/anton": "^5.2.5",
     "@jsquash/jpeg": "^1.6.0",
     "@jsquash/oxipng": "^2.3.0",
     "@jsquash/resize": "^2.1.1",
