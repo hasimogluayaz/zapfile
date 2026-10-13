@@ -1,4 +1,6 @@
 import {
+  Presentation,
+  Sheet,
   AlignLeft,
   ArrowDownUp,
   Binary,
@@ -71,6 +73,9 @@ const toolIcons: Record<string, LucideIcon> = {
   "pdf-text-extractor": ScanText,
   "pdf-to-word": FilePen,
   "pdf-to-excel": FileSpreadsheet,
+  "word-to-pdf": FileType,
+  "excel-to-pdf": Sheet,
+  "powerpoint-to-pdf": Presentation,
   "pdf-compress": FileArchive,
   // Image
   "compress-image": ImageDown,

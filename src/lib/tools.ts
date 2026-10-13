@@ -585,6 +585,39 @@ export const tools: Tool[] = [
       "Convert PDF tables to Excel (XLSX) with real numbers, merged cells and one sheet per page or table. Free, private, no uploads.",
   },
   {
+    slug: "word-to-pdf",
+    name: "Word to PDF",
+    description: "Convert Word documents (DOCX, DOC, ODT, RTF) to PDF with the layout intact",
+    emoji: "📄",
+    category: "pdf",
+    acceptedFormats: [".docx", ".doc", ".odt", ".rtf", ".txt"],
+    metaTitle: "Word to PDF Converter - Free, Exact Layout | ZapFile",
+    metaDescription:
+      "Convert DOCX, DOC, ODT and RTF to PDF in your browser with LibreOffice: fonts, tables, images, headers and page breaks kept. Batch convert, PDF/A, no upload, no watermark.",
+  },
+  {
+    slug: "excel-to-pdf",
+    name: "Excel to PDF",
+    description: "Convert spreadsheets (XLSX, XLS, ODS, CSV) to PDF, every sheet and formula result",
+    emoji: "📊",
+    category: "pdf",
+    acceptedFormats: [".xlsx", ".xls", ".ods", ".csv"],
+    metaTitle: "Excel to PDF Converter - Free, All Sheets | ZapFile",
+    metaDescription:
+      "Convert XLSX, XLS, ODS and CSV spreadsheets to PDF in your browser: every sheet, calculated formulas, number formats, colors and print areas. Batch convert, no upload.",
+  },
+  {
+    slug: "powerpoint-to-pdf",
+    name: "PowerPoint to PDF",
+    description: "Convert presentations (PPTX, PPT, ODP) to PDF, one page per slide",
+    emoji: "📽️",
+    category: "pdf",
+    acceptedFormats: [".pptx", ".ppt", ".odp"],
+    metaTitle: "PowerPoint to PDF Converter - Free, Slides Kept | ZapFile",
+    metaDescription:
+      "Convert PPTX, PPT and ODP presentations to PDF in your browser: one page per slide with shapes, images, text and themes kept. Batch convert, no upload, no watermark.",
+  },
+  {
     slug: "pdf-text-extractor",
     name: "PDF Text Extractor",
     description: "Extract and copy all text content from PDF files",

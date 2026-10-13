@@ -12,6 +12,18 @@ const antonVersion = JSON.parse(
   fs.readFileSync(new URL("./node_modules/@fontsource/anton/package.json", import.meta.url), "utf8"),
 ).version;
 
+// Word/Excel/PowerPoint → PDF runs LibreOffice (WebAssembly) from /vendor/libreoffice-<version>/.
+const libreofficeVersion = JSON.parse(
+  fs.readFileSync(new URL("./node_modules/@matbee/libreoffice-converter/package.json", import.meta.url), "utf8"),
+).version;
+
+// LibreOffice uses threads (SharedArrayBuffer), which needs a cross-origin isolated page and worker.
+const ISOLATION_HEADERS = [
+  { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+  { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
+];
+const OFFICE_TOOL_PATHS = ["/tools/word-to-pdf", "/tools/excel-to-pdf", "/tools/powerpoint-to-pdf"];
+
 const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === "true",
 });
@@ -21,10 +33,21 @@ const nextConfig = {
   env: {
     NEXT_PUBLIC_ORT_VERSION: ortVersion,
     NEXT_PUBLIC_ANTON_VERSION: antonVersion,
+    NEXT_PUBLIC_LIBREOFFICE_VERSION: libreofficeVersion,
   },
   transpilePackages: ["lamejs"],
   // Exclude onnxruntime-node from server-side bundling (native Node addon)
   serverExternalPackages: ["onnxruntime-node", "onnxruntime-web"],
+
+  async headers() {
+    return [
+      ...OFFICE_TOOL_PATHS.map((source) => ({ source, headers: ISOLATION_HEADERS })),
+      {
+        source: "/vendor/libreoffice-:version/:file*",
+        headers: [...ISOLATION_HEADERS, { key: "Cross-Origin-Resource-Policy", value: "same-origin" }],
+      },
+    ];
+  },
 
   // Retired and merged tools (v2.0 cleanup): keep old URLs working for users and search engines.
   async redirects() {

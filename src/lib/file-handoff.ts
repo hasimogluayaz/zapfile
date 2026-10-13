@@ -47,3 +47,46 @@ export function toolsForFiles(files: File[]): Tool[] {
       exts.every((ext) => tool.acceptedFormats.includes(ext)),
   );
 }
+
+const PERSIST_CACHE = "zapfile-handoff";
+
+/**
+ * Keep pending files across one full page reload (tools that must reload to become cross-origin
+ * isolated). Stored in Cache Storage on this device only; `restorePersistedFiles` removes them.
+ */
+export async function persistPendingFiles(): Promise<void> {
+  if (!pending || typeof caches === "undefined") return;
+  try {
+    const cache = await caches.open(PERSIST_CACHE);
+    await Promise.all(
+      pending.files.map((f, i) =>
+        cache.put(
+          `https://handoff.zapfile.invalid/${i}`,
+          new Response(f, { headers: { "content-type": f.type || "application/octet-stream", "x-name": encodeURIComponent(f.name), "x-at": String(pending!.at) } }),
+        ),
+      ),
+    );
+  } catch {
+    /* storage unavailable: the user drops the file again */
+  }
+}
+
+export async function restorePersistedFiles(): Promise<void> {
+  if (typeof caches === "undefined") return;
+  try {
+    if (!(await caches.has(PERSIST_CACHE))) return;
+    const cache = await caches.open(PERSIST_CACHE);
+    const files: File[] = [];
+    let at = 0;
+    for (const req of [...(await cache.keys())].sort((a, b) => a.url.localeCompare(b.url, undefined, { numeric: true }))) {
+      const res = await cache.match(req);
+      if (!res) continue;
+      at = Number(res.headers.get("x-at")) || Date.now();
+      files.push(new File([await res.blob()], decodeURIComponent(res.headers.get("x-name") ?? "file"), { type: res.headers.get("content-type") ?? "" }));
+    }
+    await caches.delete(PERSIST_CACHE);
+    if (files.length && Date.now() - at < MAX_AGE_MS) pending = { files, at };
+  } catch {
+    /* ignore */
+  }
+}

@@ -72,6 +72,29 @@ fs.rmSync(vendorRoot, { recursive: true, force: true });
   }
 }
 
+// ── LibreOffice WebAssembly (Word/Excel/PowerPoint → PDF) ────────────────────
+// Only the small loader scripts: soffice.wasm/.data are too big for a deployment
+// and are fetched from models/libreoffice-<version>/ at runtime (see src/lib/office).
+{
+  const dir = pkgDir("@matbee/libreoffice-converter");
+  const out = path.join(vendorRoot, `libreoffice-${pkgVersion("@matbee/libreoffice-converter")}`);
+  fs.mkdirSync(out, { recursive: true });
+  for (const [from, to] of [
+    ["wasm/soffice.js", "soffice.js"],
+    ["wasm/soffice.worker.js", "soffice.worker.js"],
+  ]) {
+    fs.copyFileSync(path.join(dir, from), path.join(out, to));
+  }
+  // The worker logs every LibreOffice step to the console; keep errors, drop the chatter.
+  const worker = fs.readFileSync(path.join(dir, "dist/browser.worker.global.js"), "utf8");
+  const quiet = worker.replace("print:console.log,printErr:console.error", "print:()=>{},printErr:()=>{}");
+  if (quiet === worker) throw new Error("copy-vendor-assets: LibreOffice worker log hook not found");
+  fs.writeFileSync(
+    path.join(out, "browser.worker.js"),
+    `self.console.log=()=>{};self.console.info=()=>{};self.console.debug=()=>{};\n${quiet}`,
+  );
+}
+
 // ── Anton (meme generator's Impact-style font, SIL OFL) ─────────────────────
 {
   const dir = pkgDir("@fontsource/anton");

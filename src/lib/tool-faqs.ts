@@ -40,6 +40,52 @@ const toolFaqs: Record<string, FaqItem[]> = {
       answer: "Yes. Turn on Restrict printing, copying and editing to choose what readers may do. Keep the permissions password so you can lift the restrictions later.",
     },
   ],
+  "word-to-pdf": [
+    {
+      question: "How do I convert Word to PDF for free?",
+      answer: "Drop one or more DOCX, DOC, ODT or RTF files into ZapFile's Word to PDF tool. LibreOffice, running inside your browser, lays out every page and you download the PDFs one by one, as a ZIP, or combined into a single PDF. Nothing is uploaded and there is no watermark.",
+    },
+    {
+      question: "Will the PDF look the same as in Word?",
+      answer: "The document is laid out by LibreOffice, the same engine many converters run on their servers: fonts, tables, images, headers, footers, footnotes, page numbers and page breaks are kept. Common Microsoft fonts are replaced by metric-compatible ones (for example Carlito for Calibri), so lines and pages break in the same places.",
+    },
+    {
+      question: "Why is there a download the first time?",
+      answer: "The conversion engine is about 77 MB. It is downloaded once, checked and stored in your browser, so later visits start instantly and even work offline. Your documents themselves never leave your device.",
+    },
+    {
+      question: "Can I convert a password-protected document or make a PDF/A?",
+      answer: "Yes. Enter the document's password when asked and it is opened locally. Turn on PDF/A to get an archival PDF/A-2b file with every font embedded.",
+    },
+  ],
+  "excel-to-pdf": [
+    {
+      question: "How do I convert Excel to PDF?",
+      answer: "Drop XLSX, XLS, ODS or CSV files into ZapFile's Excel to PDF tool. Each workbook is converted in your browser with LibreOffice and you download the PDF. Nothing is uploaded.",
+    },
+    {
+      question: "Are all sheets and formulas included?",
+      answer: "Yes. Every sheet is printed in order, formulas are recalculated so the PDF shows their results, and number formats, colors, borders, merged cells, print areas and page setup from the workbook are respected.",
+    },
+    {
+      question: "Why is a wide sheet split across pages?",
+      answer: "The PDF follows the workbook's page setup, like printing from Excel. To keep a sheet on one page, set its scaling to fit one page wide (Page Layout → Fit to) before converting.",
+    },
+  ],
+  "powerpoint-to-pdf": [
+    {
+      question: "How do I convert PowerPoint to PDF?",
+      answer: "Drop PPTX, PPT or ODP presentations into ZapFile's PowerPoint to PDF tool. Each slide becomes one PDF page, converted in your browser with LibreOffice. Nothing is uploaded and there is no watermark.",
+    },
+    {
+      question: "Are images, shapes and slide designs kept?",
+      answer: "Yes. Backgrounds, themes, shapes, pictures, tables, charts and text formatting are rendered as on the slide. Animations and embedded videos can't play in a PDF, so their first frame or poster is shown.",
+    },
+    {
+      question: "Can I convert several presentations at once?",
+      answer: "Yes. Drop as many files as you like: they are converted one after another and you can download each PDF, all of them as a ZIP, or combine them into one PDF.",
+    },
+  ],
   "pdf-to-word": [
     {
       question: "How do I convert a PDF to Word for free?",
