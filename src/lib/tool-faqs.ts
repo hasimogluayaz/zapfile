@@ -86,6 +86,20 @@ const toolFaqs: Record<string, FaqItem[]> = {
       answer: "Yes. Drop as many files as you like: they are converted one after another and you can download each PDF, all of them as a ZIP, or combine them into one PDF.",
     },
   ],
+  "compare-pdf": [
+    {
+      question: "How do I compare two PDF files?",
+      answer: "Drop the original and the revised PDF into ZapFile's Compare PDF tool. Their text is compared word by word in your browser: removed words are highlighted red on the original, added words green on the revision, and every change is listed so you can jump to it.",
+    },
+    {
+      question: "Does it compare scanned PDFs or images?",
+      answer: "It compares text. Scanned pages without a text layer have no text to compare; run them through OCR first.",
+    },
+    {
+      question: "Are my contracts uploaded?",
+      answer: "No. Both files are read and compared locally on your device, which makes it safe for contracts and other confidential documents.",
+    },
+  ],
   "html-to-pdf": [
     {
       question: "How do I convert an HTML file to PDF?",

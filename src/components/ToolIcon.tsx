@@ -1,4 +1,5 @@
 import {
+  GitCompareArrows,
   FileCode2,
   Globe,
   Droplets,
@@ -89,6 +90,7 @@ const toolIcons: Record<string, LucideIcon> = {
   "crop-pdf": Crop,
   "pdf-to-markdown": FileCode2,
   "html-to-pdf": Globe,
+  "compare-pdf": GitCompareArrows,
   "pdf-compress": FileArchive,
   // Image
   "compress-image": ImageDown,

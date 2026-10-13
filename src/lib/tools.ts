@@ -116,6 +116,17 @@ export const tools: Tool[] = [
       "Crop PDF pages in your browser: drag a crop box, apply it to all or some pages, or trim the white margins of every page automatically. No upload, no watermark.",
   },
   {
+    slug: "compare-pdf",
+    name: "Compare PDF",
+    description: "Find every added, removed or changed word between two versions of a PDF",
+    emoji: "🔍",
+    category: "pdf",
+    acceptedFormats: [".pdf"],
+    metaTitle: "Compare PDF Files - Highlight Differences, Free | ZapFile",
+    metaDescription:
+      "Compare two PDF versions in your browser: changed, added and removed words are highlighted side by side on the pages, with a clickable list of every change. No upload.",
+  },
+  {
     slug: "pdf-page-numbers",
     name: "PDF Page Numbers",
     description: "Add page numbers to your PDF document",
