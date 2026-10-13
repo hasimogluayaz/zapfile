@@ -474,7 +474,7 @@ export const tools: Tool[] = [
   {
     slug: "base-converter",
     name: "Number Base Converter",
-    description: "Convert numbers between decimal, hex, binary and octal",
+    description: "Convert between binary, octal, decimal, hex and any base up to 36, with two's complement",
     emoji: "🔢",
     category: "utility",
     acceptedFormats: [],
