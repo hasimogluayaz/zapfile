@@ -5,6 +5,14 @@
 
 export const arLocaleStrings: Record<string, string> = {
   "nav.allTools": "جميع الأدوات",
+  "css.v2.restructure": "دمج القواعد والاختصارات",
+  "css.v2.keepLicense": "الإبقاء على تعليقات /*! الترخيص */",
+  "css.v2.saved": "أصغر بنسبة {pct}% (توفير {size})",
+  "css.v2.parseError": "تعذّر تحليل CSS",
+  "css.v2.nestingTitle": "وُجد تداخل CSS: استُخدم تصغير آمن",
+  "css.v2.nestingBody": "أُزيلت المسافات والتعليقات فقط لتبقى القواعد المتداخلة سليمة، وتُخطّت التحسينات البنيوية.",
+  "css.v2.minifyNote": "صُغّر باستخدام csso: تُختصر الألوان والأصفار والوحدات وتُدمج القواعد المكررة، ولا تُغيَّر النصوص وurl() وcalc() أبدًا.",
+  "css.v2.beautifyNote": "تصريح واحد ومحدد واحد في كل سطر؛ تُنسخ النصوص وurl() وcalc() كما هي، ويُدعم تداخل CSS الأصلي.",
   "xml.v2.keepComments": "الإبقاء على التعليقات",
   "xml.v2.summary": "{elements} عنصر · {attributes} سمة · العمق {depth}",
   "xml.v2.lossless": "لا يغيّر التنسيق البيانات أبدًا: يُحفظ النص والسمات وCDATA والكيانات وDOCTYPE والتعليقات كما هي، ويبقى النص المختلط مثل <p>مرحبًا <b>عالم</b></p> في سطر واحد.",

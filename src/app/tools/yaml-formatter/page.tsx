@@ -8,7 +8,7 @@ import { Segmented } from "@/components/ui/controls";
 import { useI18n } from "@/lib/i18n";
 import { useLiveTask, useStoredPref, useStoredText, useTaskRunner } from "@/lib/text-tools/hooks";
 import { CodeEditor, ErrorBox, OutputPanel, SavedNote, baseName, readTextFile, smallButton, type CodeEditorHandle } from "@/lib/text-tools/ui";
-import { processYaml, type YamlIndent, type YamlMode, type YamlReq, type YamlRes } from "./yaml-tool";
+import type { YamlIndent, YamlMode, YamlReq, YamlRes } from "./yaml-tool";
 
 const SAMPLE_YAML = `# Deployment settings
 app:
@@ -36,7 +36,7 @@ export default function YAMLFormatterPage() {
 
   const runner = useTaskRunner<YamlReq, YamlRes>(
     () => new Worker(new URL("./yaml.worker.ts", import.meta.url), { type: "module" }),
-    processYaml,
+    async (req) => (await import("./yaml-tool")).processYaml(req),
   );
   const req = useMemo<YamlReq | null>(() => (input.trim() ? { text: input, mode, indent } : null), [input, mode, indent]);
   const { result, pending, failure } = useLiveTask(runner, req, input.length);
