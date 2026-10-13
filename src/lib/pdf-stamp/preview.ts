@@ -9,8 +9,11 @@ export interface PagePreview {
   scale: number;
 }
 
-/** Render a page (as viewers show it: crop box, /Rotate) so its width is `pxWidth` pixels. */
-export async function renderPagePreview(pdf: PDFDocumentProxy, pageNumber: number, pxWidth: number): Promise<PagePreview> {
+/**
+ * Render a page (as viewers show it: crop box, /Rotate) so its width is `pxWidth` pixels.
+ * `forms: false` leaves form fields out of the picture (for tools that draw their own inputs).
+ */
+export async function renderPagePreview(pdf: PDFDocumentProxy, pageNumber: number, pxWidth: number, opts: { forms?: boolean } = {}): Promise<PagePreview> {
   const page = await pdf.getPage(pageNumber);
   try {
     const base = page.getViewport({ scale: 1 });
@@ -22,7 +25,8 @@ export async function renderPagePreview(pdf: PDFDocumentProxy, pageNumber: numbe
     const ctx = canvas.getContext("2d")!;
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    await page.render({ canvas, canvasContext: ctx, viewport }).promise;
+    // pdf.js AnnotationMode: 1 = draw everything, 2 = leave forms to an HTML layer.
+    await page.render({ canvas, canvasContext: ctx, viewport, annotationMode: opts.forms === false ? 2 : 1 }).promise;
     const bitmap = await createImageBitmap(canvas);
     canvas.width = canvas.height = 0;
     return { bitmap, widthPt: base.width, heightPt: base.height, scale };

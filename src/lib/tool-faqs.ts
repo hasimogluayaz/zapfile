@@ -86,6 +86,20 @@ const toolFaqs: Record<string, FaqItem[]> = {
       answer: "Yes. Drop as many files as you like: they are converted one after another and you can download each PDF, all of them as a ZIP, or combine them into one PDF.",
     },
   ],
+  "fill-pdf": [
+    {
+      question: "How do I fill in a PDF form?",
+      answer: "Open the PDF in ZapFile's Fill PDF Form tool. Every field appears on the page where you can type, tick boxes and choose options; the side list shows which fields are still empty. Then download the filled PDF.",
+    },
+    {
+      question: "What does Flatten do?",
+      answer: "Flattening turns the filled fields into regular page content, so the answers can no longer be changed and every viewer shows them the same way. Leave it off if someone still needs to edit the form.",
+    },
+    {
+      question: "My PDF has no fields. Can I still write on it?",
+      answer: "Yes. Use Sign PDF to place text, dates, checkmarks and signatures anywhere on any PDF.",
+    },
+  ],
   "redact-pdf": [
     {
       question: "How do I redact a PDF?",

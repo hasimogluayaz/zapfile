@@ -1,4 +1,5 @@
 import {
+  ClipboardPen,
   GitCompareArrows,
   SquareX,
   FileCode2,
@@ -93,6 +94,7 @@ const toolIcons: Record<string, LucideIcon> = {
   "html-to-pdf": Globe,
   "compare-pdf": GitCompareArrows,
   "redact-pdf": SquareX,
+  "fill-pdf": ClipboardPen,
   "pdf-compress": FileArchive,
   // Image
   "compress-image": ImageDown,

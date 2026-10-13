@@ -83,6 +83,17 @@ export const tools: Tool[] = [
       "Rotate PDF pages 90, 180 or 270 degrees. Rotate individual pages or all at once. Free online tool.",
   },
   {
+    slug: "fill-pdf",
+    name: "Fill PDF Form",
+    description: "Fill in PDF forms right on the page: text fields, checkboxes, choices, then save or flatten",
+    emoji: "📋",
+    category: "pdf",
+    acceptedFormats: [".pdf"],
+    metaTitle: "Fill PDF Forms Online - Free, Private | ZapFile",
+    metaDescription:
+      "Fill in fillable PDF forms in your browser: type into fields on the page, tick checkboxes, pick options, then download, optionally flattened. Turkish and other letters supported. No upload.",
+  },
+  {
     slug: "sign-pdf",
     name: "Sign PDF",
     description: "Draw, type or upload your signature and place it on a PDF, with text, dates and checkmarks",

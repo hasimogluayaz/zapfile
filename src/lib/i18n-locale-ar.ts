@@ -5,6 +5,18 @@
 
 export const arLocaleStrings: Record<string, string> = {
   "nav.allTools": "جميع الأدوات",
+  "tool.fill-pdf.name": "تعبئة نموذج PDF",
+  "tool.fill-pdf.desc": "املأ نماذج PDF على الصفحة مباشرة: حقول النص ومربعات الاختيار والخيارات، ثم احفظ أو ادمج",
+  "fill.drop": "أفلت نموذج PDF قابلًا للتعبئة",
+  "fill.noFields": "لا يحتوي ملف PDF هذا على حقول قابلة للتعبئة.",
+  "fill.useSign": "أضف نصًا عبر توقيع PDF",
+  "fill.hint": "اكتب مباشرة في الحقول المميزة على الصفحة.",
+  "fill.fields": "{n} حقول",
+  "fill.filled": "تمت تعبئة {n} من {total}",
+  "fill.flatten": "تسطيح النموذج",
+  "fill.flattenHint": "تصبح الإجابات جزءًا من الصفحة ولا يمكن تعديلها",
+  "fill.download": "تنزيل PDF المعبأ",
+  "fill.done": "تم تنزيل PDF المعبأ",
   "tool.redact-pdf.name": "تنقيح PDF",
   "tool.redact-pdf.desc": "احجب الأسماء والأرقام والبيانات الحساسة نهائيًا: بالبحث أو الأنماط أو رسم مربعات",
   "redact.drop": "أفلت ملف PDF لتنقيحه",
