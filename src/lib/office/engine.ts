@@ -40,6 +40,8 @@ function sourcesFor(f: EngineFile): string[][] {
   const override = process.env.NEXT_PUBLIC_OFFICE_ENGINE_URL; // e.g. a self-hosted copy of the same parts
   return [
     ...(override ? [names.map((n) => `${override.replace(/\/$/, "")}/${n}`)] : []),
+    // Same origin first (copied into the deployment at build time): the site's own CDN, no cold cache.
+    names.map((n) => `/vendor/libreoffice-${VERSION}/engine/${n}`),
     names.map((n) => `https://cdn.jsdelivr.net/gh/${REPO}@${COMMIT}/${dir}/${n}`),
     names.map((n) => `https://raw.githubusercontent.com/${REPO}/${COMMIT}/${dir}/${n}`),
   ];
@@ -82,22 +84,28 @@ async function downloadGz(f: EngineFile, onBytes: (n: number) => void): Promise<
   const failures: string[] = [];
   for (const urls of sourcesFor(f)) {
     let got = 0;
+    const ac = new AbortController();
     try {
-      const chunks: Blob[] = [];
-      for (const url of urls) {
-        const res = await fetch(url, { mode: "cors", credentials: "omit" });
-        if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
-        const reader = res.body.getReader();
-        const parts: Uint8Array[] = [];
-        for (;;) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          parts.push(value);
-          got += value.length;
-          onBytes(value.length);
-        }
-        chunks.push(new Blob(parts as BlobPart[]));
-      }
+      // All parts at once: several connections fill the line much faster than one.
+      const chunks = await Promise.all(
+        urls.map(async (url) => {
+          const res = await fetch(url, { mode: "cors", credentials: "omit", signal: ac.signal });
+          if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
+          const reader = res.body.getReader();
+          const parts: Uint8Array[] = [];
+          for (;;) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            parts.push(value);
+            got += value.length;
+            onBytes(value.length);
+          }
+          return new Blob(parts as BlobPart[]);
+        }),
+      ).catch((e) => {
+        ac.abort();
+        throw e;
+      });
       const blob = new Blob(chunks);
       if (blob.size !== f.gzBytes || (await sha256Hex(blob)) !== f.sha256) throw new Error("integrity check failed");
       return blob;

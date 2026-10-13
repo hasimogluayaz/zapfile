@@ -85,6 +85,12 @@ fs.rmSync(vendorRoot, { recursive: true, force: true });
   ]) {
     fs.copyFileSync(path.join(dir, from), path.join(out, to));
   }
+  // Serve the engine parts from our own origin too, when the deployment includes models/ (see .vercelignore).
+  const parts = path.join(root, "models", `libreoffice-${pkgVersion("@matbee/libreoffice-converter")}`);
+  if (fs.existsSync(parts)) {
+    fs.mkdirSync(path.join(out, "engine"), { recursive: true });
+    for (const f of fs.readdirSync(parts).filter((n) => n.endsWith(".bin"))) fs.copyFileSync(path.join(parts, f), path.join(out, "engine", f));
+  }
   // The worker logs every LibreOffice step to the console; keep errors, drop the chatter.
   const worker = fs.readFileSync(path.join(dir, "dist/browser.worker.global.js"), "utf8");
   const quiet = worker.replace("print:console.log,printErr:console.error", "print:()=>{},printErr:()=>{}");

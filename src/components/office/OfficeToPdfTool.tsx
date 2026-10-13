@@ -122,6 +122,19 @@ export default function OfficeToPdfTool({ kind }: { kind: OfficeKind }) {
 
   useEffect(() => () => jobsRef.current.forEach((j) => j.thumb && URL.revokeObjectURL(j.thumb)), []);
 
+  // Start downloading and booting the engine as soon as the page opens, so it is usually ready by the
+  // time a file is picked. Skipped on data-saver / slow connections; dropping a file starts it anyway.
+  const [prefetching, setPrefetching] = useState(false);
+  useEffect(() => {
+    if (support !== "ok") return;
+    const conn = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
+    if (conn?.saveData || /(^|-)(2g|3g)$/.test(conn?.effectiveType ?? "")) return;
+    const onProgress = (p: EngineProgress) => setEngine(p);
+    setPrefetching(true);
+    getOfficeEngine(onProgress).catch(() => setPrefetching(false)); // errors surface when a file is converted
+    return () => offProgress(onProgress);
+  }, [support]);
+
   const update = (id: number, patch: Partial<Job>) => setJobs((prev) => prev.map((j) => (j.id === id ? { ...j, ...patch } : j)));
 
   const settingsKey = JSON.stringify({ pdfa });
@@ -215,7 +228,7 @@ export default function OfficeToPdfTool({ kind }: { kind: OfficeKind }) {
   const Icon = ICON[kind];
   const { accept, formats } = ACCEPT[kind];
   const mb = (n: number) => `${Math.round(n / 1_000_000)} MB`;
-  const preparing = jobs.some((j) => j.status === "converting") && engine && engine.phase !== "ready";
+  const preparing = (prefetching || jobs.some((j) => j.status === "converting")) && engine && engine.phase !== "ready" && !engineError;
 
   if (support === "isolation" || support === "browser") {
     return (
@@ -250,7 +263,7 @@ export default function OfficeToPdfTool({ kind }: { kind: OfficeKind }) {
 
       {kind === "html" && jobs.length === 0 && <p className="text-[13px] text-t-tertiary">{t("office.htmlNote")}</p>}
 
-      {jobs.length === 0 && cached === false && (
+      {jobs.length === 0 && cached === false && !preparing && (
         <p className="flex items-start gap-2 text-[13px] text-t-tertiary">
           <Download className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
           {t("office.firstRun", { size: mb(ENGINE_DOWNLOAD_BYTES) })}

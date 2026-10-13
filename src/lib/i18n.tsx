@@ -2056,7 +2056,7 @@ const en: Record<string, string> = {
     "share.copied": "Link copied",
     "share.fail": "Could not copy",
     "footer.newsletter": "New tools by email",
-    "footer.newsletterHint": "mailto:hello@zapfile.xyz?subject=ZapFile%20updates",
+    "footer.newsletterHint": "mailto:ayvexdevelopment@gmail.com?subject=ZapFile%20updates",
 
     // Hero
     "hero.badge": "100% Free · No Sign-up · Browser-Based",
@@ -3526,7 +3526,7 @@ const en: Record<string, string> = {
       "We may use Google AdSense for advertising, which uses cookies to serve relevant ads. You can manage your ad preferences through Google's ad settings.",
     "privacy.contactTitle": "Contact",
     "privacy.contactBody":
-      "If you have questions about this privacy policy, please contact us at privacy@zapfile.xyz.",
+      "If you have questions about this privacy policy, please contact us at ayvexdevelopment@gmail.com.",
 };
 
 function mergeLocale(
@@ -5517,7 +5517,7 @@ const translations: Record<Locale, Record<string, string>> = {
     "share.copied": "Bağlantı kopyalandı",
     "share.fail": "Kopyalanamadı",
     "footer.newsletter": "E-posta ile yeni araçlar",
-    "footer.newsletterHint": "mailto:hello@zapfile.xyz?subject=ZapFile%20updates",
+    "footer.newsletterHint": "mailto:ayvexdevelopment@gmail.com?subject=ZapFile%20updates",
 
     // Hero
     "hero.badge": "%100 Ücretsiz · Kayıt Yok · Tarayıcı Tabanlı",
@@ -6978,7 +6978,7 @@ const translations: Record<Locale, Record<string, string>> = {
       "Reklam için Google AdSense kullanabiliriz; çerezlerle ilgili reklamlar sunulabilir. Reklam tercihlerinizi Google reklam ayarlarından yönetebilirsiniz.",
     "privacy.contactTitle": "İletişim",
     "privacy.contactBody":
-      "Bu gizlilik politikası hakkında sorularınız için privacy@zapfile.xyz adresinden bize ulaşın.",
+      "Bu gizlilik politikası hakkında sorularınız için ayvexdevelopment@gmail.com adresinden bize ulaşın.",
   },
   de: {
     "nav.allTools": "Alle Werkzeuge",
@@ -8954,7 +8954,7 @@ const translations: Record<Locale, Record<string, string>> = {
     "share.copied": "Link kopiert",
     "share.fail": "Kopieren fehlgeschlagen",
     "footer.newsletter": "Neue Tools per E-Mail",
-    "footer.newsletterHint": "mailto:hello@zapfile.xyz?subject=ZapFile%20updates",
+    "footer.newsletterHint": "mailto:ayvexdevelopment@gmail.com?subject=ZapFile%20updates",
     "hero.badge": "100% Kostenlos · Keine Anmeldung · Browserbasiert",
     "hero.title1": "Die Datei-Werkzeuge, die du",
     "hero.title2": "wirklich nutzen",
@@ -10202,7 +10202,7 @@ const translations: Record<Locale, Record<string, string>> = {
       "Wir können Google AdSense für Werbung nutzen; Cookies können relevante Anzeigen liefern. Einstellungen können Sie in den Google-Werbeeinstellungen verwalten.",
     "privacy.contactTitle": "Kontakt",
     "privacy.contactBody":
-      "Bei Fragen zu dieser Datenschutzerklärung kontaktieren Sie uns unter privacy@zapfile.xyz.",
+      "Bei Fragen zu dieser Datenschutzerklärung kontaktieren Sie uns unter ayvexdevelopment@gmail.com.",
   },
   fr: {
     "nav.allTools": "Tous les outils",
@@ -12178,7 +12178,7 @@ const translations: Record<Locale, Record<string, string>> = {
     "share.copied": "Lien copié",
     "share.fail": "Échec de la copie",
     "footer.newsletter": "Nouveaux outils par e-mail",
-    "footer.newsletterHint": "mailto:hello@zapfile.xyz?subject=ZapFile%20updates",
+    "footer.newsletterHint": "mailto:ayvexdevelopment@gmail.com?subject=ZapFile%20updates",
     "hero.badge": "100% Gratuit · Sans inscription · Basé sur le navigateur",
     "hero.title1": "Les outils de fichiers que vous",
     "hero.title2": "voulez vraiment",
@@ -13427,7 +13427,7 @@ const translations: Record<Locale, Record<string, string>> = {
       "Nous pouvons utiliser Google AdSense pour la publicité, avec des cookies pour des annonces pertinentes. Gérez vos préférences dans les paramètres publicitaires Google.",
     "privacy.contactTitle": "Contact",
     "privacy.contactBody":
-      "Pour toute question sur cette politique : privacy@zapfile.xyz.",
+      "Pour toute question sur cette politique : ayvexdevelopment@gmail.com.",
   },
   es: mergeLocale(en, {
     ...localeOverrides.es,

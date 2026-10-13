@@ -67,7 +67,7 @@ export const partialStaticPageLocales: Record<
       "Podemos usar Google AdSense para publicidad; las cookies pueden mostrar anuncios relevantes. Puedes gestionar preferencias en la configuración de anuncios de Google.",
     "privacy.contactTitle": "Contacto",
     "privacy.contactBody":
-      "Si tienes preguntas sobre esta política, escríbenos a privacy@zapfile.xyz.",
+      "Si tienes preguntas sobre esta política, escríbenos a ayvexdevelopment@gmail.com.",
   },
 
   pt: {
@@ -131,7 +131,7 @@ export const partialStaticPageLocales: Record<
       "Podemos usar o Google AdSense para anúncios; cookies podem exibir anúncios relevantes. Gerencie preferências nas configurações de anúncios do Google.",
     "privacy.contactTitle": "Contato",
     "privacy.contactBody":
-      "Dúvidas sobre esta política: privacy@zapfile.xyz.",
+      "Dúvidas sobre esta política: ayvexdevelopment@gmail.com.",
   },
 
   it: {
@@ -195,7 +195,7 @@ export const partialStaticPageLocales: Record<
       "Possiamo usare Google AdSense per la pubblicità; i cookie possono mostrare annunci pertinenti. Gestisci le preferenze nelle impostazioni annunci di Google.",
     "privacy.contactTitle": "Contatto",
     "privacy.contactBody":
-      "Per domande su questa informativa: privacy@zapfile.xyz.",
+      "Per domande su questa informativa: ayvexdevelopment@gmail.com.",
   },
 
   ja: {
@@ -259,7 +259,7 @@ export const partialStaticPageLocales: Record<
       "広告に Google AdSense を利用する場合、関連広告配信のため Cookie が使われることがあります。Google の広告設定で管理できます。",
     "privacy.contactTitle": "お問い合わせ",
     "privacy.contactBody":
-      "本ポリシーに関するご質問は privacy@zapfile.xyz までご連絡ください。",
+      "本ポリシーに関するご質問は ayvexdevelopment@gmail.com までご連絡ください。",
   },
 
   ar: {
@@ -323,6 +323,6 @@ export const partialStaticPageLocales: Record<
       "قد نستخدم Google AdSense للإعلانات، مع ملفات تعريف لعرض إعلانات مناسبة. يمكنك إدارة التفضيلات في إعدادات إعلانات Google.",
     "privacy.contactTitle": "تواصل",
     "privacy.contactBody":
-      "للأسئلة حول هذه السياسة: privacy@zapfile.xyz.",
+      "للأسئلة حول هذه السياسة: ayvexdevelopment@gmail.com.",
   },
 };

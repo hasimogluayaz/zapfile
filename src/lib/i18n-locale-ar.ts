@@ -2047,7 +2047,7 @@ export const arLocaleStrings: Record<string, string> = {
   "share.copied": "تم نسخ الرابط",
   "share.fail": "تعذر النسخ",
   "footer.newsletter": "أدوات جديدة عبر البريد",
-  "footer.newsletterHint": "mailto:hello@zapfile.xyz?subject=ZapFile%20updates",
+  "footer.newsletterHint": "mailto:ayvexdevelopment@gmail.com?subject=ZapFile%20updates",
 
   "hero.badge": "مجاني بالكامل · بلا تسجيل · داخل المتصفح",
   "hero.title1": "أدوات الملفات التي",

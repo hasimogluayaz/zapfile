@@ -1,1 +1,4 @@
-/models
+# Large model files are fetched from a pinned commit at runtime; the LibreOffice engine
+# parts are also deployed (copied to /vendor by scripts/copy-vendor-assets.mjs) so they load same-origin.
+/models/*
+!/models/libreoffice-2.7.2/
