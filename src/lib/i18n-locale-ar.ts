@@ -5,6 +5,18 @@
 
 export const arLocaleStrings: Record<string, string> = {
   "nav.allTools": "جميع الأدوات",
+  "csvjson.v2.typed": "اكتشاف الأرقام وقيم true/false",
+  "csvjson.v2.typedHint": "تبقى الرموز ذات الأصفار البادئة (الرموز البريدية والمعرّفات) نصًا؛ وتصبح الخلايا الفارغة null.",
+  "csvjson.v2.jsonLines": "JSON Lines (كائن في كل سطر)",
+  "csvjson.v2.flatten": "تسطيح الكائنات المتداخلة",
+  "csvjson.v2.flattenHint": "يصبح address.city عمودًا مستقلًا وتُدمج قوائم القيم بـ \"; \".",
+  "csvjson.v2.quoteAll": "وضع كل حقل بين علامتي اقتباس",
+  "csvjson.v2.summary": "{rows} صف · {cols} عمود",
+  "csvjson.v2.detected": "الفاصل المكتشف: {d}",
+  "csvjson.v2.excelHint": "CSV بعلامة UTF-8 ليعرض Excel الأحرف العربية بشكل صحيح",
+  "csvjson.v2.empty": "لا شيء للتحويل.",
+  "csvjson.v2.warnings": "{n} صفوف تبدو غير منتظمة",
+  "csvjson.v2.previewLimit": "تعرض المعاينة أول {n} من {total} صف؛ ويتضمن الناتج كل الصفوف.",
   "css.v2.restructure": "دمج القواعد والاختصارات",
   "css.v2.keepLicense": "الإبقاء على تعليقات /*! الترخيص */",
   "css.v2.saved": "أصغر بنسبة {pct}% (توفير {size})",
