@@ -452,7 +452,7 @@ export const tools: Tool[] = [
   {
     slug: "uuid-generator",
     name: "UUID Generator",
-    description: "Generate UUIDs v4 and Nano IDs in bulk",
+    description: "Generate UUID v4/v7, ULID and Nano IDs in bulk, and inspect any UUID",
     emoji: "🎲",
     category: "utility",
     acceptedFormats: [],
