@@ -286,7 +286,7 @@ export const tools: Tool[] = [
   {
     slug: "hash-generator",
     name: "Hash Generator",
-    description: "Generate SHA-1, SHA-256, SHA-384, SHA-512 hashes",
+    description: "MD5, SHA-256, SHA-512, SHA3, BLAKE3 and CRC32 hashes for text and files, with HMAC and checksum verification",
     emoji: "\ud83d\udd10",
     category: "utility",
     acceptedFormats: [],
