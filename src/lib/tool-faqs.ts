@@ -86,6 +86,20 @@ const toolFaqs: Record<string, FaqItem[]> = {
       answer: "Yes. Drop as many files as you like: they are converted one after another and you can download each PDF, all of them as a ZIP, or combine them into one PDF.",
     },
   ],
+  "organize-pdf": [
+    {
+      question: "How do I rearrange pages in a PDF?",
+      answer: "Drop the PDF into ZapFile's Organize PDF tool and drag the page thumbnails into the order you want. You can also move a page with its arrow buttons or with Alt + arrow keys. Download the result when you're done. Nothing is uploaded.",
+    },
+    {
+      question: "Can I delete or extract pages?",
+      answer: "Yes. Select pages (Ctrl or Shift + click to select several) and delete them, or use Extract to download only the selected pages as a new PDF. Rotate, duplicate and blank-page insertion work the same way, and every change can be undone.",
+    },
+    {
+      question: "Can I combine pages from several PDFs?",
+      answer: "Yes. Add more PDFs and their pages join the grid, numbered by file, so you can mix and reorder pages from different documents into one PDF.",
+    },
+  ],
   "pdf-to-powerpoint": [
     {
       question: "How do I convert a PDF to PowerPoint?",

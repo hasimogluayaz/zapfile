@@ -1,4 +1,5 @@
 import {
+  LayoutGrid,
   MonitorPlay,
   Presentation,
   Sheet,
@@ -78,6 +79,7 @@ const toolIcons: Record<string, LucideIcon> = {
   "excel-to-pdf": Sheet,
   "powerpoint-to-pdf": Presentation,
   "pdf-to-powerpoint": MonitorPlay,
+  "organize-pdf": LayoutGrid,
   "pdf-compress": FileArchive,
   // Image
   "compress-image": ImageDown,

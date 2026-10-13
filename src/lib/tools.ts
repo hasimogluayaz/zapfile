@@ -61,6 +61,17 @@ export const tools: Tool[] = [
       "Convert PDF pages to high-quality PNG or JPG images. Batch download as ZIP. No uploads required.",
   },
   {
+    slug: "organize-pdf",
+    name: "Organize PDF",
+    description: "Reorder, delete, rotate, duplicate and extract PDF pages, or combine several PDFs",
+    emoji: "🗂️",
+    category: "pdf",
+    acceptedFormats: [".pdf"],
+    metaTitle: "Organize PDF Pages - Reorder, Delete, Extract | ZapFile",
+    metaDescription:
+      "Drag PDF pages into a new order, delete or rotate pages, insert blank pages, duplicate, extract a selection or combine pages from several PDFs. Free, private, in your browser.",
+  },
+  {
     slug: "rotate-pdf",
     name: "Rotate PDF",
     description: "Rotate PDF pages individually or all at once",
