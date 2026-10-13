@@ -352,7 +352,7 @@ export const tools: Tool[] = [
   {
     slug: "timestamp-converter",
     name: "Timestamp Converter",
-    description: "Convert between Unix timestamps and human dates",
+    description: "Convert Unix timestamps (s, ms, µs, ns) and dates across time zones",
     emoji: "\ud83d\udd50",
     category: "utility",
     acceptedFormats: [],

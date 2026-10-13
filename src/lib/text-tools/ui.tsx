@@ -334,7 +334,18 @@ export function ErrorBox({
 
 /* ---------------- Output panel ---------------- */
 
-export function CopyButton({ getText, disabled, label }: { getText: () => string | Promise<string>; disabled?: boolean; label?: string }) {
+export function CopyButton({
+  getText,
+  disabled,
+  label,
+  iconOnly,
+}: {
+  getText: () => string | Promise<string>;
+  disabled?: boolean;
+  label?: string;
+  /** Square icon button (label used as its accessible name only). */
+  iconOnly?: boolean;
+}) {
   const { t } = useI18n();
   const [done, setDone] = useState(false);
   useEffect(() => {
@@ -345,9 +356,10 @@ export function CopyButton({ getText, disabled, label }: { getText: () => string
   return (
     <button
       type="button"
-      className={smallButton}
+      className={iconOnly ? `${smallButton} !w-9 !px-0` : smallButton}
       disabled={disabled}
       aria-label={label ?? t("ui.copy")}
+      title={iconOnly ? (label ?? t("ui.copy")) : undefined}
       onClick={async () => {
         try {
           await navigator.clipboard.writeText(await getText());
@@ -358,7 +370,7 @@ export function CopyButton({ getText, disabled, label }: { getText: () => string
       }}
     >
       {done ? <Check className="h-4 w-4" aria-hidden="true" /> : <Copy className="h-4 w-4" aria-hidden="true" />}
-      {done ? t("textkit.v2.copiedShort") : label ?? t("ui.copy")}
+      {iconOnly ? null : done ? t("textkit.v2.copiedShort") : label ?? t("ui.copy")}
     </button>
   );
 }

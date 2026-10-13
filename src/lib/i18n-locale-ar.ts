@@ -5,6 +5,19 @@
 
 export const arLocaleStrings: Record<string, string> = {
   "nav.allTools": "جميع الأدوات",
+  "ts.v2.input": "طابع زمني أو تاريخ",
+  "ts.v2.unit": "الوحدة",
+  "ts.v2.auto": "تلقائي",
+  "ts.v2.micro": "ميكروثانية",
+  "ts.v2.nano": "نانوثانية",
+  "ts.v2.readAs": "قُرئ كـ {unit} (حسب عدد الأرقام).",
+  "ts.v2.unreadable": "ليس طابعًا زمنيًا أو تاريخًا مقروءًا. جرّب 1700000000 أو 2026-10-13T09:30:00Z.",
+  "ts.v2.calendar": "التقويم",
+  "ts.v2.calendarValue": "أسبوع ISO ‏{week} · اليوم {day} من السنة",
+  "ts.v2.zones": "اللحظة نفسها حول العالم",
+  "ts.v2.addZone": "إضافة منطقة زمنية…",
+  "ts.v2.dateTime": "التاريخ والوقت",
+  "ts.v2.zone": "المنطقة الزمنية",
   "base.v2.baseN": "الأساس {n}",
   "base.v2.base": "أساس {n}",
   "base.v2.badDigit": "يُسمح فقط بالأرقام الصالحة في الأساس {base}.",
@@ -1878,8 +1891,8 @@ export const arLocaleStrings: Record<string, string> = {
   "tool.url-encoder.name": "ترميز/فك ترميز URL",
   "tool.url-encoder.desc": "ترميز أو فك ترميز سلاسل URL فوراً",
   "tool.timestamp-converter.name": "محوّل الطوابع الزمنية",
-  "tool.timestamp-converter.desc":
-    "التحويل بين طوابع Unix والتاريخ البشري",
+  "tool.timestamp-converter.desc": "حوّل الطوابع الزمنية Unix ‏(s وms وµs وns) والتواريخ بين المناطق الزمنية",
+
   "tool.lorem-ipsum.name": "مولّد Lorem Ipsum",
   "tool.lorem-ipsum.desc": "إنشاء نص بديل للتصاميم والتخطيطات",
   "tool.regex-tester.name": "اختبار التعبيرات النمطية",

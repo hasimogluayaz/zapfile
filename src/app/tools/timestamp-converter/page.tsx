@@ -1,307 +1,235 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import toast from "react-hot-toast";
+import { useEffect, useMemo, useState } from "react";
+import { Clock, Plus, X } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
+import { Segmented, sectionTitle } from "@/components/ui/controls";
 import { useI18n } from "@/lib/i18n";
+import { useStoredPref } from "@/lib/text-tools/hooks";
+import { CopyButton, smallButton } from "@/lib/text-tools/ui";
+import { dayOfYear, formatOffset, isoInZone, isoWeek, parseInput, wallToEpoch, zoneOffset, type Unit } from "./time-core";
 
-/** "3 hours ago" / "in 2 days", in the UI language (Intl handles plurals). */
-function getRelativeTime(date: Date, locale: string): string {
-  const diffSeconds = Math.round((date.getTime() - Date.now()) / 1000);
-  const abs = Math.abs(diffSeconds);
+const DEFAULT_ZONES = ["UTC", "America/New_York", "Europe/London", "Europe/Istanbul", "Asia/Tokyo"];
+const ZONES_KEY = "zapfile.ts.zones";
+
+function relative(ms: number, now: number, locale: string): string {
+  const diff = (ms - now) / 1000;
+  const abs = Math.abs(diff);
   const rtf = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
-  if (abs < 60) return rtf.format(diffSeconds, "second");
-  if (abs < 3600) return rtf.format(Math.trunc(diffSeconds / 60), "minute");
-  if (abs < 86400) return rtf.format(Math.trunc(diffSeconds / 3600), "hour");
-  if (abs < 86400 * 30) return rtf.format(Math.trunc(diffSeconds / 86400), "day");
-  if (abs < 86400 * 365) return rtf.format(Math.trunc(diffSeconds / (86400 * 30)), "month");
-  return rtf.format(Math.trunc(diffSeconds / (86400 * 365)), "year");
+  if (abs < 60) return rtf.format(Math.round(diff), "second");
+  if (abs < 3600) return rtf.format(Math.trunc(diff / 60), "minute");
+  if (abs < 86400) return rtf.format(Math.trunc(diff / 3600), "hour");
+  if (abs < 86400 * 30) return rtf.format(Math.trunc(diff / 86400), "day");
+  if (abs < 86400 * 365) return rtf.format(Math.trunc(diff / (86400 * 30)), "month");
+  return rtf.format(Math.trunc(diff / (86400 * 365)), "year");
 }
 
-function toDatetimeLocalString(date: Date): string {
-  const pad = (n: number) => n.toString().padStart(2, "0");
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center gap-3 py-2">
+      <span className="w-40 shrink-0 text-[13px] text-t-tertiary">{label}</span>
+      <code dir="ltr" className="min-w-0 flex-1 break-all font-mono text-[13.5px] text-t-primary">
+        {value}
+      </code>
+      <CopyButton getText={() => value} iconOnly />
+    </div>
+  );
 }
 
 export default function TimestampConverterPage() {
   const { t, locale } = useI18n();
-  // Time-dependent values start empty and are filled after mount, so the
-  // server-rendered HTML (UTC, earlier second) never mismatches the client.
-  const [currentTimestamp, setCurrentTimestamp] = useState<number | null>(null);
-
-  // Unix -> Date
-  const [unixInput, setUnixInput] = useState("");
-  const [convertedDate, setConvertedDate] = useState<Date | null>(null);
-  const [unixError, setUnixError] = useState("");
-
-  // Date -> Unix
-  const [dateInput, setDateInput] = useState("");
-  const [convertedUnix, setConvertedUnix] = useState<number | null>(null);
-
-  // Live clock
-  useEffect(() => {
-    setCurrentTimestamp(Math.floor(Date.now() / 1000));
-    const interval = setInterval(() => {
-      setCurrentTimestamp(Math.floor(Date.now() / 1000));
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Unix -> Date conversion
-  const convertUnixToDate = useCallback(() => {
-    const trimmed = unixInput.trim();
-    if (!trimmed) {
-      setConvertedDate(null);
-      setUnixError("");
-      return;
-    }
-    const num = Number(trimmed);
-    if (isNaN(num)) {
-      setUnixError("Please enter a valid number");
-      setConvertedDate(null);
-      return;
-    }
-    // Handle seconds vs milliseconds: if > 1e12, treat as milliseconds
-    const ms = num > 1e12 ? num : num * 1000;
-    const date = new Date(ms);
-    if (isNaN(date.getTime())) {
-      setUnixError("Invalid timestamp");
-      setConvertedDate(null);
-      return;
-    }
-    setUnixError("");
-    setConvertedDate(date);
-  }, [unixInput]);
+  const [now, setNow] = useState<number | null>(null);
+  const [input, setInput] = useState("");
+  const [unit, setUnit] = useStoredPref<Unit | "auto">("ts.unit", "auto", ["auto", "s", "ms", "us", "ns"]);
+  const [zones, setZones] = useState<string[]>(DEFAULT_ZONES);
+  const [allZones, setAllZones] = useState<string[]>([]);
+  const [wall, setWall] = useState("");
+  const [wallZone, setWallZone] = useState("UTC");
+  const [adding, setAdding] = useState("");
+  const localZone = useMemo(() => (typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : "UTC"), []);
 
   useEffect(() => {
-    convertUnixToDate();
-  }, [convertUnixToDate]);
-
-  // Date -> Unix conversion
-  const convertDateToUnix = useCallback(() => {
-    if (!dateInput) {
-      setConvertedUnix(null);
-      return;
-    }
-    const date = new Date(dateInput);
-    if (isNaN(date.getTime())) {
-      setConvertedUnix(null);
-      return;
-    }
-    setConvertedUnix(date.getTime());
-  }, [dateInput]);
-
-  useEffect(() => {
-    convertDateToUnix();
-  }, [convertDateToUnix]);
-
-  // Pre-fill on mount
-  useEffect(() => {
-    const now = new Date();
-    setUnixInput(Math.floor(now.getTime() / 1000).toString());
-    setDateInput(toDatetimeLocalString(now));
-  }, []);
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const copyToClipboard = async (text: string, _label?: string) => {
+    setNow(Date.now());
+    const id = setInterval(() => setNow(Date.now()), 1000);
     try {
-      await navigator.clipboard.writeText(text);
-      toast.success(t("ui.copied"));
+      const saved = JSON.parse(localStorage.getItem(ZONES_KEY) ?? "null") as string[] | null;
+      if (Array.isArray(saved) && saved.length) setZones(saved);
     } catch {
-      toast.error(t("ui.copyFailed"));
+      /* defaults */
+    }
+    try {
+      const list = (Intl as unknown as { supportedValuesOf?: (k: string) => string[] }).supportedValuesOf?.("timeZone") ?? DEFAULT_ZONES;
+      // "UTC" and the device's own zone may be missing from the canonical list.
+      setAllZones(Array.from(new Set(["UTC", Intl.DateTimeFormat().resolvedOptions().timeZone, ...list])));
+    } catch {
+      setAllZones(DEFAULT_ZONES);
+    }
+    setWallZone(Intl.DateTimeFormat().resolvedOptions().timeZone);
+    return () => clearInterval(id);
+  }, []);
+
+  const saveZones = (z: string[]) => {
+    setZones(z);
+    try {
+      localStorage.setItem(ZONES_KEY, JSON.stringify(z));
+    } catch {
+      /* blocked */
     }
   };
 
-  const dateFormats = convertedDate
-    ? [
-        {
-          label: t("ts.iso"),
-          value: convertedDate.toISOString(),
-        },
-        {
-          label: t("ts.localDate"),
-          value: convertedDate.toLocaleString(locale),
-        },
-        {
-          label: t("ts.utcDate"),
-          value: convertedDate.toUTCString(),
-        },
-        {
-          label: t("ts.relative"),
-          value: getRelativeTime(convertedDate, locale),
-        },
-      ]
-    : [];
+  const parsed = useMemo(() => parseInput(input, unit), [input, unit]);
+  const ms = parsed?.ms ?? null;
+  const wallMs = useMemo(() => (wall ? wallToEpoch(wall, wallZone) : null), [wall, wallZone]);
+
+  const fmt = (v: number, timeZone: string) =>
+    new Intl.DateTimeFormat(locale, { timeZone, dateStyle: "full", timeStyle: "long" }).format(new Date(v));
+
+  const unitLabel: Record<Unit, string> = { s: t("ts.seconds"), ms: t("ts.milliseconds"), us: t("ts.v2.micro"), ns: t("ts.v2.nano") };
 
   return (
-    <ToolLayout
-      toolName="Timestamp Converter"
-      toolDescription="Convert between Unix timestamps and human-readable dates. Multiple formats supported. Everything runs in your browser."
-    >
-      <div className="space-y-6">
-        {/* Current Timestamp */}
-        <div className="glass rounded-2xl p-6 text-center">
-          <p className="text-sm text-t-secondary mb-2">
-            {t("ts.currentTimestamp")}
-          </p>
-          <button
-            onClick={() =>
-              currentTimestamp !== null && copyToClipboard(currentTimestamp.toString())
-            }
-            className="text-3xl font-bold font-mono gradient-text hover:opacity-80 transition-opacity cursor-pointer tabular-nums"
-          >
-            {currentTimestamp ?? "\u00a0"}
-          </button>
-          <p className="text-xs text-t-tertiary mt-2">{t("ts.clickCopy")}</p>
-        </div>
-
-        {/* Unix -> Date */}
-        <div className="glass rounded-2xl p-6">
-          <h3 className="text-sm font-semibold text-t-primary mb-4">
-            {t("ts.toDate")}
-          </h3>
-          <div className="flex gap-3">
-            <input
-              type="text"
-              value={unixInput}
-              onChange={(e) => setUnixInput(e.target.value)}
-              placeholder={t("ts.enterTimestamp")}
-              className="flex-1 px-4 py-3 rounded-xl bg-bg-secondary border border-border text-t-primary placeholder:text-t-tertiary focus:outline-none focus:border-accent text-sm font-mono transition-colors"
-            />
-            <button
-              onClick={() =>
-                setUnixInput(Math.floor(Date.now() / 1000).toString())
-              }
-              className="px-4 py-3 rounded-xl text-sm font-medium text-t-secondary bg-bg-secondary border border-border hover:bg-bg-tertiary hover:text-t-primary transition-all whitespace-nowrap"
-            >
+    <ToolLayout toolName={t("tool.timestamp-converter.name")} toolDescription={t("tool.timestamp-converter.desc")}>
+      <div className="space-y-5">
+        {/* Live clock */}
+        <div className="glass flex flex-wrap items-center justify-between gap-3 p-5">
+          <div>
+            <p className={sectionTitle}>{t("ts.currentTimestamp")}</p>
+            <p className="mt-1 font-mono text-[28px] font-semibold tabular-nums text-t-primary" suppressHydrationWarning>
+              {now === null ? " " : Math.floor(now / 1000)}
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <CopyButton getText={() => String(Math.floor(Date.now() / 1000))} label={t("ts.seconds")} />
+            <CopyButton getText={() => String(Date.now())} label={t("ts.milliseconds")} />
+            <button type="button" className={smallButton} onClick={() => setInput(String(Math.floor(Date.now() / 1000)))}>
+              <Clock className="h-4 w-4" aria-hidden="true" />
               {t("ts.now")}
             </button>
           </div>
+        </div>
 
-          {unixError && (
-            <p className="text-xs text-red-700 dark:text-red-400 mt-2">{unixError === "Please enter a valid number" ? t("ts.invalidNumber") : t("ts.invalidTimestamp")}</p>
-          )}
+        {/* Any input */}
+        <div className="glass space-y-4 p-5">
+          <label className="block">
+            <span className="mb-1.5 block text-[13px] font-medium text-t-secondary">{t("ts.v2.input")}</span>
+            <input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="1700000000 · 1700000000000 · 2026-10-13T09:30:00Z"
+              spellCheck={false}
+              dir="ltr"
+              className="h-12 w-full rounded-xl border border-border bg-bg-secondary px-3 font-mono text-[15px] text-t-primary placeholder:text-t-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-volt/60"
+            />
+          </label>
+          <div className="flex flex-wrap items-center gap-3">
+            <Segmented<Unit | "auto">
+              label={t("ts.v2.unit")}
+              size="sm"
+              value={unit}
+              onChange={setUnit}
+              options={[
+                { value: "auto", label: t("ts.v2.auto") },
+                { value: "s", label: "s" },
+                { value: "ms", label: "ms" },
+                { value: "us", label: "µs" },
+                { value: "ns", label: "ns" },
+              ]}
+            />
+            {parsed && parsed.as !== "date" && <span className="text-[12.5px] text-t-tertiary">{t("ts.v2.readAs", { unit: unitLabel[parsed.as] })}</span>}
+          </div>
+          {input.trim() && !parsed && <p className="text-[13px] text-red-700 dark:text-red-400">{t("ts.v2.unreadable")}</p>}
 
-          {dateFormats.length > 0 && (
-            <div className="mt-4 space-y-3">
-              {dateFormats.map(({ label, value }) => (
-                <div
-                  key={label}
-                  className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-bg-secondary border border-border"
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs text-t-tertiary mb-0.5">{label}</p>
-                    <p className="text-sm text-t-primary font-mono truncate">
-                      {value}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => copyToClipboard(value, label)}
-                    className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-t-secondary bg-bg-secondary border border-border hover:bg-bg-tertiary hover:text-t-primary transition-all"
-                  >
-                    <svg
-                      className="w-3.5 h-3.5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                      />
-                    </svg>
-                    {t("ui.copy")}
-                  </button>
-                </div>
-              ))}
+          {ms !== null && now !== null && (
+            <div className="divide-y divide-border border-t border-border">
+              <Row label={t("ts.seconds")} value={String(Math.floor(ms / 1000))} />
+              <Row label={t("ts.milliseconds")} value={String(Math.round(ms))} />
+              <Row label="ISO 8601 (UTC)" value={new Date(ms).toISOString()} />
+              {localZone !== "UTC" && localZone !== "Etc/UTC" && <Row label={`ISO 8601 (${localZone})`} value={isoInZone(ms, localZone)} />}
+              <Row label="RFC 2822" value={new Date(ms).toUTCString()} />
+              <Row label={t("ts.localDate")} value={fmt(ms, localZone)} />
+              <Row label={t("ts.relative")} value={relative(ms, now, locale)} />
+              <Row
+                label={t("ts.v2.calendar")}
+                value={t("ts.v2.calendarValue", { week: isoWeek(ms + zoneOffset(ms, localZone) * 60000), day: dayOfYear(ms + zoneOffset(ms, localZone) * 60000) })}
+              />
             </div>
           )}
         </div>
 
-        {/* Date -> Unix */}
-        <div className="glass rounded-2xl p-6">
-          <h3 className="text-sm font-semibold text-t-primary mb-4">
-            {t("ts.toTimestamp")}
-          </h3>
-          <input
-            type="datetime-local"
-            value={dateInput}
-            onChange={(e) => setDateInput(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl bg-bg-secondary border border-border text-t-primary focus:outline-none focus:border-accent text-sm transition-colors"
-          />
+        {/* World clock for the instant */}
+        {ms !== null && (
+          <div className="glass space-y-3 p-5">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className={sectionTitle}>{t("ts.v2.zones")}</p>
+              <div className="flex gap-2">
+                <select value={adding} onChange={(e) => setAdding(e.target.value)} aria-label={t("ts.v2.addZone")} className="h-9 max-w-[220px] rounded-lg border border-border bg-bg-secondary px-2 text-[13px] text-t-primary">
+                  <option value="">{t("ts.v2.addZone")}</option>
+                  {allZones
+                    .filter((z) => !zones.includes(z))
+                    .map((z) => (
+                      <option key={z} value={z}>
+                        {z.replace(/_/g, " ")}
+                      </option>
+                    ))}
+                </select>
+                <button type="button" className={smallButton} disabled={!adding} onClick={() => (saveZones([...zones, adding]), setAdding(""))}>
+                  <Plus className="h-4 w-4" aria-hidden="true" />
+                  {t("urlenc.v2.addParam")}
+                </button>
+              </div>
+            </div>
+            <ul className="divide-y divide-border">
+              {zones.map((z) => {
+                let label = "";
+                let off = 0;
+                try {
+                  label = fmt(ms, z);
+                  off = zoneOffset(ms, z);
+                } catch {
+                  return null;
+                }
+                return (
+                  <li key={z} className="flex items-center gap-3 py-2">
+                    <div className="w-44 shrink-0">
+                      <p className="text-[13.5px] font-medium text-t-primary">{z.replace(/_/g, " ")}</p>
+                      <p className="text-[12px] tabular-nums text-t-tertiary">{formatOffset(off)}</p>
+                    </div>
+                    <span className="min-w-0 flex-1 text-[13.5px] text-t-secondary">{label}</span>
+                    <CopyButton getText={() => isoInZone(ms, z)} iconOnly />
+                    <button type="button" onClick={() => saveZones(zones.filter((x) => x !== z))} aria-label={`${t("ui.remove")} ${z}`} className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-t-tertiary hover:bg-bg-secondary hover:text-t-primary">
+                      <X className="h-4 w-4" aria-hidden="true" />
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
 
-          {convertedUnix !== null && (
-            <div className="mt-4 space-y-3">
-              <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-bg-secondary border border-border">
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs text-t-tertiary mb-0.5">
-                    {t("ts.seconds")}
-                  </p>
-                  <p className="text-sm text-t-primary font-mono">
-                    {Math.floor(convertedUnix / 1000)}
-                  </p>
-                </div>
-                <button
-                  onClick={() =>
-                    copyToClipboard(
-                      Math.floor(convertedUnix / 1000).toString(),
-                      "Unix timestamp (seconds)"
-                    )
-                  }
-                  className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-t-secondary bg-bg-secondary border border-border hover:bg-bg-tertiary hover:text-t-primary transition-all"
-                >
-                  <svg
-                    className="w-3.5 h-3.5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                    />
-                  </svg>
-                  {t("ui.copy")}
-                </button>
-              </div>
-              <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-bg-secondary border border-border">
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs text-t-tertiary mb-0.5">
-                    {t("ts.milliseconds")}
-                  </p>
-                  <p className="text-sm text-t-primary font-mono">
-                    {convertedUnix}
-                  </p>
-                </div>
-                <button
-                  onClick={() =>
-                    copyToClipboard(
-                      convertedUnix.toString(),
-                      "Unix timestamp (milliseconds)"
-                    )
-                  }
-                  className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-t-secondary bg-bg-secondary border border-border hover:bg-bg-tertiary hover:text-t-primary transition-all"
-                >
-                  <svg
-                    className="w-3.5 h-3.5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                    />
-                  </svg>
-                  {t("ui.copy")}
-                </button>
-              </div>
+        {/* Date → timestamp */}
+        <div className="glass space-y-4 p-5">
+          <p className={sectionTitle}>{t("ts.toTimestamp")}</p>
+          <div className="flex flex-wrap gap-3">
+            <input
+              type="datetime-local"
+              step={1}
+              value={wall}
+              onChange={(e) => setWall(e.target.value)}
+              aria-label={t("ts.v2.dateTime")}
+              className="h-11 rounded-xl border border-border bg-bg-secondary px-3 text-[14px] text-t-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-volt/60"
+            />
+            <select value={wallZone} onChange={(e) => setWallZone(e.target.value)} aria-label={t("ts.v2.zone")} className="h-11 min-w-0 max-w-full rounded-xl border border-border bg-bg-secondary px-3 text-[14px] text-t-primary">
+              {(allZones.length ? allZones : DEFAULT_ZONES).map((z) => (
+                <option key={z} value={z}>
+                  {z.replace(/_/g, " ")}
+                </option>
+              ))}
+            </select>
+          </div>
+          {wallMs !== null && (
+            <div className="divide-y divide-border border-t border-border">
+              <Row label={t("ts.seconds")} value={String(Math.floor(wallMs / 1000))} />
+              <Row label={t("ts.milliseconds")} value={String(wallMs)} />
+              <Row label="ISO 8601 (UTC)" value={new Date(wallMs).toISOString()} />
             </div>
           )}
         </div>
