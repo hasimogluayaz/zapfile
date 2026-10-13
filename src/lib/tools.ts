@@ -105,6 +105,17 @@ export const tools: Tool[] = [
       "Add a text or image watermark to PDF pages in your browser: CONFIDENTIAL stamps, logos, tiled patterns, any angle and opacity, chosen pages. Real text, no upload.",
   },
   {
+    slug: "crop-pdf",
+    name: "Crop PDF",
+    description: "Crop PDF pages to an area, or trim white margins from every page automatically",
+    emoji: "✂️",
+    category: "pdf",
+    acceptedFormats: [".pdf"],
+    metaTitle: "Crop PDF - Trim Margins Online, Free | ZapFile",
+    metaDescription:
+      "Crop PDF pages in your browser: drag a crop box, apply it to all or some pages, or trim the white margins of every page automatically. No upload, no watermark.",
+  },
+  {
     slug: "pdf-page-numbers",
     name: "PDF Page Numbers",
     description: "Add page numbers to your PDF document",

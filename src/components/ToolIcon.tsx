@@ -84,6 +84,7 @@ const toolIcons: Record<string, LucideIcon> = {
   "organize-pdf": LayoutGrid,
   "watermark-pdf": Droplets,
   "sign-pdf": Signature,
+  "crop-pdf": Crop,
   "pdf-compress": FileArchive,
   // Image
   "compress-image": ImageDown,

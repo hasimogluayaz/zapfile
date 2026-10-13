@@ -86,6 +86,20 @@ const toolFaqs: Record<string, FaqItem[]> = {
       answer: "Yes. Drop as many files as you like: they are converted one after another and you can download each PDF, all of them as a ZIP, or combine them into one PDF.",
     },
   ],
+  "crop-pdf": [
+    {
+      question: "How do I crop a PDF?",
+      answer: "Open the PDF in ZapFile's Crop PDF tool, drag the yellow frame (or its handles) around the area you want to keep and download. The same area is applied to every page, or only to the pages you choose.",
+    },
+    {
+      question: "Can it remove white margins automatically?",
+      answer: "Yes. Choose Trim margins on each page: every page is checked for its printed area and cropped to it, with the padding you set. Ideal for scanned books or slides with wide borders.",
+    },
+    {
+      question: "Is the cropped content deleted?",
+      answer: "No. Cropping sets the visible page area (crop box and media box), like other PDF editors do. The parts outside are hidden in every viewer and when printing, but not erased from the file. To remove sensitive content, redact it instead.",
+    },
+  ],
   "sign-pdf": [
     {
       question: "How do I sign a PDF for free?",
