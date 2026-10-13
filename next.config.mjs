@@ -38,6 +38,7 @@ const nextConfig = {
     NEXT_PUBLIC_ANTON_VERSION: antonVersion,
     NEXT_PUBLIC_LIBREOFFICE_VERSION: libreofficeVersion,
     NEXT_PUBLIC_DEJAVU_VERSION: pkgVersion("dejavu-fonts-ttf"),
+    NEXT_PUBLIC_TESSERACT_VERSION: pkgVersion("tesseract.js"),
     NEXT_PUBLIC_SIGFONT_VERSIONS: JSON.stringify({
       "dancing-script": pkgVersion("@fontsource/dancing-script"),
       "great-vibes": pkgVersion("@fontsource/great-vibes"),

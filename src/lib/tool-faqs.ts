@@ -86,6 +86,24 @@ const toolFaqs: Record<string, FaqItem[]> = {
       answer: "Yes. Drop as many files as you like: they are converted one after another and you can download each PDF, all of them as a ZIP, or combine them into one PDF.",
     },
   ],
+  "ocr-pdf": [
+    {
+      question: "How do I make a scanned PDF searchable?",
+      answer: "Drop the scan into ZapFile's OCR PDF tool, pick the document's languages and start. Each page is read with Tesseract OCR in your browser and an invisible text layer is added over the original image, so the page looks the same but you can search, select and copy its text.",
+    },
+    {
+      question: "Which languages are supported?",
+      answer: "English, Turkish, German, French, Spanish, Portuguese, Italian, Russian, Arabic, Japanese, Simplified Chinese and Korean. Choose up to three for documents that mix languages. The language data downloads once and is then cached.",
+    },
+    {
+      question: "Are pages that already have text processed again?",
+      answer: "No, by default only pages without real text are recognized, so digital pages keep their exact text. Choose All pages to redo everything, for example when an old OCR layer is poor.",
+    },
+    {
+      question: "Can I OCR a photo or an image?",
+      answer: "Yes. Drop a JPG, PNG or WEBP and you get a searchable PDF of it, plus the recognized text to copy or download as TXT.",
+    },
+  ],
   "fill-pdf": [
     {
       question: "How do I fill in a PDF form?",

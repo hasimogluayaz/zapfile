@@ -728,6 +728,17 @@ export const tools: Tool[] = [
       "Convert PPTX, PPT and ODP presentations to PDF in your browser: one page per slide with shapes, images, text and themes kept. Batch convert, no upload, no watermark.",
   },
   {
+    slug: "ocr-pdf",
+    name: "OCR PDF",
+    description: "Make scanned PDFs and photos searchable and copyable with text recognition in 12 languages",
+    emoji: "🔤",
+    category: "pdf",
+    acceptedFormats: [".pdf", ".jpg", ".jpeg", ".png", ".webp", ".tif", ".tiff"],
+    metaTitle: "OCR PDF - Make Scanned PDFs Searchable, Free | ZapFile",
+    metaDescription:
+      "Turn scanned PDFs and photos into searchable PDFs in your browser: an invisible text layer is added over the original page, in English, Turkish, German, French, Spanish and more. Also exports plain text. No upload.",
+  },
+  {
     slug: "pdf-text-extractor",
     name: "PDF Text Extractor",
     description: "Extract and copy all text content from PDF files",

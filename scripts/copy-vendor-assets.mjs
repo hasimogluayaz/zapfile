@@ -107,6 +107,17 @@ fs.rmSync(vendorRoot, { recursive: true, force: true });
   fs.copyFileSync(path.join(dir, "LICENSE"), path.join(out, "LICENSE"));
 }
 
+// ── Tesseract OCR (worker + LSTM cores; language data lives in public/tessdata) ──
+{
+  const out = path.join(vendorRoot, `tesseract-${pkgVersion("tesseract.js")}`);
+  fs.mkdirSync(out, { recursive: true });
+  fs.copyFileSync(path.join(pkgDir("tesseract.js"), "dist", "worker.min.js"), path.join(out, "worker.min.js"));
+  const core = pkgDir("tesseract.js-core");
+  for (const f of ["tesseract-core-lstm.wasm.js", "tesseract-core-simd-lstm.wasm.js", "tesseract-core-relaxedsimd-lstm.wasm.js"]) {
+    fs.copyFileSync(path.join(core, f), path.join(out, f));
+  }
+}
+
 // ── PDF text fonts (DejaVu, Bitstream Vera licence) and signature fonts (OFL) ──
 {
   const dir = pkgDir("dejavu-fonts-ttf");
