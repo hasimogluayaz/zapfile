@@ -5,6 +5,18 @@
 
 export const arLocaleStrings: Record<string, string> = {
   "nav.allTools": "جميع الأدوات",
+  "wc.v2.seoTitle": "عنوان Google",
+  "wc.v2.metaDesc": "الوصف التعريفي",
+  "wc.v2.bytes": "الحجم (UTF-8)",
+  "wc.v2.details": "الجمل",
+  "wc.v2.avgSentence": "متوسط الكلمات في الجملة",
+  "wc.v2.longestSentence": "أطول جملة (كلمات)",
+  "wc.v2.longHint": "يتجاوز متوسط الجمل 25 كلمة. الجمل القصيرة أسهل قراءة.",
+  "wc.v2.topWords": "الكلمات الأكثر استخدامًا",
+  "wc.v2.xRule": "يحسب X كل رابط 23 حرفًا والأحرف الآسيوية والرموز التعبيرية حرفين.",
+  "wc.v2.smsParts": "{n} رسالة",
+  "wc.v2.smsPer": "{n} حرفًا لكل رسالة",
+  "wc.v2.smsUnicode": "تحوّل هذه الأحرف الرسالة إلى يونيكود، فتتسع لعدد أقل بكثير:",
   "contrast.v2.normalText": "نص عادي",
   "contrast.v2.largeText": "نص كبير",
   "contrast.v2.uiParts": "الأيقونات والحدود وعناصر التحكم",
