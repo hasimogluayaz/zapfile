@@ -1,4 +1,5 @@
 import {
+  FileCheck2,
   FileSearch,
   ClipboardPen,
   GitCompareArrows,
@@ -97,6 +98,7 @@ const toolIcons: Record<string, LucideIcon> = {
   "redact-pdf": SquareX,
   "fill-pdf": ClipboardPen,
   "ocr-pdf": FileSearch,
+  "repair-pdf": FileCheck2,
   "pdf-compress": FileArchive,
   // Image
   "compress-image": ImageDown,

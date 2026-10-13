@@ -750,6 +750,17 @@ export const tools: Tool[] = [
       "Extract and copy all text from PDF files with columns and reading order kept. Free, browser-based, no uploads.",
   },
   {
+    slug: "repair-pdf",
+    name: "Repair PDF",
+    description: "Fix PDFs that won't open or show errors, and recover as many pages as possible",
+    emoji: "🩹",
+    category: "pdf",
+    acceptedFormats: [".pdf"],
+    metaTitle: "Repair PDF - Fix Corrupted PDF Files, Free | ZapFile",
+    metaDescription:
+      "Repair damaged or corrupted PDFs in your browser: the file structure is rebuilt with a fresh cross-reference table, and pages that can't be saved that way are recovered as images. No upload.",
+  },
+  {
     slug: "pdf-compress",
     name: "PDF Compressor",
     description: "Reduce PDF file size by compressing embedded images",

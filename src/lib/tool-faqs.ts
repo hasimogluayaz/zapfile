@@ -86,6 +86,20 @@ const toolFaqs: Record<string, FaqItem[]> = {
       answer: "Yes. Drop as many files as you like: they are converted one after another and you can download each PDF, all of them as a ZIP, or combine them into one PDF.",
     },
   ],
+  "repair-pdf": [
+    {
+      question: "How do I repair a corrupted PDF?",
+      answer: "Drop the file into ZapFile's Repair PDF tool. It re-reads every object it can find, ignoring a damaged cross-reference table, and writes a clean new PDF. Download it and open it as usual. Nothing is uploaded.",
+    },
+    {
+      question: "What if the structure is too damaged?",
+      answer: "Then the pages that can still be drawn are recovered as high-resolution images in a new PDF. Their text isn't selectable any more; run OCR PDF on the result to make it searchable again.",
+    },
+    {
+      question: "Can every PDF be repaired?",
+      answer: "Not always: a file that was cut off very early or overwritten has no page data left to recover. Repair works best on PDFs with broken offsets, missing cross-reference tables or truncated endings, the most common damage from interrupted downloads and email.",
+    },
+  ],
   "ocr-pdf": [
     {
       question: "How do I make a scanned PDF searchable?",
