@@ -86,6 +86,24 @@ const toolFaqs: Record<string, FaqItem[]> = {
       answer: "Yes. Drop as many files as you like: they are converted one after another and you can download each PDF, all of them as a ZIP, or combine them into one PDF.",
     },
   ],
+  "sign-pdf": [
+    {
+      question: "How do I sign a PDF for free?",
+      answer: "Open the PDF in ZapFile's Sign PDF tool, create your signature by drawing it, typing your name in a handwriting font or uploading a photo of it, then drag it where it belongs and download the signed PDF. Everything happens in your browser.",
+    },
+    {
+      question: "Can I add the date, my name or checkmarks?",
+      answer: "Yes. Add text boxes, today's date and ✓ or ✗ marks, move and resize them, and copy an item to every page (for example initials on each page).",
+    },
+    {
+      question: "Is this a legally binding signature?",
+      answer: "It is a visual electronic signature, like signing a printout: accepted for many everyday agreements, but some documents require a qualified digital signature with a certificate. Check what the recipient needs.",
+    },
+    {
+      question: "Is my signature stored anywhere?",
+      answer: "No. The signature exists only in this browser tab while you work and is never uploaded.",
+    },
+  ],
   "watermark-pdf": [
     {
       question: "How do I add a watermark to a PDF?",

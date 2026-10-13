@@ -83,6 +83,17 @@ export const tools: Tool[] = [
       "Rotate PDF pages 90, 180 or 270 degrees. Rotate individual pages or all at once. Free online tool.",
   },
   {
+    slug: "sign-pdf",
+    name: "Sign PDF",
+    description: "Draw, type or upload your signature and place it on a PDF, with text, dates and checkmarks",
+    emoji: "✍️",
+    category: "pdf",
+    acceptedFormats: [".pdf"],
+    metaTitle: "Sign PDF Online - Free, No Account, Private | ZapFile",
+    metaDescription:
+      "Sign PDF documents in your browser: draw, type or upload a signature, drag it into place, add your name, the date or checkmarks, and download. No upload, no sign-up.",
+  },
+  {
     slug: "watermark-pdf",
     name: "Watermark PDF",
     description: "Stamp text or a logo on PDF pages: position, tiling, rotation and opacity",
