@@ -41,3 +41,18 @@ split -b 19000000 -d -a 2 --additional-suffix=.bin model.onnx birefnet-lite-768/
 `export.py` expects the BiRefNet source tree in `./src` (commit used:
 `main` as of 2026-10) and `torch`, `torchvision`, `timm`, `einops`,
 `kornia`, `huggingface_hub`, `onnx`, `onnxruntime`.
+
+## libreoffice-2.7.2/ — Word, Excel and PowerPoint to PDF
+
+| | |
+|---|---|
+| Engine | LibreOffice compiled to WebAssembly, from the npm package `@matbee/libreoffice-converter@2.7.2` (`wasm/soffice.wasm`, `wasm/soffice.data`) |
+| Source | https://github.com/matbeedotcom/libreoffice-document-converter (build scripts) and https://www.libreoffice.org (LibreOffice sources) |
+| License | MPL-2.0 (LibreOffice); unmodified binaries |
+| `soffice.wasm` | 147,416,331 bytes raw; stored gzipped (48,600,040 bytes, SHA-256 `7301d283e77df88c11e6cd429b7e23624d29584c55cd3aee79b56f4e3121b189`) as `wasm-part-00.bin` … `wasm-part-02.bin` |
+| `soffice.data` | 99,735,918 bytes raw; stored gzipped (28,465,699 bytes, SHA-256 `4f4b6375f2669f8a08a63e3573afb3695b21a438deaad38c8e81697bf5d3c5cc`) as `data-part-00.bin`, `data-part-01.bin` |
+
+The browser concatenates the parts, checks the SHA-256 of the gzip stream, keeps it in Cache Storage and
+unpacks it with `DecompressionStream`. The small loader scripts (`soffice.js`, `soffice.worker.js`,
+`browser.worker.global.js`) are copied from the npm package into `public/vendor/libreoffice-<version>/`.
+To recreate the parts: `gzip -9 -n -c soffice.wasm | split -b 19000000 -d -a 2 --additional-suffix=.bin - wasm-part-`.
