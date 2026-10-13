@@ -74,9 +74,9 @@ export default function SignPdfPage() {
   useEffect(() => {
     const el = boxRef.current;
     if (!el) return;
-    const ro = new ResizeObserver(() => setBoxW(el.clientWidth));
+    const ro = new ResizeObserver(() => setBoxW(Math.max(0, el.clientWidth - 24)));
     ro.observe(el);
-    setBoxW(el.clientWidth);
+    setBoxW(Math.max(0, el.clientWidth - 24));
     return () => ro.disconnect();
   }, [doc]);
 
@@ -235,7 +235,7 @@ export default function SignPdfPage() {
         <FileDropzone onFilesSelected={open} accept={{ "application/pdf": [".pdf"] }} formats={["PDF"]} label={opening ? t("p2o.opening") : t("sign.drop")} />
       ) : (
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
-          <div className="space-y-3">
+          <div className="min-w-0 space-y-3">
             <div className="glass flex items-center gap-3 p-3">
               <p className="min-w-0 flex-1 truncate text-[14px] font-semibold text-t-primary" title={doc.file.name}>
                 {doc.file.name} <span className="font-normal text-t-tertiary">· {formatFileSize(doc.file.size)}</span>

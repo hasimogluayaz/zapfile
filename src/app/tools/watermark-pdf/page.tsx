@@ -229,7 +229,7 @@ export default function WatermarkPdfPage() {
         <FileDropzone onFilesSelected={open} accept={{ "application/pdf": [".pdf"] }} formats={["PDF"]} label={opening ? t("p2o.opening") : t("wmpdf.drop")} />
       ) : (
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
-          <div className="space-y-3 lg:sticky lg:top-20">
+          <div className="min-w-0 space-y-3 lg:sticky lg:top-20">
             <div className="glass flex items-center gap-3 p-3">
               <p className="min-w-0 flex-1 truncate text-[14px] font-semibold text-t-primary" title={doc.file.name}>
                 {doc.file.name} <span className="font-normal text-t-tertiary">· {formatFileSize(doc.file.size)}</span>

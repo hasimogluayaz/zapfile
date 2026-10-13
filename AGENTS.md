@@ -25,7 +25,7 @@ src/
 │   ├── terms/page.tsx
 │   └── tools/
 │       ├── page.tsx         # Browse all tools
-│       └── [slug]/page.tsx  # 59 individual tool pages
+│       └── [slug]/page.tsx  # 70 individual tool pages
 ├── components/
 │   ├── Header.tsx           # Sticky header, language switcher, category dropdown
 │   ├── Footer.tsx           # Multi-column footer
@@ -38,7 +38,7 @@ src/
 │   ├── ErrorBoundary.tsx    # Catches render errors, shows refresh button
 │   └── AdPlaceholder.tsx    # Placeholder for future ads
 ├── lib/
-│   ├── tools.ts             # 59 tools registry (slug, name, description, category, acceptedFormats)
+│   ├── tools.ts             # 70 tools registry (slug, name, description, category, acceptedFormats)
 │   ├── tool-i18n.ts         # toolField() helper for localized tool names/descriptions
 │   ├── file-handoff.ts      # Home drop pad → tool page file handoff (in-memory)
 │   ├── search.ts            # searchTools(): diacritic-insensitive ranked tool search (header modal, home, /tools)
@@ -60,7 +60,7 @@ src/
 
 ## Tools
 
-Canonical list: `src/lib/tools.ts` — 59 tools across 4 categories (PDF, Image, Video/Audio, Utility). FFmpeg/AI/browser-fetch tools were removed in v1.4.0. v2.0 retired 13 off-brand or third-party-dependent tools and merged 5 duplicates; their URLs 301-redirect via `redirects()` in `next.config.mjs` — add a redirect whenever a tool slug is removed or renamed.
+Canonical list: `src/lib/tools.ts` — 70 tools across 4 categories (PDF, Image, Video/Audio, Utility). FFmpeg/AI/browser-fetch tools were removed in v1.4.0. v2.0 retired 13 off-brand or third-party-dependent tools and merged 5 duplicates; their URLs 301-redirect via `redirects()` in `next.config.mjs` — add a redirect whenever a tool slug is removed or renamed.
 
 ## Design System ("Voltage")
 
@@ -108,6 +108,14 @@ Workers/wasm that libraries load at runtime are copied from `node_modules` into 
 - LibreOffice needs threads (SharedArrayBuffer): the tool pages (`OFFICE_TOOL_PATHS`) and `/vendor/libreoffice-*` get COOP/COEP headers in `next.config.mjs`. Client-side navigation can't isolate a page, so the tool reloads itself once (handed-off files survive via `persistPendingFiles`). Keep those pages free of cross-origin subresources.
 - To upgrade: add the new parts in one commit, then point `COMMIT`, hashes and sizes in `engine.ts` at it.
 - PDF → PowerPoint is our own converter: `slides.ts` (positioned text boxes, rectangles, lines, pictures, rendered figures) + `pptx.ts` (OOXML writer), via `PdfConvertTool kind="pptx"`.
+
+## PDF editing tools (`src/lib/pdf-stamp/`)
+
+- Watermark, Sign, Crop, Redact, Fill Form and OCR share `geometry.ts` (the page's *visible* frame: crop box + `/Rotate`, points; `toUser` maps back to user space so placements survive rotated pages), `preview.ts` (`renderPagePreview`, `forms: false` hides widgets) and `fonts.ts`.
+- Text written into PDFs uses DejaVu (TTF, Unicode incl. Turkish) embedded with `@pdf-lib/fontkit` (subset); the same TTF is registered as a CSS font so previews match. Signature fonts (Dancing Script, Great Vibes, Caveat; OFL) are woff2 for canvas only. All served from `/vendor`.
+- Redact PDF must never leave hidden content in the file: redacted pages are rendered to JPEG with the boxes burned in and the output is a **fresh** document (`copyPages` of the other pages), not `removePage` (pdf-lib keeps orphaned objects).
+- OCR PDF: tesseract.js worker/cores from `/vendor/tesseract-<version>/`, language data (`4.0.0_best_int`, Apache-2.0) committed in `public/tessdata/`. Output keeps the original page and adds an invisible text layer (render mode 3, `Tz` to fit each word's box).
+- Organize, Compare (`lib/pdf-convert/words.ts` gives words with boxes), Repair (pdf-lib re-read; truncated files are salvaged by rebuilding the page tree; last resort page images) and PDF → Markdown (`pdf-convert/markdown.ts`) complete the PDF set.
 
 ## File handoff
 
