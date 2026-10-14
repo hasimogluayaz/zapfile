@@ -681,7 +681,7 @@ export default function BackgroundRemoverPage() {
         )}
 
         {phase === "ready" && doc && source && (
-          <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
             {/* Editor */}
             <div className="glass overflow-hidden p-0">
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-3 py-2">

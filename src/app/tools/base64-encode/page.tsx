@@ -137,7 +137,7 @@ export default function Base64Page() {
           )}
         </div>
 
-        <div className="grid gap-5 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
           {/* Input */}
           <div className="glass space-y-3 p-4 sm:p-5">
             {mode === "encode" && source === "file" ? (

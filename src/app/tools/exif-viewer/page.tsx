@@ -423,7 +423,7 @@ export default function ExifViewerPage() {
                     <p className="text-[14px] text-t-secondary">{t("exif.v2.noneFoundLong")}</p>
                   </div>
                 ) : (
-                  <div className="grid gap-4 md:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     {described.groups.map((g) => (
                       <section key={g.id} className={`glass rounded-2xl p-4 ${g.id === "location" ? "border border-volt/50" : ""}`}>
                         <h3 className={`${sectionTitle} mb-2`}>{g.title}</h3>

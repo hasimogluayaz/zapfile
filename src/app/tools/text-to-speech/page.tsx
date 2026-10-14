@@ -347,7 +347,7 @@ export default function TextToSpeechPage() {
 
   return (
     <ToolLayout toolName={t("tool.text-to-speech.name")} toolDescription={t("tool.text-to-speech.desc")}>
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
         {/* Text / reader */}
         <div className="glass space-y-3 p-5">
           <div className="flex items-center justify-between gap-3">

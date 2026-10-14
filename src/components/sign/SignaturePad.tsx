@@ -236,7 +236,7 @@ export default function SignaturePad({ onDone, onCancel, initialName = "" }: { o
             aria-label={t("sign.namePlaceholder")}
             className="h-11 w-full rounded-xl border border-border bg-bg-secondary px-3 text-[15px] text-t-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-volt/60"
           />
-          <div className="grid gap-2 sm:grid-cols-3" role="radiogroup" aria-label={t("meme.fontFamily")}>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3" role="radiogroup" aria-label={t("meme.fontFamily")}>
             {SIGNATURE_FONTS.map((f) => (
               <button
                 key={f}

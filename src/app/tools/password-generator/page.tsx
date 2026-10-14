@@ -218,7 +218,7 @@ export default function PasswordGeneratorPage() {
           {s.mode === "password" && (
             <>
               <Slider label={t("pw.length")} value={s.pw.length} min={6} max={128} onChange={(length) => patchPw({ length })} display={s.pw.length} />
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {(Object.keys(SET_LABEL) as SetKey[]).map((k) => (
                   <Toggle key={k} checked={s.pw.sets[k]} onChange={() => toggleSet(k)} label={t(SET_LABEL[k])} />
                 ))}
@@ -243,7 +243,7 @@ export default function PasswordGeneratorPage() {
                   options={SEPARATORS.map((sep) => ({ value: sep, label: sep === " " ? t("pw.v2.space") : sep === "" ? t("pw.v2.none") : sep }))}
                 />
               </div>
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <Toggle checked={s.pp.capitalize} onChange={(v) => patchPp({ capitalize: v })} label={t("pw.v2.capitalize")} />
                 <Toggle checked={s.pp.addNumber} onChange={(v) => patchPp({ addNumber: v })} label={t("pw.v2.addNumber")} />
               </div>

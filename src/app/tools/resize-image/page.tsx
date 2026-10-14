@@ -402,7 +402,7 @@ export default function ResizeImagePage() {
           label={t("resize.ui.dropLabel")}
         />
       ) : (
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
           <div className="min-w-0 space-y-4">
             {selected && (
               <div className="glass space-y-3 p-4">

@@ -505,7 +505,7 @@ export default function PdfPageNumbersPage() {
             </div>
 
             {pageCount > 0 && (
-              <div className="grid gap-5 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+              <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
                 {/* Live preview */}
                 <div className="glass space-y-3 p-4 lg:sticky lg:top-20 lg:self-start">
                   <div className="flex items-center justify-between gap-2">
@@ -661,7 +661,7 @@ export default function PdfPageNumbersPage() {
 
                   <section className="glass space-y-4 p-5">
                     <p className={sectionTitle}>{t("pagenum.ui.pageRange")}</p>
-                    <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <NumberField
                         id="pn-skip"
                         label={t("pagenum.v2.skip")}
@@ -737,7 +737,7 @@ export default function PdfPageNumbersPage() {
                         </span>
                       </label>
                     </div>
-                    <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <Slider label={t("pagenum.ui.fontSize")} value={size} min={6} max={36} onChange={setSize} display={`${size} pt`} />
                       <Slider label={t("pagenum.ui.opacity")} value={opacity} min={10} max={100} onChange={setOpacity} display={`${opacity}%`} />
                       <Slider label={t("pagenum.ui.marginX")} value={marginX} min={0} max={144} onChange={setMarginX} display={`${marginX} pt`} disabled={h === "center"} />

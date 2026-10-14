@@ -409,7 +409,7 @@ export default function MemeGeneratorPage() {
 
   return (
     <ToolLayout toolName={t("tool.meme-generator.name")} toolDescription={t("tool.meme-generator.desc")}>
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start" onKeyDown={onKeyDown}>
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start" onKeyDown={onKeyDown}>
         <div className="space-y-3 lg:sticky lg:top-20">
           <div className="glass p-3 sm:p-4">
             <div className="mb-3 flex flex-wrap items-center gap-2">

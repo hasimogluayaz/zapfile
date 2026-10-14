@@ -506,7 +506,7 @@ export default function VideoToGifPage() {
             </div>
 
             {meta && !loadError && (
-              <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+              <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
                 {/* Settings */}
                 <div className="glass space-y-5 p-5">
                   <div className="space-y-2">

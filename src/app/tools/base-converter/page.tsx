@@ -128,7 +128,7 @@ export default function BaseConverterPage() {
     <ToolLayout toolName={t("tool.base-converter.name")} toolDescription={t("tool.base-converter.desc")}>
       <div className="space-y-5">
         <div className="glass space-y-4 p-5">
-          <div className="grid gap-4 sm:grid-cols-2">{fields.map(input)}</div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">{fields.map(input)}</div>
           <div className="flex flex-wrap items-end gap-x-6 gap-y-3 border-t border-border pt-4">
             <label className="block">
               <span className="mb-1.5 block text-[13px] text-t-secondary">{t("base.v2.customBase")}</span>
@@ -147,7 +147,7 @@ export default function BaseConverterPage() {
         </div>
 
         {n !== null && (
-          <div className="grid gap-5 lg:grid-cols-2">
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
             <div className="glass space-y-3 p-5">
               <p className={sectionTitle}>{t("base.v2.twos")}</p>
               <Segmented<Width> label={t("base.v2.width")} size="sm" value={width} onChange={setWidth} options={WIDTHS.map((w) => ({ value: w, label: `${w}-bit` }))} />

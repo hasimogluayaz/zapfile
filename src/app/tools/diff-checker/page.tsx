@@ -409,7 +409,7 @@ export default function DiffCheckerPage() {
   return (
     <ToolLayout toolName="Diff Checker" toolDescription="Compare two texts and highlight differences">
       <div className="space-y-5">
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {sideInput("a")}
           {sideInput("b")}
         </div>
@@ -464,7 +464,7 @@ export default function DiffCheckerPage() {
               ]}
             />
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Toggle checked={ignoreWs} onChange={setIgnoreWs} label={t("diff.v2.ignoreWs")} description={t("diff.v2.ignoreWsHint")} />
             <Toggle checked={ignoreCase} onChange={setIgnoreCase} label={t("diff.v2.ignoreCase")} />
           </div>

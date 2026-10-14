@@ -345,7 +345,7 @@ export default function QRGeneratorPage() {
               </Field>
             )}
             {type === "wifi" && (
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <Field label={t("qr.wifi.ssid")}>
                   <input value={wifi.ssid} onChange={v(setWifi, "ssid")} className={inputClass} autoComplete="off" />
                 </Field>
@@ -366,7 +366,7 @@ export default function QRGeneratorPage() {
               </div>
             )}
             {type === "vcard" && (
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <Field label={t("qr.v2.firstName")}>
                   <input value={vcard.firstName} onChange={v(setVcard, "firstName")} className={inputClass} autoComplete="given-name" />
                 </Field>
@@ -418,7 +418,7 @@ export default function QRGeneratorPage() {
             )}
             {type === "geo" && (
               <div className="space-y-3">
-                <div className="grid gap-3 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <Field label={t("qr.v2.latitude")}>
                     <input inputMode="decimal" value={geo.lat} onChange={v(setGeo, "lat")} placeholder="41.0082" className={inputClass} aria-invalid={!!geo.lat && parseCoord(geo.lat, 90) === null} />
                   </Field>
@@ -433,7 +433,7 @@ export default function QRGeneratorPage() {
               </div>
             )}
             {type === "event" && (
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <Field label={t("qr.v2.eventTitle")} className="sm:col-span-2">
                   <input value={event.title} onChange={v(setEvent, "title")} className={inputClass} />
                 </Field>
@@ -499,7 +499,7 @@ export default function QRGeneratorPage() {
                 {inverted ? t("qr.v2.inverted") : t("qr.v2.lowContrast")}
               </p>
             )}
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <p className="text-[13px] text-t-secondary">{t("qr.v2.modules")}</p>
                 <Segmented<ModuleShape>

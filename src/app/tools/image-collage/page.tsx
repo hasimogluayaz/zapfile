@@ -329,7 +329,7 @@ export default function ImageCollagePage() {
             <FileDropzone onFilesSelected={addFiles} accept={ACCEPT} multiple formats={["JPG", "PNG", "WEBP", "AVIF"]} label={t("collage.ui.dropLabel")} />
           )
         ) : (
-          <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
             <div className="space-y-3">
               <div className="glass p-3 sm:p-4">
                 <div ref={boxRef} className="flex justify-center">

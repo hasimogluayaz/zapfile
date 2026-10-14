@@ -165,7 +165,7 @@ export default function JwtDecoderPage() {
               </div>
             )}
 
-            <div className="grid gap-5 lg:grid-cols-2">
+            <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
               <div className="glass space-y-2 p-5">
                 <div className="flex items-center justify-between">
                   <p className={`${sectionTitle} !text-rose-700 dark:!text-rose-400`}>{t("jwt.header")}</p>

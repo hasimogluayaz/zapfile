@@ -346,7 +346,7 @@ export default function PdfConvertTool({ kind }: { kind: Kind }) {
                     ]}
                   />
                 </div>
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   {/* One sheet per table holds only tables anyway. */}
                   {sheetLayout !== "table" && (
                     <Toggle checked={tablesOnly} onChange={setTablesOnly} label={t("p2o.tablesOnly")} description={t("p2o.tablesOnlyHint")} />

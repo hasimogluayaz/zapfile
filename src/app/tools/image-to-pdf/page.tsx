@@ -418,7 +418,7 @@ export default function ImageToPdfPage() {
 
         {items.length > 0 && (
           <>
-            <div className="grid gap-5 lg:grid-cols-[1.25fr_1fr]">
+            <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1.25fr_1fr]">
               <div className="glass rounded-2xl p-5 space-y-4">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-[14px] font-semibold text-t-primary">

@@ -135,7 +135,7 @@ export default function ColorContrastPage() {
           <p className="text-[12.5px] text-t-tertiary">{t("contrast.v2.formats")}</p>
         </div>
 
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
           {/* Live preview */}
           <div className="overflow-hidden rounded-2xl border border-border" style={{ background: bgCss }}>
             <div className="space-y-4 p-6 sm:p-8" style={{ color: fgCss }}>
@@ -190,7 +190,7 @@ export default function ColorContrastPage() {
               <Wand2 className="h-4 w-4" aria-hidden="true" />
               {t("contrast.v2.fixTitle")}
             </p>
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {fixes.flatMap((f) =>
                 (["fg", "bg"] as const).map((which) => {
                   const hex = f[which];

@@ -568,7 +568,7 @@ export default function AudioRecorderPage() {
                   ))}
                 </select>
               </label>
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <Toggle checked={noiseSuppression} onChange={setNoiseSuppression} label={t("ar.v2.noiseSuppression")} description={t("ar.v2.noiseHint")} />
                 <Toggle checked={echoCancellation} onChange={setEchoCancellation} label={t("ar.v2.echoCancellation")} description={t("ar.v2.echoHint")} />
               </div>
@@ -647,7 +647,7 @@ export default function AudioRecorderPage() {
                   </button>
                 </div>
               ) : (
-                <div className="grid gap-2 sm:grid-cols-3">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                   <button type="button" onClick={() => exportAs("mp3")} disabled={!recording.buffer} className={buttonPrimary}>
                     <Download className="h-4 w-4" aria-hidden="true" />
                     {t("ar.downloadMp3")}

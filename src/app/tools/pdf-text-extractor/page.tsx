@@ -430,7 +430,7 @@ export default function PdfTextExtractorPage() {
               </div>
 
               {pageCount > 0 && (
-                <div className="grid gap-5 md:grid-cols-2">
+                <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                   <div className="space-y-2">
                     <p className={sectionTitle}>{t("pdftext.ui.pageRange")}</p>
                     <div className="grid grid-cols-2 gap-3">
@@ -543,7 +543,7 @@ export default function PdfTextExtractorPage() {
                   </div>
                 )}
 
-                <div className="grid gap-5 lg:grid-cols-[260px_1fr]">
+                <div className="grid grid-cols-1 gap-5 lg:grid-cols-[260px_1fr]">
                   <aside className="glass space-y-4 p-4 lg:sticky lg:top-20 lg:self-start">
                     <label className="block">
                       <span className="mb-1.5 block text-[13px] font-medium text-t-secondary">{t("pdftext.ui.search")}</span>

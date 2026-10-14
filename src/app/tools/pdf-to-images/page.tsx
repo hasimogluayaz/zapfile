@@ -303,7 +303,7 @@ export default function PdfToImagesPage() {
               </div>
             </div>
 
-            <div className="grid gap-5 lg:grid-cols-2">
+            <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
               <div className="glass rounded-2xl p-5 space-y-5">
                 <div>
                   <p className={sectionTitle}>{t("pdfimages.ui.pageRange")}</p>

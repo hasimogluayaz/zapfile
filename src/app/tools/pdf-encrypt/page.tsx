@@ -519,7 +519,7 @@ export default function PdfEncryptPage() {
               />
 
               {requireOpenPassword && (
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
                     <PasswordField id="pw" label={t("pdfsec.password")} value={password} onChange={setPassword} autoFocus={!needsCurrentPassword} />
                     <div className="mt-2 flex items-center gap-2">
@@ -582,7 +582,7 @@ export default function PdfEncryptPage() {
                     </div>
                     <fieldset>
                       <legend className="mb-2 text-[13px] font-medium text-t-secondary">{t("pdfsec.allow")}</legend>
-                      <div className="grid gap-1 sm:grid-cols-2">
+                      <div className="grid grid-cols-1 gap-1 sm:grid-cols-2">
                         {permissionRows.map(({ key, label }) => (
                           <label key={key} className="flex min-h-9 cursor-pointer items-center gap-2.5 rounded-lg px-1 py-1 text-[14px] text-t-primary">
                             <input

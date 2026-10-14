@@ -491,7 +491,7 @@ export default function CropImagePage() {
           </div>
         </div>
       ) : (
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start">
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start">
           <div className="glass min-w-0 p-3 sm:p-4">
             <div ref={frameRef} className="w-full">
               <div className="flex justify-center">

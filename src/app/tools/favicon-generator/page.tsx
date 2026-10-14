@@ -535,7 +535,7 @@ export default function FaviconGeneratorPage() {
               </div>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <p className="text-[13px] font-medium text-t-secondary">{t("fav.v2.browserTab")}</p>
                 {tabMock(false)}
@@ -621,7 +621,7 @@ export default function FaviconGeneratorPage() {
           {/* App details */}
           <div className="glass space-y-4 rounded-2xl p-4 sm:p-5">
             <h2 className={sectionTitle}>{t("fav.v2.appDetails")}</h2>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <label className="block">
                 <span className="text-[13px] text-t-secondary">{t("fav.appName")}</span>
                 <input
@@ -651,7 +651,7 @@ export default function FaviconGeneratorPage() {
           </div>
 
           {/* Code */}
-          <div className="grid gap-4 lg:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             {[
               { title: t("fav.htmlSnippet"), hint: t("fav.htmlSnippetHint"), code: snippet },
               { title: "site.webmanifest", hint: t("fav.manifestHint"), code: manifest },

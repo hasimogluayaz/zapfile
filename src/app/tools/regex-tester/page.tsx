@@ -338,7 +338,7 @@ export default function RegexTesterPage() {
         </section>
 
         {/* Test string + highlighted result */}
-        <div className="grid gap-5 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
           <section className="glass p-5 sm:p-6">
             <div className="mb-2 flex items-center justify-between gap-3">
               <label htmlFor="rx-text" className="text-sm font-medium text-t-secondary">
@@ -462,7 +462,7 @@ export default function RegexTesterPage() {
 
         {/* Match list + group details */}
         {run.kind === "done" && matches.length > 0 && (
-          <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
             <section className="glass p-5 sm:p-6">
               <h2 className="mb-3 text-sm font-medium text-t-secondary">{t("regex.matchDetails")}</h2>
               <ol className="max-h-[420px] space-y-1 overflow-y-auto pe-1">

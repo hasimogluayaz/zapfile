@@ -381,7 +381,7 @@ export default function ColorPickerPage() {
           </div>
         )}
 
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
           {/* Picker */}
           <div className="glass space-y-4 p-4 sm:p-5">
             <div

@@ -267,7 +267,7 @@ export default function CompressImagePage() {
           <p className="text-[13px] text-t-tertiary">{t("cimg.engineNote")}</p>
         </div>
       ) : (
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
           <div className="space-y-4">
             {/* Before / after of the selected image */}
             {selected && beforeUrl && (

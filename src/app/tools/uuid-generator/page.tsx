@@ -85,7 +85,7 @@ export default function UuidGeneratorPage() {
           <p className="text-[13px] text-t-secondary">{t(KIND_HINT[kind])}</p>
 
           {isUuid && (
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <Toggle checked={hyphens} onChange={setHyphens} label={t("uuid.v2.hyphens")} />
               <Toggle checked={upper} onChange={setUpper} label={t("uuid.v2.uppercase")} />
               <Toggle checked={braces} onChange={setBraces} label={t("uuid.v2.braces")} />

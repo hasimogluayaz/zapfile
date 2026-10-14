@@ -56,7 +56,7 @@ export default function WordCounterPage() {
 
   return (
     <ToolLayout toolName={t("tool.word-counter.name")} toolDescription={t("tool.word-counter.desc")}>
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className="space-y-5">
           <div className="glass p-5 sm:p-6">
             <div className="mb-3 flex items-center justify-between">
@@ -92,7 +92,7 @@ export default function WordCounterPage() {
           </div>
 
           {(s.top.length > 0 || s.words > 0) && (
-            <div className="grid gap-5 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
               <div className="glass space-y-2 p-5">
                 <p className={sectionTitle}>{t("wc.v2.details")}</p>
                 <dl className="grid grid-cols-[1fr_auto] gap-y-1.5 text-[13.5px]">
