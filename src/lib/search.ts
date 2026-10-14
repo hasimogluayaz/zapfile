@@ -19,6 +19,7 @@ export function normalizeSearch(text: string): string {
 const synonyms: Record<string, string> = {
   "merge-pdf": "combine join birlestir",
   "split-pdf": "extract pages separate bol ayir",
+  "pdf-encrypt": "password protect lock unlock decrypt remove password secure sifrele sifre kaldir kilit",
   "pdf-compress": "shrink reduce size smaller kucult sikistir",
   "compress-image": "shrink reduce optimize smaller jpg png webp kucult sikistir",
   "resize-image": "scale dimensions width height boyutlandir",

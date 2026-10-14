@@ -1,0 +1,32 @@
+services:
+  office-api:
+    build: .
+    restart: unless-stopped
+    init: true
+    env_file: .env
+    mem_limit: ${API_MEM_LIMIT:-900m}
+    # Only on the internal network: LibreOffice can't reach the internet (no remote content / SSRF).
+    networks: [internal]
+
+  caddy:
+    image: caddy:2.8.4
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks: [internal, web]
+
+networks:
+  internal:
+    internal: true
+  web: {}
+
+volumes:
+  caddy_data: {}
+  caddy_config: {}

@@ -1,1204 +1,632 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent } from "react";
 import toast from "react-hot-toast";
+import { AlignCenter, AlignLeft, AlignRight, ArrowDown, ArrowUp, Copy, Download, ImagePlus, Loader2, Plus, Redo2, Trash2, Undo2 } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
 import FileDropzone from "@/components/FileDropzone";
+import { Segmented, Slider, Toggle, buttonPrimary, buttonSecondary, sectionTitle } from "@/components/ui/controls";
+import { builtInFontFamily, ctx2d, decodeImage, encodeCanvas, makeCanvas, makeProxy, maxCanvasPixels, releaseCanvas, resolveFormat, type FormatChoice } from "@/lib/image-editor-kit";
+import { ExportFormatPicker } from "@/lib/image-editor-kit-ui";
 import { downloadBlob, getFileNameWithoutExtension } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n";
+import { useStoredPref } from "@/lib/text-tools/hooks";
+import { MEME_FAMILY, bandHeight, drawMeme, handlePoint, hitBox, type Layer, type LayerBox, type MemeFont, type MemeState, type MemeStyle } from "./meme-render";
 
-interface TextItem {
-  id: string;
-  text: string;
-  x: number;
-  y: number;
-  fontSize: number;
-  fontFamily: string;
-  color: string;
-  strokeColor: string;
-  strokeWidth: number;
-  rotation: number;
-  align: "left" | "center" | "right";
-  bold: boolean;
-  italic: boolean;
-  opacity: number;
-  backgroundColor: string;
-  backgroundOpacity: number;
+const ACCEPT = { "image/*": [".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp", ".avif"] };
+const STYLES: MemeStyle[] = ["classic", "plain", "label", "shadow"];
+const FONTS: MemeFont[] = ["meme", "sans", "serif"];
+const SWATCHES = ["#FFFFFF", "#000000", "#FFD60A", "#FF3B30", "#34C759", "#0A84FF"];
+
+let measure: CanvasRenderingContext2D | null = null;
+const measureCtx = () => (measure ??= ctx2d(makeCanvas(1, 1)));
+
+let seq = 1;
+const newId = () => `l${seq++}`;
+
+function layer(text: string, patch: Partial<Layer> = {}): Layer {
+  return { id: newId(), text, x: 0.5, y: 0.5, size: 0.09, width: 0.92, rotation: 0, align: "center", font: "meme", style: "classic", color: "#FFFFFF", accent: "#000000", upper: true, ...patch };
 }
 
-function cloneTextItems(items: TextItem[]): TextItem[] {
-  return items.map((t) => ({ ...t }));
+type PresetId = "classic" | "bottom" | "band" | "labels";
+
+function preset(id: PresetId, t: (k: string) => string, aspect: number): MemeState {
+  // Keep top/bottom text clear of the edge whatever the image shape.
+  const edge = Math.min(0.12, 0.075 * aspect + 0.02);
+  switch (id) {
+    case "bottom":
+      return { layers: [layer(t("meme.ui.captionHere"), { y: 1 - edge })], band: { on: false, text: "", size: 0.055 } };
+    case "band":
+      return { layers: [], band: { on: true, text: t("meme.v2.bandSample"), size: 0.055 } };
+    case "labels":
+      return {
+        layers: [
+          layer(t("meme.ui.me"), { x: 0.25, y: 0.82, size: 0.06, width: 0.4, font: "sans", style: "label", color: "#000000", accent: "#FFFFFF", upper: false }),
+          layer(t("meme.ui.newThing"), { x: 0.75, y: 0.82, size: 0.06, width: 0.4, font: "sans", style: "label", color: "#000000", accent: "#FFFFFF", upper: false }),
+        ],
+        band: { on: false, text: "", size: 0.055 },
+      };
+    default:
+      return { layers: [layer(t("meme.ui.topText"), { y: edge }), layer(t("meme.ui.bottomText"), { y: 1 - edge })], band: { on: false, text: "", size: 0.055 } };
+  }
 }
 
-function hexToRgba(hex: string, alpha: number) {
-  const normalized = hex.replace("#", "");
-  const safe = normalized.length === 3
-    ? normalized
-        .split("")
-        .map((char) => `${char}${char}`)
-        .join("")
-    : normalized.padEnd(6, "0").slice(0, 6);
-
-  const r = Number.parseInt(safe.slice(0, 2), 16);
-  const g = Number.parseInt(safe.slice(2, 4), 16);
-  const b = Number.parseInt(safe.slice(4, 6), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+function isTyping(target: EventTarget | null): boolean {
+  return target instanceof HTMLElement && (["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName) || target.isContentEditable);
 }
 
-function getTextLines(text: string) {
-  const lines = text.split(/\r?\n/);
-  return lines.length > 0 ? lines : [""];
+/** Load the self-hosted Anton face once; resolves when it can be drawn on canvas. */
+let fontPromise: Promise<void> | null = null;
+function loadMemeFont(): Promise<void> {
+  if (fontPromise) return fontPromise;
+  fontPromise = (async () => {
+    if (typeof FontFace === "undefined" || !document.fonts) return;
+    const base = `/vendor/anton-${process.env.NEXT_PUBLIC_ANTON_VERSION}/`;
+    const faces = [
+      new FontFace(MEME_FAMILY, `url(${base}anton-latin-400-normal.woff2) format("woff2")`, {
+        unicodeRange: "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD",
+      }),
+      new FontFace(MEME_FAMILY, `url(${base}anton-latin-ext-400-normal.woff2) format("woff2")`, {
+        unicodeRange: "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF",
+      }),
+    ];
+    await Promise.all(
+      faces.map(async (f) => {
+        try {
+          document.fonts.add(await f.load());
+        } catch {
+          /* falls back to Impact / system bold */
+        }
+      }),
+    );
+  })();
+  return fontPromise;
 }
-
-const FONT_FAMILIES = [
-  "Impact",
-  "Arial Black",
-  "Arial",
-  "Helvetica",
-  "Comic Sans MS",
-  "Georgia",
-  "Times New Roman",
-  "Trebuchet MS",
-  "Verdana",
-  "Courier New",
-];
-
-type PresetTemplate = {
-  labelKey: string;
-  items: Omit<TextItem, "id">[];
-};
-
-const PRESETS: PresetTemplate[] = [
-  {
-    labelKey: "meme.preset.classic",
-    items: [
-      {
-        text: "TOP TEXT",
-        x: 50,
-        y: 8,
-        fontSize: 48,
-        fontFamily: "Impact",
-        color: "#ffffff",
-        strokeColor: "#000000",
-        strokeWidth: 3,
-        rotation: 0,
-        align: "center",
-        bold: false,
-        italic: false,
-        opacity: 100,
-        backgroundColor: "#000000",
-        backgroundOpacity: 0,
-      },
-      {
-        text: "BOTTOM TEXT",
-        x: 50,
-        y: 92,
-        fontSize: 48,
-        fontFamily: "Impact",
-        color: "#ffffff",
-        strokeColor: "#000000",
-        strokeWidth: 3,
-        rotation: 0,
-        align: "center",
-        bold: false,
-        italic: false,
-        opacity: 100,
-        backgroundColor: "#000000",
-        backgroundOpacity: 0,
-      },
-    ],
-  },
-  {
-    labelKey: "meme.preset.bottomCaption",
-    items: [
-      {
-        text: "Caption here",
-        x: 50,
-        y: 90,
-        fontSize: 44,
-        fontFamily: "Impact",
-        color: "#ffffff",
-        strokeColor: "#000000",
-        strokeWidth: 3,
-        rotation: 0,
-        align: "center",
-        bold: false,
-        italic: false,
-        opacity: 100,
-        backgroundColor: "#000000",
-        backgroundOpacity: 0,
-      },
-    ],
-  },
-  {
-    labelKey: "meme.preset.reaction",
-    items: [
-      {
-        text: "Me:",
-        x: 20,
-        y: 10,
-        fontSize: 36,
-        fontFamily: "Arial Black",
-        color: "#ffffff",
-        strokeColor: "#000000",
-        strokeWidth: 2,
-        rotation: 0,
-        align: "left",
-        bold: true,
-        italic: false,
-        opacity: 100,
-        backgroundColor: "#000000",
-        backgroundOpacity: 0,
-      },
-      {
-        text: "Also me:",
-        x: 70,
-        y: 10,
-        fontSize: 36,
-        fontFamily: "Arial Black",
-        color: "#ffffff",
-        strokeColor: "#000000",
-        strokeWidth: 2,
-        rotation: 0,
-        align: "left",
-        bold: true,
-        italic: false,
-        opacity: 100,
-        backgroundColor: "#000000",
-        backgroundOpacity: 0,
-      },
-    ],
-  },
-  {
-    labelKey: "meme.preset.distractedBoyfriend",
-    items: [
-      {
-        text: "New thing",
-        x: 25,
-        y: 88,
-        fontSize: 32,
-        fontFamily: "Impact",
-        color: "#ffffff",
-        strokeColor: "#000000",
-        strokeWidth: 2,
-        rotation: 0,
-        align: "center",
-        bold: false,
-        italic: false,
-        opacity: 100,
-        backgroundColor: "#000000",
-        backgroundOpacity: 0,
-      },
-      {
-        text: "Old thing",
-        x: 75,
-        y: 88,
-        fontSize: 32,
-        fontFamily: "Impact",
-        color: "#ffffff",
-        strokeColor: "#000000",
-        strokeWidth: 2,
-        rotation: 0,
-        align: "center",
-        bold: false,
-        italic: false,
-        opacity: 100,
-        backgroundColor: "#000000",
-        backgroundOpacity: 0,
-      },
-      {
-        text: "Me",
-        x: 50,
-        y: 55,
-        fontSize: 32,
-        fontFamily: "Impact",
-        color: "#ffffff",
-        strokeColor: "#000000",
-        strokeWidth: 2,
-        rotation: 0,
-        align: "center",
-        bold: false,
-        italic: false,
-        opacity: 100,
-        backgroundColor: "#000000",
-        backgroundOpacity: 0,
-      },
-    ],
-  },
-];
-
-function makeId() {
-  return Math.random().toString(36).slice(2, 10);
-}
-
-function defaultItems(): TextItem[] {
-  return [
-    {
-      id: makeId(),
-      text: "TOP TEXT",
-      x: 50,
-      y: 8,
-      fontSize: 48,
-      fontFamily: "Impact",
-      color: "#ffffff",
-      strokeColor: "#000000",
-      strokeWidth: 3,
-      rotation: 0,
-      align: "center",
-      bold: false,
-      italic: false,
-      opacity: 100,
-      backgroundColor: "#000000",
-      backgroundOpacity: 0,
-    },
-    {
-      id: makeId(),
-      text: "BOTTOM TEXT",
-      x: 50,
-      y: 92,
-      fontSize: 48,
-      fontFamily: "Impact",
-      color: "#ffffff",
-      strokeColor: "#000000",
-      strokeWidth: 3,
-      rotation: 0,
-      align: "center",
-      bold: false,
-      italic: false,
-      opacity: 100,
-      backgroundColor: "#000000",
-      backgroundOpacity: 0,
-    },
-  ];
-}
-
 
 export default function MemeGeneratorPage() {
-  const { locale, t } = useI18n();
-  const editorCopy = locale === "tr"
-    ? {
-        newText: "Yeni Metin",
-        duplicate: "Kopyala",
-        bringForward: "Öne al",
-        sendBackward: "Arkaya al",
-        xPosition: "X Konumu",
-        yPosition: "Y Konumu",
-        opacity: "Saydamlık",
-        textBackground: "Metin Arka Planı",
-        backgroundOpacity: "Arka plan opaklığı",
-        layerTools: "Katman araçları",
-        quickMove: "İnce hareket",
-      }
-    : {
-        newText: "New Text",
-        duplicate: "Duplicate",
-        bringForward: "Bring forward",
-        sendBackward: "Send backward",
-        xPosition: "X Position",
-        yPosition: "Y Position",
-        opacity: "Opacity",
-        textBackground: "Text background",
-        backgroundOpacity: "Background opacity",
-        layerTools: "Layer tools",
-        quickMove: "Fine move",
-      };
+  const { t, locale } = useI18n();
   const [file, setFile] = useState<File | null>(null);
-  const [imgSrc, setImgSrc] = useState<string | null>(null);
-  const [textItems, setTextItems] = useState<TextItem[]>(defaultItems());
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [undoStack, setUndoStack] = useState<TextItem[][]>([]);
-  const [redoStack, setRedoStack] = useState<TextItem[][]>([]);
+  const [proxy, setProxy] = useState<ImageBitmap | null>(null);
+  const [natural, setNatural] = useState<{ w: number; h: number } | null>(null);
+  const [state, setState] = useState<MemeState>({ layers: [], band: { on: false, text: "", size: 0.055 } });
+  const [selected, setSelected] = useState<string | null>(null);
+  const [fontReady, setFontReady] = useState(false);
+  const [boxW, setBoxW] = useState(0);
+  const [guide, setGuide] = useState<{ v: boolean; h: boolean }>({ v: false, h: false });
+  const [format, setFormat] = useStoredPref<FormatChoice>("meme.format", "original", ["original", "image/jpeg", "image/png", "image/webp"]);
+  const [quality, setQuality] = useStoredPref<number>("meme.quality", 0.92);
+  const [exporting, setExporting] = useState(false);
+  const [history, setHistory] = useState<{ stack: MemeState[]; index: number }>({ stack: [], index: -1 });
 
-  const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const imgRef = useRef<HTMLImageElement | null>(null);
-  const itemsRef = useRef<TextItem[]>(textItems);
-  itemsRef.current = textItems;
-
-  // Drag state
-  const dragRef = useRef<{
-    id: string;
-    startMouseX: number;
-    startMouseY: number;
-    startItemX: number;
-    startItemY: number;
-    beforeItems: TextItem[];
-  } | null>(null);
-
-  // Load image
-  const handleFilesSelected = useCallback((files: File[]) => {
-    const f = files[0];
-    setFile(f);
-    const url = URL.createObjectURL(f);
-    setImgSrc(url);
-    const img = new window.Image();
-    img.onload = () => {
-      imgRef.current = img;
-    };
-    img.onerror = () => toast.error(t("meme.loadFail"));
-    img.src = url;
-    setTextItems(defaultItems());
-    setSelectedId(null);
-    setUndoStack([]);
-    setRedoStack([]);
-  }, [t]);
-
-  const selectedItem = textItems.find((item) => item.id === selectedId) ?? null;
-
-  function pushHistorySnapshot() {
-    setUndoStack((u) => [...u.slice(-49), cloneTextItems(itemsRef.current)]);
-    setRedoStack([]);
-  }
-
-  function updateItem(id: string, patch: Partial<TextItem>) {
-    setTextItems((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, ...patch } : t))
-    );
-  }
-
-  function addText() {
-    pushHistorySnapshot();
-    const id = makeId();
-    setTextItems((prev) => [
-      ...prev,
-      {
-        id,
-        text: editorCopy.newText,
-        x: 50,
-        y: 50,
-        fontSize: 48,
-        fontFamily: "Impact",
-        color: "#ffffff",
-        strokeColor: "#000000",
-        strokeWidth: 3,
-        rotation: 0,
-        align: "center",
-        bold: false,
-        italic: false,
-        opacity: 100,
-        backgroundColor: "#000000",
-        backgroundOpacity: 0,
-      },
-    ]);
-    setSelectedId(id);
-  }
-
-  function deleteItem(id: string) {
-    pushHistorySnapshot();
-    setTextItems((prev) => prev.filter((t) => t.id !== id));
-    if (selectedId === id) setSelectedId(null);
-  }
-
-  function applyPreset(preset: PresetTemplate) {
-    pushHistorySnapshot();
-    setTextItems(preset.items.map((item) => ({ ...item, id: makeId() })));
-    setSelectedId(null);
-  }
-
-  function duplicateItem(id: string) {
-    const source = itemsRef.current.find((item) => item.id === id);
-    if (!source) return;
-    pushHistorySnapshot();
-    const nextId = makeId();
-    const clone = {
-      ...source,
-      id: nextId,
-      x: Math.min(95, source.x + 4),
-      y: Math.min(95, source.y + 4),
-    };
-    setTextItems((prev) => [...prev, clone]);
-    setSelectedId(nextId);
-  }
-
-  function moveLayer(id: string, direction: "forward" | "backward") {
-    const current = itemsRef.current;
-    const index = current.findIndex((item) => item.id === id);
-    if (index === -1) return;
-    const targetIndex =
-      direction === "forward"
-        ? Math.min(current.length - 1, index + 1)
-        : Math.max(0, index - 1);
-    if (targetIndex === index) return;
-    pushHistorySnapshot();
-    const next = [...current];
-    const [item] = next.splice(index, 1);
-    next.splice(targetIndex, 0, item);
-    setTextItems(next);
-  }
-
-  function nudgeItem(id: string, deltaX: number, deltaY: number) {
-    setTextItems((prev) =>
-      prev.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              x: Math.max(0, Math.min(100, item.x + deltaX)),
-              y: Math.max(0, Math.min(100, item.y + deltaY)),
-            }
-          : item,
-      ),
-    );
-  }
-
-  // Drag handlers
-  function handleMouseDown(e: React.MouseEvent, id: string) {
-    e.preventDefault();
-    e.stopPropagation();
-    setSelectedId(id);
-    const container = containerRef.current;
-    if (!container) return;
-    const item = textItems.find((t) => t.id === id);
-    if (!item) return;
-    dragRef.current = {
-      id,
-      startMouseX: e.clientX,
-      startMouseY: e.clientY,
-      startItemX: item.x,
-      startItemY: item.y,
-      beforeItems: cloneTextItems(textItems),
-    };
-  }
-
-  function handleTouchStart(e: React.TouchEvent, id: string) {
-    e.stopPropagation();
-    setSelectedId(id);
-    const container = containerRef.current;
-    if (!container) return;
-    const item = textItems.find((t) => t.id === id);
-    if (!item) return;
-    const touch = e.touches[0];
-    dragRef.current = {
-      id,
-      startMouseX: touch.clientX,
-      startMouseY: touch.clientY,
-      startItemX: item.x,
-      startItemY: item.y,
-      beforeItems: cloneTextItems(textItems),
-    };
-  }
+  const boxRef = useRef<HTMLDivElement>(null);
+  const textRef = useRef<HTMLTextAreaElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const boxesRef = useRef<{ band: number; boxes: LayerBox[] }>({ band: 0, boxes: [] });
+  const drag = useRef<{ id: string; mode: "move" | "resize"; sx: number; sy: number; start: Layer; dist: number } | null>(null);
+  const restoring = useRef(false);
 
   useEffect(() => {
-    function handleMouseMove(e: MouseEvent) {
-      if (!dragRef.current || !containerRef.current) return;
-      const { id, startMouseX, startMouseY, startItemX, startItemY } = dragRef.current;
-      const rect = containerRef.current.getBoundingClientRect();
-      const dx = ((e.clientX - startMouseX) / rect.width) * 100;
-      const dy = ((e.clientY - startMouseY) / rect.height) * 100;
-      updateItem(id, {
-        x: Math.max(0, Math.min(100, startItemX + dx)),
-        y: Math.max(0, Math.min(100, startItemY + dy)),
-      });
-    }
-    function handleTouchMove(e: TouchEvent) {
-      if (!dragRef.current || !containerRef.current) return;
-      const { id, startMouseX, startMouseY, startItemX, startItemY } = dragRef.current;
-      const rect = containerRef.current.getBoundingClientRect();
-      const touch = e.touches[0];
-      const dx = ((touch.clientX - startMouseX) / rect.width) * 100;
-      const dy = ((touch.clientY - startMouseY) / rect.height) * 100;
-      updateItem(id, {
-        x: Math.max(0, Math.min(100, startItemX + dx)),
-        y: Math.max(0, Math.min(100, startItemY + dy)),
-      });
-    }
-    function handleUp() {
-      const d = dragRef.current;
-      if (d?.beforeItems) {
-        const after = itemsRef.current;
-        if (JSON.stringify(after) !== JSON.stringify(d.beforeItems)) {
-          setUndoStack((u) => [...u.slice(-49), d.beforeItems]);
-          setRedoStack([]);
-        }
+    loadMemeFont().then(() => setFontReady(true));
+  }, []);
+  useEffect(() => () => proxy?.close(), [proxy]);
+
+  const load = useCallback(
+    async (f: File) => {
+      try {
+        const d = await decodeImage(f);
+        const p = await makeProxy(d.bitmap, 1400);
+        d.bitmap.close();
+        const first = preset("classic", t, d.naturalWidth / d.naturalHeight);
+        setFile(f);
+        setNatural({ w: d.naturalWidth, h: d.naturalHeight });
+        setProxy(p);
+        setState(first);
+        setSelected(null);
+        setHistory({ stack: [first], index: 0 });
+      } catch {
+        toast.error(t("meme.loadFail"));
       }
-      dragRef.current = null;
+    },
+    [t],
+  );
+
+  // ── History: record settled states (a pause of 350 ms ends an edit) ──
+  useEffect(() => {
+    if (!file) return;
+    if (restoring.current) {
+      restoring.current = false;
+      return;
     }
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", handleUp);
-    window.addEventListener("touchmove", handleTouchMove, { passive: true });
-    window.addEventListener("touchend", handleUp);
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleUp);
-      window.removeEventListener("touchmove", handleTouchMove);
-      window.removeEventListener("touchend", handleUp);
-    };
-  }, [textItems]);
+    const id = window.setTimeout(() => {
+      setHistory((h) => {
+        if (h.stack[h.index] && JSON.stringify(h.stack[h.index]) === JSON.stringify(state)) return h;
+        const stack = [...h.stack.slice(0, h.index + 1), state].slice(-60);
+        return { stack, index: stack.length - 1 };
+      });
+    }, 350);
+    return () => window.clearTimeout(id);
+  }, [state, file]);
+  const canUndo = history.index > 0;
+  const canRedo = history.index < history.stack.length - 1;
+  const undo = useCallback(() => {
+    if (!canUndo) return;
+    restoring.current = true;
+    setState(history.stack[history.index - 1]!);
+    setHistory((h) => ({ ...h, index: h.index - 1 }));
+  }, [canUndo, history]);
+  const redo = useCallback(() => {
+    if (!canRedo) return;
+    restoring.current = true;
+    setState(history.stack[history.index + 1]!);
+    setHistory((h) => ({ ...h, index: h.index + 1 }));
+  }, [canRedo, history]);
 
-  function undoMeme() {
-    if (undoStack.length === 0) return;
-    const prev = undoStack[undoStack.length - 1]!;
-    setRedoStack((r) => [...r, cloneTextItems(itemsRef.current)]);
-    setUndoStack((u) => u.slice(0, -1));
-    setTextItems(cloneTextItems(prev));
-  }
-
-  function redoMeme() {
-    if (redoStack.length === 0) return;
-    const next = redoStack[redoStack.length - 1]!;
-    setUndoStack((u) => [...u.slice(-49), cloneTextItems(itemsRef.current)]);
-    setRedoStack((r) => r.slice(0, -1));
-    setTextItems(cloneTextItems(next));
-  }
-
-  function drawCanvasTextItem(
-    ctx: CanvasRenderingContext2D,
-    item: TextItem,
-    cx: number,
-    cy: number,
-    scaledFontSize: number,
-    scaleFactor: number,
-  ) {
-    const lines = getTextLines(item.text);
-    const lineHeight = scaledFontSize * 1.08;
-    const style = item.italic ? "italic " : "";
-    const weight = item.bold ? "bold " : "";
-
-    ctx.save();
-    ctx.translate(cx, cy);
-    ctx.rotate((item.rotation * Math.PI) / 180);
-    ctx.globalAlpha = item.opacity / 100;
-    ctx.font = `${style}${weight}${scaledFontSize}px ${item.fontFamily}, sans-serif`;
-    ctx.textAlign = item.align;
-    ctx.textBaseline = "middle";
-    ctx.lineJoin = "round";
-    ctx.miterLimit = 2;
-
-    const widths = lines.map((line) => ctx.measureText(line || " ").width);
-    const blockWidth = widths.length > 0 ? Math.max(...widths) : 0;
-    const blockHeight = lineHeight * lines.length;
-    const paddingX = 12 * scaleFactor;
-    const paddingY = 8 * scaleFactor;
-
-    if (item.backgroundOpacity > 0) {
-      let rectX = -blockWidth / 2 - paddingX;
-      if (item.align === "left") rectX = -paddingX;
-      if (item.align === "right") rectX = -blockWidth - paddingX;
-      const rectY = -blockHeight / 2 - paddingY;
-      const rectWidth = blockWidth + paddingX * 2;
-      const rectHeight = blockHeight + paddingY * 2;
-      ctx.fillStyle = hexToRgba(
-        item.backgroundColor,
-        Math.min(1, Math.max(0, item.backgroundOpacity / 100)),
-      );
-      ctx.beginPath();
-      ctx.roundRect(rectX, rectY, rectWidth, rectHeight, 10 * scaleFactor);
-      ctx.fill();
-    }
-
-    lines.forEach((line, index) => {
-      const yOffset = (index - (lines.length - 1) / 2) * lineHeight;
-      if (item.strokeWidth > 0) {
-        ctx.strokeStyle = item.strokeColor;
-        ctx.lineWidth = item.strokeWidth * scaleFactor * 2;
-        ctx.strokeText(line, 0, yOffset);
-      }
-      ctx.fillStyle = item.color;
-      ctx.fillText(line, 0, yOffset);
+  const sel = state.layers.find((l) => l.id === selected) ?? null;
+  const patch = useCallback((id: string, p: Partial<Layer>) => setState((s) => ({ ...s, layers: s.layers.map((l) => (l.id === id ? { ...l, ...p } : l)) })), []);
+  const addLayer = () => {
+    const l: Layer = sel ? { ...sel, id: newId(), text: t("meme.ui.newText"), y: Math.min(0.9, sel.y + 0.12) } : layer(t("meme.ui.newText"));
+    setState((s) => ({ ...s, layers: [...s.layers, l] }));
+    setSelected(l.id);
+    requestAnimationFrame(() => textRef.current?.select());
+  };
+  const removeLayer = (id: string) => {
+    setState((s) => ({ ...s, layers: s.layers.filter((l) => l.id !== id) }));
+    setSelected(null);
+  };
+  const duplicate = (id: string) => {
+    const src = state.layers.find((l) => l.id === id);
+    if (!src) return;
+    const copy = { ...src, id: newId(), x: Math.min(0.95, src.x + 0.04), y: Math.min(0.95, src.y + 0.04) };
+    setState((s) => ({ ...s, layers: [...s.layers, copy] }));
+    setSelected(copy.id);
+  };
+  const moveLayer = (id: string, dir: 1 | -1) =>
+    setState((s) => {
+      const i = s.layers.findIndex((l) => l.id === id), j = i + dir;
+      if (i < 0 || j < 0 || j >= s.layers.length) return s;
+      const layers = [...s.layers];
+      [layers[i], layers[j]] = [layers[j]!, layers[i]!];
+      return { ...s, layers };
     });
 
-    ctx.restore();
-  }
+  // ── Preview size ──
+  useEffect(() => {
+    const el = boxRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setBoxW(el.clientWidth));
+    ro.observe(el);
+    setBoxW(el.clientWidth);
+    return () => ro.disconnect();
+  }, [file]);
 
-  function handleDownload() {
-    const img = imgRef.current;
-    const canvas = canvasRef.current;
-    const container = containerRef.current;
-    if (!img || !canvas || !file || !container) return;
+  const aspect = natural ? natural.h / natural.w : 1;
+  const maxH = typeof window !== "undefined" ? window.innerHeight * 0.68 : 640;
+  const cssW = Math.max(1, Math.min(boxW, maxH / (aspect + (state.band.on ? 0.18 : 0))));
+  const builtin = useMemo(() => (typeof document === "undefined" ? "sans-serif" : builtInFontFamily()), []);
 
-    const nw = img.naturalWidth;
-    const nh = img.naturalHeight;
-    canvas.width = nw;
-    canvas.height = nh;
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    ctx.drawImage(img, 0, 0);
-
-    const displayW = container.clientWidth;
-    const displayH = container.clientHeight;
-    const scaleX = nw / displayW;
-    const scaleY = nh / displayH;
-    const scaleFactor = Math.min(scaleX, scaleY);
-
-    for (const item of textItems) {
-      if (!item.text.trim()) continue;
-
-      const cx = (item.x / 100) * nw;
-      const cy = (item.y / 100) * nh;
-      const scaledFontSize = item.fontSize * scaleFactor;
-      drawCanvasTextItem(ctx, item, cx, cy, scaledFontSize, scaleFactor);
+  // ── Draw preview ──
+  useEffect(() => {
+    const c = canvasRef.current;
+    if (!c || !proxy || !boxW) return;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const W = Math.round(cssW * dpr), H = Math.round(W * aspect);
+    const ctx = ctx2d(c);
+    // Measure the band first so the canvas is sized before drawing.
+    const band = bandHeight(measureCtx(), state.band, W, builtin);
+    c.width = W;
+    c.height = H + band;
+    c.style.width = `${cssW}px`;
+    c.style.height = `${(H + band) / dpr}px`;
+    const res = drawMeme(ctx, proxy, W, H, state, { builtin, locale });
+    boxesRef.current = { band: res.band / dpr, boxes: res.boxes.map((b) => ({ ...b, cx: b.cx / dpr, cy: b.cy / dpr, w: b.w / dpr, h: b.h / dpr })) };
+    // Overlay: selection, resize handle and centre guides (preview only).
+    ctx.save();
+    ctx.scale(dpr, dpr);
+    const cssH = H / dpr, top = res.band / dpr;
+    ctx.strokeStyle = "#FFD60A";
+    ctx.lineWidth = 1;
+    if (guide.v) {
+      ctx.beginPath();
+      ctx.moveTo(cssW / 2, top);
+      ctx.lineTo(cssW / 2, top + cssH);
+      ctx.stroke();
     }
+    if (guide.h) {
+      ctx.beginPath();
+      ctx.moveTo(0, top + cssH / 2);
+      ctx.lineTo(cssW, top + cssH / 2);
+      ctx.stroke();
+    }
+    const b = boxesRef.current.boxes.find((x) => x.id === selected);
+    if (b) {
+      ctx.save();
+      ctx.translate(b.cx, b.cy);
+      ctx.rotate((b.rot * Math.PI) / 180);
+      ctx.setLineDash([5, 4]);
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = "#16181D";
+      ctx.strokeRect(-b.w / 2, -b.h / 2, b.w, b.h);
+      ctx.strokeStyle = "#FFD60A";
+      ctx.lineDashOffset = 4.5;
+      ctx.strokeRect(-b.w / 2, -b.h / 2, b.w, b.h);
+      ctx.restore();
+      const hp = handlePoint(b);
+      ctx.fillStyle = "#FFD60A";
+      ctx.strokeStyle = "#16181D";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(hp.x, hp.y, 7, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    }
+    ctx.restore();
+  }, [proxy, state, selected, cssW, aspect, boxW, builtin, locale, fontReady, guide]);
 
-    canvas.toBlob((blob) => {
-      if (blob) {
-        const baseName = getFileNameWithoutExtension(file.name);
-        downloadBlob(blob, `${baseName}-meme.png`);
-        toast.success(t("meme.success"));
-      } else {
-        toast.error(t("meme.fail"));
+  // ── Pointer interaction ──
+  const pos = (e: { clientX: number; clientY: number }) => {
+    const r = canvasRef.current!.getBoundingClientRect();
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
+  };
+  const onDown = (e: ReactPointerEvent<HTMLCanvasElement>) => {
+    const p = pos(e);
+    const { boxes } = boxesRef.current;
+    const cur = boxes.find((b) => b.id === selected);
+    if (cur) {
+      const hp = handlePoint(cur);
+      if (Math.hypot(p.x - hp.x, p.y - hp.y) <= 14) {
+        e.currentTarget.setPointerCapture(e.pointerId);
+        drag.current = { id: cur.id, mode: "resize", sx: p.x, sy: p.y, start: sel!, dist: Math.max(8, Math.hypot(p.x - cur.cx, p.y - cur.cy)) };
+        return;
       }
-    }, "image/png");
+    }
+    const hit = [...boxes].reverse().find((b) => hitBox(b, p.x, p.y, 4));
+    if (!hit) {
+      setSelected(null);
+      return;
+    }
+    e.currentTarget.setPointerCapture(e.pointerId);
+    setSelected(hit.id);
+    const l = state.layers.find((x) => x.id === hit.id)!;
+    // Start from where the block is drawn (it may be held inside the image edges).
+    const w = e.currentTarget.clientWidth;
+    const start = { ...l, x: hit.cx / w, y: (hit.cy - boxesRef.current.band) / (w * aspect) };
+    drag.current = { id: hit.id, mode: "move", sx: p.x, sy: p.y, start, dist: 0 };
+  };
+  const onMove = (e: ReactPointerEvent<HTMLCanvasElement>) => {
+    const d = drag.current;
+    const c = canvasRef.current;
+    if (!c) return;
+    const p = pos(e);
+    if (!d) {
+      const { boxes } = boxesRef.current;
+      const cur = boxes.find((b) => b.id === selected);
+      const onHandle = cur && Math.hypot(p.x - handlePoint(cur).x, p.y - handlePoint(cur).y) <= 14;
+      c.style.cursor = onHandle ? "nwse-resize" : boxes.some((b) => hitBox(b, p.x, p.y, 4)) ? "move" : "default";
+      return;
+    }
+    const cssW2 = c.clientWidth, imgH = cssW2 * aspect;
+    if (d.mode === "resize") {
+      const b = boxesRef.current.boxes.find((x) => x.id === d.id);
+      if (!b) return;
+      const k = Math.hypot(p.x - b.cx, p.y - b.cy) / d.dist;
+      patch(d.id, { size: Math.min(0.4, Math.max(0.015, d.start.size * k)), width: Math.min(1, Math.max(0.1, d.start.width * k)) });
+      return;
+    }
+    let x = d.start.x + (p.x - d.sx) / cssW2;
+    let y = d.start.y + (p.y - d.sy) / imgH;
+    // Snap to the centre lines.
+    const sv = Math.abs(x - 0.5) * cssW2 < 6, sh = Math.abs(y - 0.5) * imgH < 6;
+    if (sv) x = 0.5;
+    if (sh) y = 0.5;
+    if (sv !== guide.v || sh !== guide.h) setGuide({ v: sv, h: sh });
+    patch(d.id, { x: Math.min(1, Math.max(0, x)), y: Math.min(1, Math.max(0, y)) });
+  };
+  const onUp = () => {
+    drag.current = null;
+    setGuide({ v: false, h: false });
+  };
+
+  const onKeyDown = (e: ReactKeyboardEvent) => {
+    if (isTyping(e.target)) return;
+    const mod = e.metaKey || e.ctrlKey;
+    if (mod && e.key.toLowerCase() === "z") {
+      e.preventDefault();
+      if (e.shiftKey) redo();
+      else undo();
+      return;
+    }
+    if (mod && e.key.toLowerCase() === "y") {
+      e.preventDefault();
+      redo();
+      return;
+    }
+    if (!sel) return;
+    if (mod && e.key.toLowerCase() === "d") {
+      e.preventDefault();
+      duplicate(sel.id);
+      return;
+    }
+    if (e.key === "Delete" || e.key === "Backspace") {
+      e.preventDefault();
+      removeLayer(sel.id);
+      return;
+    }
+    const step = e.shiftKey ? 0.05 : 0.005;
+    const d = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[e.key];
+    if (d) {
+      e.preventDefault();
+      patch(sel.id, { x: Math.min(1, Math.max(0, sel.x + d[0]!)), y: Math.min(1, Math.max(0, sel.y + d[1]!)) });
+    }
+  };
+
+  // ── Export at full resolution ──
+  const exportMeme = async () => {
+    if (!file || !natural) return;
+    setExporting(true);
+    let canvas: HTMLCanvasElement | null = null;
+    try {
+      await loadMemeFont();
+      const d = await decodeImage(file);
+      let W = d.width, H = d.height;
+      const band = bandHeight(measureCtx(), state.band, W, builtin);
+      const budget = maxCanvasPixels();
+      if (W * (H + band) > budget) {
+        const k = Math.sqrt(budget / (W * (H + band))) * 0.99;
+        W = Math.floor(W * k);
+        H = Math.floor(H * k);
+      }
+      canvas = makeCanvas(W, H + bandHeight(measureCtx(), state.band, W, builtin));
+      drawMeme(ctx2d(canvas), d.bitmap, W, H, state, { builtin, locale });
+      d.bitmap.close();
+      const type = resolveFormat(file.type, format);
+      const blob = await encodeCanvas(canvas, type, quality);
+      const ext = type === "image/jpeg" ? "jpg" : type === "image/png" ? "png" : "webp";
+      downloadBlob(blob, `${getFileNameWithoutExtension(file.name)}-meme.${ext}`);
+      toast.success(t("meme.success"));
+    } catch {
+      toast.error(t("meme.fail"));
+    } finally {
+      releaseCanvas(canvas);
+      setExporting(false);
+    }
+  };
+
+  const applyPreset = (id: PresetId) => {
+    setState(preset(id, t, natural ? natural.w / natural.h : 1));
+    setSelected(null);
+  };
+
+  if (!file || !proxy) {
+    return (
+      <ToolLayout toolName={t("tool.meme-generator.name")} toolDescription={t("tool.meme-generator.desc")}>
+        <FileDropzone onFilesSelected={(fs) => fs[0] && load(fs[0])} accept={ACCEPT} multiple={false} formats={["JPG", "PNG", "WEBP", "GIF", "AVIF"]} label={t("meme.dropLabel")} />
+      </ToolLayout>
+    );
   }
 
-  function reset() {
-    setFile(null);
-    setImgSrc(null);
-    imgRef.current = null;
-    setTextItems(defaultItems());
-    setSelectedId(null);
-    setUndoStack([]);
-    setRedoStack([]);
-  }
+  const label = (k: string) => <span className="mb-1.5 block text-[13px] text-t-secondary">{k}</span>;
 
   return (
-    <ToolLayout
-      toolName="Meme Generator"
-      toolDescription="Add draggable text layers to images to create memes"
-    >
-      <canvas ref={canvasRef} className="hidden" />
-
-      <div className="space-y-6">
-        {!file ? (
-          <>
-            <FileDropzone
-              onFilesSelected={handleFilesSelected}
-              accept={{
-                "image/*": [".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp"],
-              }}
-              formats={["JPG", "PNG", "WEBP", "GIF"]}
-              label={t("meme.dropLabel")}
-            />
-
-            {/* Presets preview */}
-            <div className="glass rounded-xl p-5 space-y-3">
-              <p className="text-[13px] font-semibold text-t-primary">{t("meme.templates")}</p>
-              <p className="text-[12px] text-t-secondary">
-                {t("meme.templatesHint")}
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {PRESETS.map((p) => (
-                  <span
-                    key={p.labelKey}
-                    className="text-[11px] px-3 py-1.5 rounded-lg border border-border bg-bg-secondary text-t-secondary"
-                  >
-                    {t(p.labelKey)}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </>
-        ) : (
-          <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_400px] 2xl:grid-cols-[minmax(0,1fr)_440px] lg:items-start">
-            {/* Canvas area */}
-            <div className="space-y-3 lg:sticky lg:top-20">
-              <div className="flex items-center justify-between">
-                <p className="text-[13px] font-semibold text-t-primary">{t("meme.preview")}</p>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={undoMeme}
-                    disabled={undoStack.length === 0}
-                    className="px-3 py-1.5 rounded-lg text-[12px] font-semibold text-t-secondary bg-bg-secondary border border-border hover:bg-bg-tertiary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    {t("meme.undo")}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={redoMeme}
-                    disabled={redoStack.length === 0}
-                    className="px-3 py-1.5 rounded-lg text-[12px] font-semibold text-t-secondary bg-bg-secondary border border-border hover:bg-bg-tertiary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    {t("meme.redo")}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={addText}
-                    className="px-3 py-1.5 rounded-lg text-[12px] font-semibold text-on-accent bg-accent hover:shadow-lg hover:shadow-sm transition-all"
-                  >
-                    {t("meme.addText")}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={reset}
-                    className="px-3 py-1.5 rounded-lg text-[12px] font-semibold text-t-secondary bg-bg-secondary border border-border hover:bg-bg-tertiary transition-colors"
-                  >
-                    {t("meme.newImage")}
-                  </button>
-                </div>
-              </div>
-
-              {/* Interactive preview container */}
-              <div
-                ref={containerRef}
-                className="relative mx-auto w-fit max-w-full select-none overflow-hidden rounded-xl border border-border bg-bg-secondary/60"
-                style={{ cursor: "default" }}
-                onClick={() => setSelectedId(null)}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={imgSrc!}
-                  alt="Meme base"
-                  className="mx-auto block max-h-[calc(100vh-18rem)] max-w-full object-contain"
-                  draggable={false}
-                />
-
-                {/* Text overlays */}
-                {textItems.map((item) => (
-                  <div
-                    key={item.id}
-                    onMouseDown={(e) => handleMouseDown(e, item.id)}
-                    onTouchStart={(e) => handleTouchStart(e, item.id)}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedId(item.id);
-                    }}
-                    style={{
-                      position: "absolute",
-                      left: `${item.x}%`,
-                      top: `${item.y}%`,
-                      transform: `translate(-50%, -50%) rotate(${item.rotation}deg)`,
-                      fontSize: `${item.fontSize}px`,
-                      fontFamily: `${item.fontFamily}, sans-serif`,
-                      fontWeight: item.bold ? "bold" : "normal",
-                      fontStyle: item.italic ? "italic" : "normal",
-                      color: item.color,
-                      textAlign: item.align,
-                      opacity: item.opacity / 100,
-                      backgroundColor:
-                        item.backgroundOpacity > 0
-                          ? hexToRgba(item.backgroundColor, item.backgroundOpacity / 100)
-                          : "transparent",
-                      WebkitTextStroke: item.strokeWidth > 0
-                        ? `${item.strokeWidth}px ${item.strokeColor}`
-                        : undefined,
-                      cursor: "move",
-                      whiteSpace: "pre-wrap",
-                      lineHeight: 1.1,
-                      padding: "4px 6px",
-                      outline: selectedId === item.id
-                        ? "2px dashed rgba(99,102,241,0.8)"
-                        : "2px dashed transparent",
-                      outlineOffset: "2px",
-                      borderRadius: "4px",
-                      userSelect: "none",
-                      pointerEvents: "auto",
-                    }}
-                  >
-                    {item.text || "\u00A0"}
-                  </div>
-                ))}
-              </div>
-
-              {/* Presets */}
-              <div className="glass rounded-xl p-4 space-y-2">
-                <p className="text-[12px] font-semibold text-t-primary">{t("meme.quickTemplates")}</p>
-                <div className="flex flex-wrap gap-2">
-                  {PRESETS.map((p) => (
-                    <button
-                      key={p.labelKey}
-                      onClick={() => applyPreset(p)}
-                      className="px-3 py-1.5 rounded-lg text-[11px] font-medium text-t-secondary bg-bg-secondary border border-border hover:border-accent/50 hover:text-t-primary transition-colors"
-                    >
-                      {t(p.labelKey)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Download */}
-              <button
-                onClick={handleDownload}
-                className="w-full py-3 rounded-xl font-semibold text-on-accent bg-accent hover:shadow-lg hover:shadow-sm hover:scale-[1.01] active:scale-[0.99] transition-all text-[14px]"
-              >
-                {t("meme.downloadMeme")}
+    <ToolLayout toolName={t("tool.meme-generator.name")} toolDescription={t("tool.meme-generator.desc")}>
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start" onKeyDown={onKeyDown}>
+        <div className="space-y-3 lg:sticky lg:top-20">
+          <div className="glass p-3 sm:p-4">
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+              <button type="button" className={buttonSecondary} onClick={undo} disabled={!canUndo} aria-label={t("meme.undo")} title={`${t("meme.undo")} (Ctrl+Z)`}>
+                <Undo2 className="h-4 w-4" aria-hidden="true" />
               </button>
+              <button type="button" className={buttonSecondary} onClick={redo} disabled={!canRedo} aria-label={t("meme.redo")} title={`${t("meme.redo")} (Ctrl+Y)`}>
+                <Redo2 className="h-4 w-4" aria-hidden="true" />
+              </button>
+              <button type="button" className={buttonSecondary} onClick={addLayer}>
+                <Plus className="h-4 w-4" aria-hidden="true" />
+                {t("meme.v2.addText")}
+              </button>
+              <button type="button" className={`${buttonSecondary} ms-auto`} onClick={() => fileRef.current?.click()}>
+                <ImagePlus className="h-4 w-4" aria-hidden="true" />
+                {t("meme.newImage")}
+              </button>
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                tabIndex={-1}
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  e.target.value = "";
+                  if (f) load(f);
+                }}
+              />
             </div>
-
-            {/* Controls panel */}
-            <div className="glass rounded-xl p-5 space-y-5 lg:max-h-[calc(100vh-9rem)] lg:overflow-y-auto lg:pr-1">
-              {/* Text layers list */}
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-[13px] font-semibold text-t-primary">{t("meme.textLayers")}</p>
-                  <button
-                    onClick={addText}
-                    className="text-[11px] px-2.5 py-1 rounded-lg text-accent bg-accent/10 hover:bg-accent/20 transition-colors"
-                  >
-                    {t("meme.addLayer")}
-                  </button>
-                </div>
-                <div className="space-y-1.5">
-                  {textItems.map((item) => (
-                    <div
-                      key={item.id}
-                      onClick={() => setSelectedId(item.id)}
-                      className={`flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors ${
-                        selectedId === item.id
-                          ? "bg-accent/15 border border-accent/30"
-                          : "bg-bg-secondary border border-border hover:bg-bg-secondary"
-                      }`}
-                    >
-                      <span className="flex-1 text-[12px] text-t-primary truncate">
-                        {item.text || t("meme.emptyText")}
-                      </span>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteItem(item.id);
-                        }}
-                        className="text-[14px] text-t-secondary hover:text-red-400 transition-colors leading-none"
-                        title={t("meme.deleteLayerTitle")}
-                      >
-                        &times;
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Selected item controls */}
-              {selectedItem ? (
-                <div className="space-y-4 border-t border-border pt-4">
-                  <p className="text-[12px] font-semibold text-t-secondary uppercase tracking-wide">
-                    {t("meme.editSelected")}
-                  </p>
-
-                  {/* Text */}
-                  <div>
-                    <label className="block text-[11px] text-t-secondary mb-1">{t("meme.textLabel")}</label>
-                    <textarea
-                      value={selectedItem.text}
-                      onChange={(e) => updateItem(selectedItem.id, { text: e.target.value })}
-                      rows={2}
-                      className="w-full px-3 py-2 rounded-lg bg-bg-secondary border border-border text-[13px] text-t-primary placeholder:text-t-secondary/50 focus:outline-none focus:border-accent/50 transition-colors resize-none"
-                      placeholder={t("meme.enterText")}
-                    />
-                  </div>
-
-                  {/* Font Family */}
-                  <div>
-                    <label className="block text-[11px] text-t-secondary mb-1">{t("meme.fontFamily")}</label>
-                    <select
-                      value={selectedItem.fontFamily}
-                      onChange={(e) => updateItem(selectedItem.id, { fontFamily: e.target.value })}
-                      className="w-full px-3 py-2 rounded-lg bg-bg-secondary border border-border text-[13px] text-t-primary focus:outline-none focus:border-accent/50 transition-colors"
-                    >
-                      {FONT_FAMILIES.map((f) => (
-                        <option key={f} value={f} style={{ fontFamily: f }}>
-                          {f}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Bold / Italic */}
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => updateItem(selectedItem.id, { bold: !selectedItem.bold })}
-                      className={`flex-1 py-2 rounded-lg text-[12px] font-bold transition-colors border ${
-                        selectedItem.bold
-                          ? "bg-accent/20 border-accent/40 text-accent"
-                          : "bg-bg-secondary border-border text-t-secondary hover:bg-bg-secondary"
-                      }`}
-                    >
-                      B
-                    </button>
-                    <button
-                      onClick={() => updateItem(selectedItem.id, { italic: !selectedItem.italic })}
-                      className={`flex-1 py-2 rounded-lg text-[12px] font-bold italic transition-colors border ${
-                        selectedItem.italic
-                          ? "bg-accent/20 border-accent/40 text-accent"
-                          : "bg-bg-secondary border-border text-t-secondary hover:bg-bg-secondary"
-                      }`}
-                    >
-                      I
-                    </button>
-                  </div>
-
-                  {/* Font Size */}
-                  <div>
-                    <div className="flex justify-between mb-1">
-                      <label className="text-[11px] text-t-secondary">{t("meme.fontSize")}</label>
-                      <span className="text-[11px] font-mono text-t-secondary">{selectedItem.fontSize}px</span>
-                    </div>
-                    <input
-                      type="range"
-                      min={16}
-                      max={120}
-                      step={1}
-                      value={selectedItem.fontSize}
-                      onChange={(e) => updateItem(selectedItem.id, { fontSize: Number(e.target.value) })}
-                      className="w-full accent-accent"
-                    />
-                  </div>
-
-                  {/* Rotation */}
-                  <div>
-                    <div className="flex justify-between mb-1">
-                      <label className="text-[11px] text-t-secondary">{t("meme.rotation")}</label>
-                      <span className="text-[11px] font-mono text-t-secondary">{selectedItem.rotation}&deg;</span>
-                    </div>
-                    <input
-                      type="range"
-                      min={-180}
-                      max={180}
-                      step={1}
-                      value={selectedItem.rotation}
-                      onChange={(e) => updateItem(selectedItem.id, { rotation: Number(e.target.value) })}
-                      className="w-full accent-accent"
-                    />
-                  </div>
-
-                  {/* Stroke Width */}
-                  <div>
-                    <div className="flex justify-between mb-1">
-                      <label className="text-[11px] text-t-secondary">{t("meme.strokeWidth")}</label>
-                      <span className="text-[11px] font-mono text-t-secondary">{selectedItem.strokeWidth}px</span>
-                    </div>
-                    <input
-                      type="range"
-                      min={0}
-                      max={6}
-                      step={1}
-                      value={selectedItem.strokeWidth}
-                      onChange={(e) => updateItem(selectedItem.id, { strokeWidth: Number(e.target.value) })}
-                      className="w-full accent-accent"
-                    />
-                  </div>
-
-                  {/* Colors */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-[11px] text-t-secondary mb-1">{t("meme.textColor")}</label>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="color"
-                          value={selectedItem.color}
-                          onChange={(e) => updateItem(selectedItem.id, { color: e.target.value })}
-                          className="w-8 h-8 rounded-lg cursor-pointer border border-border bg-bg-secondary p-0.5"
-                        />
-                        <span className="text-[10px] font-mono text-t-secondary">{selectedItem.color}</span>
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-[11px] text-t-secondary mb-1">{t("meme.strokeColor")}</label>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="color"
-                          value={selectedItem.strokeColor}
-                          onChange={(e) => updateItem(selectedItem.id, { strokeColor: e.target.value })}
-                          className="w-8 h-8 rounded-lg cursor-pointer border border-border bg-bg-secondary p-0.5"
-                        />
-                        <span className="text-[10px] font-mono text-t-secondary">{selectedItem.strokeColor}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Alignment */}
-                  <div>
-                    <label className="block text-[11px] text-t-secondary mb-1">{t("meme.alignment")}</label>
-                    <div className="flex gap-1">
-                      {(["left", "center", "right"] as const).map((a) => (
-                        <button
-                          key={a}
-                          onClick={() => updateItem(selectedItem.id, { align: a })}
-                          className={`flex-1 py-1.5 rounded-lg text-[11px] font-medium capitalize transition-colors border ${
-                            selectedItem.align === a
-                              ? "bg-accent/20 border-accent/40 text-accent"
-                              : "bg-bg-secondary border-border text-t-secondary hover:bg-bg-secondary"
-                          }`}
-                        >
-                          {a}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="rounded-xl border border-border bg-bg-secondary/70 p-3 space-y-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-t-secondary">
-                      {editorCopy.layerTools}
-                    </p>
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        type="button"
-                        onClick={() => duplicateItem(selectedItem.id)}
-                        className="rounded-lg border border-border bg-bg-primary px-3 py-2 text-[12px] font-medium text-t-primary transition-colors hover:border-accent/40"
-                      >
-                        {editorCopy.duplicate}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => moveLayer(selectedItem.id, "forward")}
-                        className="rounded-lg border border-border bg-bg-primary px-3 py-2 text-[12px] font-medium text-t-primary transition-colors hover:border-accent/40"
-                      >
-                        {editorCopy.bringForward}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => moveLayer(selectedItem.id, "backward")}
-                        className="rounded-lg border border-border bg-bg-primary px-3 py-2 text-[12px] font-medium text-t-primary transition-colors hover:border-accent/40"
-                      >
-                        {editorCopy.sendBackward}
-                      </button>
-                      <div className="rounded-lg border border-border bg-bg-primary px-3 py-2 text-[11px] text-t-secondary">
-                        {editorCopy.quickMove}
-                      </div>
-                    </div>
-                    <div className="mx-auto grid w-28 grid-cols-3 gap-2">
-                      <span />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          pushHistorySnapshot();
-                          nudgeItem(selectedItem.id, 0, -1);
-                        }}
-                        className="rounded-lg border border-border bg-bg-primary px-2 py-2 text-[12px] text-t-primary transition-colors hover:border-accent/40"
-                      >
-                        ↑
-                      </button>
-                      <span />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          pushHistorySnapshot();
-                          nudgeItem(selectedItem.id, -1, 0);
-                        }}
-                        className="rounded-lg border border-border bg-bg-primary px-2 py-2 text-[12px] text-t-primary transition-colors hover:border-accent/40"
-                      >
-                        ←
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          pushHistorySnapshot();
-                          updateItem(selectedItem.id, { x: 50, y: 50 });
-                        }}
-                        className="rounded-lg border border-border bg-bg-primary px-2 py-2 text-[11px] text-t-primary transition-colors hover:border-accent/40"
-                      >
-                        +
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          pushHistorySnapshot();
-                          nudgeItem(selectedItem.id, 1, 0);
-                        }}
-                        className="rounded-lg border border-border bg-bg-primary px-2 py-2 text-[12px] text-t-primary transition-colors hover:border-accent/40"
-                      >
-                        →
-                      </button>
-                      <span />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          pushHistorySnapshot();
-                          nudgeItem(selectedItem.id, 0, 1);
-                        }}
-                        className="rounded-lg border border-border bg-bg-primary px-2 py-2 text-[12px] text-t-primary transition-colors hover:border-accent/40"
-                      >
-                        ↓
-                      </button>
-                      <span />
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between mb-1">
-                      <label className="text-[11px] text-t-secondary">{editorCopy.xPosition}</label>
-                      <span className="text-[11px] font-mono text-t-secondary">{Math.round(selectedItem.x)}%</span>
-                    </div>
-                    <input
-                      type="range"
-                      min={0}
-                      max={100}
-                      step={1}
-                      value={selectedItem.x}
-                      onChange={(e) => updateItem(selectedItem.id, { x: Number(e.target.value) })}
-                      className="w-full accent-accent"
-                    />
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between mb-1">
-                      <label className="text-[11px] text-t-secondary">{editorCopy.yPosition}</label>
-                      <span className="text-[11px] font-mono text-t-secondary">{Math.round(selectedItem.y)}%</span>
-                    </div>
-                    <input
-                      type="range"
-                      min={0}
-                      max={100}
-                      step={1}
-                      value={selectedItem.y}
-                      onChange={(e) => updateItem(selectedItem.id, { y: Number(e.target.value) })}
-                      className="w-full accent-accent"
-                    />
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between mb-1">
-                      <label className="text-[11px] text-t-secondary">{editorCopy.opacity}</label>
-                      <span className="text-[11px] font-mono text-t-secondary">{selectedItem.opacity}%</span>
-                    </div>
-                    <input
-                      type="range"
-                      min={10}
-                      max={100}
-                      step={1}
-                      value={selectedItem.opacity}
-                      onChange={(e) => updateItem(selectedItem.id, { opacity: Number(e.target.value) })}
-                      className="w-full accent-accent"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-[11px] text-t-secondary mb-1">{editorCopy.textBackground}</label>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="color"
-                          value={selectedItem.backgroundColor}
-                          onChange={(e) => updateItem(selectedItem.id, { backgroundColor: e.target.value })}
-                          className="w-8 h-8 rounded-lg cursor-pointer border border-border bg-bg-secondary p-0.5"
-                        />
-                        <span className="text-[10px] font-mono text-t-secondary">{selectedItem.backgroundColor}</span>
-                      </div>
-                    </div>
-                    <div>
-                      <div className="flex justify-between mb-1">
-                        <label className="text-[11px] text-t-secondary">{editorCopy.backgroundOpacity}</label>
-                        <span className="text-[11px] font-mono text-t-secondary">{selectedItem.backgroundOpacity}%</span>
-                      </div>
-                      <input
-                        type="range"
-                        min={0}
-                        max={100}
-                        step={1}
-                        value={selectedItem.backgroundOpacity}
-                        onChange={(e) => updateItem(selectedItem.id, { backgroundOpacity: Number(e.target.value) })}
-                        className="w-full accent-accent"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Delete */}
-                  <button
-                    onClick={() => deleteItem(selectedItem.id)}
-                    className="w-full py-2 rounded-lg text-[12px] font-semibold text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors"
-                  >
-                    {t("meme.deleteThisLayer")}
-                  </button>
-                </div>
-              ) : (
-                <div className="border-t border-border pt-4">
-                  <p className="text-[12px] text-t-secondary text-center py-4">
-                    {t("meme.selectHint")}
-                  </p>
-                </div>
-              )}
+            <div ref={boxRef} className="flex justify-center">
+              <canvas
+                ref={canvasRef}
+                tabIndex={0}
+                role="img"
+                aria-label={t("meme.preview")}
+                className="block touch-none select-none rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-volt/60"
+                onPointerDown={onDown}
+                onPointerMove={onMove}
+                onPointerUp={onUp}
+                onPointerCancel={onUp}
+                onDoubleClick={() => textRef.current?.select()}
+              />
             </div>
           </div>
-        )}
+          <p className="text-[12.5px] text-t-tertiary">{t("meme.v2.hint")}</p>
+        </div>
+
+        <div className="space-y-5">
+          <div className="glass space-y-3 p-4">
+            <p className={sectionTitle}>{t("meme.quickTemplates")}</p>
+            <div className="grid grid-cols-2 gap-2">
+              {(
+                [
+                  ["classic", "meme.preset.classic"],
+                  ["bottom", "meme.preset.bottomCaption"],
+                  ["band", "meme.v2.preset.band"],
+                  ["labels", "meme.v2.preset.labels"],
+                ] as const
+              ).map(([id, key]) => (
+                <button key={id} type="button" onClick={() => applyPreset(id)} className="rounded-lg border border-border px-3 py-2 text-start text-[12.5px] font-medium text-t-secondary transition hover:border-t-primary/40 hover:text-t-primary">
+                  {t(key)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="glass space-y-3 p-4">
+            <Toggle checked={state.band.on} onChange={(on) => setState((s) => ({ ...s, band: { ...s.band, on, text: s.band.text || t("meme.v2.bandSample") } }))} label={t("meme.v2.band")} description={t("meme.v2.bandHint")} />
+            {state.band.on && (
+              <>
+                <textarea
+                  value={state.band.text}
+                  onChange={(e) => setState((s) => ({ ...s, band: { ...s.band, text: e.target.value } }))}
+                  rows={2}
+                  aria-label={t("meme.v2.band")}
+                  className="w-full resize-none rounded-xl border border-border bg-bg-secondary px-3 py-2 text-[14px] text-t-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-volt/60"
+                />
+                <Slider label={t("meme.fontSize")} value={Math.round(state.band.size * 1000)} min={30} max={100} onChange={(v) => setState((s) => ({ ...s, band: { ...s.band, size: v / 1000 } }))} display={String(Math.round(state.band.size * 1000))} />
+              </>
+            )}
+          </div>
+
+          <div className="glass space-y-3 p-4">
+            <p className={sectionTitle}>{t("meme.textLayers")}</p>
+            {state.layers.length === 0 ? (
+              <p className="text-[13px] text-t-tertiary">{t("meme.v2.noLayers")}</p>
+            ) : (
+              <ul className="space-y-1.5">
+                {[...state.layers].reverse().map((l) => (
+                  <li key={l.id}>
+                    <button
+                      type="button"
+                      onClick={() => setSelected(l.id)}
+                      aria-pressed={selected === l.id}
+                      className={`w-full truncate rounded-lg border px-3 py-2 text-start text-[13px] transition ${selected === l.id ? "border-t-primary bg-bg-secondary text-t-primary" : "border-border text-t-secondary hover:text-t-primary"}`}
+                    >
+                      {l.text.trim() || t("meme.emptyText")}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {sel ? (
+              <div className="space-y-4 border-t border-border pt-4">
+                <textarea
+                  ref={textRef}
+                  value={sel.text}
+                  onChange={(e) => patch(sel.id, { text: e.target.value })}
+                  rows={2}
+                  aria-label={t("meme.textLabel")}
+                  placeholder={t("meme.enterText")}
+                  className="w-full resize-none rounded-xl border border-border bg-bg-secondary px-3 py-2 text-[14px] text-t-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-volt/60"
+                />
+                <div>
+                  {label(t("meme.v2.style"))}
+                  <Segmented<MemeStyle>
+                    label={t("meme.v2.style")}
+                    size="sm"
+                    value={sel.style}
+                    onChange={(style) =>
+                      patch(sel.id, style === "label" && sel.style !== "label" ? { style, color: "#000000", accent: "#FFFFFF" } : style === "classic" && sel.style === "label" ? { style, color: "#FFFFFF", accent: "#000000" } : { style })
+                    }
+                    options={STYLES.map((s) => ({ value: s, label: t(`meme.v2.style.${s}`) }))}
+                  />
+                </div>
+                <div>
+                  {label(t("meme.fontFamily"))}
+                  <Segmented<MemeFont>
+                    label={t("meme.fontFamily")}
+                    size="sm"
+                    value={sel.font}
+                    onChange={(font) => patch(sel.id, { font })}
+                    options={FONTS.map((f) => ({ value: f, label: <span style={{ fontFamily: f === "meme" ? `"${MEME_FAMILY}", Impact, sans-serif` : f === "serif" ? "Georgia, serif" : undefined }}>{t(`meme.v2.font.${f}`)}</span> }))}
+                  />
+                </div>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <Toggle checked={sel.upper} onChange={(upper) => patch(sel.id, { upper })} label={t("meme.v2.upper")} />
+                  <Segmented<Layer["align"]>
+                    label={t("meme.alignment")}
+                    size="sm"
+                    value={sel.align}
+                    onChange={(align) => patch(sel.id, { align })}
+                    options={[
+                      { value: "left", label: <AlignLeft className="h-4 w-4" aria-hidden="true" />, title: t("meme.ui.alignLeft") },
+                      { value: "center", label: <AlignCenter className="h-4 w-4" aria-hidden="true" />, title: t("meme.ui.alignCenter") },
+                      { value: "right", label: <AlignRight className="h-4 w-4" aria-hidden="true" />, title: t("meme.ui.alignRight") },
+                    ]}
+                  />
+                </div>
+                <Slider label={t("meme.fontSize")} value={Math.round(sel.size * 1000)} min={15} max={300} onChange={(v) => patch(sel.id, { size: v / 1000 })} display={String(Math.round(sel.size * 1000))} />
+                <Slider label={t("meme.v2.width")} value={Math.round(sel.width * 100)} min={10} max={100} onChange={(v) => patch(sel.id, { width: v / 100 })} display={`${Math.round(sel.width * 100)}%`} />
+                <Slider label={t("meme.rotation")} value={sel.rotation} min={-45} max={45} onChange={(v) => patch(sel.id, { rotation: v })} display={`${sel.rotation}°`} />
+                <div className="grid grid-cols-2 gap-3">
+                  {(
+                    [
+                      ["color", t("meme.textColor")],
+                      ...(sel.style === "classic" || sel.style === "label" ? [["accent", sel.style === "label" ? t("meme.v2.boxColor") : t("meme.strokeColor")] as const] : []),
+                    ] as const
+                  ).map(([key, name]) => (
+                    <div key={key}>
+                      {label(name)}
+                      <div className="flex flex-wrap gap-1.5">
+                        {SWATCHES.map((c) => (
+                          <button
+                            key={c}
+                            type="button"
+                            onClick={() => patch(sel.id, { [key]: c })}
+                            aria-label={`${name} ${c}`}
+                            className={`h-6 w-6 rounded-md border-2 ${sel[key].toUpperCase() === c ? "border-t-primary" : "border-border"}`}
+                            style={{ background: c }}
+                          />
+                        ))}
+                        <label className="relative h-6 w-6 cursor-pointer overflow-hidden rounded-md border-2 border-border" title={name}>
+                          <span className="absolute inset-0" style={{ background: "conic-gradient(#f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00)" }} />
+                          <input type="color" value={sel[key].toLowerCase()} onChange={(e) => patch(sel.id, { [key]: e.target.value.toUpperCase() })} className="absolute inset-0 cursor-pointer opacity-0" aria-label={name} />
+                        </label>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex flex-wrap gap-2 border-t border-border pt-4">
+                  <button type="button" className={buttonSecondary} onClick={() => duplicate(sel.id)} title={`${t("meme.ui.duplicate")} (Ctrl+D)`}>
+                    <Copy className="h-4 w-4" aria-hidden="true" />
+                    {t("meme.ui.duplicate")}
+                  </button>
+                  <button type="button" className={buttonSecondary} onClick={() => moveLayer(sel.id, 1)} aria-label={t("meme.ui.bringForward")} title={t("meme.ui.bringForward")}>
+                    <ArrowUp className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                  <button type="button" className={buttonSecondary} onClick={() => moveLayer(sel.id, -1)} aria-label={t("meme.ui.sendBackward")} title={t("meme.ui.sendBackward")}>
+                    <ArrowDown className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                  <button type="button" className={`${buttonSecondary} ms-auto`} onClick={() => removeLayer(sel.id)} aria-label={t("meme.deleteLayerTitle")} title={t("meme.deleteLayerTitle")}>
+                    <Trash2 className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              state.layers.length > 0 && <p className="text-[12.5px] text-t-tertiary">{t("meme.selectHint")}</p>
+            )}
+          </div>
+
+          <div className="glass space-y-4 p-4">
+            <ExportFormatPicker value={format} onChange={setFormat} quality={quality} onQualityChange={setQuality} sourceType={file.type} />
+            {file.type === "image/gif" && <p className="text-[12px] text-t-tertiary">{t("meme.v2.gifNote")}</p>}
+            <button type="button" className={`${buttonPrimary} w-full`} onClick={exportMeme} disabled={exporting}>
+              {exporting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Download className="h-4 w-4" aria-hidden="true" />}
+              {t("meme.downloadMeme")}
+            </button>
+            {natural && (
+              <p className="text-center text-[12.5px] tabular-nums text-t-tertiary">
+                {natural.w} × {natural.h} px
+              </p>
+            )}
+          </div>
+        </div>
       </div>
     </ToolLayout>
   );

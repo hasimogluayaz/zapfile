@@ -1,5 +1,7 @@
 # ZapFile — Project Context
 
+> **Continuing previous work?** Read `docs/HANDOFF.md` first: current branch, open decisions and the next task (server-side Office → PDF).
+
 ## Overview
 
 ZapFile (zapfile.xyz) is a free, browser-based file processing tool suite. All processing happens client-side — no server uploads. Deployed on Vercel via GitHub (main branch auto-deploys).
@@ -8,7 +10,7 @@ ZapFile (zapfile.xyz) is a free, browser-based file processing tool suite. All p
 
 - **Framework**: Next.js 14 (App Router), TypeScript
 - **Styling**: Tailwind CSS with CSS custom properties (light/dark theme), Lucide icons (`lucide-react`)
-- **Key deps**: `pdf-lib`, `react-dropzone`, `react-hot-toast`, `tesseract.js` (OCR)
+- **Key deps**: `pdf-lib`, `@cantoo/pdf-lib` (PDF encryption), `pdfjs-dist`, `onnxruntime-web` (background remover), `@jsquash/*` + `image-q` (image engine codecs), `gifenc`, `yaml`, `papaparse`, `csso`, `marked` + `dompurify`, `diff`, `hash-wasm`, `jszip`, `qrcode`, `jsqr`, `react-dropzone`, `react-hot-toast`
 - **Analytics**: `@vercel/analytics`, `@vercel/speed-insights`
 
 ## Architecture
@@ -25,7 +27,7 @@ src/
 │   ├── terms/page.tsx
 │   └── tools/
 │       ├── page.tsx         # Browse all tools
-│       └── [slug]/page.tsx  # 53 individual tool pages
+│       └── [slug]/page.tsx  # 70 individual tool pages
 ├── components/
 │   ├── Header.tsx           # Sticky header, language switcher, category dropdown
 │   ├── Footer.tsx           # Multi-column footer
@@ -38,7 +40,7 @@ src/
 │   ├── ErrorBoundary.tsx    # Catches render errors, shows refresh button
 │   └── AdPlaceholder.tsx    # Placeholder for future ads
 ├── lib/
-│   ├── tools.ts             # 53 tools registry (slug, name, description, category, acceptedFormats)
+│   ├── tools.ts             # 70 tools registry (slug, name, description, category, acceptedFormats)
 │   ├── tool-i18n.ts         # toolField() helper for localized tool names/descriptions
 │   ├── file-handoff.ts      # Home drop pad → tool page file handoff (in-memory)
 │   ├── search.ts            # searchTools(): diacritic-insensitive ranked tool search (header modal, home, /tools)
@@ -60,7 +62,7 @@ src/
 
 ## Tools
 
-Canonical list: `src/lib/tools.ts` — 53 tools across 4 categories (PDF, Image, Video/Audio, Utility). FFmpeg/AI/browser-fetch tools were removed in v1.4.0. v2.0 retired 13 off-brand or third-party-dependent tools and merged 5 duplicates; their URLs 301-redirect via `redirects()` in `next.config.mjs` — add a redirect whenever a tool slug is removed or renamed.
+Canonical list: `src/lib/tools.ts` — 70 tools across 4 categories (PDF, Image, Video/Audio, Utility). FFmpeg/AI/browser-fetch tools were removed in v1.4.0. v2.0 retired 13 off-brand or third-party-dependent tools and merged 5 duplicates; their URLs 301-redirect via `redirects()` in `next.config.mjs` — add a redirect whenever a tool slug is removed or renamed.
 
 ## Design System ("Voltage")
 
@@ -72,6 +74,53 @@ Canonical list: `src/lib/tools.ts` — 53 tools across 4 categories (PDF, Image,
 - Tailwind `dark:` variants follow `[data-theme="dark"]` (`darkMode` selector), not the OS; an inline script in layout.tsx sets the theme before first paint.
 - Avoid `bg-white/5`-style classes from the old dark-only UI; use `bg-bg-secondary`, `border-border`, etc.
 - `metaTitle` / `metaDescription` in tools.ts must be English (canonical pages are English)
+
+## Runtime assets (`public/vendor/`)
+
+Workers/wasm that libraries load at runtime are copied from `node_modules` into `public/vendor/<lib>-<version>/` by `scripts/copy-vendor-assets.mjs` (runs on `predev`/`prebuild`, output git-ignored). Never load them from a third-party CDN. The meme generator's font (Anton, `@fontsource/anton`, OFL) is served the same way from `/vendor/anton-<version>/`. pdf.js goes through `src/lib/pdfjs.ts` (`openPdf`).
+
+## Background remover (`src/lib/bg-removal/`)
+
+- `worker.ts` (Web Worker): loads onnxruntime-web from `/vendor/ort-<NEXT_PUBLIC_ORT_VERSION>/` (WebGPU build, WASM fallback; NaN/failed GPU runs retry on WASM), downloads the model, runs inference and refinement. `client.ts` is the main-thread wrapper.
+- `models.ts`: model manifest. The model (BiRefNet lite, MIT, re-exported at 768×768, fp16-stored weights, 94 MB) lives in `models/` of this repo, split into ≤19 MB parts, served from a **pinned commit** via jsDelivr (fallback raw.githubusercontent), SHA-256 verified, kept in Cache Storage. `models/` is excluded from Vercel (`.vercelignore`); provenance and export scripts in `models/README.md`. To change the model: add new parts in one commit, then point `MODEL_COMMIT`/hash/size at it.
+- `refine.ts`: speck/hole cleanup, colour guided filter (full-res edges), levels, blur-fusion foreground estimation (colour decontamination). Pure functions, testable in Node.
+- `document.ts` (brush erase/restore + tile undo/redo, outputs), `compose.ts` (backdrops + export), `components/bg-removal/CutoutEditor.tsx` (zoom/pan/pinch canvas).
+- Don't use the published 1024 BiRefNet ONNX files: they peak at ~6.7 GB and exceed WebAssembly's 4 GB limit.
+
+## Image engine (`src/lib/image-engine/`) — use it for any image export
+
+- `processImage(job, signal?)` runs decode → crop → rotate/flip → resize → encode in a Web Worker pool (no UI jank; batches run in parallel). `processAll`, `makeThumbnail(blob, maxSide)` (small WebP previews), `scanQr(blob|bitmap)` (BarcodeDetector, else jsQR at several scales). `AbortError` on cancel.
+- Decode honours EXIF orientation and caps pixels at 16.7 MP on WebKit (iOS canvas limit). Resize is Lanczos3 in linear light (`@jsquash/resize`); `fit: contain | cover | stretch`, `withoutEnlargement` (default true).
+- Encoders: JPEG = MozJPEG, WebP = libwebp (quality 1 = lossless), PNG = OxiPNG; `pngLossy` = 256-colour palette PNG (fast, `palette-png.ts`). `targetBytes` binary-searches quality; `keepOriginalIfLarger` returns the input when re-encoding would grow it. Re-encoding strips EXIF/GPS.
+- Never call `canvas.toDataURL` on full-size images or loop over full-res pixels on the main thread; preview on a downscaled proxy and export through the engine.
+- Shared Voltage controls for tool UIs: `components/ui/controls.tsx` (`Segmented`, `Toggle`, `Slider`, button/section classes). `ImageCompareSlider` is the before/after component.
+
+## PDF → Word / Excel (`src/lib/pdf-convert/`)
+
+- `extract.ts` (main thread, pdf.js operator list) turns a page into a `PageModel` (`model.ts`): glyphs with real font/size/colour/baseline, ruling lines, filled boxes, vector shapes and placed images (re-encoded through the image engine). `client.ts` renders scanned pages and vector figures (`findFigureRegions`: charts, diagrams) to pictures, then hands everything to `convert.worker.ts`.
+- `layout.ts` is pure and runs in the worker: ruled tables (union-find grid, merged cells, shading), whitespace-aligned tables, column gutters and reading order (columns reflow into one), paragraphs (alignment, indents, spacing, de-hyphenation, cross-column joins), headings, lists, sub/superscript, underline, running headers/footers. `sheetItems()` is the Excel view of a page.
+- `docx.ts` / `xlsx.ts` write OOXML with JSZip (mind the strict child order of `w:pPr` / `w:rPr`). Excel numbers are parsed with decimal-comma detection, currency, percentages and ISO dates.
+- PDF → Word has two writers: `docx.ts` (flowing text: headings, lists, tables) and `docx-layout.ts` (exact layout: the PowerPoint slide model from `slides.ts` as anchored text boxes, pictures and shapes per page). `prefersExactLayout()` picks exact layout for designed documents (several pictures per page); the user can force either ("Layout" option).
+- pdf.js 5 hands JPEGs over as a `VideoFrame` (no `.width`): `extract.ts` draws every image into its own canvas using the image object's size. Soft drop-shadow images (flat dark colour + blurred alpha) are skipped, since the rounded cards painted over them aren't carried over.
+- UI: `components/pdf-convert/PdfConvertTool.tsx` (`kind: "docx" | "xlsx"`). Converts automatically on drop and on option changes; a password-protected PDF links to Protect PDF.
+- Check layout changes with a LibreOffice round trip (DOCX → PDF → compare with the source PDF) on multi-column, table, chart and scanned samples.
+
+## Office → PDF (`src/lib/office/`)
+
+- **Fast mode (default):** `server.ts` posts the file to our conversion server (`server/office-api/`: Node + LibreOffice in Docker behind Caddy, Hetzner CPX02 `2.31.6.195`, `https://api.zapfile.xyz`; files deleted right after, converter has no internet). `NEXT_PUBLIC_OFFICE_API_URL` overrides the URL (empty string = off). On any server error the tool falls back to the in-browser engine below; password-protected documents always use it. Users can pick "Private" mode (remembered in localStorage). These pages hide the "runs on your device" trust panel; the privacy policy explains the fast mode. Server setup/update: `server/office-api/README.md` (`setup.sh`). Before either path, `prepare.ts` fixes Word files: formula fields (`=SUM(LEFT)`) are replaced by Word's saved results (LibreOffice recalculates them wrongly with Turkish number formats), and empty paragraphs that anchor a page's floating boxes get the page break Word rendered. Fonts matter most for layout fidelity: the server image installs Montserrat/Open Sans/Roboto/Lato plus `fonts.conf` aliases; a missing font gets replaced by a wider one and text overflows its boxes.
+- Word / Excel / PowerPoint → PDF run LibreOffice compiled to WebAssembly (`@matbee/libreoffice-converter`, MPL-2.0) in the browser: `engine.ts` (download, cache, start, `officeToPdf`), UI `components/office/OfficeToPdfTool.tsx` (`kind: "word" | "excel" | "powerpoint" | "html"`; batch, ZIP, combine, PDF/A, passwords).
+- `soffice.wasm` / `soffice.data` (~77 MB gzipped) live in `models/libreoffice-<version>/` as ≤19 MB parts and are fetched from a **pinned commit** via jsDelivr (fallback raw.githubusercontent), SHA-256 checked, kept in Cache Storage, unpacked with `DecompressionStream`. Small loader scripts are copied to `public/vendor/libreoffice-<version>/` (the worker's console logging is stripped there). `NEXT_PUBLIC_OFFICE_ENGINE_URL` overrides the parts' base URL (local testing / self-hosting).
+- LibreOffice needs threads (SharedArrayBuffer): the tool pages (`OFFICE_TOOL_PATHS`) and `/vendor/libreoffice-*` get COOP/COEP headers in `next.config.mjs`. Client-side navigation can't isolate a page, so the tool reloads itself once (handed-off files survive via `persistPendingFiles`). Keep those pages free of cross-origin subresources.
+- To upgrade: add the new parts in one commit, then point `COMMIT`, hashes and sizes in `engine.ts` at it.
+- PDF → PowerPoint is our own converter: `slides.ts` (positioned text boxes, rectangles, lines, pictures, rendered figures) + `pptx.ts` (OOXML writer), via `PdfConvertTool kind="pptx"`.
+
+## PDF editing tools (`src/lib/pdf-stamp/`)
+
+- Watermark, Sign, Crop, Redact, Fill Form and OCR share `geometry.ts` (the page's *visible* frame: crop box + `/Rotate`, points; `toUser` maps back to user space so placements survive rotated pages), `preview.ts` (`renderPagePreview`, `forms: false` hides widgets) and `fonts.ts`.
+- Text written into PDFs uses DejaVu (TTF, Unicode incl. Turkish) embedded with `@pdf-lib/fontkit` (subset); the same TTF is registered as a CSS font so previews match. Signature fonts (Dancing Script, Great Vibes, Caveat; OFL) are woff2 for canvas only. All served from `/vendor`.
+- Redact PDF must never leave hidden content in the file: redacted pages are rendered to JPEG with the boxes burned in and the output is a **fresh** document (`copyPages` of the other pages), not `removePage` (pdf-lib keeps orphaned objects).
+- OCR PDF: tesseract.js worker/cores from `/vendor/tesseract-<version>/`, language data (`4.0.0_best_int`, Apache-2.0) committed in `public/tessdata/`. Output keeps the original page and adds an invisible text layer (render mode 3, `Tz` to fit each word's box).
+- Organize, Compare (`lib/pdf-convert/words.ts` gives words with boxes), Repair (pdf-lib re-read; truncated files are salvaged by rebuilding the page tree; last resort page images) and PDF → Markdown (`pdf-convert/markdown.ts`) complete the PDF set.
 
 ## File handoff
 

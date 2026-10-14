@@ -1,145 +1,242 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { Shuffle } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent } from "react";
 import toast from "react-hot-toast";
+import { Check, Copy, ImageIcon, Pipette, Shuffle, X } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
+import { Segmented, buttonSecondary, sectionTitle } from "@/components/ui/controls";
+import { decodeImage, makeProxy } from "@/lib/image-editor-kit";
 import { useI18n } from "@/lib/i18n";
+import { useStoredPref } from "@/lib/text-tools/hooks";
+import {
+  HARMONIES,
+  contrastWith,
+  formatColor,
+  harmony,
+  hslToRgb,
+  hsvToRgb,
+  nearestName,
+  oklchToRgb,
+  parseAnyColor,
+  readableInk,
+  rgbToHsl,
+  rgbToHsv,
+  rgbToOklch,
+  toHex,
+  tonalScale,
+  type FormatId,
+  type HSVA,
+  type Harmony,
+  type RGBA,
+} from "./color-core";
 
-function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
-  const match = hex.replace("#", "").match(/^([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
-  if (!match) return null;
-  return { r: parseInt(match[1], 16), g: parseInt(match[2], 16), b: parseInt(match[3], 16) };
-}
-
-function rgbToHex(r: number, g: number, b: number): string {
-  return "#" + [r, g, b].map((x) => x.toString(16).padStart(2, "0")).join("");
-}
-
-function rgbToHsl(r: number, g: number, b: number): { h: number; s: number; l: number } {
-  r /= 255; g /= 255; b /= 255;
-  const max = Math.max(r, g, b), min = Math.min(r, g, b);
-  const l = (max + min) / 2;
-  let h = 0, s = 0;
-  if (max !== min) {
-    const d = max - min;
-    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-    switch (max) {
-      case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
-      case g: h = ((b - r) / d + 2) / 6; break;
-      case b: h = ((r - g) / d + 4) / 6; break;
-    }
-  }
-  return { h: Math.round(h * 360), s: Math.round(s * 100), l: Math.round(l * 100) };
-}
-
-function hslToRgb(h: number, s: number, l: number): { r: number; g: number; b: number } {
-  h /= 360; s /= 100; l /= 100;
-  let r, g, b;
-  if (s === 0) {
-    r = g = b = l;
-  } else {
-    const hue2rgb = (p: number, q: number, t: number) => {
-      if (t < 0) t += 1;
-      if (t > 1) t -= 1;
-      if (t < 1 / 6) return p + (q - p) * 6 * t;
-      if (t < 1 / 2) return q;
-      if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
-      return p;
-    };
-    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-    const p = 2 * l - q;
-    r = hue2rgb(p, q, h + 1 / 3);
-    g = hue2rgb(p, q, h);
-    b = hue2rgb(p, q, h - 1 / 3);
-  }
-  return { r: Math.round(r * 255), g: Math.round(g * 255), b: Math.round(b * 255) };
-}
-
-type HarmonyMode =
-  | "complementary"
-  | "analogous"
-  | "triadic"
-  | "split-complementary"
-  | "tetradic";
-
-const HARMONY_MODES: { value: HarmonyMode; labelKey: string; offsets: number[] }[] = [
-  { value: "complementary", labelKey: "rc.harmony.complementary", offsets: [180] },
-  { value: "analogous", labelKey: "rc.harmony.analogous", offsets: [-30, 30] },
-  { value: "triadic", labelKey: "rc.harmony.triadic", offsets: [120, 240] },
-  { value: "split-complementary", labelKey: "rc.harmony.splitComp", offsets: [150, 210] },
-  { value: "tetradic", labelKey: "rc.harmony.tetradic", offsets: [90, 180, 270] },
+const COLOR_KEY = "zapfile.cp.color";
+const RECENT_KEY = "zapfile.cp.recent";
+const FORMATS: { id: FormatId; label: string }[] = [
+  { id: "hex", label: "HEX" },
+  { id: "rgb", label: "RGB" },
+  { id: "hsl", label: "HSL" },
+  { id: "hwb", label: "HWB" },
+  { id: "oklch", label: "OKLCH" },
+  { id: "cmyk", label: "CMYK" },
 ];
+const HARMONY_LABEL: Record<Harmony, string> = {
+  complementary: "rc.harmony.complementary",
+  analogous: "rc.harmony.analogous",
+  triadic: "rc.harmony.triadic",
+  split: "rc.harmony.splitComp",
+  tetradic: "rc.harmony.tetradic",
+  mono: "clr.v2.mono",
+};
+const CHECKER = "repeating-conic-gradient(#d4d4d8 0 25%, #ffffff 0 50%) 0 0 / 12px 12px";
+const HUE_TRACK = "linear-gradient(to right, #f00, #ff0 16.67%, #0f0 33.33%, #0ff 50%, #00f 66.67%, #f0f 83.33%, #f00)";
 
-function randomHex(): string {
-  return "#" + Math.floor(Math.random() * 0x1000000).toString(16).padStart(6, "0");
-}
+const clamp = (x: number, lo = 0, hi = 1) => Math.min(hi, Math.max(lo, x));
 
-/** Black or white, whichever reads better on the given color (WCAG luminance). */
-function bestTextColor(r: number, g: number, b: number): "#000000" | "#ffffff" {
-  const lin = (c: number) => {
-    const v = c / 255;
-    return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
-  };
-  const L = 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
-  return L > 0.179 ? "#000000" : "#ffffff";
-}
+type EyeDropperCtor = new () => { open: () => Promise<{ sRGBHex: string }> };
 
 function isTypingTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
   return ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName) || target.isContentEditable;
 }
 
+/** A pleasant random colour: mid lightness, moderate chroma, any hue. */
+function randomColor(): RGBA {
+  return oklchToRgb(0.5 + Math.random() * 0.38, 0.08 + Math.random() * 0.13, Math.random() * 360);
+}
+
+/** Pointer + keyboard 1-D slider drawn as a colour track. */
+function Track({
+  label,
+  value,
+  max,
+  step,
+  onChange,
+  background,
+  thumbColor,
+  valueText,
+}: {
+  label: string;
+  value: number;
+  max: number;
+  step: number;
+  onChange: (v: number) => void;
+  background: string;
+  thumbColor: string;
+  valueText: string;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const at = (e: ReactPointerEvent) => {
+    const r = ref.current!.getBoundingClientRect();
+    onChange(clamp((e.clientX - r.left) / r.width) * max);
+  };
+  const onKey = (e: ReactKeyboardEvent) => {
+    const k = e.shiftKey ? step * 10 : step;
+    const next = e.key === "ArrowRight" || e.key === "ArrowUp" ? value + k : e.key === "ArrowLeft" || e.key === "ArrowDown" ? value - k : e.key === "Home" ? 0 : e.key === "End" ? max : null;
+    if (next === null) return;
+    e.preventDefault();
+    onChange(clamp(next, 0, max));
+  };
+  return (
+    <div
+      ref={ref}
+      dir="ltr"
+      role="slider"
+      tabIndex={0}
+      aria-label={label}
+      aria-valuemin={0}
+      aria-valuemax={max}
+      aria-valuenow={Math.round(value)}
+      aria-valuetext={valueText}
+      onKeyDown={onKey}
+      onPointerDown={(e) => {
+        e.currentTarget.setPointerCapture(e.pointerId);
+        at(e);
+      }}
+      onPointerMove={(e) => e.buttons === 1 && at(e)}
+      className="relative h-4 cursor-pointer touch-none rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-volt/60 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+      style={{ background }}
+    >
+      <span className="pointer-events-none absolute inset-0 rounded-full shadow-[inset_0_0_0_1px_rgb(0_0_0/0.08)]" />
+      <span
+        className="pointer-events-none absolute top-1/2 h-6 w-6 -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] border-white shadow-[0_0_0_1px_rgb(0_0_0/0.25),0_2px_6px_rgb(0_0_0/0.25)]"
+        style={{ left: `${(value / max) * 100}%`, background: thumbColor }}
+      />
+    </div>
+  );
+}
+
+/** Number input that keeps the user's draft ("0.", "-") while typing and resyncs when idle. */
+function NumField({ label, value, min, max, step, digits, suffix, onCommit }: { label: string; value: number; min: number; max: number; step: number; digits: number; suffix?: string; onCommit: (v: number) => void }) {
+  const shown = String(Math.round(value * 10 ** digits) / 10 ** digits);
+  const [draft, setDraft] = useState<string | null>(null);
+  return (
+    <label className="block min-w-0">
+      <span className="mb-1 block text-center text-[12px] font-medium text-t-tertiary">{label}</span>
+      <span className="relative block">
+        <input
+          type="number"
+          inputMode="decimal"
+          min={min}
+          max={max}
+          step={step}
+          value={draft ?? shown}
+          onFocus={() => setDraft(shown)}
+          onBlur={() => setDraft(null)}
+          onChange={(e) => {
+            setDraft(e.target.value);
+            const n = parseFloat(e.target.value);
+            if (Number.isFinite(n)) onCommit(clamp(n, min, max));
+          }}
+          className={`h-10 w-full rounded-lg border border-border bg-bg-secondary text-center font-mono text-[13.5px] tabular-nums text-t-primary [appearance:textfield] focus:outline-none focus-visible:ring-2 focus-visible:ring-volt/60 [&::-webkit-inner-spin-button]:appearance-none ${suffix ? "pe-4 ps-1" : "px-1"}`}
+        />
+        {suffix && <span className="pointer-events-none absolute end-2 top-1/2 -translate-y-1/2 text-[11px] text-t-tertiary">{suffix}</span>}
+      </span>
+    </label>
+  );
+}
+
+function Badge({ ok, label, title }: { ok: boolean; label: string; title: string }) {
+  return (
+    <span title={title} className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11.5px] font-semibold ${ok ? "bg-accent/10 text-t-primary" : "bg-bg-secondary text-t-tertiary line-through"}`}>
+      {ok ? <Check className="h-3 w-3" aria-hidden="true" /> : <X className="h-3 w-3" aria-hidden="true" />}
+      {label}
+    </span>
+  );
+}
+
 export default function ColorPickerPage() {
   const { t } = useI18n();
-  const [hex, setHex] = useState("#ffd60a");
-  const [rgb, setRgb] = useState({ r: 255, g: 214, b: 10 });
-  const [hsl, setHsl] = useState({ h: 50, s: 100, l: 52 });
+  const [hsva, setHsva] = useState<HSVA>({ h: 50, s: 0.96, v: 1, a: 1 });
+  const [mode, setMode] = useStoredPref<"rgb" | "hsl" | "oklch">("cp.mode", "rgb", ["rgb", "hsl", "oklch"]);
+  const [kind, setKind] = useStoredPref<Harmony>("cp.harmony", "complementary", HARMONIES);
+  const [recent, setRecent] = useState<string[]>([]);
+  const [text, setText] = useState<string | null>(null);
+  const [hasDropper, setHasDropper] = useState(false);
+  const [image, setImage] = useState<ImageBitmap | null>(null);
+  const [hover, setHover] = useState<{ x: number; y: number; hex: string } | null>(null);
+  const area = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const loaded = useRef(false);
 
-  const updateFromHex = (newHex: string) => {
-    setHex(newHex);
-    const parsed = hexToRgb(newHex);
-    if (parsed) {
-      setRgb(parsed);
-      setHsl(rgbToHsl(parsed.r, parsed.g, parsed.b));
+  const rgb = useMemo(() => hsvToRgb(hsva), [hsva]);
+  const hex = toHex(rgb);
+  const opaqueHex = toHex(rgb, false);
+
+  const setRgb = useCallback((c: RGBA) => setHsva((prev) => rgbToHsv(c, prev.h)), []);
+
+  // Restore: link hash first (#ff8800), then the last colour used.
+  useEffect(() => {
+    let start: RGBA | null = null;
+    const h = decodeURIComponent(location.hash.slice(1));
+    if (/^[0-9a-f]{3,8}$/i.test(h)) start = parseAnyColor(h);
+    try {
+      start ??= parseAnyColor(localStorage.getItem(COLOR_KEY) ?? "");
+      const r = JSON.parse(localStorage.getItem(RECENT_KEY) ?? "[]") as unknown;
+      if (Array.isArray(r)) setRecent(r.filter((x): x is string => typeof x === "string" && /^#[0-9A-F]{6,8}$/.test(x)).slice(0, 16));
+    } catch {
+      /* storage blocked */
     }
-  };
-
-  const updateFromRgb = (r: number, g: number, b: number) => {
-    r = Math.max(0, Math.min(255, r));
-    g = Math.max(0, Math.min(255, g));
-    b = Math.max(0, Math.min(255, b));
-    setRgb({ r, g, b });
-    setHex(rgbToHex(r, g, b));
-    setHsl(rgbToHsl(r, g, b));
-  };
-
-  const updateFromHsl = (h: number, s: number, l: number) => {
-    h = Math.max(0, Math.min(360, h));
-    s = Math.max(0, Math.min(100, s));
-    l = Math.max(0, Math.min(100, l));
-    setHsl({ h, s, l });
-    const newRgb = hslToRgb(h, s, l);
-    setRgb(newRgb);
-    setHex(rgbToHex(newRgb.r, newRgb.g, newRgb.b));
-  };
-
-  const [harmony, setHarmony] = useState<HarmonyMode>("complementary");
-
-  const randomize = useCallback(() => {
-    const next = randomHex();
-    setHex(next);
-    const parsed = hexToRgb(next);
-    if (parsed) {
-      setRgb(parsed);
-      setHsl(rgbToHsl(parsed.r, parsed.g, parsed.b));
-    }
+    if (start) setHsva(rgbToHsv(start));
+    setHasDropper(typeof window !== "undefined" && "EyeDropper" in window);
+    loaded.current = true;
   }, []);
 
-  // Space bar generates a random color (when not typing in a field).
+  // Persist, mirror into the URL hash (shareable link) and remember settled colours.
+  useEffect(() => {
+    if (!loaded.current) return;
+    const id = window.setTimeout(() => {
+      try {
+        localStorage.setItem(COLOR_KEY, hex);
+      } catch {
+        /* ignore */
+      }
+      history.replaceState(null, "", `${location.pathname}${location.search}#${hex.slice(1).toLowerCase()}`);
+    }, 300);
+    const rid = window.setTimeout(() => {
+      setRecent((prev) => {
+        if (prev[0] === hex) return prev;
+        const next = [hex, ...prev.filter((x) => x !== hex)].slice(0, 16);
+        try {
+          localStorage.setItem(RECENT_KEY, JSON.stringify(next));
+        } catch {
+          /* ignore */
+        }
+        return next;
+      });
+    }, 1500);
+    return () => {
+      window.clearTimeout(id);
+      window.clearTimeout(rid);
+    };
+  }, [hex]);
+
+  const randomize = useCallback(() => setHsva(rgbToHsv(randomColor())), []);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.code === "Space" && !isTypingTarget(e.target)) {
+      if (e.code === "Space" && !isTypingTarget(e.target) && !(e.target instanceof HTMLElement && e.target.closest("button,[role=slider],a"))) {
         e.preventDefault();
         randomize();
       }
@@ -148,283 +245,412 @@ export default function ColorPickerPage() {
     return () => window.removeEventListener("keydown", onKey);
   }, [randomize]);
 
-  const harmonyColors = (HARMONY_MODES.find((m) => m.value === harmony)?.offsets ?? []).map(
-    (offset) => {
-      const h = (((hsl.h + offset) % 360) + 360) % 360;
-      const c = hslToRgb(h, hsl.s, hsl.l);
-      return rgbToHex(c.r, c.g, c.b);
-    },
-  );
-
-  const copy = async (text: string) => {
+  const copy = async (value: string) => {
     try {
-      await navigator.clipboard.writeText(text);
-      toast.success(t("clr.copied", { value: text }));
+      await navigator.clipboard.writeText(value);
+      toast.success(t("clr.copied", { value: value.length > 40 ? value.slice(0, 40) + "…" : value }));
     } catch {
       toast.error(t("clr.copyFail"));
     }
   };
 
-  const presetColors = [
-    "#ef4444", "#f97316", "#eab308", "#22c55e", "#06b6d4",
-    "#3b82f6", "#6366f1", "#8b5cf6", "#d946ef", "#ec4899",
-    "#f43f5e", "#ffffff", "#94a3b8", "#475569", "#000000",
-  ];
+  // ── Saturation / brightness square ──
+  const pickArea = (e: ReactPointerEvent) => {
+    const r = area.current!.getBoundingClientRect();
+    setHsva((p) => ({ ...p, s: clamp((e.clientX - r.left) / r.width), v: 1 - clamp((e.clientY - r.top) / r.height) }));
+  };
+  const areaKey = (e: ReactKeyboardEvent) => {
+    const k = e.shiftKey ? 0.1 : 0.01;
+    const d = { ArrowLeft: [-k, 0], ArrowRight: [k, 0], ArrowUp: [0, k], ArrowDown: [0, -k] }[e.key];
+    if (!d) return;
+    e.preventDefault();
+    setHsva((p) => ({ ...p, s: clamp(p.s + d[0]!), v: clamp(p.v + d[1]!) }));
+  };
 
-  const hexString = hex.toUpperCase();
-  const rgbString = `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
-  const hslString = `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`;
+  // ── Screen and image pickers ──
+  const eyedrop = async () => {
+    try {
+      const Ctor = (window as unknown as { EyeDropper: EyeDropperCtor }).EyeDropper;
+      const res = await new Ctor().open();
+      const c = parseAnyColor(res.sRGBHex);
+      if (c) setRgb({ ...c, a: 1 });
+    } catch {
+      /* cancelled */
+    }
+  };
+
+  const openImage = async (f: File) => {
+    try {
+      const d = await decodeImage(f);
+      const proxy = await makeProxy(d.bitmap, 1600);
+      if (proxy !== d.bitmap) d.bitmap.close();
+      setImage((old) => {
+        old?.close();
+        return proxy;
+      });
+    } catch {
+      toast.error(t("ui.failedLoad"));
+    }
+  };
+
+  useEffect(() => {
+    const c = canvasRef.current;
+    if (!c || !image) return;
+    c.width = image.width;
+    c.height = image.height;
+    c.getContext("2d", { willReadFrequently: true })?.drawImage(image, 0, 0);
+  }, [image]);
+  useEffect(() => () => image?.close(), [image]);
+
+  const sample = (e: ReactPointerEvent<HTMLCanvasElement>) => {
+    const c = e.currentTarget;
+    const r = c.getBoundingClientRect();
+    const x = Math.floor(clamp((e.clientX - r.left) / r.width, 0, 0.9999) * c.width);
+    const y = Math.floor(clamp((e.clientY - r.top) / r.height, 0, 0.9999) * c.height);
+    const d = c.getContext("2d", { willReadFrequently: true })?.getImageData(x, y, 1, 1).data;
+    if (!d) return null;
+    return { x: e.clientX - r.left, y: e.clientY - r.top, c: { r: d[0]!, g: d[1]!, b: d[2]!, a: 1 } };
+  };
+
+  // ── Derived ──
+  const scale = useMemo(() => tonalScale({ ...rgb, a: 1 }), [rgb]);
+  const partners = useMemo(() => harmony({ ...rgb, a: 1 }, kind), [rgb, kind]);
+  const name = useMemo(() => nearestName(rgb), [rgb]);
+  const onWhite = contrastWith(rgb, 255);
+  const onBlack = contrastWith(rgb, 0);
+  const parsedText = text !== null ? parseAnyColor(text) : null;
+
+  const [hh, ss, ll] = rgbToHsl(rgb);
+  const [L, C, H] = rgbToOklch(rgb);
+  const channels =
+    mode === "rgb"
+      ? [
+          { label: "R", value: rgb.r, max: 255, step: 1, digits: 0, set: (v: number) => setRgb({ ...rgb, r: v }) },
+          { label: "G", value: rgb.g, max: 255, step: 1, digits: 0, set: (v: number) => setRgb({ ...rgb, g: v }) },
+          { label: "B", value: rgb.b, max: 255, step: 1, digits: 0, set: (v: number) => setRgb({ ...rgb, b: v }) },
+        ]
+      : mode === "hsl"
+        ? [
+            { label: "H", value: hsva.h, max: 360, step: 1, digits: 0, suffix: "°", set: (v: number) => setHsva((p) => ({ ...rgbToHsv(hslToRgb(v, ss, ll, p.a), v), h: v })) },
+            { label: "S", value: ss, max: 100, step: 1, digits: 0, suffix: "%", set: (v: number) => setRgb(hslToRgb(hh, v, ll, rgb.a)) },
+            { label: "L", value: ll, max: 100, step: 1, digits: 0, suffix: "%", set: (v: number) => setRgb(hslToRgb(hh, ss, v, rgb.a)) },
+          ]
+        : [
+            { label: "L", value: L * 100, max: 100, step: 0.5, digits: 1, suffix: "%", set: (v: number) => setRgb(oklchToRgb(v / 100, C, H, rgb.a)) },
+            { label: "C", value: C, max: 0.4, step: 0.005, digits: 3, set: (v: number) => setRgb(oklchToRgb(L, v, H, rgb.a)) },
+            { label: "H", value: H, max: 360, step: 1, digits: 1, suffix: "°", set: (v: number) => setRgb(oklchToRgb(L, C, v, rgb.a)) },
+          ];
+
+  const scaleCss = `:root {\n${scale.steps.map((s) => `  --color-${name.name}-${s.step}: ${s.hex};`).join("\n")}\n}`;
 
   return (
-    <ToolLayout
-      toolName={t("tool.color-picker.name")}
-      toolDescription={t("tool.color-picker.desc")}
-    >
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Color preview & picker */}
-        <div className="space-y-6">
-          {/* Large color preview */}
-          <div className="glass rounded-xl p-6">
+    <ToolLayout toolName={t("tool.color-picker.name")} toolDescription={t("tool.color-picker.desc")}>
+      <div className="space-y-5">
+        {image && (
+          <div className="glass space-y-3 p-4 sm:p-5">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-[13.5px] text-t-secondary">{t("clr.v2.imageHint")}</p>
+              <button type="button" onClick={() => setImage(null)} className={buttonSecondary} aria-label={t("clr.v2.closeImage")}>
+                <X className="h-4 w-4" aria-hidden="true" />
+              </button>
+            </div>
+            <div className="relative mx-auto w-fit max-w-full">
+              <canvas
+                ref={canvasRef}
+                className="block max-h-[60vh] max-w-full cursor-crosshair touch-none rounded-lg"
+                onPointerMove={(e) => {
+                  const s = sample(e);
+                  setHover(s ? { x: s.x, y: s.y, hex: toHex(s.c, false) } : null);
+                  if (s && e.buttons === 1) setRgb(s.c);
+                }}
+                onPointerLeave={() => setHover(null)}
+                onPointerDown={(e) => {
+                  e.currentTarget.setPointerCapture(e.pointerId);
+                  const s = sample(e);
+                  if (s) setRgb(s.c);
+                }}
+              />
+              {hover && (
+                <span
+                  className="pointer-events-none absolute flex h-12 w-12 -translate-x-1/2 -translate-y-[calc(100%+14px)] items-end justify-center rounded-full border-[3px] border-white pb-0.5 shadow-[0_0_0_1px_rgb(0_0_0/0.3),0_4px_12px_rgb(0_0_0/0.3)]"
+                  style={{ left: hover.x, top: hover.y, background: hover.hex }}
+                  aria-hidden="true"
+                />
+              )}
+            </div>
+          </div>
+        )}
+
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+          {/* Picker */}
+          <div className="glass space-y-4 p-4 sm:p-5">
             <div
-              className="relative flex h-48 w-full items-end justify-between rounded-xl border border-border p-4 transition-colors duration-200"
-              style={{ backgroundColor: hex, color: bestTextColor(rgb.r, rgb.g, rgb.b) }}
+              ref={area}
+              dir="ltr"
+              role="slider"
+              tabIndex={0}
+              aria-label={t("clr.v2.area")}
+              aria-valuetext={`${Math.round(hsva.s * 100)}%, ${Math.round(hsva.v * 100)}%`}
+              aria-valuenow={Math.round(hsva.s * 100)}
+              onKeyDown={areaKey}
+              onPointerDown={(e) => {
+                e.currentTarget.setPointerCapture(e.pointerId);
+                pickArea(e);
+              }}
+              onPointerMove={(e) => e.buttons === 1 && pickArea(e)}
+              className="relative aspect-[4/3] w-full cursor-crosshair touch-none rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-volt/60 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+              style={{ background: `linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, transparent), hsl(${hsva.h} 100% 50%)` }}
             >
-              <span className="font-mono text-2xl font-semibold tracking-tight">{hex.toUpperCase()}</span>
-              <button
-                type="button"
-                onClick={randomize}
-                className="flex items-center gap-2 rounded-full bg-black/15 px-3.5 py-2 text-sm font-semibold backdrop-blur-sm transition hover:bg-black/25"
-                title={`${t("rc.generateNew")} (${t("rc.spaceKey")})`}
-              >
+              <span className="pointer-events-none absolute inset-0 rounded-xl shadow-[inset_0_0_0_1px_rgb(0_0_0/0.08)]" />
+              <span
+                className="pointer-events-none absolute h-6 w-6 -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] border-white shadow-[0_0_0_1px_rgb(0_0_0/0.3),0_2px_6px_rgb(0_0_0/0.3)]"
+                style={{ left: `${hsva.s * 100}%`, top: `${(1 - hsva.v) * 100}%`, background: opaqueHex }}
+              />
+            </div>
+
+            <div className="flex items-center gap-4">
+              <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-border" style={{ background: CHECKER }}>
+                <span className="absolute inset-0" style={{ background: hex }} />
+              </div>
+              <div className="min-w-0 flex-1 space-y-3.5">
+                <Track label={t("clr.v2.hue")} value={hsva.h} max={360} step={1} onChange={(h) => setHsva((p) => ({ ...p, h }))} background={HUE_TRACK} thumbColor={`hsl(${hsva.h} 100% 50%)`} valueText={`${Math.round(hsva.h)}°`} />
+                <Track
+                  label={t("clr.v2.alpha")}
+                  value={hsva.a * 100}
+                  max={100}
+                  step={1}
+                  onChange={(a) => setHsva((p) => ({ ...p, a: Math.round(a) / 100 }))}
+                  background={`linear-gradient(to right, transparent, ${opaqueHex}), ${CHECKER}`}
+                  thumbColor={hex}
+                  valueText={`${Math.round(hsva.a * 100)}%`}
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <button type="button" onClick={randomize} className={buttonSecondary} title={`${t("rc.generateNew")} (${t("rc.spaceKey")})`}>
                 <Shuffle className="h-4 w-4" aria-hidden="true" />
                 {t("rc.generateNew")}
               </button>
+              {hasDropper && (
+                <button type="button" onClick={eyedrop} className={buttonSecondary}>
+                  <Pipette className="h-4 w-4" aria-hidden="true" />
+                  {t("clr.v2.eyedropper")}
+                </button>
+              )}
+              <button type="button" onClick={() => fileRef.current?.click()} className={buttonSecondary}>
+                <ImageIcon className="h-4 w-4" aria-hidden="true" />
+                {t("clr.v2.fromImage")}
+              </button>
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                tabIndex={-1}
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  e.target.value = "";
+                  if (f) openImage(f);
+                }}
+              />
             </div>
 
-            {/* Native color input */}
-            <div className="mt-4 flex items-center gap-4">
-              <input
-                type="color"
-                value={hex}
-                aria-label={t("clr.hex")}
-                onChange={(e) => updateFromHex(e.target.value)}
-                className="w-14 h-14 rounded-xl cursor-pointer bg-transparent border-0"
+            <div className="space-y-3 border-t border-border pt-4">
+              <Segmented<"rgb" | "hsl" | "oklch">
+                label={t("clr.v2.channels")}
+                size="sm"
+                value={mode}
+                onChange={setMode}
+                options={[
+                  { value: "rgb", label: "RGB" },
+                  { value: "hsl", label: "HSL" },
+                  { value: "oklch", label: "OKLCH" },
+                ]}
               />
-              <div className="flex-1">
-                <p className="text-sm text-t-secondary mb-1">{t("clr.hex")}</p>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={hexString}
-                    onChange={(e) => {
-                      const v = e.target.value;
-                      setHex(v);
-                      if (/^#[0-9a-f]{6}$/i.test(v)) updateFromHex(v);
-                    }}
-                    className="flex-1 px-3 py-2 rounded-lg bg-bg-secondary border border-border text-t-primary font-mono text-sm focus:outline-none focus:border-accent/50"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => copy(hexString)}
-                    className="px-3 py-2 rounded-lg bg-bg-secondary text-t-secondary hover:text-t-primary hover:bg-bg-tertiary transition-colors text-sm border border-border"
-                  >
-                    {t("clr.copy")}
-                  </button>
-                </div>
+              <div className="grid grid-cols-4 gap-2">
+                {channels.map((ch) => (
+                  <NumField key={mode + ch.label} label={ch.label} value={ch.value} min={0} max={ch.max} step={ch.step} digits={ch.digits} suffix={"suffix" in ch ? ch.suffix : undefined} onCommit={ch.set} />
+                ))}
+                <NumField label="A" value={hsva.a * 100} min={0} max={100} step={1} digits={0} suffix="%" onCommit={(v) => setHsva((p) => ({ ...p, a: v / 100 }))} />
               </div>
             </div>
           </div>
 
-          {/* Preset colors */}
-          <div className="glass rounded-xl p-6">
-            <h3 className="text-t-primary font-medium mb-3">{t("clr.presets")}</h3>
-            <div className="flex flex-wrap gap-2">
-              {presetColors.map((c) => (
-                <button
-                  key={c}
-                  onClick={() => updateFromHex(c)}
-                  className={`w-9 h-9 rounded-lg border-2 transition-transform hover:scale-110 ${
-                    hex.toLowerCase() === c.toLowerCase() ? "border-t-primary scale-110" : "border-border"
-                  }`}
-                  style={{ backgroundColor: c }}
-                  title={c}
-                  aria-label={c}
+          {/* Values */}
+          <div className="space-y-5">
+            <div className="glass space-y-3 p-4 sm:p-5">
+              <label className="block">
+                <span className="mb-1.5 block text-[13px] text-t-secondary">{t("clr.v2.input")}</span>
+                <input
+                  value={text ?? hex}
+                  dir="ltr"
+                  spellCheck={false}
+                  autoComplete="off"
+                  placeholder="#FFD60A · rgb(…) · oklch(…) · tomato"
+                  onFocus={(e) => {
+                    setText(hex);
+                    e.currentTarget.select();
+                  }}
+                  onBlur={() => setText(null)}
+                  onChange={(e) => {
+                    setText(e.target.value);
+                    const c = parseAnyColor(e.target.value);
+                    if (c) setRgb(c);
+                  }}
+                  aria-invalid={text !== null && text.trim() !== "" && !parsedText}
+                  className="h-12 w-full rounded-xl border border-border bg-bg-secondary px-3 font-mono text-[15px] text-t-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-volt/60 aria-[invalid=true]:border-red-500/60"
                 />
-              ))}
+                <span className="mt-1.5 block text-[12.5px] text-t-tertiary">
+                  {text !== null && text.trim() !== "" && !parsedText ? t("clr.v2.invalid") : t(name.exact ? "clr.v2.exactName" : "clr.v2.near", { name: name.name })}
+                </span>
+              </label>
+              <ul className="divide-y divide-border">
+                {FORMATS.map((f) => {
+                  const v = formatColor(rgb, f.id);
+                  return (
+                    <li key={f.id} className="flex items-center gap-3 py-1.5">
+                      <span className="w-14 shrink-0 text-[12px] font-semibold text-t-tertiary">{f.label}</span>
+                      <button type="button" onClick={() => copy(v)} dir="ltr" className="min-w-0 flex-1 truncate text-start font-mono text-[13.5px] text-t-primary hover:underline">
+                        {v}
+                      </button>
+                      <button type="button" onClick={() => copy(v)} aria-label={`${t("clr.copy")} ${f.label}`} className="rounded-md p-1.5 text-t-tertiary transition hover:bg-bg-secondary hover:text-t-primary">
+                        <Copy className="h-4 w-4" aria-hidden="true" />
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+
+            <div className="glass space-y-3 p-4 sm:p-5">
+              <p className={sectionTitle}>{t("clr.v2.contrast")}</p>
+              <div className="grid grid-cols-2 gap-3">
+                {([
+                  [255, onWhite, "#FFFFFF", "#6B7280", "clr.v2.onWhite"],
+                  [0, onBlack, "#16181D", "#9CA3AF", "clr.v2.onBlack"],
+                ] as const).map(([bg, ratio, fill, muted, key]) => (
+                  <div key={bg} className="overflow-hidden rounded-xl border border-border">
+                    <div className="flex h-16 items-center justify-center gap-2 text-[22px] font-semibold" style={{ background: fill, color: hex }}>
+                      Aa{" "}
+                      <span className="text-[13px] font-medium" style={{ color: muted }}>
+                        {t(key)}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap items-center justify-between gap-1.5 p-2.5">
+                      <span className="font-mono text-[14px] font-semibold tabular-nums text-t-primary">{ratio.toFixed(2)}:1</span>
+                      <span className="flex gap-1">
+                        <Badge ok={ratio >= 4.5} label="AA" title={t("clr.v2.aaHint")} />
+                        <Badge ok={ratio >= 7} label="AAA" title={t("clr.v2.aaHint")} />
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[12.5px] text-t-tertiary">{t("clr.v2.aaHint")}</p>
             </div>
           </div>
+        </div>
 
-          {/* Color harmony */}
-          <div className="glass rounded-xl p-6">
-            <h3 className="mb-3 font-medium text-t-primary">{t("rc.harmonyMode")}</h3>
-            <div className="segmented mb-4 max-w-full overflow-x-auto scrollbar-hide">
-              {HARMONY_MODES.map((m) => (
+        {/* Tonal scale */}
+        <div className="glass space-y-3 p-4 sm:p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className={sectionTitle}>{t("clr.v2.scale")}</p>
+              <p className="mt-1 text-[12.5px] text-t-tertiary">{t("clr.v2.scaleHint")}</p>
+            </div>
+            <button type="button" onClick={() => copy(scaleCss)} className={buttonSecondary}>
+              <Copy className="h-4 w-4" aria-hidden="true" />
+              {t("clr.v2.copyScale")}
+            </button>
+          </div>
+          <div className="grid grid-cols-6 gap-1.5 sm:grid-cols-11">
+            {scale.steps.map((s, i) => {
+              const c = parseAnyColor(s.hex)!;
+              return (
                 <button
-                  key={m.value}
+                  key={s.step}
                   type="button"
-                  onClick={() => setHarmony(m.value)}
-                  aria-pressed={harmony === m.value}
-                  className={`shrink-0 rounded-[9px] px-3 py-1.5 text-[13px] font-medium transition-colors ${
-                    harmony === m.value
-                      ? "bg-surface text-t-primary shadow-sm"
-                      : "text-t-secondary hover:text-t-primary"
-                  }`}
+                  onClick={() => setRgb({ ...c, a: rgb.a })}
+                  title={s.hex}
+                  className={`flex h-16 flex-col justify-between rounded-lg p-1.5 text-start font-mono text-[10.5px] leading-tight transition hover:scale-[1.04] ${i === scale.nearest ? "ring-2 ring-t-primary ring-offset-2 ring-offset-surface" : ""}`}
+                  style={{ background: s.hex, color: readableInk(c) }}
                 >
-                  {t(m.labelKey)}
+                  <span className="font-semibold">{s.step}</span>
+                  <span>{s.hex.slice(1)}</span>
                 </button>
-              ))}
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="space-y-5">
+          {/* Harmonies */}
+          <div className="glass space-y-3 p-4 sm:p-5">
+            <p className={sectionTitle}>{t("rc.harmonyMode")}</p>
+            <div className="max-w-full overflow-x-auto scrollbar-hide">
+              <Segmented<Harmony> label={t("rc.harmonyMode")} size="sm" value={kind} onChange={setKind} options={HARMONIES.map((h) => ({ value: h, label: t(HARMONY_LABEL[h]) }))} />
             </div>
             <div className="flex gap-2">
-              {[hex, ...harmonyColors].map((c, i) => {
-                const parsed = hexToRgb(c);
+              {[opaqueHex, ...partners].map((c, i) => {
+                const parsed = parseAnyColor(c)!;
                 return (
                   <button
                     key={`${c}-${i}`}
                     type="button"
-                    onClick={() => (i === 0 ? copy(c.toUpperCase()) : updateFromHex(c))}
-                    className="flex h-20 flex-1 items-end rounded-lg border border-border p-2 font-mono text-[11px] font-semibold transition-transform hover:scale-[1.02]"
-                    style={{
-                      backgroundColor: c,
-                      color: parsed ? bestTextColor(parsed.r, parsed.g, parsed.b) : undefined,
-                    }}
-                    title={i === 0 ? t("clr.copy") : c.toUpperCase()}
+                    onClick={() => (i === 0 ? copy(c) : setRgb({ ...parsed, a: rgb.a }))}
+                    className="flex h-20 min-w-0 flex-1 items-end rounded-lg border border-border p-2 font-mono text-[11px] font-semibold transition hover:scale-[1.02]"
+                    style={{ background: c, color: readableInk(parsed) }}
+                    title={i === 0 ? t("clr.copy") : c}
                   >
-                    {c.toUpperCase()}
+                    <span className="truncate">{c.slice(1)}</span>
                   </button>
                 );
               })}
             </div>
           </div>
-        </div>
 
-        {/* Values */}
-        <div className="space-y-6">
-          {/* RGB */}
-          <div className="glass rounded-xl p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-t-primary font-medium">{t("clr.rgb")}</h3>
-              <button
-                type="button"
-                onClick={() => copy(rgbString)}
-                className="px-3 py-1.5 text-xs rounded-lg bg-accent/15 text-accent hover:bg-accent/25 transition-colors border border-accent/30"
-              >
-                {t("clr.copy")}
-              </button>
-            </div>
-            {(["r", "g", "b"] as const).map((channel) => (
-              <div key={channel} className="flex items-center gap-4">
-                <span className="text-sm text-t-secondary uppercase w-4">{channel}</span>
-                <input
-                  type="range"
-                  min="0"
-                  max="255"
-                  value={rgb[channel]}
-                  onChange={(e) => {
-                    const val = Number(e.target.value);
-                    updateFromRgb(
-                      channel === "r" ? val : rgb.r,
-                      channel === "g" ? val : rgb.g,
-                      channel === "b" ? val : rgb.b
-                    );
-                  }}
-                  className="flex-1 accent-accent"
-                />
-                <input
-                  type="number"
-                  min="0"
-                  max="255"
-                  value={rgb[channel]}
-                  onChange={(e) => {
-                    const val = Number(e.target.value);
-                    updateFromRgb(
-                      channel === "r" ? val : rgb.r,
-                      channel === "g" ? val : rgb.g,
-                      channel === "b" ? val : rgb.b
-                    );
-                  }}
-                  className="w-16 px-2 py-1.5 rounded-lg bg-bg-secondary border border-border text-t-primary text-sm text-center focus:outline-none focus:border-accent/50"
-                />
-              </div>
-            ))}
-            <p className="text-sm text-t-secondary font-mono">{rgbString}</p>
-          </div>
-
-          {/* HSL */}
-          <div className="glass rounded-xl p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-t-primary font-medium">{t("clr.hsl")}</h3>
-              <button
-                type="button"
-                onClick={() => copy(hslString)}
-                className="px-3 py-1.5 text-xs rounded-lg bg-accent/15 text-accent hover:bg-accent/25 transition-colors border border-accent/30"
-              >
-                {t("clr.copy")}
-              </button>
-            </div>
-            {([
-              { key: "h" as const, label: "H", max: 360, unit: "\u00B0" },
-              { key: "s" as const, label: "S", max: 100, unit: "%" },
-              { key: "l" as const, label: "L", max: 100, unit: "%" },
-            ]).map(({ key, label, max, unit }) => (
-              <div key={key} className="flex items-center gap-4">
-                <span className="text-sm text-t-secondary w-4">{label}</span>
-                <input
-                  type="range"
-                  min="0"
-                  max={max}
-                  value={hsl[key]}
-                  onChange={(e) => {
-                    const val = Number(e.target.value);
-                    updateFromHsl(
-                      key === "h" ? val : hsl.h,
-                      key === "s" ? val : hsl.s,
-                      key === "l" ? val : hsl.l
-                    );
-                  }}
-                  className="flex-1 accent-accent"
-                />
-                <div className="flex items-center gap-1">
-                  <input
-                    type="number"
-                    min="0"
-                    max={max}
-                    value={hsl[key]}
-                    onChange={(e) => {
-                      const val = Number(e.target.value);
-                      updateFromHsl(
-                        key === "h" ? val : hsl.h,
-                        key === "s" ? val : hsl.s,
-                        key === "l" ? val : hsl.l
-                      );
-                    }}
-                    className="w-16 px-2 py-1.5 rounded-lg bg-bg-secondary border border-border text-t-primary text-sm text-center focus:outline-none focus:border-accent/50"
-                  />
-                  <span className="text-xs text-t-secondary">{unit}</span>
-                </div>
-              </div>
-            ))}
-            <p className="text-sm text-t-secondary font-mono">{hslString}</p>
-          </div>
-
-          {/* CSS variable */}
-          <div className="glass rounded-xl p-6">
-            <h3 className="text-t-primary font-medium mb-3">{t("clr.css")}</h3>
-            <div className="space-y-2">
-              {[
-                { label: t("clr.hex"), value: hexString },
-                { label: t("clr.rgb"), value: rgbString },
-                { label: t("clr.hsl"), value: hslString },
-              ].map((item) => (
+          {/* Recent */}
+          <div className="glass space-y-3 p-4 sm:p-5">
+            <div className="flex items-center justify-between gap-3">
+              <p className={sectionTitle}>{t("clr.v2.recent")}</p>
+              {recent.length > 0 && (
                 <button
                   type="button"
-                  key={item.label}
-                  onClick={() => copy(`color: ${item.value};`)}
-                  className="w-full text-left px-4 py-2 rounded-lg bg-bg-secondary hover:bg-bg-tertiary transition-colors font-mono text-sm text-t-secondary hover:text-t-primary border border-border"
+                  onClick={() => {
+                    setRecent([]);
+                    try {
+                      localStorage.removeItem(RECENT_KEY);
+                    } catch {
+                      /* ignore */
+                    }
+                  }}
+                  className="text-[12.5px] text-t-tertiary hover:text-t-primary"
                 >
-                  {t("clr.cssColor", { value: item.value })}
+                  {t("clr.v2.clearRecent")}
                 </button>
-              ))}
+              )}
             </div>
+            {recent.length ? (
+              <div className="grid grid-cols-8 gap-1.5 sm:grid-cols-[repeat(16,minmax(0,1fr))]">
+                {recent.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setRgb(parseAnyColor(c)!)}
+                    title={c}
+                    aria-label={c}
+                    className={`relative aspect-square overflow-hidden rounded-lg border transition hover:scale-105 ${c === hex ? "border-t-primary" : "border-border"}`}
+                    style={{ background: CHECKER }}
+                  >
+                    <span className="absolute inset-0" style={{ background: c }} />
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className="text-[13px] text-t-tertiary">{t("clr.v2.recentEmpty")}</p>
+            )}
+            <p className="text-[12.5px] text-t-tertiary">{t("clr.v2.shareHint")}</p>
           </div>
         </div>
       </div>

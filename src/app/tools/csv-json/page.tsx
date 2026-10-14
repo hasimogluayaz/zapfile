@@ -1,320 +1,211 @@
 "use client";
 
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { ArrowLeftRight, CheckCircle2, Download, Loader2 } from "lucide-react";
 import CsvTable from "@/components/CsvTable";
-import { parseCsvSimple } from "@/lib/parse-csv-simple";
-import toast from "react-hot-toast";
 import ToolLayout from "@/components/ToolLayout";
+import { Segmented, Toggle, sectionTitle } from "@/components/ui/controls";
+import { downloadBlob } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n";
+import { useLiveTask, useStoredPref, useStoredText, useTaskRunner } from "@/lib/text-tools/hooks";
+import { CodeEditor, ErrorBox, OutputPanel, SavedNote, baseName, readTextFile, smallButton } from "@/lib/text-tools/ui";
+import type { CsvReq, CsvRes, Delim, Direction } from "./csv-core";
 
-type Mode = "csv-to-json" | "json-to-csv";
-type Delimiter = "," | "\t" | ";";
+const SAMPLE_CSV = `name,city,joined,active,score
+"Yılmaz, Ayşe",İstanbul,2024-03-01,true,92.5
+Jean Dupont,Paris,2023-11-12,false,78
+"Müller ""Max""",Berlin,2025-01-20,true,
+Ana Souza,"São Paulo
+Brazil",2022-07-08,true,88`;
 
-function parseCSV(text: string, delimiter: Delimiter, hasHeaders: boolean): unknown {
-  const lines = text.split(/\r?\n/).filter((line) => line.trim() !== "");
-  if (lines.length === 0) return [];
+const SAMPLE_JSON = `[
+  { "id": 1, "name": "Ayşe", "address": { "city": "İstanbul", "zip": "34000" }, "tags": ["admin", "beta"] },
+  { "id": 2, "name": "Jean", "address": { "city": "Paris", "zip": "75001" }, "active": true }
+]`;
 
-  const parseRow = (row: string): string[] => {
-    const result: string[] = [];
-    let current = "";
-    let inQuotes = false;
-    for (let i = 0; i < row.length; i++) {
-      const ch = row[i];
-      if (inQuotes) {
-        if (ch === '"' && row[i + 1] === '"') {
-          current += '"';
-          i++;
-        } else if (ch === '"') {
-          inQuotes = false;
-        } else {
-          current += ch;
-        }
-      } else {
-        if (ch === '"') {
-          inQuotes = true;
-        } else if (ch === delimiter) {
-          result.push(current.trim());
-          current = "";
-        } else {
-          current += ch;
-        }
-      }
-    }
-    result.push(current.trim());
-    return result;
-  };
+const DELIM_LABEL: Record<string, string> = { ",": ",", ";": ";", "\t": "Tab", "|": "|" };
 
-  const rows = lines.map(parseRow);
-
-  if (hasHeaders && rows.length > 1) {
-    const headers = rows[0];
-    return rows.slice(1).map((row) => {
-      const obj: Record<string, string> = {};
-      headers.forEach((header, i) => {
-        obj[header] = row[i] ?? "";
-      });
-      return obj;
-    });
-  }
-
-  return rows;
-}
-
-function jsonToCSV(data: unknown): string {
-  if (!Array.isArray(data) || data.length === 0) {
-    throw new Error("Input must be a non-empty JSON array");
-  }
-
-  if (typeof data[0] === "object" && data[0] !== null && !Array.isArray(data[0])) {
-    const headers = Object.keys(data[0]);
-    const rows = data.map((item) => {
-      return headers.map((h) => {
-        const val = String((item as Record<string, unknown>)[h] ?? "");
-        if (val.includes(",") || val.includes('"') || val.includes("\n")) {
-          return `"${val.replace(/"/g, '""')}"`;
-        }
-        return val;
-      }).join(",");
-    });
-    return [headers.join(","), ...rows].join("\n");
-  }
-
-  if (Array.isArray(data[0])) {
-    return data.map((row) =>
-      (row as unknown[]).map((cell) => {
-        const val = String(cell ?? "");
-        if (val.includes(",") || val.includes('"') || val.includes("\n")) {
-          return `"${val.replace(/"/g, '""')}"`;
-        }
-        return val;
-      }).join(",")
-    ).join("\n");
-  }
-
-  throw new Error("JSON must be an array of objects or array of arrays");
-}
-
-export default function CSVJSONPage() {
+export default function CsvJsonPage() {
   const { t } = useI18n();
-  const [mode, setMode] = useState<Mode>("csv-to-json");
-  const [input, setInput] = useState("");
-  const [output, setOutput] = useState("");
-  const [error, setError] = useState("");
-  const [delimiter, setDelimiter] = useState<Delimiter>(",");
-  const [hasHeaders, setHasHeaders] = useState(true);
+  const [input, setInput, store] = useStoredText("csv-json");
+  const [direction, setDirection] = useStoredPref<Direction>("csv.dir", "csv2json", ["csv2json", "json2csv"]);
+  const [delimiter, setDelimiter] = useStoredPref<Delim>("csv.delim", "auto", ["auto", ",", ";", "\t", "|"]);
+  const [header, setHeader] = useStoredPref<boolean>("csv.header", true);
+  const [typed, setTyped] = useStoredPref<boolean>("csv.typed", true);
+  const [jsonShape, setJsonShape] = useStoredPref<"array" | "lines">("csv.shape", "array", ["array", "lines"]);
+  const [flatten, setFlatten] = useStoredPref<boolean>("csv.flatten", true);
+  const [quoteAll, setQuoteAll] = useStoredPref<boolean>("csv.quoteAll", false);
+  const [fileBase, setFileBase] = useState("data");
 
-  const convert = useCallback(() => {
-    if (!input.trim()) {
-      setOutput("");
-      setError("");
-      return;
-    }
+  const runner = useTaskRunner<CsvReq, CsvRes>(
+    () => new Worker(new URL("./csv.worker.ts", import.meta.url), { type: "module" }),
+    async (req) => (await import("./csv-core")).processCsv(req),
+  );
+  const req = useMemo<CsvReq | null>(
+    () => (input.trim() ? { text: input, direction, delimiter, header, typed, jsonShape, flatten, quoteAll } : null),
+    [input, direction, delimiter, header, typed, jsonShape, flatten, quoteAll],
+  );
+  const { result, pending, failure } = useLiveTask(runner, req, input.length);
+  const ok = result && result.ok ? result : null;
+  const err = result && !result.ok ? result : null;
+  const output = input.trim() && ok ? ok.output : "";
+  const toJson = direction === "csv2json";
 
-    try {
-      if (mode === "csv-to-json") {
-        const result = parseCSV(input, delimiter, hasHeaders);
-        setOutput(JSON.stringify(result, null, 2));
-      } else {
-        const parsed = JSON.parse(input);
-        setOutput(jsonToCSV(parsed));
-      }
-      setError("");
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Conversion failed");
-      setOutput("");
-    }
-  }, [input, mode, delimiter, hasHeaders]);
+  const onFile = useCallback(
+    async (file: File) => {
+      const text = await readTextFile(file, t);
+      if (text === null) return;
+      setInput(text);
+      setFileBase(baseName(file.name) || "data");
+      if (/\.(json|jsonl|ndjson)$/i.test(file.name)) setDirection("json2csv");
+      else if (/\.(csv|tsv|txt)$/i.test(file.name)) setDirection("csv2json");
+      if (/\.tsv$/i.test(file.name)) setDelimiter("\t");
+    },
+    [setInput, setDirection, setDelimiter, t],
+  );
 
-  useEffect(() => {
-    const timer = setTimeout(convert, 200);
-    return () => clearTimeout(timer);
-  }, [convert]);
-
-  const copyToClipboard = async () => {
+  const swap = () => {
     if (!output) return;
-    try {
-      await navigator.clipboard.writeText(output);
-      toast.success(t("ui.copied"));
-    } catch {
-      toast.error(t("ui.copyFailed"));
-    }
-  };
-
-  const swapMode = () => {
-    const newMode = mode === "csv-to-json" ? "json-to-csv" : "csv-to-json";
-    setMode(newMode as Mode);
     setInput(output);
-    setOutput("");
-    setError("");
+    setDirection(toJson ? "json2csv" : "csv2json");
   };
-
-  const clearAll = () => {
-    setInput("");
-    setOutput("");
-    setError("");
-  };
-
-  // Table preview of whichever side is CSV (input in CSV→JSON, output in JSON→CSV).
-  const tableRows = useMemo(() => {
-    if (error) return [];
-    const csv = mode === "csv-to-json" ? input : output;
-    if (!csv.trim()) return [];
-    return parseCsvSimple(csv, mode === "csv-to-json" ? delimiter : ",").filter(
-      (row) => row.some((cell) => cell.trim() !== ""),
-    );
-  }, [mode, input, output, delimiter, error]);
 
   return (
-    <ToolLayout
-      toolName="CSV ↔ JSON"
-      toolDescription="Convert between CSV and JSON formats"
-    >
-      <div className="space-y-6">
-        {/* Mode Toggle */}
-        <div className="glass rounded-xl p-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex gap-2">
-              <button
-                onClick={() => { setMode("csv-to-json"); setOutput(""); setError(""); }}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                  mode === "csv-to-json"
-                    ? "bg-accent text-on-accent"
-                    : "text-t-secondary hover:text-t-primary bg-bg-secondary border border-border"
-                }`}
-              >
-                {t("csvjson.csvToJson")}
-              </button>
-              <button
-                onClick={() => { setMode("json-to-csv"); setOutput(""); setError(""); }}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                  mode === "json-to-csv"
-                    ? "bg-accent text-on-accent"
-                    : "text-t-secondary hover:text-t-primary bg-bg-secondary border border-border"
-                }`}
-              >
-                {t("csvjson.jsonToCsv")}
-              </button>
+    <ToolLayout toolName={t("tool.csv-json.name")} toolDescription={t("tool.csv-json.desc")}>
+      <div className="space-y-5">
+        <div className="glass space-y-4 rounded-2xl p-4">
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+            <Segmented<Direction>
+              label={t("b64.v2.direction")}
+              value={direction}
+              onChange={setDirection}
+              options={[
+                { value: "csv2json", label: t("csvjson.csvToJson") },
+                { value: "json2csv", label: t("csvjson.jsonToCsv") },
+              ]}
+            />
+            <div className="flex items-center gap-2">
+              <span className="text-[13px] text-t-secondary">{t("csvjson.delimiter")}</span>
+              <Segmented<Delim>
+                label={t("csvjson.delimiter")}
+                size="sm"
+                value={delimiter}
+                onChange={setDelimiter}
+                options={[
+                  ...(toJson ? [{ value: "auto" as Delim, label: t("ts.v2.auto") }] : []),
+                  { value: "," as Delim, label: "," },
+                  { value: ";" as Delim, label: ";" },
+                  { value: "\t" as Delim, label: "Tab" },
+                  { value: "|" as Delim, label: "|" },
+                ]}
+              />
             </div>
-
-            <div className="flex gap-2">
-              <button
-                onClick={swapMode}
-                className="px-4 py-2 rounded-lg text-t-secondary bg-bg-secondary border border-border hover:text-t-primary transition-colors text-sm"
-              >
+            <div className="flex gap-2 sm:ms-auto">
+              <button type="button" className={smallButton} onClick={swap} disabled={!output}>
+                <ArrowLeftRight className="h-4 w-4" aria-hidden="true" />
                 {t("ui.swap")}
               </button>
               <button
-                onClick={clearAll}
-                className="px-4 py-2 rounded-lg text-t-secondary bg-bg-secondary border border-border hover:text-t-primary transition-colors text-sm"
+                type="button"
+                className={smallButton}
+                onClick={() => {
+                  setInput(toJson ? SAMPLE_CSV : SAMPLE_JSON);
+                  setFileBase("sample");
+                }}
               >
-                {t("ui.clear")}
+                {t("json.sample")}
               </button>
             </div>
           </div>
-
-          {/* CSV Options */}
-          {mode === "csv-to-json" && (
-            <div className="flex flex-wrap items-center gap-4 mt-4 pt-4 border-t border-border">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-t-secondary">{t("csvjson.delimiter")}</span>
-                <div className="flex gap-1">
-                  {([
-                    { value: ",", labelKey: "csvjson.comma" },
-                    { value: "\t", labelKey: "csvjson.tab" },
-                    { value: ";", labelKey: "csvjson.semicolon" },
-                  ] as { value: Delimiter; labelKey: string }[]).map((d) => (
-                    <button
-                      key={d.labelKey}
-                      onClick={() => setDelimiter(d.value)}
-                      className={`px-3 py-1 text-xs rounded-lg font-medium transition-all ${
-                        delimiter === d.value
-                          ? "bg-accent text-on-accent"
-                          : "text-t-secondary hover:text-t-primary bg-bg-secondary border border-border"
-                      }`}
-                    >
-                      {t(d.labelKey)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={hasHeaders}
-                  onChange={(e) => setHasHeaders(e.target.checked)}
-                  className="rounded border-border text-accent focus:ring-accent/50"
-                />
-                <span className="text-sm text-t-secondary">{t("csvjson.firstRowHeaders")}</span>
-              </label>
-            </div>
-          )}
-        </div>
-
-        {/* Input */}
-        <div className="glass rounded-xl p-6">
-          <label className="block text-sm text-t-secondary mb-2">
-            {mode === "csv-to-json" ? t("csvjson.csvInput") : t("csvjson.jsonInput")}
-          </label>
-          <textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder={
-              mode === "csv-to-json"
-                ? "name,age,city\nJohn,30,New York\nJane,25,London"
-                : '[{"name":"John","age":30},{"name":"Jane","age":25}]'
-            }
-            rows={10}
-            spellCheck={false}
-            className="w-full bg-bg-secondary border border-border rounded-lg px-4 py-3 text-t-primary placeholder-t-tertiary focus:outline-none focus:ring-2 focus:ring-accent/50 font-mono"
-          />
-        </div>
-
-        {/* Error */}
-        {error && (
-          <div className="glass rounded-xl p-4 border border-red-500/20 bg-red-500/5">
-            <div className="flex items-start gap-3">
-              <svg className="w-5 h-5 text-red-400 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
-              </svg>
-              <div>
-                <p className="text-sm font-medium text-red-400">{t("csvjson.error")}</p>
-                <p className="text-xs text-red-400/70 mt-1 font-mono">{error}</p>
-              </div>
-            </div>
+          <div className="flex flex-wrap gap-x-6 gap-y-3">
+            {toJson ? (
+              <>
+                <Toggle checked={header} onChange={setHeader} label={t("csvjson.firstRowHeaders")} />
+                <Toggle checked={typed} onChange={setTyped} label={t("csvjson.v2.typed")} description={t("csvjson.v2.typedHint")} />
+                <Toggle checked={jsonShape === "lines"} onChange={(v) => setJsonShape(v ? "lines" : "array")} label={t("csvjson.v2.jsonLines")} />
+              </>
+            ) : (
+              <>
+                <Toggle checked={flatten} onChange={setFlatten} label={t("csvjson.v2.flatten")} description={t("csvjson.v2.flattenHint")} />
+                <Toggle checked={quoteAll} onChange={setQuoteAll} label={t("csvjson.v2.quoteAll")} />
+              </>
+            )}
           </div>
-        )}
+        </div>
 
-        {/* Output */}
-        {output && (
-          <div className="glass rounded-xl p-6">
-            <div className="flex items-center justify-between mb-2">
-              <label className="text-sm text-t-secondary">
-                {mode === "csv-to-json" ? t("csvjson.jsonOutput") : t("csvjson.csvOutput")}
-              </label>
-              <button
-                onClick={copyToClipboard}
-                className="px-4 py-2 rounded-lg text-t-secondary bg-bg-secondary border border-border hover:text-t-primary transition-colors text-sm"
-              >
-                {t("ui.copy")}
-              </button>
-            </div>
-            <textarea
-              value={output}
-              readOnly
-              rows={10}
-              className="w-full bg-bg-secondary border border-border rounded-lg px-4 py-3 text-t-primary font-mono text-sm resize-y"
+        <div className="grid gap-5 lg:grid-cols-2">
+          <div className="glass rounded-2xl p-4 sm:p-5">
+            <CodeEditor
+              label={toJson ? t("csvjson.csvInput") : t("csvjson.jsonInput")}
+              value={input}
+              onChange={setInput}
+              placeholder={toJson ? "name,age\nAyşe,30" : '[{"name":"Ayşe","age":30}]'}
+              errorLine={err?.line ?? null}
+              onFile={onFile}
+              accept={[".csv", ".tsv", ".txt", ".json", ".jsonl", ".ndjson"]}
+              onClear={() => setInput("")}
+              footer={
+                <>
+                  {input.trim() && (
+                    <span className="inline-flex items-center gap-1.5 font-medium">
+                      {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : ok ? <CheckCircle2 className="h-3.5 w-3.5 text-t-primary" aria-hidden="true" /> : null}
+                      {pending ? t("textkit.v2.checking") : ok ? t("csvjson.v2.summary", { rows: ok.rows.toLocaleString(), cols: ok.cols }) : ""}
+                    </span>
+                  )}
+                  <SavedNote tooBig={store.tooBigToStore} />
+                </>
+              }
             />
-            <p className="text-xs text-t-tertiary mt-2">
-              {output.length.toLocaleString()} {t("ui.characters")}
-            </p>
           </div>
+          <div className="glass rounded-2xl p-4 sm:p-5">
+            <OutputPanel
+              title={toJson ? t("csvjson.jsonOutput") : t("csvjson.csvOutput")}
+              text={output}
+              filename={`${fileBase}.${toJson ? (jsonShape === "lines" ? "jsonl" : "json") : "csv"}`}
+              mime={toJson ? "application/json" : "text/csv"}
+              stale={pending}
+              placeholder={t("textkit.v2.outputPlaceholder")}
+              meta={ok && toJson && delimiter === "auto" ? <span>{t("csvjson.v2.detected", { d: DELIM_LABEL[ok.delimiter] ?? ok.delimiter })}</span> : null}
+              actions={
+                !toJson && output ? (
+                  <button
+                    type="button"
+                    className={smallButton}
+                    title={t("csvjson.v2.excelHint")}
+                    onClick={() => downloadBlob(new Blob(["﻿" + output], { type: "text/csv;charset=utf-8" }), `${fileBase}-excel.csv`)}
+                  >
+                    <Download className="h-4 w-4" aria-hidden="true" />
+                    Excel
+                  </button>
+                ) : null
+              }
+            />
+          </div>
+        </div>
+
+        {failure && <ErrorBox title={t("textkit.v2.failed")} message={failure} />}
+        {err && <ErrorBox title={t("csvjson.error")} message={err.message === "empty" ? t("csvjson.v2.empty") : err.message} line={err.line} source={input} />}
+        {ok && ok.warnings.length > 0 && (
+          <ErrorBox
+            tone="warning"
+            title={t("csvjson.v2.warnings", { n: ok.warnings.length })}
+            message={
+              <ul className="space-y-0.5">
+                {ok.warnings.map((w, i) => (
+                  <li key={i}>
+                    {t("textkit.v2.lineOnly", { line: w.row })} · {w.message}
+                  </li>
+                ))}
+              </ul>
+            }
+          />
         )}
 
-        {tableRows.length > 1 && (
-          <div className="glass rounded-xl p-6">
-            <h3 className="mb-3 text-sm font-medium text-t-secondary">{t("csvview.preview")}</h3>
-            <CsvTable rows={tableRows} />
+        {ok && ok.preview.length > 1 && (
+          <div className="glass space-y-3 rounded-2xl p-4 sm:p-5">
+            <p className={sectionTitle}>{t("csvview.preview")}</p>
+            <CsvTable rows={header || !toJson ? ok.preview : [ok.preview[0]!.map((_, i) => `#${i + 1}`), ...ok.preview]} />
+            {ok.rows > ok.preview.length - 1 && <p className="text-[12.5px] text-t-tertiary">{t("csvjson.v2.previewLimit", { n: (ok.preview.length - 1).toLocaleString(), total: ok.rows.toLocaleString() })}</p>}
           </div>
         )}
       </div>

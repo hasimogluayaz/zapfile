@@ -1,9 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { Copy, RefreshCw } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
+import { Segmented, Slider, Toggle, buttonPrimary, buttonSecondary, sectionTitle } from "@/components/ui/controls";
 import { useI18n } from "@/lib/i18n";
+import { useStoredPref } from "@/lib/text-tools/hooks";
 
 type GenerateType = "paragraphs" | "sentences" | "words";
 
@@ -42,117 +45,95 @@ const LOREM_WORDS = [
 ];
 
 const LOREM_START = "Lorem ipsum dolor sit amet, consectetur adipiscing elit";
+const WORDS = Array.from(new Set(LOREM_WORDS));
 
-function getRandomWord(): string {
-  return LOREM_WORDS[Math.floor(Math.random() * LOREM_WORDS.length)];
+type Format = "text" | "html" | "markdown";
+
+function pick(prev?: string): string {
+  // Never repeat the previous word.
+  for (;;) {
+    const w = WORDS[Math.floor(Math.random() * WORDS.length)]!;
+    if (w !== prev) return w;
+  }
 }
 
 function capitalize(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-function generateSentence(): string {
-  const length = 8 + Math.floor(Math.random() * 12);
+function sentence(): string {
+  const length = 7 + Math.floor(Math.random() * 11);
   const words: string[] = [];
-  for (let i = 0; i < length; i++) {
-    words.push(getRandomWord());
+  for (let i = 0; i < length; i++) words.push(pick(words[i - 1]));
+  // A comma in longer sentences reads more naturally.
+  if (length > 10) {
+    const at = 3 + Math.floor(Math.random() * (length - 6));
+    words[at] += ",";
   }
-  words[0] = capitalize(words[0]);
-  return words.join(" ") + ".";
+  words[0] = capitalize(words[0]!);
+  return words.join(" ") + (Math.random() < 0.08 ? "?" : ".");
 }
 
-function generateParagraph(): string {
-  const sentenceCount = 4 + Math.floor(Math.random() * 5);
-  const sentences: string[] = [];
-  for (let i = 0; i < sentenceCount; i++) {
-    sentences.push(generateSentence());
-  }
-  return sentences.join(" ");
+function paragraph(): string {
+  const n = 4 + Math.floor(Math.random() * 4);
+  return Array.from({ length: n }, sentence).join(" ");
 }
 
-function generateText(
-  type: GenerateType,
-  count: number,
-  startWithLorem: boolean
-): string {
-  let result: string;
-
-  switch (type) {
-    case "paragraphs": {
-      const paragraphs: string[] = [];
-      for (let i = 0; i < count; i++) {
-        paragraphs.push(generateParagraph());
-      }
-      if (startWithLorem && paragraphs.length > 0) {
-        paragraphs[0] = LOREM_START + ". " + paragraphs[0];
-      }
-      result = paragraphs.join("\n\n");
-      break;
-    }
-    case "sentences": {
-      const sentences: string[] = [];
-      for (let i = 0; i < count; i++) {
-        sentences.push(generateSentence());
-      }
-      if (startWithLorem && sentences.length > 0) {
-        sentences[0] = LOREM_START + ". " + sentences[0];
-      }
-      result = sentences.join(" ");
-      break;
-    }
-    case "words": {
-      const words: string[] = [];
-      for (let i = 0; i < count; i++) {
-        words.push(getRandomWord());
-      }
-      if (startWithLorem && words.length > 0) {
-        const loremWords = LOREM_START.toLowerCase().split(" ");
-        const replaceCount = Math.min(loremWords.length, words.length);
-        for (let i = 0; i < replaceCount; i++) {
-          words[i] = loremWords[i];
-        }
-        words[0] = capitalize(words[0]);
-      }
-      result = words.join(" ");
-      break;
-    }
+function generate(type: GenerateType | "chars", count: number, startWithLorem: boolean): string[] {
+  if (type === "paragraphs") {
+    const ps = Array.from({ length: count }, paragraph);
+    if (startWithLorem) ps[0] = `${LOREM_START}. ${ps[0]}`;
+    return ps;
   }
-
-  return result;
+  if (type === "sentences") {
+    const ss = Array.from({ length: count }, sentence);
+    if (startWithLorem) ss[0] = `${LOREM_START}.`;
+    return [ss.join(" ")];
+  }
+  if (type === "words") {
+    const ws: string[] = [];
+    for (let i = 0; i < count; i++) ws.push(pick(ws[i - 1]));
+    if (startWithLorem) LOREM_START.toLowerCase().replace(",", "").split(" ").slice(0, count).forEach((w, i) => (ws[i] = w));
+    ws[0] = capitalize(ws[0]!);
+    return [ws.join(" ")];
+  }
+  // Exact character count (for testing field limits), ending on a full word.
+  let out = startWithLorem ? `${LOREM_START}. ` : "";
+  while (out.length < count) out += sentence() + " ";
+  out = out.slice(0, count);
+  const cut = out.lastIndexOf(" ");
+  if (cut > count * 0.8) out = out.slice(0, cut);
+  out = out.replace(/[ ,]+$/, "");
+  if (out.length < count && !/[.?]$/.test(out)) out += ".";
+  return [out.slice(0, count)];
 }
 
-function countWords(text: string): number {
-  return text.trim() === "" ? 0 : text.trim().split(/\s+/).length;
+function render(parts: string[], format: Format, type: string): string {
+  if (format === "text") return parts.join("\n\n");
+  if (format === "html") return parts.map((p) => `<p>${p}</p>`).join("\n");
+  return parts.join("\n\n") + (type === "paragraphs" ? "\n" : "");
 }
 
 export default function LoremIpsumPage() {
-  const { t } = useI18n();
-  const [type, setType] = useState<GenerateType>("paragraphs");
-  const [count, setCount] = useState(3);
-  const [startWithLorem, setStartWithLorem] = useState(true);
-  const [text, setText] = useState("");
+  const { t, locale } = useI18n();
+  const [type, setType] = useStoredPref<GenerateType | "chars">("lorem.type", "paragraphs", ["paragraphs", "sentences", "words", "chars"]);
+  const [count, setCount] = useStoredPref<number>("lorem.count", 3);
+  const [startWithLorem, setStartWithLorem] = useStoredPref<boolean>("lorem.start", true);
+  const [format, setFormat] = useStoredPref<Format>("lorem.format", "text", ["text", "html", "markdown"]);
+  const [parts, setParts] = useState<string[]>([]);
 
-  const defaultCounts: Record<GenerateType, number> = {
-    paragraphs: 3,
-    sentences: 10,
-    words: 50,
-  };
+  const limits: Record<string, [number, number, number]> = { paragraphs: [1, 50, 3], sentences: [1, 100, 10], words: [1, 1000, 50], chars: [10, 5000, 280] };
+  const [min, max] = limits[type]!;
+  const safeCount = Math.min(max, Math.max(min, count));
 
-  const generate = useCallback(() => {
-    setText(generateText(type, count, startWithLorem));
-  }, [type, count, startWithLorem]);
+  const regenerate = useCallback(() => setParts(generate(type, safeCount, startWithLorem)), [type, safeCount, startWithLorem]);
+  useEffect(() => regenerate(), [regenerate]);
 
-  useEffect(() => {
-    generate();
-  }, [generate]);
+  const text = render(parts, format, type);
+  const plain = parts.join("\n\n");
+  const words = plain.trim() ? plain.trim().split(/\s+/).length : 0;
 
-  const handleTypeChange = (newType: GenerateType) => {
-    setType(newType);
-    setCount(defaultCounts[newType]);
-  };
-
-  const copyToClipboard = async () => {
-    if (!text) return;
+  const copy = async () => {
     try {
       await navigator.clipboard.writeText(text);
       toast.success(t("lorem.textCopied"));
@@ -161,146 +142,65 @@ export default function LoremIpsumPage() {
     }
   };
 
-  const wordCount = countWords(text);
-  const charCount = text.length;
-
-  const types: { value: GenerateType; label: string }[] = [
-    { value: "paragraphs", label: t("lorem.paragraphs") },
-    { value: "sentences", label: t("lorem.sentences") },
-    { value: "words", label: t("lorem.words") },
-  ];
-
   return (
-    <ToolLayout
-      toolName="Lorem Ipsum Generator"
-      toolDescription="Generate placeholder text for designs and layouts. Choose paragraphs, sentences, or words. Everything runs in your browser."
-    >
-      <div className="space-y-6">
-        {/* Settings */}
-        <div className="glass rounded-2xl p-6">
-          <h3 className="text-sm font-medium text-t-secondary mb-4">
-            {t("lorem.settings")}
-          </h3>
-
-          {/* Type Selector */}
-          <div className="mb-5">
-            <label className="text-sm text-t-primary mb-2 block">{t("ui.type")}</label>
-            <div className="flex gap-2">
-              {types.map(({ value, label }) => (
-                <button
-                  key={value}
-                  onClick={() => handleTypeChange(value)}
-                  className={`px-5 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                    type === value
-                      ? "bg-accent/20 border border-accent text-t-primary"
-                      : "bg-bg-secondary border border-border text-t-secondary hover:border-t-primary/20"
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
+    <ToolLayout toolName={t("tool.lorem-ipsum.name")} toolDescription={t("tool.lorem-ipsum.desc")}>
+      <div className="space-y-5">
+        <div className="glass space-y-5 p-5 sm:p-6">
+          <Segmented<GenerateType | "chars">
+            label={t("ui.type")}
+            value={type}
+            onChange={(v) => {
+              setType(v);
+              setCount(limits[v]![2]);
+            }}
+            options={[
+              { value: "paragraphs", label: t("lorem.paragraphs") },
+              { value: "sentences", label: t("lorem.sentences") },
+              { value: "words", label: t("lorem.words") },
+              { value: "chars", label: t("lorem.v2.chars") },
+            ]}
+          />
+          <div className="flex flex-wrap items-end gap-4">
+            <Slider className="min-w-[220px] flex-1" label={t("lorem.count")} value={safeCount} min={min} max={type === "chars" ? 1000 : type === "words" ? 300 : max} onChange={setCount} display={safeCount} />
+            <label className="block">
+              <span className="sr-only">{t("lorem.count")}</span>
+              <input type="number" min={min} max={max} value={safeCount} onChange={(e) => setCount(Number(e.target.value) || min)} className="h-10 w-24 rounded-xl border border-border bg-bg-secondary px-3 text-[14px] tabular-nums text-t-primary" />
+            </label>
           </div>
-
-          {/* Count Slider */}
-          <div className="mb-5">
-            <div className="flex items-center justify-between mb-2">
-              <label className="text-sm text-t-primary">{t("lorem.count")}</label>
-              <span className="text-sm font-semibold text-t-primary tabular-nums">
-                {count}
-              </span>
-            </div>
-            <input
-              type="range"
-              min={1}
-              max={50}
-              value={count}
-              onChange={(e) => setCount(Number(e.target.value))}
-              className="w-full accent-accent"
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+            <Toggle checked={startWithLorem} onChange={setStartWithLorem} label={t("lorem.startWith")} />
+            <Segmented<Format>
+              label={t("lorem.v2.format")}
+              size="sm"
+              value={format}
+              onChange={setFormat}
+              options={[
+                { value: "text", label: t("lorem.v2.plain") },
+                { value: "html", label: "HTML" },
+                { value: "markdown", label: "Markdown" },
+              ]}
             />
-            <div className="flex justify-between text-xs text-t-tertiary mt-1">
-              <span>1</span>
-              <span>50</span>
-            </div>
           </div>
-
-          {/* Start with Lorem checkbox */}
-          <label className="flex items-center gap-3 cursor-pointer group">
-            <div
-              className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${
-                startWithLorem
-                  ? "bg-accent border-accent"
-                  : "border-t-primary/20 bg-transparent group-hover:border-t-primary/40"
-              }`}
-              onClick={(e) => {
-                e.preventDefault();
-                setStartWithLorem(!startWithLorem);
-              }}
-            >
-              {startWithLorem && (
-                <svg
-                  className="w-3 h-3 text-white"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={3}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-              )}
-            </div>
-            <input
-              type="checkbox"
-              checked={startWithLorem}
-              onChange={() => setStartWithLorem(!startWithLorem)}
-              className="hidden"
-            />
-            <span className="text-sm text-t-primary">
-              {t("lorem.startWith")}
-            </span>
-          </label>
         </div>
 
-        {/* Generated Text */}
-        <div className="glass rounded-2xl p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-medium text-t-secondary">
-              {t("lorem.generatedText")}
-            </h3>
+        <div className="glass space-y-3 p-5 sm:p-6">
+          <div className="flex items-center justify-between gap-2">
+            <p className={sectionTitle}>{t("lorem.generatedText")}</p>
             <div className="flex gap-2">
-              <button
-                onClick={generate}
-                className="px-4 py-2 rounded-xl text-sm font-medium text-t-secondary bg-bg-secondary border border-border hover:bg-bg-tertiary hover:text-t-primary transition-all"
-              >
+              <button type="button" onClick={regenerate} className={buttonSecondary}>
+                <RefreshCw className="h-4 w-4" aria-hidden="true" />
                 {t("ui.regenerate")}
               </button>
-              <button
-                onClick={copyToClipboard}
-                disabled={!text}
-                className="px-6 py-2 rounded-xl font-semibold text-on-accent bg-accent hover:opacity-90 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 text-sm"
-              >
+              <button type="button" onClick={copy} disabled={!text} className={buttonPrimary}>
+                <Copy className="h-4 w-4" aria-hidden="true" />
                 {t("ui.copy")}
               </button>
             </div>
           </div>
-
-          <div className="px-4 py-4 rounded-xl bg-bg-secondary border border-border text-t-primary text-sm leading-relaxed whitespace-pre-wrap max-h-96 overflow-y-auto">
-            {text}
-          </div>
-
-          {/* Stats */}
-          <div className="flex gap-4 mt-3">
-            <span className="text-xs text-t-tertiary">
-              {wordCount.toLocaleString()} {t("ui.words")}
-            </span>
-            <span className="text-xs text-t-tertiary">
-              {charCount.toLocaleString()} {t("ui.characters")}
-            </span>
-          </div>
+          <div className={`max-h-[28rem] overflow-y-auto whitespace-pre-wrap rounded-xl border border-border bg-bg-secondary px-4 py-4 text-[14.5px] leading-relaxed text-t-primary ${format === "text" ? "" : "font-mono text-[13px]"}`}>{text}</div>
+          <p className="text-[12.5px] tabular-nums text-t-tertiary">
+            {words.toLocaleString(locale)} {t("ui.words")} · {plain.length.toLocaleString(locale)} {t("ui.characters")}
+          </p>
         </div>
       </div>
     </ToolLayout>

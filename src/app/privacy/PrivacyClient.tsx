@@ -32,6 +32,11 @@ export default function PrivacyClient() {
             </ul>
 
             <h2 className="text-xl font-semibold text-t-primary mt-8">
+              {t("privacy.officeTitle")}
+            </h2>
+            <p>{t("privacy.officeBody")}</p>
+
+            <h2 className="text-xl font-semibold text-t-primary mt-8">
               {t("privacy.mayCollectTitle")}
             </h2>
             <ul className="list-disc ps-6 space-y-2">

@@ -1,548 +1,729 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
+import {
+  ArrowLeftRight,
+  Download,
+  FlipHorizontal2,
+  FlipVertical2,
+  ImagePlus,
+  Loader2,
+  Maximize2,
+  Pencil,
+  RotateCcw,
+  RotateCw,
+} from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
 import FileDropzone from "@/components/FileDropzone";
-import DownloadButton from "@/components/DownloadButton";
-import { getFileNameWithoutExtension, getFileExtension } from "@/lib/utils";
+import { Segmented, Slider, Toggle, buttonPrimary, buttonSecondary, sectionTitle } from "@/components/ui/controls";
+import { makeThumbnail, processImage, type OutputFormat } from "@/lib/image-engine";
+import {
+  canHaveAlpha,
+  decodeOnMain,
+  detectAlpha,
+  formatLabel,
+  keepFormatFor,
+  outputName,
+} from "@/lib/image-tools-kit";
+import { BackgroundPicker, fitSize, useElementWidth, useMaxPreviewHeight } from "@/lib/image-tools-ui";
+import { downloadBlob, formatFileSize } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n";
 
-interface CropRect {
-  x: number; // natural image coordinates
+interface Rect {
+  x: number;
   y: number;
   w: number;
   h: number;
 }
+type Handle = "n" | "s" | "e" | "w" | "ne" | "nw" | "se" | "sw";
+type FormatChoice = "keep" | OutputFormat;
 
-type HandleId = "tl" | "tc" | "tr" | "ml" | "mr" | "bl" | "bc" | "br";
-type DragMode = "draw" | "move" | "resize";
-
-interface DragState {
-  mode: DragMode;
-  handle?: HandleId;
-  startClientX: number;
-  startClientY: number;
-  startCrop: CropRect;
+interface Source {
+  file: File;
+  thumb: string;
+  /** Oriented size in engine pixels. */
+  W: number;
+  H: number;
+  alpha: boolean;
+  mainDecode: boolean;
 }
 
-const PRESETS = [
-  { label: "Free", value: null },
-  { label: "1:1", value: 1 },
-  { label: "16:9", value: 16 / 9 },
-  { label: "9:16", value: 9 / 16 },
-  { label: "4:3", value: 4 / 3 },
-  { label: "3:2", value: 3 / 2 },
-  { label: "2:3", value: 2 / 3 },
+interface Result {
+  blob: Blob;
+  width: number;
+  height: number;
+  format: OutputFormat;
+  preview: string;
+}
+
+const PRESETS: { id: string; a: number; b: number }[] = [
+  { id: "1:1", a: 1, b: 1 },
+  { id: "4:5", a: 4, b: 5 },
+  { id: "3:2", a: 3, b: 2 },
+  { id: "16:9", a: 16, b: 9 },
+  { id: "9:16", a: 9, b: 16 },
 ];
 
-const HANDLES: { id: HandleId; cursor: string; posStyle: React.CSSProperties }[] = [
-  { id: "tl", cursor: "nwse-resize", posStyle: { top: -5, left: -5 } },
-  { id: "tc", cursor: "ns-resize",   posStyle: { top: -5, left: "calc(50% - 5px)" } },
-  { id: "tr", cursor: "nesw-resize", posStyle: { top: -5, right: -5 } },
-  { id: "ml", cursor: "ew-resize",   posStyle: { top: "calc(50% - 5px)", left: -5 } },
-  { id: "mr", cursor: "ew-resize",   posStyle: { top: "calc(50% - 5px)", right: -5 } },
-  { id: "bl", cursor: "nesw-resize", posStyle: { bottom: -5, left: -5 } },
-  { id: "bc", cursor: "ns-resize",   posStyle: { bottom: -5, left: "calc(50% - 5px)" } },
-  { id: "br", cursor: "nwse-resize", posStyle: { bottom: -5, right: -5 } },
-];
+const HANDLES: Handle[] = ["nw", "n", "ne", "e", "se", "s", "sw", "w"];
+const HANDLE_CURSOR: Record<Handle, string> = {
+  n: "ns-resize",
+  s: "ns-resize",
+  e: "ew-resize",
+  w: "ew-resize",
+  ne: "nesw-resize",
+  sw: "nesw-resize",
+  nw: "nwse-resize",
+  se: "nwse-resize",
+};
 
-const MIN_SIZE = 10;
+const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
+
+/** Largest centred rectangle with ratio r (w/h) inside vw×vh. */
+function centered(vw: number, vh: number, r: number | null): Rect {
+  if (!r) return { x: 0, y: 0, w: vw, h: vh };
+  let w = vw;
+  let h = w / r;
+  if (h > vh) {
+    h = vh;
+    w = h * r;
+  }
+  return { x: (vw - w) / 2, y: (vh - h) / 2, w, h };
+}
+
+/** Rectangle from a fixed anchor towards a pointer, honouring direction, ratio, bounds and minimum size. */
+function fromAnchor(ax: number, ay: number, px: number, py: number, r: number | null, vw: number, vh: number, min: number, dirX?: number, dirY?: number): Rect {
+  const sx = dirX ?? (px >= ax ? 1 : -1);
+  const sy = dirY ?? (py >= ay ? 1 : -1);
+  let w = Math.max(min, sx * (px - ax));
+  let h = Math.max(min, sy * (py - ay));
+  if (r) {
+    if (w / h > r) h = w / r;
+    else w = h * r;
+  }
+  const maxW = sx > 0 ? vw - ax : ax;
+  const maxH = sy > 0 ? vh - ay : ay;
+  if (w > maxW) {
+    w = maxW;
+    if (r) h = w / r;
+  }
+  if (h > maxH) {
+    h = maxH;
+    if (r) w = h * r;
+  }
+  return { x: sx > 0 ? ax : ax - w, y: sy > 0 ? ay : ay - h, w, h };
+}
+
+/** View (rotated/flipped) point → source point. Engine order: flip, then rotate clockwise. */
+function viewToSource(vx: number, vy: number, rot: number, fh: boolean, fv: boolean, W: number, H: number) {
+  let x: number;
+  let y: number;
+  if (rot === 1) {
+    x = vy;
+    y = H - vx;
+  } else if (rot === 2) {
+    x = W - vx;
+    y = H - vy;
+  } else if (rot === 3) {
+    x = W - vy;
+    y = vx;
+  } else {
+    x = vx;
+    y = vy;
+  }
+  return { x: fh ? W - x : x, y: fv ? H - y : y };
+}
 
 export default function CropImagePage() {
   const { t } = useI18n();
-  const [file, setFile] = useState<File | null>(null);
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [naturalSize, setNaturalSize] = useState({ w: 0, h: 0 });
-  const [crop, setCrop] = useState<CropRect>({ x: 0, y: 0, w: 0, h: 0 });
-  const [aspectRatio, setAspectRatio] = useState<number | null>(null);
-  const [result, setResult] = useState<Blob | null>(null);
-  const [resultPreview, setResultPreview] = useState<string | null>(null);
-  const [manualW, setManualW] = useState("");
-  const [manualH, setManualH] = useState("");
-  const [showThirds, setShowThirds] = useState(true);
+  const [src, setSrc] = useState<Source | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [rot, setRot] = useState(0);
+  const [flipH, setFlipH] = useState(false);
+  const [flipV, setFlipV] = useState(false);
+  const [crop, setCrop] = useState<Rect>({ x: 0, y: 0, w: 0, h: 0 });
+  /** Locked ratio as a w:h pair in view orientation; null = free. */
+  const [ratio, setRatio] = useState<{ id: string; a: number; b: number } | null>(null);
+  const [showGrid, setShowGrid] = useState(true);
+  const [dragging, setDragging] = useState(false);
+  const [format, setFormat] = useState<FormatChoice>("keep");
+  const [quality, setQuality] = useState(0.92);
+  const [background, setBackground] = useState("#ffffff");
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<Result | null>(null);
+  const [wText, setWText] = useState("");
+  const [hText, setHText] = useState("");
+  const [editing, setEditing] = useState<"w" | "h" | null>(null);
+  const loadId = useRef(0);
+  const runId = useRef(0);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const drag = useRef<{ id: number; mode: "draw" | "move" | Handle; start: { x: number; y: number }; startCrop: Rect; moved: boolean } | null>(null);
+  const [frameRef, frameWidth] = useElementWidth();
+  const maxH = useMaxPreviewHeight(0.62, 560);
 
-  const imgRef = useRef<HTMLImageElement>(null);
-  const dragRef = useRef<DragState | null>(null);
+  const W = src?.W ?? 0;
+  const H = src?.H ?? 0;
+  const VW = rot % 2 ? H : W;
+  const VH = rot % 2 ? W : H;
+  const box = fitSize(VW, VH, Math.max(0, frameWidth), maxH);
+  const scale = VW ? box.w / VW : 1;
+  const r = ratio ? ratio.a / ratio.b : null;
+  const minSize = Math.max(1, 24 / scale);
 
-  // ---------- helpers ----------
-
-  /** Convert a client (screen) point to natural image coordinates */
-  const toNatural = useCallback((cx: number, cy: number): { x: number; y: number } | null => {
-    const rect = imgRef.current?.getBoundingClientRect();
-    if (!rect || naturalSize.w === 0) return null;
-    const scaleX = naturalSize.w / rect.width;
-    const scaleY = naturalSize.h / rect.height;
-    return {
-      x: (cx - rect.left) * scaleX,
-      y: (cy - rect.top) * scaleY,
-    };
-  }, [naturalSize]);
-
-  /** Clamp and enforce minimum */
-  const clampCrop = useCallback(
-    (c: CropRect, ratio: number | null): CropRect => {
-      let { x, y, w, h } = c;
-      // enforce minimum size
-      w = Math.max(w, MIN_SIZE);
-      h = Math.max(h, MIN_SIZE);
-      // aspect ratio
-      if (ratio) h = w / ratio;
-      // stay inside image
-      x = Math.max(0, Math.min(x, naturalSize.w - w));
-      y = Math.max(0, Math.min(y, naturalSize.h - h));
-      w = Math.min(w, naturalSize.w - x);
-      h = Math.min(h, naturalSize.h - y);
-      return { x, y, w, h };
+  // Free URLs.
+  const srcRef = useRef(src);
+  srcRef.current = src;
+  const resultRef = useRef(result);
+  resultRef.current = result;
+  useEffect(
+    () => () => {
+      if (srcRef.current) URL.revokeObjectURL(srcRef.current.thumb);
+      if (resultRef.current) URL.revokeObjectURL(resultRef.current.preview);
     },
-    [naturalSize]
+    [],
   );
 
-  // ---------- file handling ----------
-
-  const handleFilesSelected = useCallback((files: File[]) => {
-    const f = files[0];
-    setFile(f);
-    setResult(null);
-    setResultPreview(null);
-    const url = URL.createObjectURL(f);
-    setImageUrl(url);
-    const img = new Image();
-    img.onload = () => {
-      setNaturalSize({ w: img.naturalWidth, h: img.naturalHeight });
-      // default: full image selected
-      setCrop({ x: 0, y: 0, w: img.naturalWidth, h: img.naturalHeight });
-      setManualW(String(img.naturalWidth));
-      setManualH(String(img.naturalHeight));
-    };
-    img.src = url;
+  const clearResult = useCallback(() => {
+    runId.current++;
+    setBusy(false);
+    setResult((prev) => {
+      if (prev) URL.revokeObjectURL(prev.preview);
+      return null;
+    });
   }, []);
 
-  // sync manual inputs when crop changes programmatically
-  useEffect(() => {
-    setManualW(String(Math.round(crop.w)));
-    setManualH(String(Math.round(crop.h)));
-  }, [crop.w, crop.h]);
-
-  // ---------- pointer events ----------
-
-  const getImgRect = () => imgRef.current?.getBoundingClientRect() ?? null;
-
-  const applyHandleDelta = useCallback(
-    (start: CropRect, handle: HandleId, dx: number, dy: number, ratio: number | null): CropRect => {
-      let { x, y, w, h } = start;
-      const rect = getImgRect();
-      if (!rect) return start;
-      const scaleX = naturalSize.w / rect.width;
-      const scaleY = naturalSize.h / rect.height;
-      const nx = dx * scaleX;
-      const ny = dy * scaleY;
-
-      switch (handle) {
-        case "tl": x += nx; y += ny; w -= nx; h -= ny; break;
-        case "tc": y += ny; h -= ny; break;
-        case "tr": w += nx; y += ny; h -= ny; break;
-        case "ml": x += nx; w -= nx; break;
-        case "mr": w += nx; break;
-        case "bl": x += nx; w -= nx; h += ny; break;
-        case "bc": h += ny; break;
-        case "br": w += nx; h += ny; break;
-      }
-
-      if (ratio) {
-        // Enforce aspect ratio — use the dominant axis
-        if (["tl", "tr", "bl", "br"].includes(handle)) {
-          h = w / ratio;
-        } else if (["tc", "bc"].includes(handle)) {
-          w = h * ratio;
-        } else {
-          h = w / ratio;
+  // ── Load ───────────────────────────────────────────────────────────────
+  const handleFiles = useCallback(
+    async (files: File[]) => {
+      const file = files[0];
+      if (!file) return;
+      const id = ++loadId.current;
+      setLoading(true);
+      clearResult();
+      try {
+        let thumb: { blob: Blob; width: number; height: number };
+        let mainDecode = false;
+        try {
+          thumb = await makeThumbnail(file, 1600);
+        } catch {
+          thumb = await makeThumbnail(await decodeOnMain(file), 1600);
+          mainDecode = true;
         }
-      }
-
-      return clampCrop({ x, y, w, h }, null);
-    },
-    [naturalSize, clampCrop]
-  );
-
-  const onPointerDownImg = useCallback(
-    (e: React.PointerEvent) => {
-      e.currentTarget.setPointerCapture(e.pointerId);
-      const pt = toNatural(e.clientX, e.clientY);
-      if (!pt) return;
-      dragRef.current = {
-        mode: "draw",
-        startClientX: e.clientX,
-        startClientY: e.clientY,
-        startCrop: { x: pt.x, y: pt.y, w: 0, h: 0 },
-      };
-      setCrop({ x: pt.x, y: pt.y, w: 0, h: 0 });
-    },
-    [toNatural]
-  );
-
-  const onPointerDownOverlay = useCallback(
-    (e: React.PointerEvent) => {
-      e.stopPropagation();
-      e.currentTarget.setPointerCapture(e.pointerId);
-      dragRef.current = {
-        mode: "move",
-        startClientX: e.clientX,
-        startClientY: e.clientY,
-        startCrop: { ...crop },
-      };
-    },
-    [crop]
-  );
-
-  const onPointerDownHandle = useCallback(
-    (e: React.PointerEvent, handle: HandleId) => {
-      e.stopPropagation();
-      e.currentTarget.setPointerCapture(e.pointerId);
-      dragRef.current = {
-        mode: "resize",
-        handle,
-        startClientX: e.clientX,
-        startClientY: e.clientY,
-        startCrop: { ...crop },
-      };
-    },
-    [crop]
-  );
-
-  const onPointerMove = useCallback(
-    (e: React.PointerEvent) => {
-      const d = dragRef.current;
-      if (!d) return;
-      const dx = e.clientX - d.startClientX;
-      const dy = e.clientY - d.startClientY;
-
-      if (d.mode === "draw") {
-        const pt = toNatural(e.clientX, e.clientY);
-        if (!pt) return;
-        const sx = d.startCrop.x;
-        const sy = d.startCrop.y;
-        const rawW = pt.x - sx;
-        let rawH = pt.y - sy;
-        if (aspectRatio) rawH = rawW / aspectRatio;
-        const nx = rawW >= 0 ? sx : sx + rawW;
-        const ny = rawH >= 0 ? sy : sy + rawH;
-        const newCrop = clampCrop({ x: nx, y: ny, w: Math.abs(rawW), h: Math.abs(rawH) }, aspectRatio);
-        setCrop(newCrop);
-      } else if (d.mode === "move") {
-        const rect = getImgRect();
-        if (!rect) return;
-        const scaleX = naturalSize.w / rect.width;
-        const scaleY = naturalSize.h / rect.height;
-        const nx = d.startCrop.x + dx * scaleX;
-        const ny = d.startCrop.y + dy * scaleY;
-        const cx = Math.max(0, Math.min(nx, naturalSize.w - d.startCrop.w));
-        const cy = Math.max(0, Math.min(ny, naturalSize.h - d.startCrop.h));
-        setCrop({ ...d.startCrop, x: cx, y: cy });
-      } else if (d.mode === "resize" && d.handle) {
-        setCrop(applyHandleDelta(d.startCrop, d.handle, dx, dy, aspectRatio));
+        const alpha = canHaveAlpha(file) ? await detectAlpha(thumb.blob) : false;
+        if (id !== loadId.current) return;
+        setSrc((prev) => {
+          if (prev) URL.revokeObjectURL(prev.thumb);
+          return { file, thumb: URL.createObjectURL(thumb.blob), W: thumb.width, H: thumb.height, alpha, mainDecode };
+        });
+        setRot(0);
+        setFlipH(false);
+        setFlipV(false);
+        setRatio(null);
+        setCrop({ x: 0, y: 0, w: thumb.width, h: thumb.height });
+      } catch {
+        if (id === loadId.current) toast.error(t("ui.failedLoad"));
+      } finally {
+        if (id === loadId.current) setLoading(false);
       }
     },
-    [toNatural, clampCrop, applyHandleDelta, aspectRatio, naturalSize]
+    [clearResult, t],
   );
 
-  const onPointerUp = useCallback(() => {
-    dragRef.current = null;
-  }, []);
-
-  // ---------- preset ratio ----------
-
-  const applyPreset = (ratio: number | null) => {
-    setAspectRatio(ratio);
-    if (!ratio || naturalSize.w === 0) return;
-    let w = naturalSize.w;
-    let h = w / ratio;
-    if (h > naturalSize.h) { h = naturalSize.h; w = h * ratio; }
-    setCrop({ x: (naturalSize.w - w) / 2, y: (naturalSize.h - h) / 2, w, h });
+  const reset = () => {
+    loadId.current++;
+    clearResult();
+    setSrc((prev) => {
+      if (prev) URL.revokeObjectURL(prev.thumb);
+      return null;
+    });
   };
 
-  // ---------- manual input ----------
+  // Typed size mirrors the selection unless the user is typing.
+  useEffect(() => {
+    if (editing !== "w") setWText(String(Math.round(crop.w)));
+    if (editing !== "h") setHText(String(Math.round(crop.h)));
+  }, [crop.w, crop.h, editing]);
 
-  const applyManual = () => {
-    const w = Math.max(MIN_SIZE, Math.min(Number(manualW) || crop.w, naturalSize.w));
-    const h = Math.max(MIN_SIZE, Math.min(Number(manualH) || crop.h, naturalSize.h));
-    setCrop((c) => clampCrop({ x: c.x, y: c.y, w, h }, null));
+  // ── Pointer interaction ────────────────────────────────────────────────
+  const toView = (e: { clientX: number; clientY: number }) => {
+    const rect = stageRef.current!.getBoundingClientRect();
+    return { x: clamp((e.clientX - rect.left) / scale, 0, VW), y: clamp((e.clientY - rect.top) / scale, 0, VH) };
   };
 
-  // ---------- overlay % positioning ----------
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (drag.current || (e.pointerType === "mouse" && e.button !== 0)) return;
+    const target = (e.target as HTMLElement).closest<HTMLElement>("[data-crop]");
+    const kind = target?.dataset.crop as "move" | Handle | undefined;
+    const p = toView(e);
+    e.currentTarget.setPointerCapture(e.pointerId);
+    e.preventDefault();
+    drag.current = { id: e.pointerId, mode: kind ?? "draw", start: p, startCrop: crop, moved: false };
+    setDragging(true);
+  };
 
-  const pct = naturalSize.w > 0
-    ? {
-        left:   `${(crop.x / naturalSize.w) * 100}%`,
-        top:    `${(crop.y / naturalSize.h) * 100}%`,
-        width:  `${(crop.w / naturalSize.w) * 100}%`,
-        height: `${(crop.h / naturalSize.h) * 100}%`,
+  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const d = drag.current;
+    if (!d || d.id !== e.pointerId) return;
+    const p = toView(e);
+    const dx = p.x - d.start.x;
+    const dy = p.y - d.start.y;
+    if (!d.moved && Math.hypot(dx, dy) * scale < 3) return;
+    d.moved = true;
+    const c = d.startCrop;
+    if (d.mode === "draw") {
+      setCrop(fromAnchor(d.start.x, d.start.y, p.x, p.y, r, VW, VH, minSize));
+    } else if (d.mode === "move") {
+      setCrop({ ...c, x: clamp(c.x + dx, 0, VW - c.w), y: clamp(c.y + dy, 0, VH - c.h) });
+    } else if (d.mode.length === 2) {
+      const sx = d.mode.includes("e") ? 1 : -1;
+      const sy = d.mode.includes("s") ? 1 : -1;
+      const ax = sx > 0 ? c.x : c.x + c.w;
+      const ay = sy > 0 ? c.y : c.y + c.h;
+      const px = (sx > 0 ? c.x + c.w : c.x) + dx;
+      const py = (sy > 0 ? c.y + c.h : c.y) + dy;
+      setCrop(fromAnchor(ax, ay, px, py, r, VW, VH, minSize, sx, sy));
+    } else {
+      // Edge: change one side; with a locked ratio the other side follows, centred on the crop.
+      const horizontal = d.mode === "e" || d.mode === "w";
+      if (horizontal) {
+        const ax = d.mode === "e" ? c.x : c.x + c.w;
+        let w = clamp(d.mode === "e" ? c.w + dx : c.w - dx, minSize, d.mode === "e" ? VW - ax : ax);
+        let h = c.h;
+        let y = c.y;
+        if (r) {
+          h = w / r;
+          if (h > VH) {
+            h = VH;
+            w = h * r;
+          }
+          y = clamp(c.y + c.h / 2 - h / 2, 0, VH - h);
+        }
+        setCrop({ x: d.mode === "e" ? ax : ax - w, y, w, h });
+      } else {
+        const ay = d.mode === "s" ? c.y : c.y + c.h;
+        let h = clamp(d.mode === "s" ? c.h + dy : c.h - dy, minSize, d.mode === "s" ? VH - ay : ay);
+        let w = c.w;
+        let x = c.x;
+        if (r) {
+          w = h * r;
+          if (w > VW) {
+            w = VW;
+            h = w / r;
+          }
+          x = clamp(c.x + c.w / 2 - w / 2, 0, VW - w);
+        }
+        setCrop({ x, y: d.mode === "s" ? ay : ay - h, w, h });
       }
-    : {};
-
-  const hasCrop = crop.w > MIN_SIZE && crop.h > MIN_SIZE;
-
-  // ---------- crop apply ----------
-
-  const handleCrop = async () => {
-    if (!file || !hasCrop) { toast.error(t("crop.noArea")); return; }
-    try {
-      const canvas = document.createElement("canvas");
-      canvas.width = Math.round(crop.w);
-      canvas.height = Math.round(crop.h);
-      const ctx = canvas.getContext("2d");
-      if (!ctx) throw new Error("Canvas not supported");
-
-      const img = new Image();
-      const url = URL.createObjectURL(file);
-      await new Promise<void>((resolve, reject) => {
-        img.onload = () => {
-          ctx.drawImage(img, Math.round(crop.x), Math.round(crop.y), Math.round(crop.w), Math.round(crop.h), 0, 0, Math.round(crop.w), Math.round(crop.h));
-          URL.revokeObjectURL(url);
-          resolve();
-        };
-        img.onerror = reject;
-        img.src = url;
-      });
-
-      const ext = getFileExtension(file.name);
-      const mime = ext === ".png" ? "image/png" : ext === ".webp" ? "image/webp" : "image/jpeg";
-      const blob = await new Promise<Blob>((resolve, reject) =>
-        canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Failed"))), mime, 0.92)
-      );
-
-      setResult(blob);
-      setResultPreview(URL.createObjectURL(blob));
-      toast.success(t("crop.success", { w: Math.round(crop.w), h: Math.round(crop.h) }));
-    } catch {
-      toast.error(t("crop.fail"));
     }
   };
 
-  const reset = () => {
-    setFile(null);
-    setImageUrl(null);
-    setResult(null);
-    setResultPreview(null);
-    setCrop({ x: 0, y: 0, w: 0, h: 0 });
-    setNaturalSize({ w: 0, h: 0 });
+  const endDrag = (e: React.PointerEvent<HTMLDivElement>) => {
+    const d = drag.current;
+    if (!d || d.id !== e.pointerId) return;
+    drag.current = null;
+    setDragging(false);
+    // A tap (no movement) never collapses the selection.
   };
 
-  // ---------- render ----------
+  const onCropKey = (e: React.KeyboardEvent) => {
+    const step = (e.shiftKey ? 10 : 1) * Math.max(1, Math.round(1 / scale));
+    const moves: Record<string, [number, number]> = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] };
+    const m = moves[e.key];
+    if (!m) return;
+    e.preventDefault();
+    setCrop((c) => ({ ...c, x: clamp(c.x + m[0], 0, VW - c.w), y: clamp(c.y + m[1], 0, VH - c.h) }));
+  };
+
+  // ── Ratio, rotate, flip ────────────────────────────────────────────────
+  const applyRatio = (next: { id: string; a: number; b: number } | null) => {
+    setRatio(next);
+    if (next) setCrop(centered(VW, VH, next.a / next.b));
+  };
+
+  const rotateView = (dir: 1 | -1) => {
+    // Turn the selection with the image.
+    setCrop((c) => (dir === 1 ? { x: VH - (c.y + c.h), y: c.x, w: c.h, h: c.w } : { x: c.y, y: VW - (c.x + c.w), w: c.h, h: c.w }));
+    setRatio((p) => (p ? { ...p, a: p.b, b: p.a } : p));
+    setRot((v) => (v + (dir === 1 ? 1 : 3)) % 4);
+  };
+
+  const flipView = (axis: "h" | "v") => {
+    // A mirror in view space maps to the other source axis when the view is turned 90°.
+    const sourceH = (axis === "h") !== (rot % 2 === 1);
+    if (sourceH) setFlipH((v) => !v);
+    else setFlipV((v) => !v);
+    setCrop((c) => (axis === "h" ? { ...c, x: VW - (c.x + c.w) } : { ...c, y: VH - (c.y + c.h) }));
+  };
+
+  const commitSize = (which: "w" | "h") => {
+    setEditing(null);
+    const n = Number(which === "w" ? wText : hText);
+    if (!Number.isFinite(n) || n < 1) return;
+    setCrop((c) => {
+      let w = which === "w" ? clamp(Math.round(n), 1, VW) : c.w;
+      let h = which === "h" ? clamp(Math.round(n), 1, VH) : c.h;
+      if (r) {
+        if (which === "w") h = w / r;
+        else w = h * r;
+        if (w > VW) {
+          w = VW;
+          h = w / r;
+        }
+        if (h > VH) {
+          h = VH;
+          w = h * r;
+        }
+      }
+      const cx = c.x + c.w / 2;
+      const cy = c.y + c.h / 2;
+      return { x: clamp(cx - w / 2, 0, VW - w), y: clamp(cy - h / 2, 0, VH - h), w, h };
+    });
+  };
+
+  // ── Export ─────────────────────────────────────────────────────────────
+  const outFormat: OutputFormat = src ? (format === "keep" ? keepFormatFor(src.file, src.alpha) : format) : "image/png";
+
+  const doCrop = async () => {
+    if (!src) return;
+    const id = ++runId.current;
+    setBusy(true);
+    try {
+      const a = viewToSource(crop.x, crop.y, rot, flipH, flipV, W, H);
+      const b = viewToSource(crop.x + crop.w, crop.y + crop.h, rot, flipH, flipV, W, H);
+      const x = Math.round(Math.min(a.x, b.x));
+      const y = Math.round(Math.min(a.y, b.y));
+      const sourceCrop = {
+        x,
+        y,
+        width: Math.max(1, Math.min(W - x, Math.round(Math.max(a.x, b.x)) - x)),
+        height: Math.max(1, Math.min(H - y, Math.round(Math.max(a.y, b.y)) - y)),
+      };
+      const input = src.mainDecode ? ((await decodeOnMain(src.file)) as unknown as Blob) : src.file;
+      const res = await processImage({
+        input,
+        transform: {
+          crop: sourceCrop,
+          rotate: rot * 90,
+          flipH,
+          flipV,
+          background: outFormat === "image/jpeg" && src.alpha ? background : undefined,
+        },
+        encode: { format: outFormat, quality },
+      });
+      const thumb = await makeThumbnail(res.blob, 1200);
+      if (id !== runId.current) return;
+      setResult({ blob: res.blob, width: res.width, height: res.height, format: outFormat, preview: URL.createObjectURL(thumb.blob) });
+    } catch (error) {
+      console.error(error);
+      if (id === runId.current) toast.error(t("crop.fail"));
+    } finally {
+      if (id === runId.current) setBusy(false);
+    }
+  };
+
+  const resultName = src && result ? outputName(src.file, "-cropped", result.format) : "";
+  const isFull = Math.round(crop.w) >= VW && Math.round(crop.h) >= VH && rot === 0 && !flipH && !flipV;
+
+  // ── Render ─────────────────────────────────────────────────────────────
+  const ratioChip = (active: boolean) =>
+    `min-h-[36px] rounded-lg border px-3 text-[13px] font-medium tabular-nums transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-volt ${
+      active ? "border-t-primary bg-bg-secondary text-t-primary" : "border-border text-t-secondary hover:bg-bg-secondary hover:text-t-primary"
+    }`;
+  const toolBtn =
+    "flex h-10 w-10 items-center justify-center rounded-xl border border-border text-t-secondary transition hover:bg-bg-secondary hover:text-t-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-volt";
+
+  const sel = { left: crop.x * scale, top: crop.y * scale, width: crop.w * scale, height: crop.h * scale };
 
   return (
     <ToolLayout
       toolName="Crop Image"
       toolDescription="Crop images with preset aspect ratios or free-form selection. Drag handles to resize, drag inside to move."
     >
-      <div className="space-y-5">
-        {!file ? (
+      {!src ? (
+        loading ? (
+          <div className="glass flex h-64 items-center justify-center">
+            <Loader2 className="h-6 w-6 animate-spin text-t-tertiary" aria-label={t("ui.loading")} />
+          </div>
+        ) : (
           <FileDropzone
-            onFilesSelected={handleFilesSelected}
-            accept={{ "image/jpeg": [".jpg", ".jpeg"], "image/png": [".png"], "image/webp": [".webp"] }}
-            formats={["JPG", "PNG", "WEBP"]}
-            label="Drop your image here or click to browse"
+            onFilesSelected={handleFiles}
+            accept={{
+              "image/jpeg": [".jpg", ".jpeg", ".jfif"],
+              "image/png": [".png"],
+              "image/webp": [".webp"],
+              "image/avif": [".avif"],
+              "image/gif": [".gif"],
+              "image/bmp": [".bmp"],
+            }}
+            formats={["JPG", "PNG", "WEBP", "AVIF", "GIF", "BMP"]}
+            label={t("ui.dropImage")}
           />
-        ) : !result ? (
-          <>
-            {/* Aspect ratio presets */}
-            <div className="glass rounded-2xl p-4 space-y-3">
-              <label className="flex items-center gap-2 cursor-pointer text-sm text-t-secondary">
-                <input
-                  type="checkbox"
-                  checked={showThirds}
-                  onChange={(e) => setShowThirds(e.target.checked)}
-                  className="rounded border-border accent-accent"
-                />
-                {t("crop.showThirds")}
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {PRESETS.map((p) => (
-                  <button
-                    key={p.label}
-                    onClick={() => applyPreset(p.value)}
-                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                      aspectRatio === p.value
-                        ? "bg-accent/15 border border-accent text-accent"
-                        : "bg-bg-secondary border border-border text-t-secondary hover:border-border-strong hover:text-t-primary"
-                    }`}
-                  >
-                    {p.value === null ? t("crop.free") : p.label}
-                  </button>
-                ))}
-              </div>
+        )
+      ) : result ? (
+        <div className="space-y-4">
+          <div className="glass space-y-4 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-[15px] font-semibold tabular-nums text-t-primary">
+                {result.width} × {result.height}
+              </p>
+              <p className="text-[13px] tabular-nums text-t-secondary">
+                {formatLabel(result.format)} · {formatFileSize(result.blob.size)}
+              </p>
             </div>
-
-            {/* Crop canvas */}
-            {imageUrl && (
-              <div
-                className="glass rounded-2xl p-2 select-none overflow-hidden"
-                style={{ cursor: "crosshair" }}
-              >
+            <div className="flex justify-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={result.preview} alt={t("crop.ui.resultAlt")} className="max-h-[min(60vh,520px)] max-w-full rounded-lg border border-border object-contain" />
+            </div>
+          </div>
+          <div className="flex flex-wrap justify-center gap-3">
+            <button type="button" onClick={() => downloadBlob(result.blob, resultName)} className={buttonPrimary}>
+              <Download className="h-4 w-4" aria-hidden="true" />
+              {t("crop.download")}
+            </button>
+            <button type="button" onClick={clearResult} className={buttonSecondary}>
+              <Pencil className="h-4 w-4" aria-hidden="true" />
+              {t("crop.v2.edit")}
+            </button>
+            <button type="button" onClick={reset} className={buttonSecondary}>
+              <ImagePlus className="h-4 w-4" aria-hidden="true" />
+              {t("crop.another")}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start">
+          <div className="glass min-w-0 p-3 sm:p-4">
+            <div ref={frameRef} className="w-full">
+              <div className="flex justify-center">
                 <div
-                  className="relative inline-block w-full"
-                  onPointerDown={onPointerDownImg}
+                  ref={stageRef}
+                  dir="ltr"
+                  className="relative flex select-none items-center justify-center overflow-hidden"
+                  style={{ width: box.w, height: box.h, touchAction: "none", cursor: "crosshair" }}
+                  onPointerDown={onPointerDown}
                   onPointerMove={onPointerMove}
-                  onPointerUp={onPointerUp}
+                  onPointerUp={endDrag}
+                  onPointerCancel={endDrag}
+                  onLostPointerCapture={endDrag}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    ref={imgRef}
-                    src={imageUrl}
-                    alt="Crop source"
-                    className="w-full max-h-[480px] object-contain rounded-xl block select-none"
+                    src={src.thumb}
+                    alt={t("crop.ui.sourceAlt")}
                     draggable={false}
+                    className="pointer-events-none max-w-none shrink-0"
+                    style={{
+                      width: W * scale,
+                      height: H * scale,
+                      transform: `rotate(${rot * 90}deg) scale(${flipH ? -1 : 1}, ${flipV ? -1 : 1})`,
+                    }}
                   />
-
-                  {/* Dark mask + crop box */}
-                  {hasCrop && (
-                    <>
-                      {/* semi-transparent overlay around crop */}
-                      <div className="absolute inset-0 pointer-events-none rounded-xl"
-                        style={{ background: "rgba(0,0,0,0.45)" }} />
-
-                      {/* Crop box — clears the overlay and provides handles */}
-                      <div
-                        className="absolute pointer-events-auto"
-                        style={{
-                          ...pct,
-                          boxShadow: "0 0 0 9999px rgba(0,0,0,0.45)",
-                          border: "2px solid rgba(99,102,241,0.9)",
-                          cursor: "move",
-                          background: "transparent",
-                        }}
-                        onPointerDown={onPointerDownOverlay}
-                        onPointerMove={onPointerMove}
-                        onPointerUp={onPointerUp}
-                      >
-                        {showThirds && (
+                  {crop.w > 0 && (
+                    <div
+                      data-crop="move"
+                      role="group"
+                      tabIndex={0}
+                      aria-label={t("crop.v2.areaLabel", { w: Math.round(crop.w), h: Math.round(crop.h) })}
+                      onKeyDown={onCropKey}
+                      className="absolute outline-none ring-volt focus-visible:ring-2"
+                      style={{ ...sel, cursor: "move", boxShadow: "0 0 0 9999px rgba(0,0,0,0.55)", border: "1px solid rgba(255,255,255,0.9)" }}
+                    >
+                      {(showGrid || dragging) && (
+                        <svg className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden="true">
+                          {[1, 2].map((n) => (
+                            <g key={n} stroke="rgba(255,255,255,0.7)" strokeWidth={1}>
+                              <line x1={`${(n / 3) * 100}%`} x2={`${(n / 3) * 100}%`} y1="0" y2="100%" />
+                              <line y1={`${(n / 3) * 100}%`} y2={`${(n / 3) * 100}%`} x1="0" x2="100%" />
+                            </g>
+                          ))}
+                        </svg>
+                      )}
+                      {HANDLES.map((h) => {
+                        const corner = h.length === 2;
+                        const left = h.includes("w") ? 0 : h.includes("e") ? sel.width : sel.width / 2;
+                        const top = h.includes("n") ? 0 : h.includes("s") ? sel.height : sel.height / 2;
+                        return (
                           <div
-                            className="absolute inset-0 pointer-events-none opacity-30"
-                            style={{
-                              backgroundImage:
-                                "linear-gradient(rgba(255,255,255,0.6) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.6) 1px,transparent 1px)",
-                              backgroundSize: "33.33% 33.33%",
-                            }}
-                          />
-                        )}
-
-                        {/* 8 resize handles */}
-                        {HANDLES.map(({ id, cursor, posStyle }) => (
-                          <div
-                            key={id}
-                            className="absolute w-[10px] h-[10px] bg-white border-2 border-accent rounded-sm shadow"
-                            style={{ ...posStyle, cursor, zIndex: 10 }}
-                            onPointerDown={(e) => onPointerDownHandle(e, id)}
-                          />
-                        ))}
-                      </div>
-                    </>
+                            key={h}
+                            data-crop={h}
+                            className="absolute flex h-11 w-11 items-center justify-center"
+                            style={{ left: left - 22, top: top - 22, cursor: HANDLE_CURSOR[h] }}
+                          >
+                            <span
+                              className="block rounded-sm bg-white shadow-[0_0_0_1px_rgba(0,0,0,0.35)]"
+                              style={corner ? { width: 12, height: 12 } : h === "n" || h === "s" ? { width: 22, height: 5 } : { width: 5, height: 22 }}
+                            />
+                          </div>
+                        );
+                      })}
+                      {dragging && (
+                        <span className="pointer-events-none absolute start-1.5 top-1.5 rounded bg-black/65 px-1.5 py-0.5 text-[11.5px] font-medium tabular-nums text-white">
+                          {Math.round(crop.w)} × {Math.round(crop.h)}
+                        </span>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>
-            )}
+            </div>
+            <p className="mt-3 text-center text-[12.5px] text-t-tertiary">{t("crop.v2.help")}</p>
+          </div>
 
-            {/* Info bar + manual input */}
-            <div className="glass rounded-2xl p-4">
-              <div className="flex flex-wrap items-center gap-4">
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-t-tertiary mb-1">Selection (px)</p>
-                  <p className="text-sm text-t-primary font-mono">
-                    {Math.round(crop.w)} × {Math.round(crop.h)}
-                    {hasCrop && (
-                      <span className="text-t-tertiary ml-2">
-                        from ({Math.round(crop.x)}, {Math.round(crop.y)})
-                      </span>
-                    )}
-                  </p>
+          <div className="space-y-4 lg:sticky lg:top-20">
+            <div className="glass space-y-4 p-5">
+              <div className="space-y-2">
+                <p className={sectionTitle}>{t("crop.v2.ratio")}</p>
+                <div className="flex flex-wrap gap-1.5">
+                  <button type="button" onClick={() => applyRatio(null)} aria-pressed={!ratio} className={ratioChip(!ratio)}>
+                    {t("crop.free")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => applyRatio({ id: "original", a: VW, b: VH })}
+                    aria-pressed={ratio?.id === "original"}
+                    className={ratioChip(ratio?.id === "original")}
+                  >
+                    {t("ui.original")}
+                  </button>
+                  {PRESETS.map((p) => {
+                    const active = ratio?.id === p.id;
+                    const label = active ? `${ratio!.a}:${ratio!.b}` : p.id;
+                    return (
+                      <button key={p.id} type="button" onClick={() => applyRatio({ ...p })} aria-pressed={active} className={ratioChip(active)}>
+                        {label}
+                      </button>
+                    );
+                  })}
+                  <button
+                    type="button"
+                    onClick={() => ratio && applyRatio({ ...ratio, a: ratio.b, b: ratio.a })}
+                    disabled={!ratio || ratio.a === ratio.b}
+                    aria-label={t("crop.v2.swap")}
+                    title={t("crop.v2.swap")}
+                    className={`${ratioChip(false)} inline-flex items-center disabled:opacity-40`}
+                  >
+                    <ArrowLeftRight className="h-4 w-4" aria-hidden="true" />
+                  </button>
                 </div>
+              </div>
 
-                {/* Manual W/H inputs */}
+              <div className="space-y-2">
+                <p className="text-[13px] text-t-secondary">{t("crop.ui.selectionPx")}</p>
                 <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1">
-                    <span className="text-xs text-t-tertiary">W</span>
+                  <label className="flex flex-1 items-center gap-1.5">
+                    <span className="text-[12px] text-t-tertiary">{t("crop.v2.w")}</span>
                     <input
                       type="number"
-                      value={manualW}
-                      onChange={(e) => setManualW(e.target.value)}
-                      onBlur={applyManual}
-                      onKeyDown={(e) => e.key === "Enter" && applyManual()}
-                      className="w-20 px-2 py-1.5 rounded-lg bg-bg-secondary border border-border text-t-primary text-xs focus:outline-none focus:border-accent/50 font-mono"
+                      inputMode="numeric"
+                      min={1}
+                      max={VW}
+                      value={wText}
+                      onFocus={() => setEditing("w")}
+                      onChange={(e) => setWText(e.target.value)}
+                      onBlur={() => commitSize("w")}
+                      onKeyDown={(e) => e.key === "Enter" && (e.currentTarget as HTMLInputElement).blur()}
+                      className="h-10 w-full rounded-lg border border-border bg-bg-secondary px-2 text-[14px] tabular-nums text-t-primary focus:border-t-primary/40 focus:outline-none"
+                      aria-label={t("ui.width")}
                     />
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span className="text-xs text-t-tertiary">H</span>
+                  </label>
+                  <span className="text-t-tertiary" aria-hidden="true">
+                    ×
+                  </span>
+                  <label className="flex flex-1 items-center gap-1.5">
+                    <span className="text-[12px] text-t-tertiary">{t("crop.v2.h")}</span>
                     <input
                       type="number"
-                      value={manualH}
-                      onChange={(e) => setManualH(e.target.value)}
-                      onBlur={applyManual}
-                      onKeyDown={(e) => e.key === "Enter" && applyManual()}
-                      className="w-20 px-2 py-1.5 rounded-lg bg-bg-secondary border border-border text-t-primary text-xs focus:outline-none focus:border-accent/50 font-mono"
+                      inputMode="numeric"
+                      min={1}
+                      max={VH}
+                      value={hText}
+                      onFocus={() => setEditing("h")}
+                      onChange={(e) => setHText(e.target.value)}
+                      onBlur={() => commitSize("h")}
+                      onKeyDown={(e) => e.key === "Enter" && (e.currentTarget as HTMLInputElement).blur()}
+                      className="h-10 w-full rounded-lg border border-border bg-bg-secondary px-2 text-[14px] tabular-nums text-t-primary focus:border-t-primary/40 focus:outline-none"
+                      aria-label={t("ui.height")}
                     />
-                  </div>
+                  </label>
                 </div>
-
-                {naturalSize.w > 0 && (
-                  <p className="text-xs text-t-tertiary whitespace-nowrap">
-                    Original: {naturalSize.w} × {naturalSize.h}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-3">
-              <button
-                onClick={handleCrop}
-                disabled={!hasCrop}
-                className={`flex-1 sm:flex-none px-8 py-3 rounded-xl font-semibold text-on-accent transition-all ${
-                  hasCrop
-                    ? "bg-accent hover:bg-accent-hover hover:scale-[1.02] active:scale-[0.98]"
-                    : "bg-bg-secondary text-t-tertiary cursor-not-allowed border border-border"
-                }`}
-              >
-                {t("crop.button")}
-              </button>
-              <button onClick={reset} className="px-5 py-3 rounded-xl text-t-secondary hover:text-t-primary transition-colors text-sm">
-                Cancel
-              </button>
-            </div>
-          </>
-        ) : (
-          /* Result */
-          <div className="space-y-5">
-            <div className="glass rounded-2xl p-4 flex items-center justify-between">
-              <div>
-                <p className="text-sm font-semibold text-t-primary">
-                  {Math.round(crop.w)} × {Math.round(crop.h)}px
+                <p className="text-[12px] tabular-nums text-t-tertiary">
+                  {t("crop.ui.fromXY", { x: Math.round(crop.x), y: Math.round(crop.y) })} · {t("crop.ui.originalSize", { w: VW, h: VH })}
                 </p>
-                <p className="text-xs text-t-tertiary mt-0.5">Cropped successfully</p>
               </div>
-              <span className="text-emerald-400 text-xl">✓</span>
+
+              <div className="flex flex-wrap items-center gap-1.5">
+                <button type="button" onClick={() => rotateView(-1)} className={toolBtn} aria-label={t("rotimg.rotateLeft")} title={t("rotimg.rotateLeft")}>
+                  <RotateCcw className="h-4 w-4" aria-hidden="true" />
+                </button>
+                <button type="button" onClick={() => rotateView(1)} className={toolBtn} aria-label={t("rotimg.rotateRight")} title={t("rotimg.rotateRight")}>
+                  <RotateCw className="h-4 w-4" aria-hidden="true" />
+                </button>
+                <button type="button" onClick={() => flipView("h")} className={toolBtn} aria-label={t("rotimg.flipH")} title={t("rotimg.flipH")}>
+                  <FlipHorizontal2 className="h-4 w-4" aria-hidden="true" />
+                </button>
+                <button type="button" onClick={() => flipView("v")} className={toolBtn} aria-label={t("rotimg.flipV")} title={t("rotimg.flipV")}>
+                  <FlipVertical2 className="h-4 w-4" aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRatio(null);
+                    setCrop({ x: 0, y: 0, w: VW, h: VH });
+                  }}
+                  className={toolBtn}
+                  aria-label={t("crop.v2.selectAll")}
+                  title={t("crop.v2.selectAll")}
+                >
+                  <Maximize2 className="h-4 w-4" aria-hidden="true" />
+                </button>
+              </div>
+
+              <Toggle checked={showGrid} onChange={setShowGrid} label={t("crop.showThirds")} />
             </div>
 
-            {resultPreview && (
-              <div className="flex justify-center glass rounded-2xl p-4">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={resultPreview} alt="Cropped result"
-                  className="max-h-80 max-w-full rounded-xl border border-border object-contain" />
+            <div className="glass space-y-4 p-5">
+              <div className="space-y-2">
+                <p className={sectionTitle}>{t("compimg.format")}</p>
+                <Segmented
+                  label={t("compimg.format")}
+                  size="sm"
+                  value={format}
+                  onChange={setFormat}
+                  options={[
+                    { value: "keep", label: t("compimg.keepFormat") },
+                    { value: "image/jpeg", label: "JPG" },
+                    { value: "image/webp", label: "WebP" },
+                    { value: "image/png", label: "PNG" },
+                  ]}
+                />
+                {format === "keep" && <p className="text-[12.5px] text-t-tertiary">{t("crop.v2.savesAs", { format: formatLabel(outFormat) })}</p>}
               </div>
-            )}
-
-            <div className="flex flex-wrap gap-3 justify-center">
-              <DownloadButton
-                blob={result}
-                filename={`${getFileNameWithoutExtension(file!.name)}-cropped${getFileExtension(file!.name)}`}
-                label={t("crop.download")}
-              />
-              <button onClick={reset}
-                className="px-6 py-3 rounded-xl font-semibold text-t-secondary bg-bg-secondary hover:bg-bg-tertiary transition-colors border border-border">
+              {outFormat !== "image/png" && (
+                <Slider
+                  label={t("ui.quality")}
+                  value={Math.round(quality * 100)}
+                  min={40}
+                  max={100}
+                  onChange={(v) => setQuality(v / 100)}
+                  display={`${Math.round(quality * 100)}`}
+                  hints={[t("compimg.smaller"), t("compimg.higher")]}
+                />
+              )}
+              {outFormat === "image/jpeg" && src.alpha && (
+                <BackgroundPicker value={background} onChange={setBackground} allowTransparent={false} label={t("convimg.v2.background")} hint={t("resize.v2.jpegAlphaHint")} />
+              )}
+              <button type="button" onClick={doCrop} disabled={busy || crop.w < 1 || crop.h < 1} className={`${buttonPrimary} w-full`}>
+                {busy && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+                {isFull ? t("crop.v2.saveFull") : t("crop.v2.cropTo", { w: Math.round(crop.w), h: Math.round(crop.h) })}
+              </button>
+              <button type="button" onClick={reset} className={`${buttonSecondary} w-full`}>
+                <ImagePlus className="h-4 w-4" aria-hidden="true" />
                 {t("crop.another")}
               </button>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </ToolLayout>
   );
 }

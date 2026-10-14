@@ -1,258 +1,214 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
+import type { MouseEvent as ReactMouseEvent } from "react";
 import toast from "react-hot-toast";
+import { Check, FileText, RotateCcw, RotateCw, Undo2, X } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
 import FileDropzone from "@/components/FileDropzone";
-import ProcessButton from "@/components/ProcessButton";
 import DownloadButton from "@/components/DownloadButton";
 import ProgressBar from "@/components/ProgressBar";
-import FileSizeCompare from "@/components/FileSizeCompare";
+import { buttonPrimary, buttonSecondary, sectionTitle } from "@/components/ui/controls";
 import { formatFileSize, getFileNameWithoutExtension } from "@/lib/utils";
+import { pdfInputErrorKey, toEditablePdf } from "@/lib/pdf-input";
 import { useI18n } from "@/lib/i18n";
+import { PdfPageThumb, usePdfThumbnailer } from "@/lib/pdf-thumb-view";
+import { compactPages, formatPageRanges, pagesInRanges, parsePageRanges } from "@/lib/split-pdf-ranges";
+import { runWorkerTask } from "../merge-pdf/worker-task";
 
-type RotationDegrees = 90 | 180 | 270;
-type RotationMode = "all" | "specific";
+const THUMB_BOX = 140;
 
-function parsePageRange(input: string, pageCount: number): Set<number> | null {
-  const selected = new Set<number>();
-  const normalized = input.trim().toLowerCase();
-  if (!normalized) return selected;
-
-  for (const rawToken of normalized.split(/[,;\s]+/)) {
-    const token = rawToken.trim();
-    if (!token) continue;
-
-    if (token === "all") {
-      for (let i = 0; i < pageCount; i++) selected.add(i);
-      continue;
-    }
-
-    if (token === "odd") {
-      for (let i = 0; i < pageCount; i += 2) selected.add(i);
-      continue;
-    }
-
-    if (token === "even") {
-      for (let i = 1; i < pageCount; i += 2) selected.add(i);
-      continue;
-    }
-
-    if (token === "last") {
-      selected.add(pageCount - 1);
-      continue;
-    }
-
-    const rangeMatch = token.match(/^(\d+)-(\d+)$/);
-    if (rangeMatch) {
-      const start = Number(rangeMatch[1]);
-      const end = Number(rangeMatch[2]);
-      if (
-        !Number.isInteger(start) ||
-        !Number.isInteger(end) ||
-        start < 1 ||
-        end < 1 ||
-        start > pageCount ||
-        end > pageCount
-      ) {
-        return null;
-      }
-      const from = Math.min(start, end);
-      const to = Math.max(start, end);
-      for (let page = from; page <= to; page++) selected.add(page - 1);
-      continue;
-    }
-
-    const page = Number(token);
-    if (!Number.isInteger(page) || page < 1 || page > pageCount) return null;
-    selected.add(page - 1);
-  }
-
-  return selected;
-}
+const norm = (deg: number) => (((deg % 360) + 360) % 360) as 0 | 90 | 180 | 270;
 
 export default function RotatePdfPage() {
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const [file, setFile] = useState<File | null>(null);
-  const [pageCount, setPageCount] = useState<number>(0);
-  const [rotationDegrees, setRotationDegrees] = useState<RotationDegrees>(90);
-  const [rotationMode, setRotationMode] = useState<RotationMode>("all");
-  const [selectedPages, setSelectedPages] = useState<Set<number>>(new Set());
-  const [rangeInput, setRangeInput] = useState("");
+  const [opening, setOpening] = useState(false);
+  /** Clockwise degrees added per page (index = page - 1). Unbounded so CSS turns the short way. */
+  const [turns, setTurns] = useState<number[]>([]);
+  const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [rangeText, setRangeText] = useState("");
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [resultBlob, setResultBlob] = useState<Blob | null>(null);
-  const [resultFilename, setResultFilename] = useState("");
+  const [result, setResult] = useState<{ blob: Blob; name: string; key: string } | null>(null);
+  const [gridEl, setGridEl] = useState<HTMLDivElement | null>(null);
+  const anchorRef = useRef<number | null>(null);
+  const runRef = useRef<AbortController | null>(null);
 
-  const copy =
-    locale === "tr"
-      ? {
-          rangeLabel: "Sayfa araligi",
-          rangeHint: "1-3, 5, odd, even veya last yazabilirsiniz.",
-          applyRange: "Araligi uygula",
-          quickAll: "Tumunu sec",
-          quickOdd: "Tek sayfalar",
-          quickEven: "Cift sayfalar",
-          clear: "Temizle",
-          invalidRange: "Sayfa araligi gecersiz.",
-          picked: "Secilen sayfalar",
-          previewMore: "daha",
-          affected: "Etkilenecek sayfa",
-        }
-      : {
-          rangeLabel: "Page range",
-          rangeHint: "Use 1-3, 5, odd, even, or last.",
-          applyRange: "Apply range",
-          quickAll: "Select all",
-          quickOdd: "Odd pages",
-          quickEven: "Even pages",
-          clear: "Clear",
-          invalidRange: "Invalid page range.",
-          picked: "Selected pages",
-          previewMore: "more",
-          affected: "Pages affected",
-        };
+  const thumbState = usePdfThumbnailer(file);
+  const thumbs = thumbState.thumbs;
+  const pageCount = thumbs?.pageCount ?? 0;
 
-  const handleFileSelected = useCallback(async (files: File[]) => {
-    const selected = files[0];
-    if (!selected) return;
+  useEffect(() => () => runRef.current?.abort(), []);
 
-    setFile(selected);
-    setResultBlob(null);
-    setProgress(0);
-
-    try {
-      const { PDFDocument } = await import("pdf-lib");
-      const arrayBuffer = await selected.arrayBuffer();
-      const pdfDoc = await PDFDocument.load(arrayBuffer, {
-        ignoreEncryption: true,
-      });
-      const count = pdfDoc.getPageCount();
-      setPageCount(count);
-      setRotationMode("all");
-      setSelectedPages(new Set());
-      setRangeInput("");
-    } catch (err) {
+  useEffect(() => {
+    if (thumbState.status === "error") {
+      console.error(thumbState.error);
       toast.error(t("rotpdf.loadFail"));
-      console.error(err);
+      setFile(null);
+    } else if (thumbState.status === "ready") {
+      setTurns(new Array(thumbState.thumbs.pageCount).fill(0));
     }
-  }, [t]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [thumbState.status]);
 
-  const selectedPagePreview = useMemo(() => {
-    const pages = Array.from(selectedPages)
-      .sort((a, b) => a - b)
-      .map((page) => page + 1);
-    const visible = pages.slice(0, 14).join(", ");
-    const rest = Math.max(0, pages.length - 14);
-    return rest > 0 ? `${visible} +${rest} ${copy.previewMore}` : visible;
-  }, [copy.previewMore, selectedPages]);
-
-  const togglePage = (index: number) => {
-    setSelectedPages((prev) => {
-      const next = new Set(prev);
-      if (next.has(index)) {
-        next.delete(index);
-      } else {
-        next.add(index);
+  const handleFileSelected = useCallback(
+    async (files: File[]) => {
+      const picked = files[0];
+      if (!picked) return;
+      setOpening(true);
+      try {
+        const editable = await toEditablePdf(picked);
+        runRef.current?.abort();
+        runRef.current = null;
+        setProcessing(false);
+        setFile(editable);
+        setTurns([]);
+        setSelected(new Set());
+        setRangeText("");
+        setResult(null);
+        setProgress(0);
+        anchorRef.current = null;
+      } catch (error) {
+        console.error(error);
+        toast.error(t(pdfInputErrorKey(error)));
+      } finally {
+        setOpening(false);
       }
-      return next;
-    });
-    setRangeInput("");
-  };
-
-  const applyRangeInput = () => {
-    const parsed = parsePageRange(rangeInput, pageCount);
-    if (!parsed) {
-      toast.error(copy.invalidRange);
-      return;
-    }
-    setSelectedPages(parsed);
-    setRotationMode("specific");
-  };
-
-  const applyQuickSelection = (type: "all" | "odd" | "even" | "clear") => {
-    if (type === "clear") {
-      setSelectedPages(new Set());
-      setRangeInput("");
-      return;
-    }
-
-    const parsed = parsePageRange(type, pageCount);
-    setSelectedPages(parsed ?? new Set());
-    setRangeInput(type === "all" ? `1-${pageCount}` : type);
-    setRotationMode("specific");
-  };
-
-  const handleProcess = async () => {
-    if (!file) return;
-
-    setProcessing(true);
-    setProgress(0);
-    setResultBlob(null);
-
-    try {
-      const { PDFDocument, degrees } = await import("pdf-lib");
-      const arrayBuffer = await file.arrayBuffer();
-      const pdfDoc = await PDFDocument.load(arrayBuffer, {
-        ignoreEncryption: true,
-      });
-
-      const pages = pdfDoc.getPages();
-
-      for (let i = 0; i < pages.length; i++) {
-        const shouldRotate =
-          rotationMode === "all" || selectedPages.has(i);
-
-        if (shouldRotate) {
-          const page = pages[i];
-          const currentRotation = page.getRotation().angle;
-          const newRotation = (currentRotation + rotationDegrees) % 360;
-          page.setRotation(degrees(newRotation));
-        }
-
-        setProgress(((i + 1) / pages.length) * 90);
-      }
-
-      setProgress(95);
-      const pdfBytes = await pdfDoc.save();
-      const blob = new Blob([pdfBytes.buffer as ArrayBuffer], { type: "application/pdf" });
-      setProgress(100);
-
-      const baseName = getFileNameWithoutExtension(file.name);
-      const filename = `${baseName}_rotated.pdf`;
-      setResultBlob(blob);
-      setResultFilename(filename);
-
-      const rotatedCount =
-        rotationMode === "all" ? pages.length : selectedPages.size;
-      toast.success(
-        t("rotpdf.success", { count: rotatedCount, deg: rotationDegrees })
-      );
-    } catch (err) {
-      toast.error(t("rotpdf.fail"));
-      console.error(err);
-    } finally {
-      setProcessing(false);
-    }
-  };
+    },
+    [t],
+  );
 
   const handleReset = () => {
+    runRef.current?.abort();
+    runRef.current = null;
+    setProcessing(false);
     setFile(null);
-    setPageCount(0);
-    setSelectedPages(new Set());
-    setRangeInput("");
-    setResultBlob(null);
+    setTurns([]);
+    setSelected(new Set());
+    setRangeText("");
+    setResult(null);
     setProgress(0);
   };
 
-  const affectedPageCount =
-    rotationMode === "all" ? pageCount : selectedPages.size;
+  // ── Selection (text ↔ grid) ──────────────────────────────────
+  const parsed = useMemo(
+    () => parsePageRanges(rangeText, pageCount, { keywords: true }),
+    [rangeText, pageCount],
+  );
 
-  const rotationOptions: { value: RotationDegrees; label: string }[] = [
-    { value: 90, label: t("rotpdf.90cw") },
-    { value: 180, label: t("rotpdf.180") },
-    { value: 270, label: t("rotpdf.270cw") },
-  ];
+  const onRangeChange = (text: string) => {
+    setRangeText(text);
+    anchorRef.current = null;
+    const p = parsePageRanges(text, pageCount, { keywords: true });
+    if (!p.error) setSelected(pagesInRanges(p.ranges));
+  };
+
+  const commitSelection = (next: Set<number>) => {
+    setSelected(next);
+    setRangeText(formatPageRanges(compactPages(next)));
+  };
+
+  const onTileClick = (p: number, e: ReactMouseEvent) => {
+    const next = new Set(selected);
+    const anchor = anchorRef.current;
+    if (e.shiftKey && anchor !== null) {
+      const [a, b] = anchor < p ? [anchor, p] : [p, anchor];
+      for (let i = a; i <= b; i++) next.add(i);
+    } else if (next.has(p)) next.delete(p);
+    else next.add(p);
+    anchorRef.current = p;
+    commitSelection(next);
+  };
+
+  const quickSelect = (kind: "all" | "odd" | "even" | "clear") => {
+    anchorRef.current = null;
+    if (kind === "clear") {
+      setSelected(new Set());
+      setRangeText("");
+      return;
+    }
+    const next = new Set<number>();
+    for (let p = 1; p <= pageCount; p++) {
+      if (kind === "all" || (kind === "odd" && p % 2 === 1) || (kind === "even" && p % 2 === 0)) next.add(p);
+    }
+    commitSelection(next);
+  };
+
+  // ── Rotation ────────────────────────────────────────────────
+  const rotatePages = (pages: number[] | null, delta: number) => {
+    setTurns((prev) => {
+      const next = [...prev];
+      if (pages === null) for (let i = 0; i < next.length; i++) next[i] += delta;
+      else for (const p of pages) if (p >= 1 && p <= next.length) next[p - 1] += delta;
+      return next;
+    });
+  };
+
+  const targets = selected.size > 0 ? Array.from(selected) : null;
+  const changed = turns.reduce((n, d) => n + (norm(d) !== 0 ? 1 : 0), 0);
+  const deltas = turns.map(norm);
+  const settingsKey = deltas.join(",");
+  const currentResult = result && result.key === settingsKey ? result : null;
+
+  const handleProcess = async () => {
+    if (!file || changed === 0) return;
+    const ac = new AbortController();
+    runRef.current?.abort();
+    runRef.current = ac;
+    const key = settingsKey;
+    const snapshot = [...deltas];
+    setProcessing(true);
+    setProgress(0);
+    setResult(null);
+    try {
+      const bytes = await file.arrayBuffer();
+      if (ac.signal.aborted) return;
+      const res = await runWorkerTask(
+        () => new Worker(new URL("./rotate.worker.ts", import.meta.url), { type: "module" }),
+        { bytes, deltas: snapshot },
+        [bytes],
+        (v) => runRef.current === ac && setProgress(Math.round(v * 100)),
+        ac.signal,
+      );
+      if (runRef.current !== ac) return;
+      setProgress(100);
+      setResult({
+        blob: new Blob([res.bytes as BlobPart], { type: "application/pdf" }),
+        name: `${getFileNameWithoutExtension(file.name)}_rotated.pdf`,
+        key,
+      });
+      toast.success(t("rotpdf.v2.success", { n: snapshot.filter((d) => d !== 0).length }));
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      console.error(error);
+      toast.error(t("rotpdf.fail"));
+    } finally {
+      if (runRef.current === ac) {
+        runRef.current = null;
+        setProcessing(false);
+      }
+    }
+  };
+
+  const cancel = () => {
+    runRef.current?.abort();
+    runRef.current = null;
+    setProcessing(false);
+    setProgress(0);
+  };
+
+  const scopeText =
+    targets === null
+      ? t("rotpdf.v2.scopeAll", { n: pageCount })
+      : targets.length === 1
+        ? t("rotpdf.v2.scopeOne")
+        : t("rotpdf.v2.scopeSelected", { n: targets.length });
+
+  const chip =
+    "inline-flex min-h-9 items-center rounded-lg border border-border bg-bg-secondary px-3 text-xs font-medium text-t-secondary transition-colors hover:border-accent/40 hover:text-t-primary";
+  const iconBtn =
+    "flex h-9 w-9 items-center justify-center rounded-lg text-t-secondary transition-colors hover:bg-bg-tertiary hover:text-t-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent";
 
   return (
     <ToolLayout
@@ -260,248 +216,240 @@ export default function RotatePdfPage() {
       toolDescription="Rotate PDF pages by 90, 180, or 270 degrees clockwise. Rotate all pages at once or select specific pages."
     >
       <div className="space-y-6">
-        {/* File Drop */}
         {!file ? (
-          <FileDropzone
-            onFilesSelected={handleFileSelected}
-            accept={{ "application/pdf": [".pdf"] }}
-            multiple={false}
-            label="Drop your PDF file here or click to browse"
-            formats={["pdf"]}
-          />
+          <>
+            <FileDropzone
+              onFilesSelected={handleFileSelected}
+              accept={{ "application/pdf": [".pdf"] }}
+              multiple={false}
+              label={t("rotatepdf.ui.dropLabel")}
+              formats={["pdf"]}
+            />
+            {opening && <p className="text-sm text-t-secondary">{t("splitpdf.v2.reading")}</p>}
+          </>
         ) : (
-          <div className="space-y-6">
-            {/* File info */}
-            <div className="glass rounded-xl p-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-accent/20 flex items-center justify-center">
-                  <svg
-                    className="w-5 h-5 text-accent"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={1.5}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"
-                    />
-                  </svg>
+          <div className="glass rounded-xl p-4 sm:p-6">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-bg-secondary">
+                  <FileText className="h-5 w-5 text-t-secondary" aria-hidden />
                 </div>
-                <div>
-                  <p className="text-brand-text font-medium text-sm">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-t-primary" title={file.name}>
                     {file.name}
                   </p>
-                  <p className="text-brand-muted text-xs">
-                    {formatFileSize(file.size)} &middot; {pageCount} page
-                    {pageCount !== 1 ? "s" : ""}
+                  <p className="text-xs text-t-secondary tabular-nums">
+                    {formatFileSize(file.size)}
+                    {pageCount > 0 && (
+                      <>
+                        {" "}
+                        &middot;{" "}
+                        {pageCount !== 1
+                          ? t("rotatepdf.ui.pageCountOther", { n: pageCount })
+                          : t("rotatepdf.ui.pageCountOne", { n: pageCount })}
+                      </>
+                    )}
                   </p>
                 </div>
               </div>
               <button
+                type="button"
                 onClick={handleReset}
-                className="text-brand-muted hover:text-brand-text transition-colors text-sm"
+                className="flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-2.5 text-sm text-t-secondary transition-colors hover:bg-bg-secondary hover:text-t-primary"
               >
+                <X className="h-4 w-4" aria-hidden />
                 {t("rotpdf.changeFile")}
               </button>
             </div>
 
-            {/* Rotation Angle */}
-            <div className="glass rounded-xl p-6 space-y-4">
-              <h3 className="text-brand-text font-semibold">{t("rotpdf.angle")}</h3>
-              <div className="flex gap-3">
-                {rotationOptions.map((opt) => (
-                  <button
-                    key={opt.value}
-                    onClick={() => setRotationDegrees(opt.value)}
-                    className={`
-                      flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all duration-200
-                      flex flex-col items-center gap-2
-                      ${
-                        rotationDegrees === opt.value
-                          ? "bg-accent text-on-accent shadow-sm"
-                          : "bg-bg-secondary text-brand-muted hover:bg-bg-tertiary hover:text-brand-text"
-                      }
-                    `}
-                  >
-                    <svg
-                      className="w-6 h-6"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={1.5}
-                      style={{
-                        transform: `rotate(${opt.value}deg)`,
-                      }}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182"
-                      />
-                    </svg>
-                    {opt.label}
+            {thumbState.status === "loading" && (
+              <p className="mt-4 text-sm text-t-secondary">{t("split.thumbsLoading")}</p>
+            )}
+
+            {pageCount > 0 && (
+              <fieldset disabled={processing} className="mt-5 min-w-0 space-y-4 border-t border-border pt-5">
+                {/* Rotate toolbar */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <button type="button" onClick={() => rotatePages(targets, -90)} className={buttonSecondary}>
+                    <RotateCcw className="h-4 w-4" aria-hidden />
+                    {t("rotpdf.v2.left")}
                   </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Rotation Mode */}
-            <div className="glass rounded-xl p-6 space-y-4">
-              <h3 className="text-brand-text font-semibold">
-                {t("rotpdf.pages")}
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="rounded-xl bg-bg-secondary border border-border p-4">
-                  <p className="text-xs text-brand-muted">{copy.affected}</p>
-                  <p className="text-2xl font-semibold text-brand-text">
-                    {affectedPageCount}
+                  <button type="button" onClick={() => rotatePages(targets, 90)} className={buttonSecondary}>
+                    <RotateCw className="h-4 w-4" aria-hidden />
+                    {t("rotpdf.v2.right")}
+                  </button>
+                  <button type="button" onClick={() => rotatePages(targets, 180)} className={buttonSecondary}>
+                    {t("rotpdf.180")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTurns((prev) => prev.map(() => 0))}
+                    disabled={changed === 0}
+                    className={buttonSecondary}
+                  >
+                    <Undo2 className="h-4 w-4" aria-hidden />
+                    {t("ui.reset")}
+                  </button>
+                  <p className="w-full text-[13px] text-t-secondary" aria-live="polite">
+                    {scopeText}
                   </p>
                 </div>
-                <div className="rounded-xl bg-bg-secondary border border-border p-4 sm:col-span-2">
-                  <p className="text-xs text-brand-muted">{copy.picked}</p>
-                  <p className="text-sm text-brand-text mt-1 min-h-5">
-                    {rotationMode === "all"
-                      ? t("rotpdf.allPages")
-                      : selectedPagePreview || "-"}
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setRotationMode("all")}
-                  className={`
-                    flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all duration-200
-                    ${
-                      rotationMode === "all"
-                        ? "bg-accent text-on-accent shadow-sm"
-                        : "bg-bg-secondary text-brand-muted hover:bg-bg-tertiary hover:text-brand-text"
-                    }
-                  `}
-                >
-                  {t("rotpdf.allPages")}
-                </button>
-                <button
-                  onClick={() => setRotationMode("specific")}
-                  className={`
-                    flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all duration-200
-                    ${
-                      rotationMode === "specific"
-                        ? "bg-accent text-on-accent shadow-sm"
-                        : "bg-bg-secondary text-brand-muted hover:bg-bg-tertiary hover:text-brand-text"
-                    }
-                  `}
-                >
-                  {t("rotpdf.specific")}
-                </button>
-              </div>
 
-              {/* Page selector for specific mode */}
-              {rotationMode === "specific" && pageCount > 0 && (
-                <div className="space-y-4 pt-2">
-                  <div className="rounded-xl bg-bg-secondary border border-border p-4 space-y-3">
-                    <label className="block text-sm font-medium text-brand-text">
-                      {copy.rangeLabel}
-                    </label>
-                    <div className="flex flex-col sm:flex-row gap-3">
-                      <input
-                        type="text"
-                        value={rangeInput}
-                        onChange={(event) => setRangeInput(event.target.value)}
-                        onKeyDown={(event) => {
-                          if (event.key === "Enter") applyRangeInput();
-                        }}
-                        placeholder="1-3, 5, odd, even"
-                        className="flex-1 px-4 py-3 rounded-xl bg-brand-bg border border-border text-brand-text placeholder:text-brand-muted focus:outline-none focus:border-accent/60"
-                      />
-                      <button
-                        type="button"
-                        onClick={applyRangeInput}
-                        className="px-4 py-3 rounded-xl bg-accent text-on-accent text-sm font-semibold hover:bg-accent/90 transition-colors"
-                      >
-                        {copy.applyRange}
-                      </button>
-                    </div>
-                    <p className="text-xs text-brand-muted">{copy.rangeHint}</p>
-                    <div className="flex flex-wrap gap-2">
-                      {[
-                        { type: "all" as const, label: copy.quickAll },
-                        { type: "odd" as const, label: copy.quickOdd },
-                        { type: "even" as const, label: copy.quickEven },
-                        { type: "clear" as const, label: copy.clear },
-                      ].map((item) => (
-                        <button
-                          key={item.type}
-                          type="button"
-                          onClick={() => applyQuickSelection(item.type)}
-                          className="px-3 py-2 rounded-lg bg-bg-secondary text-xs font-medium text-brand-muted hover:bg-bg-tertiary hover:text-brand-text transition-colors"
-                        >
-                          {item.label}
+                {/* Selection */}
+                <div className="space-y-2">
+                  <label htmlFor="rotateRange" className={sectionTitle}>
+                    {t("rotpdf.v2.selectLabel")}
+                  </label>
+                  <input
+                    id="rotateRange"
+                    type="text"
+                    autoComplete="off"
+                    value={rangeText}
+                    onChange={(e) => onRangeChange(e.target.value)}
+                    placeholder={t("rotatepdf.ui.rangePlaceholder")}
+                    aria-invalid={Boolean(parsed.error)}
+                    aria-describedby="rotate-range-help"
+                    className={`w-full rounded-xl border bg-bg-secondary px-4 py-3 text-t-primary placeholder:text-t-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 ${
+                      parsed.error ? "border-red-500/70" : "border-border"
+                    }`}
+                  />
+                  <p
+                    id="rotate-range-help"
+                    role={parsed.error ? "alert" : undefined}
+                    className={`text-xs ${parsed.error ? "text-red-600 dark:text-red-400" : "text-t-tertiary"}`}
+                  >
+                    {parsed.error ? t(parsed.error.key, parsed.error.params) : t("rotpdf.v2.selectHint")}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <button type="button" className={chip} onClick={() => quickSelect("all")}>
+                      {t("rotatepdf.ui.quickAll")}
+                    </button>
+                    {pageCount > 1 && (
+                      <>
+                        <button type="button" className={chip} onClick={() => quickSelect("odd")}>
+                          {t("rotatepdf.ui.quickOdd")}
                         </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-2 max-h-72 overflow-y-auto pr-1">
-                    {Array.from({ length: pageCount }, (_, i) => (
-                      <button
-                        key={i}
-                        onClick={() => togglePage(i)}
-                        className={`
-                          aspect-square rounded-lg text-sm font-medium transition-all duration-200
-                          ${
-                            selectedPages.has(i)
-                              ? "bg-accent text-on-accent shadow-sm"
-                              : "bg-bg-secondary text-brand-muted hover:bg-bg-tertiary hover:text-brand-text"
-                          }
-                        `}
-                      >
-                        {i + 1}
+                        <button type="button" className={chip} onClick={() => quickSelect("even")}>
+                          {t("rotatepdf.ui.quickEven")}
+                        </button>
+                      </>
+                    )}
+                    {selected.size > 0 && (
+                      <button type="button" className={chip} onClick={() => quickSelect("clear")}>
+                        {t("ui.clear")}
                       </button>
-                    ))}
+                    )}
                   </div>
-                  <p className="text-xs text-brand-muted">
-                    {t("rotpdf.selected", { count: selectedPages.size })}
-                  </p>
                 </div>
-              )}
-            </div>
 
-            {/* Progress */}
-            {processing && (
-              <ProgressBar progress={progress} label={t("rotpdf.rotating")} />
+                {/* Page grid */}
+                <div
+                  ref={setGridEl}
+                  className="max-h-[min(72vh,680px)] overflow-y-auto overscroll-contain rounded-xl border border-border bg-bg-secondary/50 p-2 sm:p-3"
+                >
+                  <div className="grid grid-cols-2 gap-2 min-[420px]:grid-cols-3 sm:grid-cols-4 sm:gap-3 md:grid-cols-5">
+                    {Array.from({ length: pageCount }, (_, i) => {
+                      const p = i + 1;
+                      const turn = turns[i] ?? 0;
+                      const delta = norm(turn);
+                      const on = selected.has(p);
+                      return (
+                        <div
+                          key={p}
+                          className={`relative rounded-lg border-2 p-1 transition-colors ${
+                            on ? "border-accent" : "border-transparent"
+                          }`}
+                        >
+                          <button
+                            type="button"
+                            aria-pressed={on}
+                            aria-label={
+                              delta
+                                ? t("rotpdf.v2.pageRotated", { n: p, deg: delta })
+                                : t("split.pageLabel", { n: p })
+                            }
+                            onClick={(e) => onTileClick(p, e)}
+                            className="block w-full rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                          >
+                            <PdfPageThumb
+                              thumbs={thumbs}
+                              page={p}
+                              box={THUMB_BOX}
+                              root={gridEl}
+                              className="flex aspect-square w-full items-center justify-center overflow-hidden rounded-md bg-surface"
+                              imgClassName="h-full w-full object-contain transition-transform duration-200 ease-out motion-reduce:transition-none"
+                              imgStyle={{ transform: `rotate(${turn}deg)` }}
+                              placeholder={<span className="text-xs text-t-tertiary tabular-nums">{p}</span>}
+                            />
+                          </button>
+                          {on && (
+                            <span className="pointer-events-none absolute start-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-accent text-on-accent">
+                              <Check className="h-3.5 w-3.5" aria-hidden />
+                            </span>
+                          )}
+                          {delta !== 0 && (
+                            <span className="pointer-events-none absolute end-2 top-2 rounded-full border border-border bg-surface px-1.5 py-0.5 text-[11px] font-semibold text-t-primary shadow-sm tabular-nums">
+                              +{delta}°
+                            </span>
+                          )}
+                          <div className="mt-1 flex items-center justify-between">
+                            <button
+                              type="button"
+                              onClick={() => rotatePages([p], -90)}
+                              aria-label={t("rotpdf.v2.pageLeft", { n: p })}
+                              className={iconBtn}
+                            >
+                              <RotateCcw className="h-4 w-4" aria-hidden />
+                            </button>
+                            <span className="text-[11px] text-t-secondary tabular-nums">{p}</span>
+                            <button
+                              type="button"
+                              onClick={() => rotatePages([p], 90)}
+                              aria-label={t("rotpdf.v2.pageRight", { n: p })}
+                              className={iconBtn}
+                            >
+                              <RotateCw className="h-4 w-4" aria-hidden />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </fieldset>
             )}
+          </div>
+        )}
 
-            {/* Actions */}
-            <div className="flex flex-wrap items-center gap-4">
-              <ProcessButton
-                onClick={handleProcess}
-                disabled={
-                  !file ||
-                  (rotationMode === "specific" && selectedPages.size === 0)
-                }
-                loading={processing}
-                label={t("rotpdf.button", { deg: rotationDegrees })}
-                loadingLabel={t("rotpdf.rotating")}
+        {processing && (
+          <div className="space-y-3">
+            <ProgressBar progress={progress} label={t("rotpdf.rotating")} />
+            <button type="button" onClick={cancel} className={buttonSecondary}>
+              {t("bg.cancel")}
+            </button>
+          </div>
+        )}
+
+        {file && pageCount > 0 && !processing && (
+          <div className="flex flex-wrap items-center gap-3">
+            {currentResult ? (
+              <DownloadButton
+                blob={currentResult.blob}
+                filename={currentResult.name}
+                label={`${t("ui.downloadPdf")} (${formatFileSize(currentResult.blob.size)})`}
               />
-
-              {resultBlob && (
-                <DownloadButton
-                  blob={resultBlob}
-                  filename={resultFilename}
-                  label={`${t("ui.download")} (${formatFileSize(resultBlob.size)})`}
-                />
-              )}
-            </div>
-
-            {/* Size comparison */}
-            {resultBlob && file && (
-              <FileSizeCompare
-                originalSize={file.size}
-                newSize={resultBlob.size}
-              />
+            ) : (
+              <button type="button" onClick={handleProcess} disabled={changed === 0} className={buttonPrimary}>
+                {t("rotpdf.v2.save")}
+              </button>
             )}
+            <span className="text-sm text-t-secondary" role="status">
+              {changed === 0
+                ? t("rotpdf.v2.noChanges")
+                : changed === 1
+                  ? t("rotpdf.v2.changedOne")
+                  : t("rotpdf.v2.changedOther", { n: changed })}
+            </span>
           </div>
         )}
       </div>

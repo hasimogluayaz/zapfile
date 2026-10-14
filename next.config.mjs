@@ -1,4 +1,31 @@
+import fs from "node:fs";
 import bundleAnalyzer from "@next/bundle-analyzer";
+
+// The background remover loads onnxruntime-web from /vendor/ort-<version>/
+// (copied by scripts/copy-vendor-assets.mjs), never through webpack.
+const ortVersion = JSON.parse(
+  fs.readFileSync(new URL("./node_modules/onnxruntime-web/package.json", import.meta.url), "utf8"),
+).version;
+
+// The meme font (Anton, OFL) is served from /vendor/anton-<version>/.
+const antonVersion = JSON.parse(
+  fs.readFileSync(new URL("./node_modules/@fontsource/anton/package.json", import.meta.url), "utf8"),
+).version;
+
+// Word/Excel/PowerPoint → PDF runs LibreOffice (WebAssembly) from /vendor/libreoffice-<version>/.
+const libreofficeVersion = JSON.parse(
+  fs.readFileSync(new URL("./node_modules/@matbee/libreoffice-converter/package.json", import.meta.url), "utf8"),
+).version;
+
+// LibreOffice uses threads (SharedArrayBuffer), which needs a cross-origin isolated page and worker.
+const ISOLATION_HEADERS = [
+  { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+  { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
+];
+const OFFICE_TOOL_PATHS = ["/tools/word-to-pdf", "/tools/excel-to-pdf", "/tools/powerpoint-to-pdf", "/tools/html-to-pdf"];
+
+const pkgVersion = (name) =>
+  JSON.parse(fs.readFileSync(new URL(`./node_modules/${name}/package.json`, import.meta.url), "utf8")).version;
 
 const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === "true",
@@ -6,9 +33,31 @@ const withBundleAnalyzer = bundleAnalyzer({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  env: {
+    NEXT_PUBLIC_ORT_VERSION: ortVersion,
+    NEXT_PUBLIC_ANTON_VERSION: antonVersion,
+    NEXT_PUBLIC_LIBREOFFICE_VERSION: libreofficeVersion,
+    NEXT_PUBLIC_DEJAVU_VERSION: pkgVersion("dejavu-fonts-ttf"),
+    NEXT_PUBLIC_TESSERACT_VERSION: pkgVersion("tesseract.js"),
+    NEXT_PUBLIC_SIGFONT_VERSIONS: JSON.stringify({
+      "dancing-script": pkgVersion("@fontsource/dancing-script"),
+      "great-vibes": pkgVersion("@fontsource/great-vibes"),
+      caveat: pkgVersion("@fontsource/caveat"),
+    }),
+  },
   transpilePackages: ["lamejs"],
   // Exclude onnxruntime-node from server-side bundling (native Node addon)
   serverExternalPackages: ["onnxruntime-node", "onnxruntime-web"],
+
+  async headers() {
+    return [
+      ...OFFICE_TOOL_PATHS.map((source) => ({ source, headers: ISOLATION_HEADERS })),
+      {
+        source: "/vendor/libreoffice-:version/:file*",
+        headers: [...ISOLATION_HEADERS, { key: "Cross-Origin-Resource-Policy", value: "same-origin" }],
+      },
+    ];
+  },
 
   // Retired and merged tools (v2.0 cleanup): keep old URLs working for users and search engines.
   async redirects() {
@@ -16,7 +65,6 @@ const nextConfig = {
       { source: "/tools/ip-address", destination: "/tools", permanent: true },
       { source: "/tools/internet-speed", destination: "/tools", permanent: true },
       { source: "/tools/fake-identity", destination: "/tools", permanent: true },
-      { source: "/tools/html-to-pdf", destination: "/tools", permanent: true },
       { source: "/tools/typing-speed-test", destination: "/tools", permanent: true },
       { source: "/tools/pomodoro-timer", destination: "/tools", permanent: true },
       { source: "/tools/stopwatch", destination: "/tools", permanent: true },

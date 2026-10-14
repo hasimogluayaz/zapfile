@@ -1,26 +1,40 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
+import { AlertTriangle, Download, Loader2, RefreshCw, X } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
 import FileDropzone from "@/components/FileDropzone";
 import ProgressBar from "@/components/ProgressBar";
-import {
-  downloadBlob,
-  formatFileSize,
-  getFileNameWithoutExtension,
-} from "@/lib/utils";
+import { Segmented, Slider, buttonPrimary, buttonSecondary, sectionTitle } from "@/components/ui/controls";
+import { AbortError, makeThumbnail, processImage, type OutputFormat } from "@/lib/image-engine";
+import { openPdf } from "@/lib/pdfjs";
+import { RenderAbortError, cappedScale, renderPageToBitmap, yieldToBrowser } from "@/lib/pdf-to-images-render";
+import { downloadBlob, formatFileSize, getFileNameWithoutExtension } from "@/lib/utils";
+import { pdfInputErrorKey, toEditablePdf } from "@/lib/pdf-input";
 import { useI18n } from "@/lib/i18n";
 
 type ImageFormat = "png" | "jpeg" | "webp";
 type NamingMode = "page" | "padded";
+type Background = "white" | "transparent" | "custom";
+type Dpi = 72 | 150 | 300 | 600;
 
 interface PageImage {
   pageNum: number;
-  dataUrl: string;
   blob: Blob;
+  thumb: string;
   filename: string;
+  width: number;
+  height: number;
 }
+
+const DPIS: Dpi[] = [72, 150, 300, 600];
+
+/** Checkerboard behind transparent previews. */
+const CHECKER = {
+  backgroundImage: "repeating-conic-gradient(rgb(var(--border-rgb)) 0% 25%, transparent 0% 50%)",
+  backgroundSize: "16px 16px",
+};
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
@@ -30,502 +44,486 @@ function extensionFor(format: ImageFormat) {
   return format === "jpeg" ? "jpg" : format;
 }
 
-function mimeFor(format: ImageFormat) {
+function mimeFor(format: ImageFormat): OutputFormat {
   if (format === "jpeg") return "image/jpeg";
   if (format === "webp") return "image/webp";
   return "image/png";
 }
 
-export default function PdfToImagesPage() {
-  const { locale, t } = useI18n();
-  const copy = locale === "tr"
-    ? {
-        dropLabel: "Görsele çevirmek istediğiniz PDF dosyasını bırakın",
-        fileReady: "Dosya hazır",
-        settings: "Çıktı ayarları",
-        pageRange: "Sayfa aralığı",
-        firstPage: "İlk sayfa",
-        lastPage: "Son sayfa",
-        format: "Biçim",
-        resolution: "Çözünürlük",
-        quality: "Kalite",
-        background: "JPEG/WebP arka planı",
-        naming: "Dosya adlandırma",
-        simpleNames: "page-1",
-        paddedNames: "page-001",
-        convert: "Sayfaları görsele çevir",
-        converting: "Sayfalar dönüştürülüyor...",
-        converted: "Dönüştürülen sayfalar",
-        downloadAll: "Tümünü indir",
-        newFile: "Yeni PDF",
-        rangeSummary: "Seçilen",
-        pageWord: "sayfa",
-        invalidPdf: "PDF okunamadı. Lütfen başka bir dosya deneyin.",
-        fail: "PDF görsellere çevrilemedi.",
-        success: "{count} sayfa hazır.",
-      }
-    : {
-        dropLabel: "Drop the PDF you want to turn into images",
-        fileReady: "File ready",
-        settings: "Output settings",
-        pageRange: "Page range",
-        firstPage: "First page",
-        lastPage: "Last page",
-        format: "Format",
-        resolution: "Resolution",
-        quality: "Quality",
-        background: "JPEG/WebP background",
-        naming: "File naming",
-        simpleNames: "page-1",
-        paddedNames: "page-001",
-        convert: "Convert pages to images",
-        converting: "Converting pages...",
-        converted: "Converted pages",
-        downloadAll: "Download all",
-        newFile: "New PDF",
-        rangeSummary: "Selected",
-        pageWord: "pages",
-        invalidPdf: "Could not read that PDF. Please try another file.",
-        fail: "Failed to convert PDF pages.",
-        success: "{count} pages ready.",
-      };
+function padWidth(pageCount: number) {
+  return Math.max(2, String(pageCount).length);
+}
 
+function fileName(base: string, pageNumber: number, pageCount: number, naming: NamingMode, format: ImageFormat) {
+  const part = naming === "padded" ? String(pageNumber).padStart(padWidth(pageCount), "0") : String(pageNumber);
+  return `${base}_page-${part}.${extensionFor(format)}`;
+}
+
+export default function PdfToImagesPage() {
+  const { t } = useI18n();
   const [file, setFile] = useState<File | null>(null);
+  const [bytes, setBytes] = useState<Uint8Array | null>(null);
   const [pageCount, setPageCount] = useState(0);
+  const [firstPage, setFirstPage] = useState<{ w: number; h: number } | null>(null);
   const [rangeStart, setRangeStart] = useState(1);
   const [rangeEnd, setRangeEnd] = useState(1);
-  const [processing, setProcessing] = useState(false);
-  const [progress, setProgress] = useState(0);
   const [format, setFormat] = useState<ImageFormat>("png");
-  const [quality, setQuality] = useState(92);
-  const [scale, setScale] = useState(2);
-  const [backgroundColor, setBackgroundColor] = useState("#ffffff");
+  const [quality, setQuality] = useState(90);
+  const [dpi, setDpi] = useState<Dpi>(150);
+  const [background, setBackground] = useState<Background>("white");
+  const [customColor, setCustomColor] = useState("#ffffff");
   const [namingMode, setNamingMode] = useState<NamingMode>("padded");
+  const [processing, setProcessing] = useState(false);
+  const [progress, setProgress] = useState({ done: 0, total: 0 });
   const [images, setImages] = useState<PageImage[]>([]);
+  const [resultKey, setResultKey] = useState<string | null>(null);
+  const [zipping, setZipping] = useState(false);
+  const runRef = useRef<AbortController | null>(null);
+  const imagesRef = useRef<PageImage[]>([]);
+  imagesRef.current = images;
 
-  const normalizedRange = useMemo(() => {
+  useEffect(
+    () => () => {
+      runRef.current?.abort();
+      imagesRef.current.forEach((img) => URL.revokeObjectURL(img.thumb));
+    },
+    [],
+  );
+
+  const clearImages = useCallback(() => {
+    imagesRef.current.forEach((img) => URL.revokeObjectURL(img.thumb));
+    imagesRef.current = [];
+    setImages([]);
+    setResultKey(null);
+  }, []);
+
+  const range = useMemo(() => {
     if (!pageCount) return { from: 1, to: 1, count: 0 };
     const from = clamp(rangeStart || 1, 1, pageCount);
     const to = clamp(rangeEnd || pageCount, from, pageCount);
     return { from, to, count: to - from + 1 };
   }, [pageCount, rangeEnd, rangeStart]);
 
-  const totalOutputSize = useMemo(
-    () => images.reduce((sum, image) => sum + image.blob.size, 0),
-    [images],
-  );
+  // Transparent JPEG isn't possible; the engine would flatten to white anyway.
+  const effectiveBackground = background === "transparent" && format === "jpeg" ? "white" : background;
+  const bgColor =
+    effectiveBackground === "transparent" ? "transparent" : effectiveBackground === "custom" ? customColor : "#ffffff";
 
-  const buildFilename = useCallback(
-    (pageNumber: number) => {
-      const baseName = file ? getFileNameWithoutExtension(file.name) : "pdf";
-      const ext = extensionFor(format);
-      const pagePart =
-        namingMode === "padded"
-          ? String(pageNumber).padStart(String(pageCount || pageNumber).length, "0")
-          : String(pageNumber);
-      return `${baseName}_page-${pagePart}.${ext}`;
-    },
-    [file, format, namingMode, pageCount],
-  );
+  const baseName = file ? getFileNameWithoutExtension(file.name) : "pdf";
+  const settingsKey = JSON.stringify([range.from, range.to, format, format === "png" ? 0 : quality, dpi, bgColor, namingMode]);
+  const stale = images.length > 0 && !processing && resultKey !== settingsKey;
+
+  const pixelPreview = useMemo(() => {
+    if (!firstPage) return null;
+    const fitted = cappedScale(firstPage.w, firstPage.h, dpi / 72);
+    return {
+      w: Math.floor(firstPage.w * fitted.scale),
+      h: Math.floor(firstPage.h * fitted.scale),
+      capped: fitted.capped,
+    };
+  }, [dpi, firstPage]);
 
   const handleFilesSelected = useCallback(
     async (files: File[]) => {
-      const nextFile = files[0];
-      if (!nextFile) return;
-
-      setFile(nextFile);
-      setImages([]);
-      setProgress(0);
-
+      const picked = files[0];
+      if (!picked) return;
+      runRef.current?.abort();
+      let nextFile: File;
       try {
-        const { PDFDocument } = await import("pdf-lib");
-        const pdfDoc = await PDFDocument.load(await nextFile.arrayBuffer(), {
-          ignoreEncryption: true,
-        });
-        const count = pdfDoc.getPageCount();
-        setPageCount(count);
-        setRangeStart(1);
-        setRangeEnd(count);
+        nextFile = await toEditablePdf(picked);
       } catch (error) {
         console.error(error);
-        setFile(null);
-        setPageCount(0);
-        toast.error(copy.invalidPdf);
+        toast.error(t(pdfInputErrorKey(error)));
+        return;
+      }
+      clearImages();
+      try {
+        const data = new Uint8Array(await nextFile.arrayBuffer());
+        const pdf = await openPdf(data);
+        try {
+          const page = await pdf.getPage(1);
+          const vp = page.getViewport({ scale: 1 });
+          setFirstPage({ w: vp.width, h: vp.height });
+          page.cleanup();
+          setPageCount(pdf.numPages);
+          setRangeStart(1);
+          setRangeEnd(pdf.numPages);
+        } finally {
+          void pdf.destroy();
+        }
+        setBytes(data);
+        setFile(nextFile);
+      } catch (error) {
+        console.error(error);
+        toast.error(t("pdfimages.ui.invalidPdf"));
       }
     },
-    [copy.invalidPdf],
+    [clearImages, t],
   );
 
   const handleProcess = useCallback(async () => {
-    if (!file) return;
+    if (!file || !bytes) return;
+    runRef.current?.abort();
+    const run = new AbortController();
+    runRef.current = run;
+    const { signal } = run;
+    clearImages();
     setProcessing(true);
-    setProgress(5);
-    setImages([]);
+    setProgress({ done: 0, total: range.count });
+    const key = settingsKey;
+    const mime = mimeFor(format);
+    const q = format === "png" ? 1 : quality / 100;
 
+    let pdf: Awaited<ReturnType<typeof openPdf>> | null = null;
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const pdfjsLib = await import("pdfjs-dist" as any);
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
-      setProgress(12);
-
-      const arrayBuffer = await file.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-      const from = clamp(normalizedRange.from, 1, pdf.numPages);
-      const to = clamp(normalizedRange.to, from, pdf.numPages);
-      const total = to - from + 1;
-      const results: PageImage[] = [];
-      setProgress(20);
-
-      for (let pageNumber = from; pageNumber <= to; pageNumber++) {
-        const page = await pdf.getPage(pageNumber);
-        const viewport = page.getViewport({ scale });
-        const canvas = document.createElement("canvas");
-        canvas.width = Math.ceil(viewport.width);
-        canvas.height = Math.ceil(viewport.height);
-        const ctx = canvas.getContext("2d");
-        if (!ctx) throw new Error("Canvas unavailable");
-
-        if (format !== "png") {
-          ctx.fillStyle = backgroundColor;
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-        }
-
-        await page.render({ canvasContext: ctx, viewport }).promise;
-        const mimeType = mimeFor(format);
-        const qualityParam = format === "png" ? undefined : quality / 100;
-        const blob = await new Promise<Blob>((resolve, reject) => {
-          canvas.toBlob(
-            (nextBlob) => {
-              if (nextBlob) resolve(nextBlob);
-              else reject(new Error("Image export failed"));
-            },
-            mimeType,
-            qualityParam,
-          );
+      pdf = await openPdf(bytes);
+      const from = clamp(range.from, 1, pdf.numPages);
+      const to = clamp(range.to, from, pdf.numPages);
+      let done = 0;
+      let pending: Promise<void> | null = null;
+      for (let n = from; n <= to; n++) {
+        if (signal.aborted) throw new AbortError();
+        const page = await pdf.getPage(n);
+        const rendered = await renderPageToBitmap(page, dpi / 72, bgColor, signal);
+        // Encoding runs in the engine's worker pool while we render the next page.
+        const encode = processImage(
+          { input: rendered.bitmap as unknown as Blob, encode: { format: mime, quality: q } },
+          signal,
+        );
+        if (pending) await pending;
+        const pageNum = n;
+        pending = encode.then(async (res) => {
+          const thumb = await makeThumbnail(res.blob, 400, signal);
+          if (signal.aborted) return;
+          const img: PageImage = {
+            pageNum,
+            blob: res.blob,
+            thumb: URL.createObjectURL(thumb.blob),
+            filename: fileName(baseName, pageNum, pageCount, namingMode, format),
+            width: res.width,
+            height: res.height,
+          };
+          imagesRef.current = [...imagesRef.current, img];
+          setImages(imagesRef.current);
+          done++;
+          setProgress({ done, total: to - from + 1 });
         });
-
-        results.push({
-          pageNum: pageNumber,
-          dataUrl: canvas.toDataURL(mimeType, qualityParam),
-          blob,
-          filename: buildFilename(pageNumber),
-        });
-
-        setProgress(20 + Math.round(((pageNumber - from + 1) / total) * 76));
+        pending.catch(() => undefined); // awaited below
+        await yieldToBrowser();
       }
-
-      setImages(results);
-      setProgress(100);
-      toast.success(copy.success.replace("{count}", String(results.length)));
+      if (pending) await pending;
+      if (signal.aborted) return;
+      setResultKey(key);
+      toast.success(t("pdfimages.ui.success", { count: done }));
     } catch (error) {
+      if (error instanceof AbortError || error instanceof RenderAbortError || signal.aborted) return;
       console.error(error);
-      toast.error(copy.fail);
+      clearImages();
+      toast.error(t("pdfimages.ui.fail"));
     } finally {
-      setProcessing(false);
+      if (pdf) void pdf.destroy();
+      if (runRef.current === run) {
+        runRef.current = null;
+        setProcessing(false);
+      }
     }
-  }, [
-    backgroundColor,
-    buildFilename,
-    copy.fail,
-    copy.success,
-    file,
-    format,
-    normalizedRange.from,
-    normalizedRange.to,
-    quality,
-    scale,
-  ]);
+  }, [baseName, bgColor, bytes, clearImages, dpi, file, format, namingMode, pageCount, quality, range, settingsKey, t]);
 
-  const downloadSingle = useCallback((img: PageImage) => {
-    downloadBlob(img.blob, img.filename);
-  }, []);
+  const cancel = useCallback(() => {
+    runRef.current?.abort();
+    runRef.current = null;
+    setProcessing(false);
+    clearImages();
+  }, [clearImages]);
 
   const downloadAll = useCallback(async () => {
     if (images.length === 1) {
-      downloadSingle(images[0]);
+      downloadBlob(images[0].blob, images[0].filename);
       return;
     }
-
-    const JSZip = (await import("jszip")).default;
-    const zip = new JSZip();
-    images.forEach((img) => {
-      zip.file(img.filename, img.blob);
-    });
-    const zipBlob = await zip.generateAsync({ type: "blob" });
-    const baseName = file ? getFileNameWithoutExtension(file.name) : "pdf";
-    downloadBlob(zipBlob, `${baseName}_images.zip`);
-  }, [downloadSingle, file, images]);
+    setZipping(true);
+    try {
+      const JSZip = (await import("jszip")).default;
+      const zip = new JSZip();
+      images.forEach((img) => zip.file(img.filename, img.blob));
+      // Images are already compressed; storing them is much faster.
+      const zipBlob = await zip.generateAsync({ type: "blob", compression: "STORE" });
+      downloadBlob(zipBlob, `${baseName}_images.zip`);
+    } catch (error) {
+      console.error(error);
+      toast.error(t("pdfimages.ui.fail"));
+    } finally {
+      setZipping(false);
+    }
+  }, [baseName, images, t]);
 
   const reset = useCallback(() => {
+    runRef.current?.abort();
+    runRef.current = null;
+    clearImages();
+    setProcessing(false);
     setFile(null);
+    setBytes(null);
     setPageCount(0);
+    setFirstPage(null);
     setRangeStart(1);
     setRangeEnd(1);
-    setImages([]);
-    setProgress(0);
-  }, []);
+  }, [clearImages]);
+
+  const totalOutputSize = images.reduce((sum, image) => sum + image.blob.size, 0);
+  const inputClass =
+    "w-full rounded-xl border border-border bg-bg-secondary px-3 py-2.5 text-sm text-t-primary focus:border-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-volt";
 
   return (
     <ToolLayout
       toolName="PDF to Images"
       toolDescription="Convert selected PDF pages to PNG, JPG, or WebP images with quality and range controls."
     >
-      <div className="space-y-6">
+      <div className="space-y-5">
         {!file ? (
           <FileDropzone
             onFilesSelected={handleFilesSelected}
             accept={{ "application/pdf": [".pdf"] }}
             formats={["PDF"]}
-            label={copy.dropLabel}
+            label={t("pdfimages.ui.dropLabel")}
           />
-        ) : images.length === 0 ? (
+        ) : (
           <>
-            <div className="glass rounded-2xl p-5 space-y-4">
+            <div className="glass rounded-2xl p-5">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0">
-                  <p className="text-xs uppercase tracking-[0.2em] text-t-secondary">
-                    {copy.fileReady}
-                  </p>
-                  <p className="mt-2 truncate text-lg font-semibold text-t-primary">{file.name}</p>
-                  <p className="mt-1 text-sm text-t-secondary">
-                    {formatFileSize(file.size)} - {pageCount} {copy.pageWord}
+                  <p className="truncate text-[17px] font-semibold text-t-primary">{file.name}</p>
+                  <p className="mt-1 text-[13px] text-t-secondary tabular-nums">
+                    {formatFileSize(file.size)} · {t("pdfsec.pages", { count: pageCount })}
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={reset}
-                  className="rounded-xl border border-border bg-bg-secondary px-4 py-2 text-sm font-medium text-t-secondary transition-colors hover:text-t-primary"
-                >
-                  {copy.newFile}
+                <button type="button" onClick={reset} className={buttonSecondary}>
+                  {t("pdfimages.ui.newFile")}
                 </button>
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-3">
-                <div className="rounded-2xl border border-border bg-bg-secondary/60 p-4">
-                  <p className="text-[11px] uppercase tracking-[0.2em] text-t-secondary">
-                    {copy.rangeSummary}
-                  </p>
-                  <p className="mt-2 text-xl font-semibold text-t-primary">
-                    {normalizedRange.count}
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-border bg-bg-secondary/60 p-4">
-                  <p className="text-[11px] uppercase tracking-[0.2em] text-t-secondary">
-                    {copy.format}
-                  </p>
-                  <p className="mt-2 text-xl font-semibold text-t-primary">
-                    {format.toUpperCase()}
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-border bg-bg-secondary/60 p-4">
-                  <p className="text-[11px] uppercase tracking-[0.2em] text-t-secondary">
-                    {copy.resolution}
-                  </p>
-                  <p className="mt-2 text-xl font-semibold text-t-primary">{scale}x</p>
-                </div>
               </div>
             </div>
 
             <div className="grid gap-5 lg:grid-cols-2">
-              <div className="glass rounded-2xl p-5 space-y-4">
-                <p className="text-sm font-semibold text-t-primary">{copy.pageRange}</p>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-t-secondary">
-                      {copy.firstPage}
+              <div className="glass rounded-2xl p-5 space-y-5">
+                <div>
+                  <p className={sectionTitle}>{t("pdfimages.ui.pageRange")}</p>
+                  <div className="mt-3 grid grid-cols-2 gap-3">
+                    <label className="block">
+                      <span className="mb-1.5 block text-[13px] text-t-secondary">{t("pdfimages.ui.firstPage")}</span>
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        min={1}
+                        max={pageCount}
+                        value={rangeStart}
+                        onChange={(event) => setRangeStart(Number(event.target.value || 1))}
+                        className={inputClass}
+                      />
                     </label>
-                    <input
-                      type="number"
-                      min={1}
-                      max={pageCount}
-                      value={rangeStart}
-                      onChange={(event) => setRangeStart(Number(event.target.value || 1))}
-                      className="w-full rounded-xl border border-border bg-bg-secondary px-3 py-2.5 text-sm text-t-primary focus:border-accent/50 focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-t-secondary">
-                      {copy.lastPage}
+                    <label className="block">
+                      <span className="mb-1.5 block text-[13px] text-t-secondary">{t("pdfimages.ui.lastPage")}</span>
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        min={1}
+                        max={pageCount}
+                        value={rangeEnd}
+                        onChange={(event) => setRangeEnd(Number(event.target.value || pageCount))}
+                        className={inputClass}
+                      />
                     </label>
-                    <input
-                      type="number"
-                      min={1}
-                      max={pageCount}
-                      value={rangeEnd}
-                      onChange={(event) => setRangeEnd(Number(event.target.value || pageCount))}
-                      className="w-full rounded-xl border border-border bg-bg-secondary px-3 py-2.5 text-sm text-t-primary focus:border-accent/50 focus:outline-none"
-                    />
                   </div>
+                  <p className="mt-2 text-[12.5px] text-t-tertiary">
+                    {t("pdfimages.ui.rangeSummary")}: {range.count}
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <p className={sectionTitle}>{t("pdfimages.ui.naming")}</p>
+                  <Segmented<NamingMode>
+                    label={t("pdfimages.ui.naming")}
+                    value={namingMode}
+                    onChange={setNamingMode}
+                    size="sm"
+                    options={(["page", "padded"] as const).map((mode) => ({
+                      value: mode,
+                      label: <span className="font-mono">{`page-${mode === "padded" ? "1".padStart(padWidth(pageCount), "0") : "1"}`}</span>,
+                    }))}
+                  />
+                  <p className="truncate text-[12.5px] text-t-tertiary font-mono" dir="ltr">
+                    {fileName(baseName, range.from, pageCount, namingMode, format)}
+                  </p>
                 </div>
               </div>
 
-              <div className="glass rounded-2xl p-5 space-y-4">
-                <p className="text-sm font-semibold text-t-primary">{copy.settings}</p>
-
-                <div className="grid grid-cols-3 gap-2">
-                  {(["png", "jpeg", "webp"] as const).map((nextFormat) => (
-                    <button
-                      key={nextFormat}
-                      type="button"
-                      onClick={() => setFormat(nextFormat)}
-                      className={`rounded-xl border px-3 py-2.5 text-sm font-semibold transition-colors ${
-                        format === nextFormat
-                          ? "border-accent bg-accent/15 text-t-primary"
-                          : "border-border bg-bg-secondary text-t-secondary hover:border-accent/40 hover:text-t-primary"
-                      }`}
-                    >
-                      {nextFormat === "jpeg" ? "JPG" : nextFormat.toUpperCase()}
-                    </button>
-                  ))}
-                </div>
-
-                <div>
-                  <div className="mb-2 flex items-center justify-between text-sm text-t-secondary">
-                    <label>{copy.resolution}</label>
-                    <span className="font-mono">{scale}x</span>
-                  </div>
-                  <input
-                    type="range"
-                    min={1}
-                    max={4}
-                    step={0.5}
-                    value={scale}
-                    onChange={(event) => setScale(Number(event.target.value))}
-                    className="w-full accent-accent"
+              <div className="glass rounded-2xl p-5 space-y-5">
+                <div className="space-y-2">
+                  <p className={sectionTitle}>{t("ui.format")}</p>
+                  <Segmented<ImageFormat>
+                    label={t("ui.format")}
+                    value={format}
+                    onChange={setFormat}
+                    options={[
+                      { value: "png", label: "PNG" },
+                      { value: "jpeg", label: "JPG" },
+                      { value: "webp", label: "WebP" },
+                    ]}
                   />
                 </div>
 
+                <div className="space-y-2">
+                  <p className={sectionTitle}>{t("pdfimages.ui.resolution")}</p>
+                  <Segmented<Dpi>
+                    label={t("pdfimages.ui.resolution")}
+                    value={dpi}
+                    onChange={setDpi}
+                    options={DPIS.map((d) => ({ value: d, label: t("pdfimages.v2.dpi", { dpi: d }) }))}
+                  />
+                  {pixelPreview && (
+                    <p className="text-[12.5px] text-t-tertiary tabular-nums">
+                      {t("pdfimages.v2.pixelSize", { w: pixelPreview.w, h: pixelPreview.h })}
+                      {pixelPreview.capped && <> · {t("pdfimages.v2.capped")}</>}
+                    </p>
+                  )}
+                </div>
+
                 {format !== "png" && (
-                  <>
-                    <div>
-                      <div className="mb-2 flex items-center justify-between text-sm text-t-secondary">
-                        <label>{copy.quality}</label>
-                        <span className="font-mono">{quality}%</span>
-                      </div>
-                      <input
-                        type="range"
-                        min={35}
-                        max={100}
-                        step={1}
-                        value={quality}
-                        onChange={(event) => setQuality(Number(event.target.value))}
-                        className="w-full accent-accent"
-                      />
-                    </div>
-                    <div>
-                      <label className="mb-2 block text-sm font-medium text-t-secondary">
-                        {copy.background}
-                      </label>
-                      <div className="flex items-center gap-3 rounded-xl border border-border bg-bg-secondary px-3 py-2">
-                        <input
-                          type="color"
-                          value={backgroundColor}
-                          onChange={(event) => setBackgroundColor(event.target.value)}
-                          className="h-9 w-9 rounded-lg border border-border bg-transparent p-0.5"
-                        />
-                        <span className="text-sm font-mono text-t-secondary">{backgroundColor}</span>
-                      </div>
-                    </div>
-                  </>
+                  <Slider
+                    label={t("ui.quality")}
+                    value={quality}
+                    min={40}
+                    max={100}
+                    onChange={setQuality}
+                    display={`${quality}%`}
+                  />
                 )}
 
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-t-secondary">
-                    {copy.naming}
-                  </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {([
-                      ["page", copy.simpleNames],
-                      ["padded", copy.paddedNames],
-                    ] as const).map(([value, label]) => (
-                      <button
-                        key={value}
-                        type="button"
-                        onClick={() => setNamingMode(value)}
-                        className={`rounded-xl border px-3 py-2 text-sm font-medium transition-colors ${
-                          namingMode === value
-                            ? "border-accent bg-accent/15 text-t-primary"
-                            : "border-border bg-bg-secondary text-t-secondary hover:border-accent/40"
-                        }`}
-                      >
-                        {label}
-                      </button>
-                    ))}
+                <div className="space-y-2">
+                  <p className={sectionTitle}>{t("pdfimages.v2.background")}</p>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <Segmented<Background>
+                      label={t("pdfimages.v2.background")}
+                      value={effectiveBackground}
+                      onChange={setBackground}
+                      size="sm"
+                      options={[
+                        { value: "white", label: t("pdfimages.v2.bgWhite") },
+                        {
+                          value: "transparent",
+                          label: t("pdfimages.v2.bgTransparent"),
+                          disabled: format === "jpeg",
+                          title: format === "jpeg" ? t("pdfimages.v2.noTransparentJpg") : undefined,
+                        },
+                        { value: "custom", label: t("pdfimages.v2.bgCustom") },
+                      ]}
+                    />
+                    {effectiveBackground === "custom" && (
+                      <input
+                        type="color"
+                        value={customColor}
+                        onChange={(event) => setCustomColor(event.target.value)}
+                        aria-label={t("pdfimages.v2.bgColor")}
+                        className="h-9 w-12 cursor-pointer rounded-lg border border-border bg-transparent p-0.5"
+                      />
+                    )}
                   </div>
+                  {format === "jpeg" && (
+                    <p className="text-[12.5px] text-t-tertiary">{t("pdfimages.v2.noTransparentJpg")}</p>
+                  )}
                 </div>
               </div>
             </div>
 
-            {processing && (
-              <div className="glass rounded-2xl p-4">
-                <ProgressBar progress={progress} label={copy.converting} />
-              </div>
-            )}
-
-            {!processing && (
-              <button
-                type="button"
-                onClick={handleProcess}
-                className="rounded-2xl bg-accent px-8 py-3 text-sm font-semibold text-on-accent transition-all hover:shadow-lg hover:shadow-sm"
-              >
-                {copy.convert}
-              </button>
-            )}
-          </>
-        ) : (
-          <div className="space-y-6">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm font-semibold text-t-primary">
-                  {copy.converted}: {images.length}
-                </p>
-                <p className="mt-1 text-xs text-t-secondary">
-                  {formatFileSize(totalOutputSize)}
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-3">
-                <button
-                  type="button"
-                  onClick={() => void downloadAll()}
-                  className="rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-500"
-                >
-                  {images.length > 1 ? copy.downloadAll : t("ui.download")}
-                </button>
-                <button
-                  type="button"
-                  onClick={reset}
-                  className="rounded-xl border border-border bg-bg-secondary px-5 py-2.5 text-sm font-semibold text-t-secondary transition-colors hover:text-t-primary"
-                >
-                  {copy.newFile}
+            {processing ? (
+              <div className="glass rounded-2xl p-4 flex items-center gap-4" aria-live="polite">
+                <div className="min-w-0 flex-1">
+                  <ProgressBar
+                    progress={progress.total ? 2 + (progress.done / progress.total) * 98 : 2}
+                    label={t("pdfimages.v2.progress", { done: progress.done, total: progress.total })}
+                  />
+                </div>
+                <button type="button" onClick={cancel} className={buttonSecondary}>
+                  <X className="h-4 w-4" aria-hidden="true" />
+                  {t("pdfimages.v2.cancel")}
                 </button>
               </div>
-            </div>
+            ) : (
+              (images.length === 0 || stale) && (
+                <button type="button" onClick={() => void handleProcess()} className={buttonPrimary} disabled={!range.count}>
+                  {stale && <RefreshCw className="h-4 w-4" aria-hidden="true" />}
+                  {stale ? t("pdfimages.v2.convertAgain") : t("pdfimages.ui.convert")}
+                </button>
+              )
+            )}
 
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-              {images.map((img) => (
-                <div key={img.pageNum} className="glass rounded-xl p-3 group">
-                  <div className="relative overflow-hidden rounded-lg border border-border bg-bg-secondary">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={img.dataUrl}
-                      alt={t("pdfimg.page", { num: img.pageNum })}
-                      className="w-full"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => downloadSingle(img)}
-                      className="absolute inset-0 flex items-center justify-center bg-black/55 text-sm font-semibold text-white opacity-0 transition-opacity group-hover:opacity-100"
-                    >
-                      {t("ui.download")}
+            {images.length > 0 && (
+              <div className="space-y-4">
+                {stale && !processing && (
+                  <p className="flex items-start gap-2 rounded-xl border border-border bg-bg-secondary p-3 text-[13px] text-t-secondary" role="status">
+                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                    {t("pdfimages.v2.stale")}
+                  </p>
+                )}
+                {!processing && !stale && (
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-[14px] font-semibold text-t-primary">
+                        {t("pdfimages.ui.convertedCount", { count: images.length })}
+                      </p>
+                      <p className="mt-0.5 text-[12.5px] text-t-tertiary tabular-nums">{formatFileSize(totalOutputSize)}</p>
+                    </div>
+                    <button type="button" onClick={() => void downloadAll()} disabled={zipping} className={buttonPrimary}>
+                      {zipping ? (
+                        <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                      ) : (
+                        <Download className="h-4 w-4" aria-hidden="true" />
+                      )}
+                      {images.length > 1 ? t("pdfimages.ui.downloadAll") : t("ui.download")}
                     </button>
                   </div>
-                  <p className="mt-2 truncate text-center text-xs text-t-secondary">
-                    {img.filename} - {formatFileSize(img.blob.size)}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
+                )}
+
+                <ul className={`grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 ${stale ? "opacity-50" : ""}`}>
+                  {images.map((img) => (
+                    <li key={img.pageNum} className="rounded-xl border border-border bg-surface p-2">
+                      <div
+                        className="flex aspect-[3/4] items-center justify-center overflow-hidden rounded-lg bg-bg-secondary"
+                        style={bgColor === "transparent" ? CHECKER : undefined}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={img.thumb}
+                          alt={t("pdfimg.page", { num: img.pageNum })}
+                          className="max-h-full max-w-full object-contain"
+                          loading="lazy"
+                        />
+                      </div>
+                      <div className="mt-2 flex items-center gap-2">
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-[13px] font-medium text-t-primary">
+                            {t("pdfimg.page", { num: img.pageNum })}
+                          </p>
+                          <p className="truncate text-[11.5px] text-t-tertiary tabular-nums">
+                            {img.width}×{img.height} · {formatFileSize(img.blob.size)}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => downloadBlob(img.blob, img.filename)}
+                          disabled={stale || processing}
+                          aria-label={t("pdfimages.v2.downloadPage", { num: img.pageNum })}
+                          title={img.filename}
+                          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border text-t-secondary transition hover:bg-bg-secondary hover:text-t-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-volt disabled:opacity-40"
+                        >
+                          <Download className="h-4 w-4" aria-hidden="true" />
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </>
         )}
       </div>
     </ToolLayout>

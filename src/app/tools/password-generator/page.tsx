@@ -1,305 +1,295 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import { Copy, Download, Eye, EyeOff, KeyRound, Loader2, RefreshCw, Hash, WholeWord } from "lucide-react";
 import ToolLayout from "@/components/ToolLayout";
 import PasswordStrengthChecker from "@/components/PasswordStrengthChecker";
+import { Segmented, Slider, Toggle, buttonPrimary, buttonSecondary, sectionTitle } from "@/components/ui/controls";
+import { downloadBlob } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n";
+import {
+  crackSeconds,
+  generatePassphrase,
+  generatePassword,
+  generatePin,
+  passphraseEntropy,
+  passwordEntropy,
+  type PassphraseOptions,
+  type PasswordOptions,
+  type SetKey,
+} from "./pw-core";
 
-interface PasswordOptions {
-  length: number;
-  uppercase: boolean;
-  lowercase: boolean;
-  numbers: boolean;
-  symbols: boolean;
-  excludeSimilar: boolean;
-  excludeAmbiguous: boolean;
+type Mode = "password" | "passphrase" | "pin";
+
+interface Settings {
+  mode: Mode;
+  pw: PasswordOptions;
+  pp: PassphraseOptions;
+  pinLength: number;
+  count: number;
 }
 
-const CHAR_SETS = {
-  uppercase: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-  lowercase: "abcdefghijklmnopqrstuvwxyz",
-  numbers: "0123456789",
-  symbols: "!@#$%^&*()_+-=[]{}|;:,.<>?",
+const DEFAULTS: Settings = {
+  mode: "password",
+  pw: { length: 20, sets: { upper: true, lower: true, digits: true, symbols: true }, excludeSimilar: false, excludeAmbiguous: false },
+  pp: { words: 5, separator: "-", capitalize: true, addNumber: true },
+  pinLength: 6,
+  count: 1,
 };
+const STORE_KEY = "zapfile.password.v2";
+const SET_LABEL: Record<SetKey, string> = { upper: "pw.uppercase", lower: "pw.lowercase", digits: "pw.numbers", symbols: "pw.symbols" };
+const SEPARATORS = ["-", " ", ".", "_", ""];
 
-const SIMILAR_CHARS = /[0O1lI]/g;
-const AMBIGUOUS_CHARS = /[{}[\]()/\\'"`~,;:.<>]/g;
-
-function buildCharset(options: PasswordOptions): string {
-  let charset = "";
-  if (options.uppercase) charset += CHAR_SETS.uppercase;
-  if (options.lowercase) charset += CHAR_SETS.lowercase;
-  if (options.numbers) charset += CHAR_SETS.numbers;
-  if (options.symbols) charset += CHAR_SETS.symbols;
-  if (options.excludeSimilar) charset = charset.replace(SIMILAR_CHARS, "");
-  if (options.excludeAmbiguous) charset = charset.replace(AMBIGUOUS_CHARS, "");
-  return charset;
+function strengthOf(bits: number): { key: string; bar: string; pct: number } {
+  if (bits < 40) return { key: "pw.weak", bar: "bg-red-500", pct: 22 };
+  if (bits < 60) return { key: "pw.medium", bar: "bg-amber-500", pct: 48 };
+  if (bits < 80) return { key: "pw.strong", bar: "bg-emerald-500", pct: 74 };
+  return { key: "pw.veryStrong", bar: "bg-emerald-500", pct: 100 };
 }
 
-function generatePassword(options: PasswordOptions): string {
-  const charset = buildCharset(options);
-  if (charset.length === 0) return "";
-  const array = new Uint32Array(options.length);
-  crypto.getRandomValues(array);
-  return Array.from(array, (val) => charset[val % charset.length]).join("");
+function crackLabel(bits: number, t: (k: string, p?: Record<string, string | number>) => string): string {
+  const s = crackSeconds(bits);
+  if (s < 1) return t("pw.instant");
+  if (s < 60) return t("pw.seconds", { n: Math.round(s) });
+  if (s < 3600) return t("pw.minutes", { n: Math.round(s / 60) });
+  if (s < 86400) return t("pw.hours", { n: Math.round(s / 3600) });
+  if (s < 31536000) return t("pw.days", { n: Math.round(s / 86400) });
+  const y = s / 31536000;
+  if (y < 100) return t("pw.years", { n: Math.round(y) });
+  if (y < 1e4) return t("pw.centuries");
+  return t("pw.millennia");
 }
 
-function computeEntropy(length: number, charsetSize: number): number {
-  if (charsetSize <= 1 || length <= 0) return 0;
-  return length * Math.log2(charsetSize);
-}
-
-// Estimate crack time assuming 100 billion guesses / sec (well-funded attacker offline)
-function formatCrackTime(
-  entropyBits: number,
-  t: (k: string, p?: Record<string, string | number>) => string
-): { label: string; color: string } {
-  if (entropyBits <= 0) return { label: t("pw.instant"), color: "text-red-400" };
-  const guesses = Math.pow(2, entropyBits - 1); // average
-  const guessesPerSec = 1e11;
-  const sec = guesses / guessesPerSec;
-  if (sec < 1) return { label: t("pw.instant"), color: "text-red-400" };
-  if (sec < 60) return { label: t("pw.seconds", { n: Math.round(sec) }), color: "text-red-400" };
-  const min = sec / 60;
-  if (min < 60) return { label: t("pw.minutes", { n: Math.round(min) }), color: "text-orange-400" };
-  const hr = min / 60;
-  if (hr < 24) return { label: t("pw.hours", { n: Math.round(hr) }), color: "text-orange-400" };
-  const days = hr / 24;
-  if (days < 365) return { label: t("pw.days", { n: Math.round(days) }), color: "text-yellow-400" };
-  const years = days / 365;
-  if (years < 100) return { label: t("pw.years", { n: Math.round(years) }), color: "text-emerald-600 dark:text-emerald-400" };
-  if (years < 10000) return { label: t("pw.centuries"), color: "text-emerald-600 dark:text-emerald-400" };
-  return { label: t("pw.millennia"), color: "text-emerald-600 dark:text-emerald-400" };
-}
-
-function getStrength(entropy: number): { strengthKey: string; color: string; percent: number } {
-  if (entropy < 28) return { strengthKey: "pw.weak", color: "bg-red-500", percent: 25 };
-  if (entropy < 50) return { strengthKey: "pw.medium", color: "bg-yellow-500", percent: 50 };
-  if (entropy < 80) return { strengthKey: "pw.strong", color: "bg-emerald-500", percent: 75 };
-  return { strengthKey: "pw.veryStrong", color: "bg-emerald-400", percent: 100 };
+/** Colour digits and symbols so a password is easy to read back or type. */
+function Pretty({ value }: { value: string }) {
+  return (
+    <>
+      {Array.from(value).map((c, i) => (
+        <span key={i} className={/\d/.test(c) ? "text-sky-700 dark:text-sky-400" : /[A-Za-z]/.test(c) || c === " " ? "" : "text-rose-700 dark:text-rose-400"}>
+          {c}
+        </span>
+      ))}
+    </>
+  );
 }
 
 export default function PasswordGeneratorPage() {
   const { t } = useI18n();
-  const [options, setOptions] = useState<PasswordOptions>({
-    length: 16,
-    uppercase: true,
-    lowercase: true,
-    numbers: true,
-    symbols: true,
-    excludeSimilar: false,
-    excludeAmbiguous: false,
-  });
-  const [password, setPassword] = useState("");
-  const [history, setHistory] = useState<string[]>([]);
-
-  const generate = useCallback(() => {
-    const result = generatePassword(options);
-    setPassword(result);
-    if (result) {
-      setHistory((prev) => [result, ...prev.filter((p) => p !== result)].slice(0, 5));
-    }
-  }, [options]);
+  const [s, setS] = useState<Settings>(DEFAULTS);
+  const [words, setWords] = useState<string[] | null>(null);
+  const [values, setValues] = useState<string[]>([]);
+  const [hidden, setHidden] = useState(false);
 
   useEffect(() => {
-    generate();
-  }, [generate]);
-
-  const charsetSize = buildCharset(options).length;
-  const entropy = computeEntropy(options.length, charsetSize);
-  const strength = getStrength(entropy);
-  const crackTime = formatCrackTime(entropy, t);
-
-  const copyText = async (value: string) => {
-    if (!value) return;
     try {
-      await navigator.clipboard.writeText(value);
-      toast.success(t("pw.copied"));
+      const raw = localStorage.getItem(STORE_KEY);
+      if (raw) {
+        const saved = JSON.parse(raw) as Partial<Settings>;
+        setS({ ...DEFAULTS, ...saved, pw: { ...DEFAULTS.pw, ...saved.pw, sets: { ...DEFAULTS.pw.sets, ...saved.pw?.sets } }, pp: { ...DEFAULTS.pp, ...saved.pp } });
+      }
+    } catch {
+      /* defaults */
+    }
+  }, []);
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORE_KEY, JSON.stringify(s));
+    } catch {
+      /* blocked */
+    }
+  }, [s]);
+
+  // The 7,776-word list is only downloaded when passphrases are used.
+  useEffect(() => {
+    if (s.mode !== "passphrase" || words) return;
+    import("./eff-wordlist").then((m) => setWords(m.default)).catch(() => toast.error(t("ui.failedLoad")));
+  }, [s.mode, words, t]);
+
+  const anySet = Object.values(s.pw.sets).some(Boolean);
+
+  const generate = useCallback(() => {
+    const one = (): string => {
+      if (s.mode === "pin") return generatePin(s.pinLength);
+      if (s.mode === "passphrase") return words ? generatePassphrase(words, s.pp) : "";
+      return anySet ? generatePassword(s.pw) : "";
+    };
+    setValues(Array.from({ length: s.count }, one).filter(Boolean));
+  }, [s, words, anySet]);
+
+  useEffect(() => generate(), [generate]);
+
+  const bits = useMemo(() => {
+    if (s.mode === "pin") return s.pinLength * Math.log2(10);
+    if (s.mode === "passphrase") return passphraseEntropy(7776, s.pp);
+    return passwordEntropy(s.pw);
+  }, [s]);
+  const strength = strengthOf(bits);
+
+  const patch = (p: Partial<Settings>) => setS((cur) => ({ ...cur, ...p }));
+  const patchPw = (p: Partial<PasswordOptions>) => setS((cur) => ({ ...cur, pw: { ...cur.pw, ...p } }));
+  const patchPp = (p: Partial<PassphraseOptions>) => setS((cur) => ({ ...cur, pp: { ...cur.pp, ...p } }));
+
+  const toggleSet = (k: SetKey) => {
+    const next = { ...s.pw.sets, [k]: !s.pw.sets[k] };
+    if (!Object.values(next).some(Boolean)) {
+      toast.error(t("pw.mustEnable"));
+      return;
+    }
+    patchPw({ sets: next });
+  };
+
+  const copy = async (text: string, many = false) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success(many ? t("pw.v2.copiedAll", { n: values.length }) : t("pw.copied"));
     } catch {
       toast.error(t("ui.copyFailed"));
     }
   };
 
-  const toggleOption = (key: keyof Omit<PasswordOptions, "length">) => {
-    const newOptions = { ...options, [key]: !options[key] };
-    const charTypes = [newOptions.uppercase, newOptions.lowercase, newOptions.numbers, newOptions.symbols];
-    const anyEnabled = charTypes.some(Boolean);
-    if (!anyEnabled && ["uppercase", "lowercase", "numbers", "symbols"].includes(key)) {
-      toast.error(t("pw.mustEnable"));
-      return;
-    }
-    if (buildCharset(newOptions).length === 0) {
-      toast.error(t("pw.mustEnable"));
-      return;
-    }
-    setOptions(newOptions);
-  };
-
-  const checkboxes: { key: keyof Omit<PasswordOptions, "length">; label: string }[] = [
-    { key: "uppercase", label: t("pw.uppercase") },
-    { key: "lowercase", label: t("pw.lowercase") },
-    { key: "numbers", label: t("pw.numbers") },
-    { key: "symbols", label: t("pw.symbols") },
-    { key: "excludeSimilar", label: t("pw.excludeSimilar") },
-    { key: "excludeAmbiguous", label: t("pw.excludeAmbiguous") },
-  ];
+  const main = values[0] ?? "";
+  const mask = (v: string) => (hidden ? "•".repeat(Math.min(v.length, 40)) : v);
 
   return (
-    <ToolLayout
-      toolName="Password Generator"
-      toolDescription="Generate strong, secure random passwords with customizable length and character types. Everything runs in your browser."
-    >
-      <div className="space-y-6">
-        {/* Password Display */}
-        <div className="glass rounded-2xl p-6">
-          <label className="text-sm font-medium text-t-secondary mb-3 block">
-            {t("pw.generated")}
-          </label>
-          <div className="relative">
-            <div className="w-full px-4 py-4 rounded-xl bg-bg-secondary border border-border text-t-primary font-mono text-lg leading-relaxed break-all select-all min-h-[60px]">
-              {password || (
-                <span className="text-t-tertiary">{t("pw.enableOne")}</span>
-              )}
-            </div>
+    <ToolLayout toolName={t("tool.password-generator.name")} toolDescription={t("tool.password-generator.desc")}>
+      <div className="space-y-5">
+        <Segmented<Mode>
+          label={t("pw.v2.type")}
+          value={s.mode}
+          onChange={(mode) => patch({ mode })}
+          options={[
+            { value: "password", label: t("pw.v2.password"), icon: <KeyRound className="h-4 w-4" aria-hidden="true" /> },
+            { value: "passphrase", label: t("pw.v2.passphrase"), icon: <WholeWord className="h-4 w-4" aria-hidden="true" /> },
+            { value: "pin", label: "PIN", icon: <Hash className="h-4 w-4" aria-hidden="true" /> },
+          ]}
+        />
+
+        {/* Result */}
+        <div className="glass space-y-4 p-5 sm:p-6">
+          <div className="flex items-start gap-2">
+            <output
+              className="min-h-[64px] min-w-0 flex-1 break-all rounded-xl border border-border bg-bg-secondary px-4 py-4 font-mono text-[19px] leading-relaxed text-t-primary sm:text-[21px]"
+              aria-live="polite"
+              aria-label={t("pw.generated")}
+            >
+              {main ? hidden ? mask(main) : <Pretty value={main} /> : s.mode === "passphrase" && !words ? <Loader2 className="h-5 w-5 animate-spin text-t-tertiary" aria-hidden="true" /> : null}
+            </output>
+            <button type="button" onClick={() => setHidden((h) => !h)} aria-pressed={hidden} aria-label={hidden ? t("pw.v2.show") : t("pw.v2.hide")} title={hidden ? t("pw.v2.show") : t("pw.v2.hide")} className={`${buttonSecondary} h-[64px] w-12 !px-0`}>
+              {hidden ? <Eye className="h-4 w-4" aria-hidden="true" /> : <EyeOff className="h-4 w-4" aria-hidden="true" />}
+            </button>
           </div>
 
-          {/* Strength Indicator */}
-          <div className="mt-4">
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-xs text-t-secondary">{t("pw.strength")}</span>
-              <span className="text-xs font-semibold text-t-primary">
-                {t(strength.strengthKey)}
-                <span className="text-t-tertiary ml-2 font-normal">
-                  · {Math.round(entropy)} {t("pw.bits")} {t("pw.entropy").toLowerCase()}
+          <div>
+            <div className="mb-1.5 flex items-center justify-between text-[13px]">
+              <span className="text-t-secondary">{t("pw.strength")}</span>
+              <span className="font-semibold text-t-primary">
+                {t(strength.key)}
+                <span className="ms-2 font-normal text-t-tertiary tabular-nums">
+                  {Math.round(bits)} {t("pw.bits")}
                 </span>
               </span>
             </div>
-            <div className="w-full h-2 rounded-full bg-bg-secondary overflow-hidden">
-              <div
-                className={`h-full rounded-full transition-all duration-300 ${strength.color}`}
-                style={{ width: `${strength.percent}%` }}
-              />
+            <div className="h-2 overflow-hidden rounded-full bg-bg-tertiary">
+              <div className={`h-full rounded-full transition-all duration-300 ${strength.bar}`} style={{ width: `${strength.pct}%` }} />
             </div>
+            <p className="mt-2 flex justify-between text-[12.5px] text-t-tertiary">
+              <span>{t("pw.crackTime")}</span>
+              <span className="font-medium text-t-secondary">{crackLabel(bits, t)}</span>
+            </p>
+            {s.mode === "pin" && <p className="mt-1 text-[12.5px] text-t-tertiary">{t("pw.v2.pinNote")}</p>}
           </div>
 
-          {/* Crack time */}
-          <div className="mt-3 flex items-center justify-between text-xs">
-            <span className="text-t-secondary">⚡ {t("pw.crackTime")}</span>
-            <span className={`font-semibold ${crackTime.color}`}>{crackTime.label}</span>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex gap-3 mt-5">
-            <button
-              onClick={() => copyText(password)}
-              disabled={!password}
-              className="px-6 py-3 rounded-xl font-semibold text-on-accent bg-accent hover:opacity-90 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-            >
+          <div className="flex flex-wrap gap-2">
+            <button type="button" onClick={() => copy(main)} disabled={!main} className={buttonPrimary}>
+              <Copy className="h-4 w-4" aria-hidden="true" />
               {t("ui.copy")}
             </button>
-            <button
-              onClick={generate}
-              className="px-6 py-3 rounded-xl font-semibold text-t-primary bg-bg-secondary border border-border hover:bg-bg-tertiary transition-all"
-            >
+            <button type="button" onClick={generate} className={buttonSecondary}>
+              <RefreshCw className="h-4 w-4" aria-hidden="true" />
               {t("ui.regenerate")}
             </button>
           </div>
         </div>
 
         {/* Settings */}
-        <div className="glass rounded-2xl p-6">
-          <h3 className="text-sm font-medium text-t-secondary mb-5">
-            {t("ui.settings")}
-          </h3>
+        <div className="glass space-y-5 p-5 sm:p-6">
+          <p className={sectionTitle}>{t("ui.settings")}</p>
+          {s.mode === "password" && (
+            <>
+              <Slider label={t("pw.length")} value={s.pw.length} min={6} max={128} onChange={(length) => patchPw({ length })} display={s.pw.length} />
+              <div className="grid gap-3 sm:grid-cols-2">
+                {(Object.keys(SET_LABEL) as SetKey[]).map((k) => (
+                  <Toggle key={k} checked={s.pw.sets[k]} onChange={() => toggleSet(k)} label={t(SET_LABEL[k])} />
+                ))}
+              </div>
+              <div className="grid gap-3 border-t border-border pt-4 sm:grid-cols-2">
+                <Toggle checked={s.pw.excludeSimilar} onChange={(v) => patchPw({ excludeSimilar: v })} label={t("pw.excludeSimilar")} />
+                <Toggle checked={s.pw.excludeAmbiguous} onChange={(v) => patchPw({ excludeAmbiguous: v })} label={t("pw.excludeAmbiguous")} />
+              </div>
+              <p className="text-[12.5px] text-t-tertiary">{t("pw.v2.everyType")}</p>
+            </>
+          )}
+          {s.mode === "passphrase" && (
+            <>
+              <Slider label={t("pw.v2.words")} value={s.pp.words} min={3} max={12} onChange={(n) => patchPp({ words: n })} display={s.pp.words} />
+              <div className="space-y-2">
+                <p className="text-[13px] text-t-secondary">{t("pw.v2.separator")}</p>
+                <Segmented<string>
+                  label={t("pw.v2.separator")}
+                  size="sm"
+                  value={s.pp.separator}
+                  onChange={(separator) => patchPp({ separator })}
+                  options={SEPARATORS.map((sep) => ({ value: sep, label: sep === " " ? t("pw.v2.space") : sep === "" ? t("pw.v2.none") : sep }))}
+                />
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Toggle checked={s.pp.capitalize} onChange={(v) => patchPp({ capitalize: v })} label={t("pw.v2.capitalize")} />
+                <Toggle checked={s.pp.addNumber} onChange={(v) => patchPp({ addNumber: v })} label={t("pw.v2.addNumber")} />
+              </div>
+              <p className="text-[12.5px] text-t-tertiary">{t("pw.v2.passphraseNote")}</p>
+            </>
+          )}
+          {s.mode === "pin" && <Slider label={t("pw.length")} value={s.pinLength} min={4} max={12} onChange={(pinLength) => patch({ pinLength })} display={s.pinLength} />}
 
-          {/* Length Slider */}
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-2">
-              <label className="text-sm text-t-primary">{t("pw.length")}</label>
-              <span className="text-sm font-semibold text-t-primary tabular-nums">
-                {options.length}
-              </span>
-            </div>
-            <input
-              type="range"
-              min={8}
-              max={128}
-              value={options.length}
-              onChange={(e) =>
-                setOptions({ ...options, length: Number(e.target.value) })
-              }
-              className="w-full accent-accent"
-            />
-            <div className="flex justify-between text-xs text-t-tertiary mt-1">
-              <span>8</span>
-              <span>128</span>
-            </div>
-          </div>
-
-          {/* Character Type Checkboxes */}
-          <div className="space-y-3">
-            {checkboxes.map(({ key, label }) => (
-              <label
-                key={key}
-                className="flex items-center gap-3 cursor-pointer group"
-                onClick={(e) => {
-                  e.preventDefault();
-                  toggleOption(key);
-                }}
-              >
-                <div
-                  className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${
-                    options[key]
-                      ? "bg-accent border-accent"
-                      : "border-t-primary/20 bg-transparent group-hover:border-t-primary/40"
-                  }`}
-                >
-                  {options[key] && (
-                    <svg
-                      className="w-3 h-3 text-on-accent"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={3}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                  )}
-                </div>
-                <span className="text-sm text-t-primary">{label}</span>
-              </label>
-            ))}
+          <div className="space-y-2 border-t border-border pt-4">
+            <p className="text-[13px] text-t-secondary">{t("pw.v2.howMany")}</p>
+            <Segmented<number> label={t("pw.v2.howMany")} size="sm" value={s.count} onChange={(count) => patch({ count })} options={[1, 5, 10, 25, 50].map((n) => ({ value: n, label: String(n) }))} />
           </div>
         </div>
 
-        {/* History */}
-        {history.length > 1 && (
-          <div className="glass rounded-2xl p-6">
-            <div className="flex items-baseline justify-between mb-3">
-              <h3 className="text-sm font-medium text-t-secondary">
-                {t("pw.history")}
-              </h3>
-              <span className="text-xs text-t-tertiary">{t("pw.historyHint")}</span>
-            </div>
-            <div className="space-y-1.5">
-              {history.map((p, i) => (
-                <button
-                  key={`${p}-${i}`}
-                  onClick={() => copyText(p)}
-                  className="w-full text-left px-3 py-2 rounded-lg bg-bg-secondary border border-border hover:border-accent/40 transition-colors font-mono text-[13px] text-t-primary truncate"
-                  title={t("ui.copy")}
-                >
-                  {p}
+        {values.length > 1 && (
+          <div className="glass space-y-3 p-5 sm:p-6">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className={sectionTitle}>{t("pw.v2.list", { n: values.length })}</p>
+              <div className="flex gap-2">
+                <button type="button" onClick={() => copy(values.join("\n"), true)} className={buttonSecondary}>
+                  <Copy className="h-4 w-4" aria-hidden="true" />
+                  {t("pw.v2.copyAll")}
                 </button>
-              ))}
+                <button type="button" onClick={() => downloadBlob(new Blob([values.join("\n") + "\n"], { type: "text/plain" }), `${s.mode}s.txt`)} className={buttonSecondary}>
+                  <Download className="h-4 w-4" aria-hidden="true" />
+                  .txt
+                </button>
+              </div>
             </div>
+            <ul className="divide-y divide-border">
+              {values.map((v, i) => (
+                <li key={i} className="flex items-center gap-2 py-1.5">
+                  <span className="w-7 shrink-0 text-end text-[12px] tabular-nums text-t-tertiary">{i + 1}</span>
+                  <span className="min-w-0 flex-1 truncate font-mono text-[14px] text-t-primary" dir="ltr">
+                    {hidden ? mask(v) : <Pretty value={v} />}
+                  </span>
+                  <button type="button" onClick={() => copy(v)} aria-label={`${t("ui.copy")} ${i + 1}`} className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-t-tertiary hover:bg-bg-secondary hover:text-t-primary">
+                    <Copy className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                </li>
+              ))}
+            </ul>
           </div>
         )}
+
+        <p className="text-center text-[12.5px] text-t-tertiary">{t("pw.v2.privacy")}</p>
 
         <div className="border-t border-border pt-6">
           <PasswordStrengthChecker />

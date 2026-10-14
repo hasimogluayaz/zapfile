@@ -61,6 +61,17 @@ export const tools: Tool[] = [
       "Convert PDF pages to high-quality PNG or JPG images. Batch download as ZIP. No uploads required.",
   },
   {
+    slug: "organize-pdf",
+    name: "Organize PDF",
+    description: "Reorder, delete, rotate, duplicate and extract PDF pages, or combine several PDFs",
+    emoji: "🗂️",
+    category: "pdf",
+    acceptedFormats: [".pdf"],
+    metaTitle: "Organize PDF Pages - Reorder, Delete, Extract | ZapFile",
+    metaDescription:
+      "Drag PDF pages into a new order, delete or rotate pages, insert blank pages, duplicate, extract a selection or combine pages from several PDFs. Free, private, in your browser.",
+  },
+  {
     slug: "rotate-pdf",
     name: "Rotate PDF",
     description: "Rotate PDF pages individually or all at once",
@@ -70,6 +81,61 @@ export const tools: Tool[] = [
     metaTitle: "Rotate PDF - Free Online Tool | ZapFile",
     metaDescription:
       "Rotate PDF pages 90, 180 or 270 degrees. Rotate individual pages or all at once. Free online tool.",
+  },
+  {
+    slug: "fill-pdf",
+    name: "Fill PDF Form",
+    description: "Fill in PDF forms right on the page: text fields, checkboxes, choices, then save or flatten",
+    emoji: "📋",
+    category: "pdf",
+    acceptedFormats: [".pdf"],
+    metaTitle: "Fill PDF Forms Online - Free, Private | ZapFile",
+    metaDescription:
+      "Fill in fillable PDF forms in your browser: type into fields on the page, tick checkboxes, pick options, then download, optionally flattened. Turkish and other letters supported. No upload.",
+  },
+  {
+    slug: "sign-pdf",
+    name: "Sign PDF",
+    description: "Draw, type or upload your signature and place it on a PDF, with text, dates and checkmarks",
+    emoji: "✍️",
+    category: "pdf",
+    acceptedFormats: [".pdf"],
+    metaTitle: "Sign PDF Online - Free, No Account, Private | ZapFile",
+    metaDescription:
+      "Sign PDF documents in your browser: draw, type or upload a signature, drag it into place, add your name, the date or checkmarks, and download. No upload, no sign-up.",
+  },
+  {
+    slug: "watermark-pdf",
+    name: "Watermark PDF",
+    description: "Stamp text or a logo on PDF pages: position, tiling, rotation and opacity",
+    emoji: "💧",
+    category: "pdf",
+    acceptedFormats: [".pdf"],
+    metaTitle: "Add Watermark to PDF - Text or Logo, Free | ZapFile",
+    metaDescription:
+      "Add a text or image watermark to PDF pages in your browser: CONFIDENTIAL stamps, logos, tiled patterns, any angle and opacity, chosen pages. Real text, no upload.",
+  },
+  {
+    slug: "crop-pdf",
+    name: "Crop PDF",
+    description: "Crop PDF pages to an area, or trim white margins from every page automatically",
+    emoji: "✂️",
+    category: "pdf",
+    acceptedFormats: [".pdf"],
+    metaTitle: "Crop PDF - Trim Margins Online, Free | ZapFile",
+    metaDescription:
+      "Crop PDF pages in your browser: drag a crop box, apply it to all or some pages, or trim the white margins of every page automatically. No upload, no watermark.",
+  },
+  {
+    slug: "compare-pdf",
+    name: "Compare PDF",
+    description: "Find every added, removed or changed word between two versions of a PDF",
+    emoji: "🔍",
+    category: "pdf",
+    acceptedFormats: [".pdf"],
+    metaTitle: "Compare PDF Files - Highlight Differences, Free | ZapFile",
+    metaDescription:
+      "Compare two PDF versions in your browser: changed, added and removed words are highlighted side by side on the pages, with a clickable list of every change. No upload.",
   },
   {
     slug: "pdf-page-numbers",
@@ -197,24 +263,24 @@ export const tools: Tool[] = [
   {
     slug: "image-collage",
     name: "Image Collage",
-    description: "Create photo collages with multiple layout options",
+    description: "Arrange photos in grids, feature layouts or a mosaic; reframe, swap and export in high resolution",
     emoji: "\ud83d\uddbc\ufe0f",
     category: "image",
-    acceptedFormats: [".jpg", ".jpeg", ".png", ".webp"],
-    metaTitle: "Image Collage Maker - Free Online Tool | ZapFile",
+    acceptedFormats: [".jpg", ".jpeg", ".png", ".webp", ".avif"],
+    metaTitle: "Photo Collage Maker: Grid, Mosaic & Instagram Sizes - Free | ZapFile",
     metaDescription:
-      "Create beautiful photo collages. Multiple layouts, adjustable spacing. Free, private, browser-based.",
+      "Make photo collages in your browser: grid, feature and mosaic layouts, 1:1, 4:5 and 9:16 sizes, drag to swap and reframe, rounded corners, up to 4096 px. Nothing is uploaded.",
   },
   {
     slug: "meme-generator",
     name: "Meme Generator",
-    description: "Add text to images to create memes",
+    description: "Add meme text, caption bars and labels to any image; preview matches the download exactly",
     emoji: "\ud83d\ude02",
     category: "image",
-    acceptedFormats: [".jpg", ".jpeg", ".png", ".webp"],
-    metaTitle: "Meme Generator - Free Online Tool | ZapFile",
+    acceptedFormats: [".jpg", ".jpeg", ".png", ".webp", ".gif", ".avif"],
+    metaTitle: "Meme Generator: Classic Meme Font, Caption Bars & Labels - Free | ZapFile",
     metaDescription:
-      "Create memes by adding text to images. Customize font, size, and position. Free online meme maker.",
+      "Make memes in your browser: classic outlined meme text with auto wrapping, modern caption bars, labels and shadows. Drag, resize, rotate, undo, and download at full resolution. No watermark, no upload.",
   },
   {
     slug: "image-to-base64",
@@ -264,13 +330,13 @@ export const tools: Tool[] = [
   {
     slug: "color-picker",
     name: "Color Picker",
-    description: "Pick, convert and randomize colors with harmonies",
+    description: "Pick colors from a picker, the screen or an image; convert HEX, RGB, HSL, OKLCH and build scales",
     emoji: "\ud83c\udfa8",
     category: "utility",
     acceptedFormats: [],
-    metaTitle: "Color Picker, Random Color & Harmonies - Free | ZapFile",
+    metaTitle: "Color Picker: HEX, RGB, HSL, OKLCH & Image Picker - Free | ZapFile",
     metaDescription:
-      "Pick colors, convert between HEX, RGB and HSL, generate random colors and complementary, triadic and analogous harmonies.",
+      "Pick colors with a precise picker, from your screen or from an image. Convert HEX, RGB, HSL, HWB, OKLCH and CMYK, check WCAG contrast, build 50–950 tint scales and harmonies.",
   },
   {
     slug: "json-formatter",
@@ -286,7 +352,7 @@ export const tools: Tool[] = [
   {
     slug: "hash-generator",
     name: "Hash Generator",
-    description: "Generate SHA-1, SHA-256, SHA-384, SHA-512 hashes",
+    description: "MD5, SHA-256, SHA-512, SHA3, BLAKE3 and CRC32 hashes for text and files, with HMAC and checksum verification",
     emoji: "\ud83d\udd10",
     category: "utility",
     acceptedFormats: [],
@@ -352,7 +418,7 @@ export const tools: Tool[] = [
   {
     slug: "timestamp-converter",
     name: "Timestamp Converter",
-    description: "Convert between Unix timestamps and human dates",
+    description: "Convert Unix timestamps (s, ms, µs, ns) and dates across time zones",
     emoji: "\ud83d\udd50",
     category: "utility",
     acceptedFormats: [],
@@ -418,7 +484,7 @@ export const tools: Tool[] = [
   {
     slug: "unit-converter",
     name: "Unit Converter",
-    description: "Convert between px, rem, cm, inches and more",
+    description: "Convert length, weight, temperature, volume, area, speed, data, CSS units and more",
     emoji: "\ud83d\udccf",
     category: "utility",
     acceptedFormats: [],
@@ -452,7 +518,7 @@ export const tools: Tool[] = [
   {
     slug: "uuid-generator",
     name: "UUID Generator",
-    description: "Generate UUIDs v4 and Nano IDs in bulk",
+    description: "Generate UUID v4/v7, ULID and Nano IDs in bulk, and inspect any UUID",
     emoji: "🎲",
     category: "utility",
     acceptedFormats: [],
@@ -474,7 +540,7 @@ export const tools: Tool[] = [
   {
     slug: "base-converter",
     name: "Number Base Converter",
-    description: "Convert numbers between decimal, hex, binary and octal",
+    description: "Convert between binary, octal, decimal, hex and any base up to 36, with two's complement",
     emoji: "🔢",
     category: "utility",
     acceptedFormats: [],
@@ -520,13 +586,13 @@ export const tools: Tool[] = [
   {
     slug: "background-remover",
     name: "Background Remover",
-    description: "Remove image backgrounds automatically in your browser",
+    description: "Remove image backgrounds with on-device AI and fine-tune edges with a brush",
     emoji: "✂️",
     category: "image",
     acceptedFormats: [".jpg", ".jpeg", ".png", ".webp"],
     metaTitle: "Background Remover - Remove Image Background Free | ZapFile",
     metaDescription:
-      "Remove image backgrounds automatically with AI that runs entirely in your browser. No uploads, free, transparent PNG output.",
+      "Remove image backgrounds with AI that runs entirely in your browser. Clean hair edges, erase/restore brush, new backgrounds, full-resolution PNG. No uploads, free.",
   },
   {
     slug: "color-dropper",
@@ -552,15 +618,125 @@ export const tools: Tool[] = [
   },
   // ── New PDF Tools ──
   {
+    slug: "redact-pdf",
+    name: "Redact PDF",
+    description: "Black out names, numbers and other sensitive text for good: search, patterns or drawn boxes",
+    emoji: "⬛",
+    category: "pdf",
+    acceptedFormats: [".pdf"],
+    metaTitle: "Redact PDF - Permanently Black Out Text, Free | ZapFile",
+    metaDescription:
+      "Redact PDFs in your browser: search words, find emails, phone numbers, IBANs, ID and card numbers, or draw boxes. Redacted text is truly removed, not just covered. No upload.",
+  },
+  {
     slug: "pdf-encrypt",
-    name: "PDF Encrypt",
-    description: "Add password protection to your PDF files",
+    name: "Protect PDF",
+    description: "Add or remove a PDF password with AES-256 encryption",
     emoji: "🔒",
     category: "pdf",
     acceptedFormats: [".pdf"],
-    metaTitle: "Encrypt PDF - Add Password Protection | ZapFile",
+    metaTitle: "Protect PDF with Password & Unlock PDF - Free AES-256 | ZapFile",
     metaDescription:
-      "Password-protect your PDF files securely. Encryption happens entirely in your browser, your file never leaves your device.",
+      "Password-protect a PDF with AES-256, restrict printing and copying, or remove a password you know. Runs in your browser; your file is never uploaded.",
+  },
+  {
+    slug: "html-to-pdf",
+    name: "HTML to PDF",
+    description: "Convert HTML files to PDF with headings, tables, links and embedded images",
+    emoji: "🌐",
+    category: "pdf",
+    acceptedFormats: [".html", ".htm", ".xhtml"],
+    metaTitle: "HTML to PDF Converter - Free, Fast | ZapFile",
+    metaDescription:
+      "Convert saved web pages and HTML files to PDF in seconds with LibreOffice: headings, tables, lists, links and embedded images. Batch convert; files are deleted right after, or convert privately in your browser.",
+  },
+  {
+    slug: "pdf-to-word",
+    name: "PDF to Word",
+    description: "Convert PDF to an editable Word document (DOCX)",
+    emoji: "📄",
+    category: "pdf",
+    acceptedFormats: [".pdf"],
+    metaTitle: "PDF to Word Converter - Free, Editable DOCX | ZapFile",
+    metaDescription:
+      "Convert PDF to editable Word (DOCX) with headings, lists, tables, images and page layout kept. Free, private, runs in your browser.",
+  },
+  {
+    slug: "pdf-to-excel",
+    name: "PDF to Excel",
+    description: "Extract PDF tables into an Excel spreadsheet (XLSX)",
+    emoji: "📊",
+    category: "pdf",
+    acceptedFormats: [".pdf"],
+    metaTitle: "PDF to Excel Converter - Tables to XLSX | ZapFile",
+    metaDescription:
+      "Convert PDF tables to Excel (XLSX) with real numbers, merged cells and one sheet per page or table. Free, private, no uploads.",
+  },
+  {
+    slug: "pdf-to-markdown",
+    name: "PDF to Markdown",
+    description: "Turn a PDF into clean Markdown with headings, lists, tables and images",
+    emoji: "📝",
+    category: "pdf",
+    acceptedFormats: [".pdf"],
+    metaTitle: "PDF to Markdown Converter - Free, Tables & Headings | ZapFile",
+    metaDescription:
+      "Convert PDF to Markdown in your browser: headings, bold and italic, lists, GitHub tables and images kept. Ready for docs, wikis, notes and LLM prompts. No upload.",
+  },
+  {
+    slug: "pdf-to-powerpoint",
+    name: "PDF to PowerPoint",
+    description: "Turn PDF pages into editable PowerPoint slides (PPTX)",
+    emoji: "📽️",
+    category: "pdf",
+    acceptedFormats: [".pdf"],
+    metaTitle: "PDF to PowerPoint Converter - Free, Editable PPTX | ZapFile",
+    metaDescription:
+      "Convert PDF to PowerPoint in your browser: every page becomes a slide with editable text boxes, pictures, shapes and charts in place. Free, private, no upload, no watermark.",
+  },
+  {
+    slug: "word-to-pdf",
+    name: "Word to PDF",
+    description: "Convert Word documents (DOCX, DOC, ODT, RTF) to PDF with the layout intact",
+    emoji: "📄",
+    category: "pdf",
+    acceptedFormats: [".docx", ".doc", ".odt", ".rtf", ".txt"],
+    metaTitle: "Word to PDF Converter - Free, Exact Layout | ZapFile",
+    metaDescription:
+      "Convert DOCX, DOC, ODT and RTF to PDF in seconds with LibreOffice: fonts, tables, images, headers and page breaks kept. Batch convert, PDF/A, no watermark; files are deleted right after, or convert privately in your browser.",
+  },
+  {
+    slug: "excel-to-pdf",
+    name: "Excel to PDF",
+    description: "Convert spreadsheets (XLSX, XLS, ODS, CSV) to PDF, every sheet and formula result",
+    emoji: "📊",
+    category: "pdf",
+    acceptedFormats: [".xlsx", ".xls", ".ods", ".csv"],
+    metaTitle: "Excel to PDF Converter - Free, All Sheets | ZapFile",
+    metaDescription:
+      "Convert XLSX, XLS, ODS and CSV spreadsheets to PDF in seconds: every sheet, calculated formulas, number formats, colors and print areas. Batch convert; files are deleted right after, or convert privately in your browser.",
+  },
+  {
+    slug: "powerpoint-to-pdf",
+    name: "PowerPoint to PDF",
+    description: "Convert presentations (PPTX, PPT, ODP) to PDF, one page per slide",
+    emoji: "📽️",
+    category: "pdf",
+    acceptedFormats: [".pptx", ".ppt", ".odp"],
+    metaTitle: "PowerPoint to PDF Converter - Free, Slides Kept | ZapFile",
+    metaDescription:
+      "Convert PPTX, PPT and ODP presentations to PDF in seconds: one page per slide with shapes, images, text and themes kept. Batch convert, no watermark; files are deleted right after, or convert privately in your browser.",
+  },
+  {
+    slug: "ocr-pdf",
+    name: "OCR PDF",
+    description: "Make scanned PDFs and photos searchable and copyable with text recognition in 12 languages",
+    emoji: "🔤",
+    category: "pdf",
+    acceptedFormats: [".pdf", ".jpg", ".jpeg", ".png", ".webp", ".tif", ".tiff"],
+    metaTitle: "OCR PDF - Make Scanned PDFs Searchable, Free | ZapFile",
+    metaDescription:
+      "Turn scanned PDFs and photos into searchable PDFs in your browser: an invisible text layer is added over the original page, in English, Turkish, German, French, Spanish and more. Also exports plain text. No upload.",
   },
   {
     slug: "pdf-text-extractor",
@@ -571,7 +747,18 @@ export const tools: Tool[] = [
     acceptedFormats: [".pdf"],
     metaTitle: "PDF Text Extractor - Copy Text from PDF | ZapFile",
     metaDescription:
-      "Extract and copy all text from PDF files, with OCR for scanned pages. Free, browser-based, no uploads.",
+      "Extract and copy all text from PDF files with columns and reading order kept. Free, browser-based, no uploads.",
+  },
+  {
+    slug: "repair-pdf",
+    name: "Repair PDF",
+    description: "Fix PDFs that won't open or show errors, and recover as many pages as possible",
+    emoji: "🩹",
+    category: "pdf",
+    acceptedFormats: [".pdf"],
+    metaTitle: "Repair PDF - Fix Corrupted PDF Files, Free | ZapFile",
+    metaDescription:
+      "Repair damaged or corrupted PDFs in your browser: the file structure is rebuilt with a fresh cross-reference table, and pages that can't be saved that way are recovered as images. No upload.",
   },
   {
     slug: "pdf-compress",
@@ -610,7 +797,7 @@ export const tools: Tool[] = [
   {
     slug: "text-to-speech",
     name: "Text to Speech",
-    description: "Convert text to spoken audio in Turkish and English",
+    description: "Read text aloud with every voice your device offers",
     emoji: "🔊",
     category: "video",
     acceptedFormats: [],

@@ -4,7 +4,7 @@ import PrivacyClient from "./PrivacyClient";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
-  description: "ZapFile privacy policy. Your files never leave your browser.",
+  description: "ZapFile privacy policy: files are processed on your device; Office to PDF fast mode converts on our server and deletes files immediately.",
   alternates: {
     canonical: `${SITE_URL}/privacy`,
   },

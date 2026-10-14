@@ -4,6 +4,296 @@ export interface FaqItem {
 }
 
 const toolFaqs: Record<string, FaqItem[]> = {
+  "background-remover": [
+    {
+      question: "Is the background remover really free and private?",
+      answer: "Yes. The AI model (BiRefNet, MIT licensed) runs entirely in your browser using WebGPU or WebAssembly. Your photo is never uploaded, and there are no watermarks or limits.",
+    },
+    {
+      question: "Why does the first run take longer?",
+      answer: "The first time, your browser downloads the AI model once (about 94 MB) and stores it in its cache. After that it starts instantly, even offline.",
+    },
+    {
+      question: "How do I fix an area the AI got wrong?",
+      answer: "Pick the Erase or Restore brush below the preview and paint over the area. Zoom in with the scroll wheel or a pinch for precise work, and use Undo (Ctrl+Z) at any time.",
+    },
+    {
+      question: "Can I put a new background behind the subject?",
+      answer: "Yes. Choose a solid color, a blurred version of the original photo, or your own image, then download as PNG, WebP or JPG at full resolution.",
+    },
+  ],
+  "pdf-encrypt": [
+    {
+      question: "How do I password-protect a PDF for free?",
+      answer: "Drop your PDF into ZapFile's Protect PDF tool, enter a password twice and click Protect PDF. The file is encrypted with AES-256 in your browser and is never uploaded.",
+    },
+    {
+      question: "Will the protected PDF open in Adobe Reader and on phones?",
+      answer: "Yes. ZapFile uses the standard PDF encryption built into the PDF format (AES-256, revision 6), which opens in Adobe Acrobat and Reader X or newer, Chrome, Edge, Firefox, macOS Preview, iOS and Android. Choose AES-128 only for very old readers.",
+    },
+    {
+      question: "Can I remove a password from a PDF?",
+      answer: "Yes, if you know the password. Switch to Remove password, enter it, and download an unlocked copy. ZapFile cannot recover or bypass passwords you don't know.",
+    },
+    {
+      question: "Can I stop people from printing or copying my PDF?",
+      answer: "Yes. Turn on Restrict printing, copying and editing to choose what readers may do. Keep the permissions password so you can lift the restrictions later.",
+    },
+  ],
+  "word-to-pdf": [
+    {
+      question: "How do I convert Word to PDF for free?",
+      answer: "Drop one or more DOCX, DOC, ODT or RTF files into ZapFile's Word to PDF tool. LibreOffice, running inside your browser, lays out every page and you download the PDFs one by one, as a ZIP, or combined into a single PDF. Nothing is uploaded and there is no watermark.",
+    },
+    {
+      question: "Will the PDF look the same as in Word?",
+      answer: "The document is laid out by LibreOffice, the same engine many converters run on their servers: fonts, tables, images, headers, footers, footnotes, page numbers and page breaks are kept. Common Microsoft fonts are replaced by metric-compatible ones (for example Carlito for Calibri), so lines and pages break in the same places.",
+    },
+    {
+      question: "Why is there a download the first time?",
+      answer: "The conversion engine is about 77 MB. It is downloaded once, checked and stored in your browser, so later visits start instantly and even work offline. Your documents themselves never leave your device.",
+    },
+    {
+      question: "Can I convert a password-protected document or make a PDF/A?",
+      answer: "Yes. Enter the document's password when asked and it is opened locally. Turn on PDF/A to get an archival PDF/A-2b file with every font embedded.",
+    },
+  ],
+  "excel-to-pdf": [
+    {
+      question: "How do I convert Excel to PDF?",
+      answer: "Drop XLSX, XLS, ODS or CSV files into ZapFile's Excel to PDF tool. Each workbook is converted in your browser with LibreOffice and you download the PDF. Nothing is uploaded.",
+    },
+    {
+      question: "Are all sheets and formulas included?",
+      answer: "Yes. Every sheet is printed in order, formulas are recalculated so the PDF shows their results, and number formats, colors, borders, merged cells, print areas and page setup from the workbook are respected.",
+    },
+    {
+      question: "Why is a wide sheet split across pages?",
+      answer: "The PDF follows the workbook's page setup, like printing from Excel. To keep a sheet on one page, set its scaling to fit one page wide (Page Layout → Fit to) before converting.",
+    },
+  ],
+  "powerpoint-to-pdf": [
+    {
+      question: "How do I convert PowerPoint to PDF?",
+      answer: "Drop PPTX, PPT or ODP presentations into ZapFile's PowerPoint to PDF tool. Each slide becomes one PDF page, converted in your browser with LibreOffice. Nothing is uploaded and there is no watermark.",
+    },
+    {
+      question: "Are images, shapes and slide designs kept?",
+      answer: "Yes. Backgrounds, themes, shapes, pictures, tables, charts and text formatting are rendered as on the slide. Animations and embedded videos can't play in a PDF, so their first frame or poster is shown.",
+    },
+    {
+      question: "Can I convert several presentations at once?",
+      answer: "Yes. Drop as many files as you like: they are converted one after another and you can download each PDF, all of them as a ZIP, or combine them into one PDF.",
+    },
+  ],
+  "repair-pdf": [
+    {
+      question: "How do I repair a corrupted PDF?",
+      answer: "Drop the file into ZapFile's Repair PDF tool. It re-reads every object it can find, ignoring a damaged cross-reference table, and writes a clean new PDF. Download it and open it as usual. Nothing is uploaded.",
+    },
+    {
+      question: "What if the structure is too damaged?",
+      answer: "Then the pages that can still be drawn are recovered as high-resolution images in a new PDF. Their text isn't selectable any more; run OCR PDF on the result to make it searchable again.",
+    },
+    {
+      question: "Can every PDF be repaired?",
+      answer: "Not always: a file that was cut off very early or overwritten has no page data left to recover. Repair works best on PDFs with broken offsets, missing cross-reference tables or truncated endings, the most common damage from interrupted downloads and email.",
+    },
+  ],
+  "ocr-pdf": [
+    {
+      question: "How do I make a scanned PDF searchable?",
+      answer: "Drop the scan into ZapFile's OCR PDF tool, pick the document's languages and start. Each page is read with Tesseract OCR in your browser and an invisible text layer is added over the original image, so the page looks the same but you can search, select and copy its text.",
+    },
+    {
+      question: "Which languages are supported?",
+      answer: "English, Turkish, German, French, Spanish, Portuguese, Italian, Russian, Arabic, Japanese, Simplified Chinese and Korean. Choose up to three for documents that mix languages. The language data downloads once and is then cached.",
+    },
+    {
+      question: "Are pages that already have text processed again?",
+      answer: "No, by default only pages without real text are recognized, so digital pages keep their exact text. Choose All pages to redo everything, for example when an old OCR layer is poor.",
+    },
+    {
+      question: "Can I OCR a photo or an image?",
+      answer: "Yes. Drop a JPG, PNG or WEBP and you get a searchable PDF of it, plus the recognized text to copy or download as TXT.",
+    },
+  ],
+  "fill-pdf": [
+    {
+      question: "How do I fill in a PDF form?",
+      answer: "Open the PDF in ZapFile's Fill PDF Form tool. Every field appears on the page where you can type, tick boxes and choose options; the side list shows which fields are still empty. Then download the filled PDF.",
+    },
+    {
+      question: "What does Flatten do?",
+      answer: "Flattening turns the filled fields into regular page content, so the answers can no longer be changed and every viewer shows them the same way. Leave it off if someone still needs to edit the form.",
+    },
+    {
+      question: "My PDF has no fields. Can I still write on it?",
+      answer: "Yes. Use Sign PDF to place text, dates, checkmarks and signatures anywhere on any PDF.",
+    },
+  ],
+  "redact-pdf": [
+    {
+      question: "How do I redact a PDF?",
+      answer: "Open the PDF in ZapFile's Redact PDF tool, then search for words, use a ready pattern (emails, phone numbers, IBANs, ID or card numbers, dates) or drag boxes over anything else. Click Redact and download. Everything runs in your browser.",
+    },
+    {
+      question: "Is the hidden text really gone?",
+      answer: "Yes. Pages with redactions are rebuilt as images with the black boxes burned in, and the new file is assembled from scratch, so the original text, drawings and annotations of those pages are not in it. A black rectangle drawn in an ordinary editor only covers text, which can still be copied out.",
+    },
+    {
+      question: "What happens to the other pages?",
+      answer: "Pages without redactions are copied unchanged, with selectable text. Redacted pages are high-resolution images (200 dpi), so their remaining text can't be selected; run OCR afterwards if you need it searchable.",
+    },
+  ],
+  "compare-pdf": [
+    {
+      question: "How do I compare two PDF files?",
+      answer: "Drop the original and the revised PDF into ZapFile's Compare PDF tool. Their text is compared word by word in your browser: removed words are highlighted red on the original, added words green on the revision, and every change is listed so you can jump to it.",
+    },
+    {
+      question: "Does it compare scanned PDFs or images?",
+      answer: "It compares text. Scanned pages without a text layer have no text to compare; run them through OCR first.",
+    },
+    {
+      question: "Are my contracts uploaded?",
+      answer: "No. Both files are read and compared locally on your device, which makes it safe for contracts and other confidential documents.",
+    },
+  ],
+  "html-to-pdf": [
+    {
+      question: "How do I convert an HTML file to PDF?",
+      answer: "Drop .html files into ZapFile's HTML to PDF tool. LibreOffice, running in your browser, lays out the page and you download the PDF. Nothing is uploaded.",
+    },
+    {
+      question: "Why are some pictures or styles missing?",
+      answer: "The converter works offline and can't download files from the internet, so images and stylesheets linked from other websites are skipped. Pictures embedded in the HTML (data: URLs) and inline styles are kept. Saving the page as \"Web Page, Single File\" or printing it to PDF from your browser keeps everything.",
+    },
+  ],
+  "pdf-to-markdown": [
+    {
+      question: "How do I convert a PDF to Markdown?",
+      answer: "Drop the PDF into ZapFile's PDF to Markdown tool. Headings, paragraphs, bold and italic text, lists and tables are rebuilt as GitHub-flavored Markdown in your browser. Copy it or download the .md file.",
+    },
+    {
+      question: "Are tables and images kept?",
+      answer: "Tables become Markdown pipe tables. Turn on Include images to get a ZIP with the Markdown file and an images folder it links to; charts and diagrams are saved as pictures too.",
+    },
+    {
+      question: "Is it good for ChatGPT, Claude or other AI tools?",
+      answer: "Yes. Markdown keeps the document's structure with far fewer tokens than raw PDF text, so models read headings, lists and tables correctly. Nothing is uploaded while converting.",
+    },
+  ],
+  "crop-pdf": [
+    {
+      question: "How do I crop a PDF?",
+      answer: "Open the PDF in ZapFile's Crop PDF tool, drag the yellow frame (or its handles) around the area you want to keep and download. The same area is applied to every page, or only to the pages you choose.",
+    },
+    {
+      question: "Can it remove white margins automatically?",
+      answer: "Yes. Choose Trim margins on each page: every page is checked for its printed area and cropped to it, with the padding you set. Ideal for scanned books or slides with wide borders.",
+    },
+    {
+      question: "Is the cropped content deleted?",
+      answer: "No. Cropping sets the visible page area (crop box and media box), like other PDF editors do. The parts outside are hidden in every viewer and when printing, but not erased from the file. To remove sensitive content, redact it instead.",
+    },
+  ],
+  "sign-pdf": [
+    {
+      question: "How do I sign a PDF for free?",
+      answer: "Open the PDF in ZapFile's Sign PDF tool, create your signature by drawing it, typing your name in a handwriting font or uploading a photo of it, then drag it where it belongs and download the signed PDF. Everything happens in your browser.",
+    },
+    {
+      question: "Can I add the date, my name or checkmarks?",
+      answer: "Yes. Add text boxes, today's date and ✓ or ✗ marks, move and resize them, and copy an item to every page (for example initials on each page).",
+    },
+    {
+      question: "Is this a legally binding signature?",
+      answer: "It is a visual electronic signature, like signing a printout: accepted for many everyday agreements, but some documents require a qualified digital signature with a certificate. Check what the recipient needs.",
+    },
+    {
+      question: "Is my signature stored anywhere?",
+      answer: "No. The signature exists only in this browser tab while you work and is never uploaded.",
+    },
+  ],
+  "watermark-pdf": [
+    {
+      question: "How do I add a watermark to a PDF?",
+      answer: "Drop the PDF into ZapFile's Watermark PDF tool, type your text (for example CONFIDENTIAL) or choose a logo, and adjust size, color, opacity, angle and position while the preview updates. Then download the stamped PDF. Nothing is uploaded.",
+    },
+    {
+      question: "Can the watermark repeat across the page?",
+      answer: "Yes. Turn on Tile to repeat the text or logo in a staggered pattern over the whole page, which is harder to crop out. You can also stamp only some pages, for example 2-end or odd.",
+    },
+    {
+      question: "Is the watermark text real text?",
+      answer: "Yes. Text is written with an embedded font (DejaVu, covering Turkish, Greek and Cyrillic letters), so it stays sharp at any zoom and is searchable.",
+    },
+  ],
+  "organize-pdf": [
+    {
+      question: "How do I rearrange pages in a PDF?",
+      answer: "Drop the PDF into ZapFile's Organize PDF tool and drag the page thumbnails into the order you want. You can also move a page with its arrow buttons or with Alt + arrow keys. Download the result when you're done. Nothing is uploaded.",
+    },
+    {
+      question: "Can I delete or extract pages?",
+      answer: "Yes. Select pages (Ctrl or Shift + click to select several) and delete them, or use Extract to download only the selected pages as a new PDF. Rotate, duplicate and blank-page insertion work the same way, and every change can be undone.",
+    },
+    {
+      question: "Can I combine pages from several PDFs?",
+      answer: "Yes. Add more PDFs and their pages join the grid, numbered by file, so you can mix and reorder pages from different documents into one PDF.",
+    },
+  ],
+  "pdf-to-powerpoint": [
+    {
+      question: "How do I convert a PDF to PowerPoint?",
+      answer: "Drop the PDF into ZapFile's PDF to PowerPoint tool. Each page becomes one slide in a PPTX file, built in your browser in a few seconds. Nothing is uploaded and there is no watermark.",
+    },
+    {
+      question: "Can I edit the slides?",
+      answer: "Yes. Text is placed in real text boxes with its fonts, sizes, colors and line breaks, so you can change the wording right away. Pictures, colored boxes and lines are separate objects you can move or delete. Charts and diagrams are kept as sharp pictures.",
+    },
+    {
+      question: "What happens with scanned PDFs?",
+      answer: "A scanned page has no text layer, so it becomes a full-slide picture. If the scan already contains an OCR text layer, that text is used and becomes editable.",
+    },
+  ],
+  "pdf-to-word": [
+    {
+      question: "How do I convert a PDF to Word for free?",
+      answer: "Drop your PDF into ZapFile's PDF to Word tool. It is converted in your browser in a few seconds and you download an editable DOCX file. Nothing is uploaded and there is no sign-up or watermark.",
+    },
+    {
+      question: "Does the Word file keep the layout?",
+      answer: "ZapFile rebuilds real Word structure rather than placing text boxes: headings, paragraphs with their fonts, sizes, colors and alignment, bulleted and numbered lists, tables with merged cells and shading, images, headers, footers and page numbers. Multi-column pages flow into one column so the text stays easy to edit, and charts or diagrams are kept as sharp pictures.",
+    },
+    {
+      question: "Can it convert a scanned PDF?",
+      answer: "A scanned page has no text layer, so it is placed in the document as a high-resolution picture. If the scan already contains an OCR text layer, that text is used and becomes editable.",
+    },
+    {
+      question: "What about password-protected PDFs?",
+      answer: "Remove the password first with the Protect PDF tool (you need to know it), then convert the unlocked copy.",
+    },
+  ],
+  "pdf-to-excel": [
+    {
+      question: "How do I convert a PDF table to Excel?",
+      answer: "Drop the PDF into ZapFile's PDF to Excel tool. Tables are detected from their ruling lines or from aligned columns of text and written to an XLSX file in your browser. Nothing is uploaded.",
+    },
+    {
+      question: "Are numbers converted to real Excel numbers?",
+      answer: "Yes. Amounts with thousands separators, decimal commas, currency signs, percentages, negatives in parentheses and ISO dates become numeric cells you can sum and sort. Leading-zero codes such as postcodes stay text. You can turn number detection off to keep everything as text.",
+    },
+    {
+      question: "Can I get one sheet per table?",
+      answer: "Yes. Choose one sheet per page, everything on one sheet, or one sheet per table. You can also leave out the text around the tables so only the data is exported.",
+    },
+    {
+      question: "Are merged cells and header rows kept?",
+      answer: "Merged cells in ruled tables become merged cells in Excel, header rows stay bold, and in the one-sheet-per-table layout the header row is frozen so it stays visible while you scroll.",
+    },
+  ],
   "merge-pdf": [
     {
       question: "Is this PDF merge tool free?",

@@ -1,344 +1,468 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import { ChevronLeft, ChevronRight, FileText, Info, Loader2, X } from "lucide-react";
+import type { PDFDocumentProxy } from "pdfjs-dist";
+import type { PDFFont } from "pdf-lib";
 import ToolLayout from "@/components/ToolLayout";
 import FileDropzone from "@/components/FileDropzone";
 import DownloadButton from "@/components/DownloadButton";
 import ProgressBar from "@/components/ProgressBar";
+import { Segmented, Slider, Toggle, buttonPrimary, buttonSecondary, sectionTitle } from "@/components/ui/controls";
+import { pdfInputErrorKey, toEditablePdf } from "@/lib/pdf-input";
+import { openPdf } from "@/lib/pdfjs";
 import { useI18n } from "@/lib/i18n";
+import { getFileNameWithoutExtension } from "@/lib/utils";
+import {
+  CSS_FONT,
+  autoTotal,
+  canvasMetrics,
+  isNumbered,
+  labelFor,
+  measureLabel,
+  needsRaster,
+  placeLabel,
+  type FontId,
+  type HAlign,
+  type Measurer,
+  type NumberingOptions,
+  type NumberingResponse,
+  type VAlign,
+} from "./numbering";
 
-type Position =
-  | "bottom-center"
-  | "bottom-right"
-  | "bottom-left"
-  | "top-center"
-  | "top-right"
-  | "top-left";
+type PresetId = "n" | "nTotal" | "page" | "pageOf" | "dash" | "custom";
 
-type NumberFormat = "page" | "page-total";
-
-type FontChoice =
-  | StandardFonts.Helvetica
-  | StandardFonts.TimesRoman
-  | StandardFonts.Courier;
-
-const POSITION_GRID: { value: Position; cell: string }[] = [
-  { value: "top-left", cell: "TL" },
-  { value: "top-center", cell: "TC" },
-  { value: "top-right", cell: "TR" },
-  { value: "bottom-left", cell: "BL" },
-  { value: "bottom-center", cell: "BC" },
-  { value: "bottom-right", cell: "BR" },
+const FONTS: FontId[] = ["Helvetica", "TimesRoman", "Courier"];
+const FONT_LABEL: Record<FontId, string> = { Helvetica: "Helvetica", TimesRoman: "Times", Courier: "Courier" };
+const POSITIONS: { v: VAlign; h: HAlign }[] = [
+  { v: "top", h: "left" },
+  { v: "top", h: "center" },
+  { v: "top", h: "right" },
+  { v: "bottom", h: "left" },
+  { v: "bottom", h: "center" },
+  { v: "bottom", h: "right" },
 ];
+const PREVIEW_WIDTH = 420;
 
-const FONT_OPTIONS: { value: FontChoice; label: string }[] = [
-  { value: StandardFonts.Helvetica, label: "Helvetica" },
-  { value: StandardFonts.TimesRoman, label: "Times" },
-  { value: StandardFonts.Courier, label: "Courier" },
-];
-
-function clamp(value: number, min: number, max: number) {
-  return Math.min(max, Math.max(min, value));
+function parseIntStrict(value: string): number | null {
+  if (!/^\s*-?\d+\s*$/.test(value)) return null;
+  return Number.parseInt(value, 10);
 }
 
-function hexToPdfRgb(hex: string) {
-  const normalized = hex.replace("#", "");
-  const safe = normalized.length === 3
-    ? normalized
-        .split("")
-        .map((char) => `${char}${char}`)
-        .join("")
-    : normalized.padEnd(6, "0").slice(0, 6);
-
-  const r = Number.parseInt(safe.slice(0, 2), 16) / 255;
-  const g = Number.parseInt(safe.slice(2, 4), 16) / 255;
-  const b = Number.parseInt(safe.slice(4, 6), 16) / 255;
-  return rgb(r, g, b);
-}
-
-function buildLabel(
-  currentNumber: number,
-  totalNumberedPages: number,
-  format: NumberFormat,
-  prefix: string,
-  suffix: string,
-  digits: number,
-) {
-  const base = String(currentNumber).padStart(digits, "0");
-  const numbered = format === "page-total" ? `${base} / ${totalNumberedPages}` : base;
-  return `${prefix}${numbered}${suffix}`;
-}
-
-function resolveCoordinates(
-  width: number,
-  height: number,
-  textWidth: number,
-  fontSize: number,
-  position: Position,
-  marginX: number,
-  marginY: number,
-) {
-  switch (position) {
-    case "bottom-left":
-      return { x: marginX, y: marginY };
-    case "bottom-center":
-      return { x: (width - textWidth) / 2, y: marginY };
-    case "bottom-right":
-      return { x: width - textWidth - marginX, y: marginY };
-    case "top-left":
-      return { x: marginX, y: height - fontSize - marginY };
-    case "top-center":
-      return { x: (width - textWidth) / 2, y: height - fontSize - marginY };
-    case "top-right":
-      return { x: width - textWidth - marginX, y: height - fontSize - marginY };
-    default:
-      return { x: marginX, y: marginY };
-  }
+function NumberField({
+  id,
+  label,
+  value,
+  onChange,
+  min,
+  max,
+  placeholder,
+  error,
+  hint,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  min?: number;
+  max?: number;
+  placeholder?: string;
+  error?: string | null;
+  hint?: string;
+}) {
+  return (
+    <div>
+      <label htmlFor={id} className="mb-1.5 block text-[13px] font-medium text-t-secondary">
+        {label}
+      </label>
+      <input
+        id={id}
+        type="number"
+        inputMode="numeric"
+        min={min}
+        max={max}
+        value={value}
+        placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value)}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error || hint ? `${id}-note` : undefined}
+        className={`w-full rounded-xl border bg-bg-secondary px-3 py-2.5 text-sm text-t-primary placeholder:text-t-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-volt/60 ${
+          error ? "border-red-500/60" : "border-border focus:border-accent/50"
+        }`}
+      />
+      {(error || hint) && (
+        <p id={`${id}-note`} className={`mt-1.5 text-[12px] ${error ? "text-red-600 dark:text-red-400" : "text-t-tertiary"}`}>
+          {error || hint}
+        </p>
+      )}
+    </div>
+  );
 }
 
 export default function PdfPageNumbersPage() {
-  const { locale } = useI18n();
-  const copy = locale === "tr"
-    ? {
-        dropLabel: "Numaralandırmak istediğiniz PDF dosyasını bırakın",
-        fileReady: "Dosya hazır",
-        quickSetup: "Hızlı ayarlar",
-        pageRange: "Sayfa aralığı",
-        firstPage: "İlk sayfa",
-        lastPage: "Son sayfa",
-        formatting: "Biçim",
-        prefix: "Önek",
-        suffix: "Sonek",
-        digits: "Sıfır dolgusu",
-        labelStyle: "Numara stili",
-        numberOnly: "Sadece numara",
-        numberAndTotal: "Numara / toplam",
-        appearance: "Görünüm",
-        font: "Yazı tipi",
-        fontSize: "Boyut",
-        opacity: "Saydamlık",
-        color: "Renk",
-        marginX: "Yatay boşluk",
-        marginY: "Dikey boşluk",
-        sample: "Örnek çıktı",
-        numberedPages: "Numaralanacak sayfa",
-        actualRange: "Uygulama aralığı",
-        process: "Sayfa numaralarını uygula",
-        processing: "PDF işleniyor...",
-        resultTitle: "Hazır çıktı",
-        anotherFile: "Başka PDF seç",
-        invalidPdf: "PDF okunamadı. Başka bir dosya deneyin.",
-        invalidRange: "Sayfa aralığını kontrol edin.",
-        success: "Sayfa numaraları eklendi.",
-        fail: "Sayfa numaraları eklenemedi.",
-        startHint: "İlk numaralı sayfada görünecek sayı.",
-        positionHint: "Konumu seçin, sonra boyut ve boşlukları ince ayarlayın.",
-        fromLabel: "Başlangıç",
-      }
-    : {
-        dropLabel: "Drop the PDF you want to number",
-        fileReady: "File ready",
-        quickSetup: "Quick setup",
-        pageRange: "Page range",
-        firstPage: "First page",
-        lastPage: "Last page",
-        formatting: "Formatting",
-        prefix: "Prefix",
-        suffix: "Suffix",
-        digits: "Zero padding",
-        labelStyle: "Number style",
-        numberOnly: "Number only",
-        numberAndTotal: "Number / total",
-        appearance: "Appearance",
-        font: "Font",
-        fontSize: "Size",
-        opacity: "Opacity",
-        color: "Color",
-        marginX: "Horizontal margin",
-        marginY: "Vertical margin",
-        sample: "Sample output",
-        numberedPages: "Pages to number",
-        actualRange: "Applied range",
-        process: "Apply page numbers",
-        processing: "Processing PDF...",
-        resultTitle: "Ready to download",
-        anotherFile: "Choose another PDF",
-        invalidPdf: "Could not read that PDF. Please try another file.",
-        invalidRange: "Please review the page range.",
-        success: "Page numbers added.",
-        fail: "Failed to add page numbers.",
-        startHint: "The number that appears on the first numbered page.",
-        positionHint: "Pick a placement, then fine-tune size and margins.",
-        fromLabel: "Start from",
-      };
+  const { t } = useI18n();
 
+  // File
   const [file, setFile] = useState<File | null>(null);
+  const [loading, setLoading] = useState(false);
   const [pageCount, setPageCount] = useState(0);
-  const [position, setPosition] = useState<Position>("bottom-center");
-  const [startFrom, setStartFrom] = useState(1);
-  const [rangeStart, setRangeStart] = useState(1);
-  const [rangeEnd, setRangeEnd] = useState(1);
-  const [numberFormat, setNumberFormat] = useState<NumberFormat>("page");
-  const [prefix, setPrefix] = useState("");
-  const [suffix, setSuffix] = useState("");
+  const [docVersion, setDocVersion] = useState(0);
+  const bytesRef = useRef<Uint8Array | null>(null);
+  const pdfRef = useRef<PDFDocumentProxy | null>(null);
+  const loadRef = useRef(0);
+
+  // Settings
+  const [preset, setPreset] = useState<PresetId>("n");
+  const [customTemplate, setCustomTemplate] = useState("{n}");
+  const [skipText, setSkipText] = useState("0");
+  const [lastText, setLastText] = useState("1");
+  const [startText, setStartText] = useState("1");
+  const [totalText, setTotalText] = useState("");
   const [digits, setDigits] = useState(1);
-  const [fontChoice, setFontChoice] = useState<FontChoice>(StandardFonts.Helvetica);
-  const [fontSize, setFontSize] = useState(11);
-  const [opacity, setOpacity] = useState(65);
-  const [color, setColor] = useState("#666666");
+  const [font, setFont] = useState<FontId>("Helvetica");
+  const [size, setSize] = useState(11);
+  const [color, setColor] = useState("#555555");
+  const [opacity, setOpacity] = useState(100);
+  const [h, setH] = useState<HAlign>("center");
+  const [v, setV] = useState<VAlign>("bottom");
+  const [mirror, setMirror] = useState(false);
   const [marginX, setMarginX] = useState(36);
   const [marginY, setMarginY] = useState(28);
+
+  // Preview
+  const [previewPage, setPreviewPage] = useState(1);
+  const [previewInfo, setPreviewInfo] = useState<{ page: number; width: number; height: number; pxW: number; pxH: number } | null>(null);
+  const baseCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const overlayRef = useRef<HTMLCanvasElement | null>(null);
+  const [fonts, setFonts] = useState<Record<FontId, PDFFont> | null>(null);
+
+  // Job
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [resultBlob, setResultBlob] = useState<Blob | null>(null);
+  const [result, setResult] = useState<{ blob: Blob; key: string } | null>(null);
+  const [failure, setFailure] = useState<string | null>(null);
+  const workerRef = useRef<Worker | null>(null);
+  const runningKeyRef = useRef<string | null>(null);
 
-  const positionedLabel = useMemo(
-    () => buildLabel(startFrom, Math.max(1, rangeEnd - rangeStart + 1), numberFormat, prefix, suffix, digits),
-    [digits, numberFormat, prefix, rangeEnd, rangeStart, startFrom, suffix],
-  );
-
-  const normalizedRange = useMemo(() => {
-    if (!pageCount) return { from: 1, to: 1, count: 0 };
-    const from = clamp(rangeStart || 1, 1, pageCount);
-    const to = clamp(rangeEnd || pageCount, from, pageCount);
-    return {
-      from,
-      to,
-      count: to - from + 1,
+  // Standard-font metrics for the preview (same AFM data pdf-lib writes with).
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const { PDFDocument, StandardFonts } = await import("pdf-lib");
+      const doc = await PDFDocument.create();
+      const loaded = {} as Record<FontId, PDFFont>;
+      for (const id of FONTS) loaded[id] = await doc.embedFont(StandardFonts[id]);
+      if (alive) setFonts(loaded);
+    })().catch((error) => console.error(error));
+    return () => {
+      alive = false;
     };
-  }, [pageCount, rangeEnd, rangeStart]);
+  }, []);
+
+  const closeDoc = useCallback(() => {
+    workerRef.current?.terminate();
+    workerRef.current = null;
+    runningKeyRef.current = null;
+    const pdf = pdfRef.current;
+    pdfRef.current = null;
+    if (pdf) void pdf.destroy();
+    bytesRef.current = null;
+  }, []);
+
+  useEffect(() => closeDoc, [closeDoc]);
 
   const handleFilesSelected = useCallback(
     async (files: File[]) => {
-      const nextFile = files[0];
-      if (!nextFile) return;
-
-      setFile(nextFile);
-      setResultBlob(null);
-      setProgress(0);
-
+      const picked = files[0];
+      if (!picked) return;
+      closeDoc();
+      const token = ++loadRef.current;
+      setFile(picked);
+      setLoading(true);
+      setPageCount(0);
+      setResult(null);
+      setFailure(null);
+      setProcessing(false);
+      setPreviewInfo(null);
       try {
-        const pdfDoc = await PDFDocument.load(await nextFile.arrayBuffer());
-        const totalPages = pdfDoc.getPageCount();
-        setPageCount(totalPages);
-        setRangeStart(1);
-        setRangeEnd(totalPages);
+        // Restriction-only PDFs are decrypted (off the main thread) so the
+        // numbers don't land on garbled pages; password-locked ones are refused.
+        const editable = await toEditablePdf(picked);
+        const bytes = new Uint8Array(await editable.arrayBuffer());
+        const pdf = await openPdf(bytes);
+        if (token !== loadRef.current) {
+          void pdf.destroy();
+          return;
+        }
+        bytesRef.current = bytes;
+        pdfRef.current = pdf;
+        setPageCount(pdf.numPages);
+        setSkipText("0");
+        setLastText(String(pdf.numPages));
+        setPreviewPage(1);
+        setDocVersion((n) => n + 1);
       } catch (error) {
+        if (token !== loadRef.current) return;
         console.error(error);
+        const key = pdfInputErrorKey(error);
+        toast.error(t(key === "pdf.locked" ? key : "pagenum.ui.invalidPdf"));
         setFile(null);
-        setPageCount(0);
-        toast.error(copy.invalidPdf);
+      } finally {
+        if (token === loadRef.current) setLoading(false);
       }
     },
-    [copy.invalidPdf],
+    [closeDoc, t],
   );
 
   const reset = useCallback(() => {
+    loadRef.current++;
+    closeDoc();
     setFile(null);
+    setLoading(false);
     setPageCount(0);
-    setRangeStart(1);
-    setRangeEnd(1);
-    setResultBlob(null);
-    setProgress(0);
-  }, []);
+    setResult(null);
+    setFailure(null);
+    setProcessing(false);
+    setPreviewInfo(null);
+  }, [closeDoc]);
 
-  const handleAddPageNumbers = useCallback(async () => {
-    if (!file || !pageCount) return;
+  // ─── Options & validation ───────────────────────────────────
 
-    const from = clamp(rangeStart || 1, 1, pageCount);
-    const to = clamp(rangeEnd || pageCount, from, pageCount);
-    if (from > to) {
-      toast.error(copy.invalidRange);
-      return;
+  const presetTemplates = useMemo<Record<PresetId, string>>(
+    () => ({
+      n: "{n}",
+      nTotal: "{n} / {total}",
+      page: t("pagenum.v2.tpl.page", { n: "{n}" }),
+      pageOf: t("pagenum.v2.tpl.pageOf", { n: "{n}", total: "{total}" }),
+      dash: "– {n} –",
+      custom: customTemplate,
+    }),
+    [customTemplate, t],
+  );
+  const template = presetTemplates[preset].replace(/[\u0000-\u001f\u007f]/g, " ");
+
+  const validation = useMemo(() => {
+    const errors: { skip?: string; last?: string; start?: string; total?: string; template?: string } = {};
+    if (!pageCount) return { errors, options: null as NumberingOptions | null };
+    const skip = parseIntStrict(skipText);
+    const last = parseIntStrict(lastText);
+    const start = parseIntStrict(startText);
+    const total = totalText.trim() === "" ? null : parseIntStrict(totalText);
+    if (skip === null || skip < 0 || skip > pageCount - 1) errors.skip = t("pagenum.v2.err.skip", { max: pageCount - 1 });
+    const firstPage = (skip ?? 0) + 1;
+    if (last === null || last < firstPage || last > pageCount) errors.last = t("pagenum.v2.err.last", { min: firstPage, max: pageCount });
+    if (start === null || Math.abs(start) > 99999) errors.start = t("pagenum.v2.err.number");
+    if (totalText.trim() !== "" && (total === null || total < 1 || total > 99999)) errors.total = t("pagenum.v2.err.number");
+    if (!template.trim()) errors.template = t("pagenum.v2.err.template");
+    if (Object.keys(errors).length > 0) return { errors, options: null };
+    const options: NumberingOptions = {
+      template,
+      startNumber: start!,
+      firstPage,
+      lastPage: last!,
+      totalOverride: total,
+      digits,
+      font,
+      size,
+      color,
+      opacity: opacity / 100,
+      h,
+      v,
+      mirror: mirror && h !== "center",
+      marginX,
+      marginY,
+    };
+    return { errors, options };
+  }, [color, digits, font, h, lastText, marginX, marginY, mirror, opacity, pageCount, size, skipText, startText, t, template, totalText, v]);
+
+  const { errors, options } = validation;
+  const optionsKey = options ? JSON.stringify(options) : null;
+  const firstPage = options?.firstPage ?? Math.max(1, (parseIntStrict(skipText) ?? 0) + 1);
+
+  // Jump the preview to the first numbered page when the skip changes.
+  useEffect(() => {
+    if (pageCount) setPreviewPage(Math.min(pageCount, Math.max(1, firstPage)));
+  }, [firstPage, pageCount]);
+
+  // A run whose settings no longer match what is on screen is pointless.
+  useEffect(() => {
+    if (processing && runningKeyRef.current !== optionsKey) {
+      workerRef.current?.terminate();
+      workerRef.current = null;
+      runningKeyRef.current = null;
+      setProcessing(false);
+      setProgress(0);
     }
+    setFailure(null);
+  }, [optionsKey, processing]);
 
-    setProcessing(true);
-    setProgress(8);
+  const measurerFor = useCallback(
+    (id: FontId): Measurer | null => {
+      const f = fonts?.[id];
+      if (!f) return null;
+      const scratch = document.createElement("canvas").getContext("2d");
+      const ascentAt = (s: number) => f.heightAtSize(s, { descender: false });
+      return {
+        charset: new Set(f.getCharacterSet()),
+        vector: (text, s) => ({ width: f.widthOfTextAtSize(text, s), ascent: ascentAt(s), descent: f.heightAtSize(s) - ascentAt(s) }),
+        raster: (text, s) =>
+          scratch ? canvasMetrics(scratch, text, s, id) : { width: text.length * s * 0.6, ascent: s * 0.8, descent: s * 0.2 },
+      };
+    },
+    [fonts],
+  );
+  const measurer = useMemo(() => measurerFor(font), [font, measurerFor]);
 
+  const sampleLabel = options && pageCount ? labelFor(options, options.firstPage, pageCount) : "";
+  const usesRaster = Boolean(measurer && sampleLabel && needsRaster(template.replace(/\{n\}|\{total\}/g, "0"), measurer.charset));
+  const autoTotalValue = pageCount ? autoTotal({ startNumber: parseIntStrict(startText) ?? 1, firstPage }, pageCount) : 0;
+
+  // ─── Preview ────────────────────────────────────────────────
+
+  useEffect(() => {
+    const pdf = pdfRef.current;
+    const canvas = baseCanvasRef.current;
+    if (!pdf || !canvas || previewPage < 1 || previewPage > pdf.numPages) return;
+    let cancelled = false;
+    let task: { cancel: () => void; promise: Promise<void> } | null = null;
+    (async () => {
+      const page = await pdf.getPage(previewPage);
+      if (cancelled) return;
+      const base = page.getViewport({ scale: 1 });
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      const viewport = page.getViewport({ scale: (PREVIEW_WIDTH * dpr) / base.width });
+      const off = document.createElement("canvas");
+      off.width = Math.ceil(viewport.width);
+      off.height = Math.ceil(viewport.height);
+      const offCtx = off.getContext("2d");
+      if (!offCtx) return;
+      task = page.render({ canvas: off, canvasContext: offCtx, viewport });
+      await task.promise;
+      page.cleanup();
+      if (cancelled) return;
+      // Swap in the finished render in one go (no flash of a blank page).
+      canvas.width = off.width;
+      canvas.height = off.height;
+      canvas.getContext("2d")?.drawImage(off, 0, 0);
+      off.width = 0;
+      off.height = 0;
+      setPreviewInfo({ page: previewPage, width: base.width, height: base.height, pxW: canvas.width, pxH: canvas.height });
+    })().catch((error) => {
+      if (!cancelled && (error as { name?: string })?.name !== "RenderingCancelledException") console.error(error);
+    });
+    return () => {
+      cancelled = true;
+      task?.cancel();
+    };
+  }, [previewPage, docVersion]);
+
+  // Live overlay: the label drawn exactly where the worker will put it.
+  useEffect(() => {
+    const canvas = overlayRef.current;
+    if (!canvas || !previewInfo) return;
+    canvas.width = previewInfo.pxW;
+    canvas.height = previewInfo.pxH;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (!options || !measurer || !isNumbered(options, previewInfo.page)) return;
+    const label = labelFor(options, previewInfo.page, pageCount);
+    const pieces = measureLabel(label, options.size, measurer);
+    const place = placeLabel(pieces, previewInfo.width, previewInfo.height, options, previewInfo.page);
+    const k = previewInfo.pxW / previewInfo.width;
+    ctx.save();
+    ctx.globalAlpha = options.opacity;
+    ctx.fillStyle = options.color;
+    ctx.textBaseline = "alphabetic";
+    ctx.font = `${options.size * k}px ${CSS_FONT[options.font]}`;
+    let cursor = place.x;
+    for (const piece of pieces) {
+      ctx.fillText(piece.text, cursor * k, (previewInfo.height - place.baseline) * k);
+      cursor += piece.width;
+    }
+    ctx.restore();
+  }, [measurer, options, pageCount, previewInfo]);
+
+  // ─── Run ────────────────────────────────────────────────────
+
+  const run = () => {
+    const bytes = bytesRef.current;
+    if (!options || !optionsKey || !bytes || processing) return;
+    workerRef.current?.terminate();
+    let worker: Worker;
     try {
-      const arrayBuffer = await file.arrayBuffer();
-      const pdfDoc = await PDFDocument.load(arrayBuffer);
-      const font = await pdfDoc.embedFont(fontChoice);
-      const pages = pdfDoc.getPages();
-      const totalNumberedPages = to - from + 1;
-      const numberColor = hexToPdfRgb(color);
-      setProgress(24);
-
-      let numberedIndex = 0;
-      for (let i = 0; i < pages.length; i++) {
-        const pageNumber = i + 1;
-        if (pageNumber < from || pageNumber > to) {
-          continue;
-        }
-
-        const page = pages[i];
-        const { width, height } = page.getSize();
-        const currentNumber = startFrom + numberedIndex;
-        const label = buildLabel(
-          currentNumber,
-          totalNumberedPages,
-          numberFormat,
-          prefix,
-          suffix,
-          digits,
-        );
-        const textWidth = font.widthOfTextAtSize(label, fontSize);
-        const { x, y } = resolveCoordinates(
-          width,
-          height,
-          textWidth,
-          fontSize,
-          position,
-          marginX,
-          marginY,
-        );
-
-        page.drawText(label, {
-          x,
-          y,
-          size: fontSize,
-          font,
-          opacity: opacity / 100,
-          color: numberColor,
-        });
-
-        numberedIndex += 1;
-        setProgress(24 + Math.round((numberedIndex / totalNumberedPages) * 70));
-      }
-
-      const pdfBytes = await pdfDoc.save();
-      setResultBlob(new Blob([new Uint8Array(pdfBytes)], { type: "application/pdf" }));
-      setProgress(100);
-      toast.success(copy.success);
+      worker = new Worker(new URL("./numbering.worker.ts", import.meta.url), { type: "module" });
     } catch (error) {
       console.error(error);
-      toast.error(copy.fail);
-    } finally {
-      setProcessing(false);
+      setFailure(t("pagenum.ui.fail"));
+      return;
     }
-  }, [
-    color,
-    copy.fail,
-    copy.invalidRange,
-    copy.success,
-    digits,
-    file,
-    fontChoice,
-    fontSize,
-    marginX,
-    marginY,
-    numberFormat,
-    opacity,
-    pageCount,
-    position,
-    prefix,
-    rangeEnd,
-    rangeStart,
-    startFrom,
-    suffix,
-  ]);
+    workerRef.current = worker;
+    runningKeyRef.current = optionsKey;
+    const key = optionsKey;
+    setProcessing(true);
+    setProgress(2);
+    setResult(null);
+    setFailure(null);
+    const finish = () => {
+      worker.terminate();
+      if (workerRef.current === worker) {
+        workerRef.current = null;
+        runningKeyRef.current = null;
+        setProcessing(false);
+      }
+    };
+    worker.onmessage = (event: MessageEvent<NumberingResponse>) => {
+      if (workerRef.current !== worker) return;
+      const msg = event.data;
+      if (msg.type === "progress") {
+        setProgress(2 + Math.round((msg.done / Math.max(1, msg.total)) * 88));
+      } else if (msg.type === "done") {
+        setProgress(100);
+        setResult({ blob: new Blob([msg.bytes], { type: "application/pdf" }), key });
+        finish();
+        toast.success(t("pagenum.ui.success"));
+      } else {
+        if (msg.type === "error") console.error(msg.message);
+        setFailure(msg.code === "unicode" ? t("pagenum.v2.err.unicode") : t("pagenum.ui.fail"));
+        finish();
+      }
+    };
+    worker.onerror = (event) => {
+      event.preventDefault();
+      if (workerRef.current !== worker) return;
+      console.error(event.message);
+      setFailure(t("pagenum.ui.fail"));
+      finish();
+    };
+    const copy = bytes.slice();
+    worker.postMessage({ bytes: copy.buffer, options }, [copy.buffer]);
+  };
+
+  const cancel = () => {
+    workerRef.current?.terminate();
+    workerRef.current = null;
+    runningKeyRef.current = null;
+    setProcessing(false);
+    setProgress(0);
+  };
+
+  const resultFresh = result && optionsKey && result.key === optionsKey ? result : null;
+  const numberedCount = options ? options.lastPage - options.firstPage + 1 : 0;
+  const previewNumbered = options ? isNumbered(options, previewPage) : false;
+
+  const presetIds: PresetId[] = ["n", "nTotal", "page", "pageOf", "dash", "custom"];
+  const presetSample = (id: PresetId) => {
+    if (id === "custom") return t("pagenum.v2.custom");
+    const base = options ?? {
+      startNumber: 1,
+      firstPage: 1,
+      totalOverride: null,
+      digits,
+    };
+    return labelFor({ ...(base as NumberingOptions), template: presetTemplates[id] }, base.firstPage, pageCount || 1);
+  };
 
   return (
     <ToolLayout
@@ -351,342 +475,309 @@ export default function PdfPageNumbersPage() {
             onFilesSelected={handleFilesSelected}
             accept={{ "application/pdf": [".pdf"] }}
             formats={["PDF"]}
-            label={copy.dropLabel}
+            label={t("pagenum.ui.dropLabel")}
           />
         ) : (
           <>
-            <div className="glass rounded-2xl p-5 sm:p-6 space-y-5">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div className="min-w-0">
-                  <p className="text-xs uppercase tracking-[0.22em] text-t-secondary">
-                    {copy.fileReady}
-                  </p>
-                  <p className="mt-2 text-lg font-semibold text-t-primary truncate">
-                    {file.name}
-                  </p>
-                  <p className="mt-1 text-sm text-t-secondary">
-                    {pageCount} {pageCount === 1 ? "page" : "pages"}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={reset}
-                  className="shrink-0 rounded-xl border border-border bg-bg-secondary px-4 py-2 text-sm font-medium text-t-secondary transition-colors hover:text-t-primary"
-                >
-                  {copy.anotherFile}
-                </button>
+            <div className="glass flex items-center gap-3 p-4">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-bg-secondary text-t-primary">
+                {loading ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> : <FileText className="h-5 w-5" aria-hidden="true" />}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[15px] font-semibold text-t-primary">{file.name}</p>
+                <p className="text-[13px] text-t-tertiary">
+                  {loading
+                    ? t("ui.loading")
+                    : pageCount === 1
+                      ? t("pagenum.ui.pageOne", { n: pageCount })
+                      : t("pagenum.ui.pageMany", { n: pageCount })}
+                </p>
               </div>
-
-              <div className="grid gap-4 md:grid-cols-3">
-                <div className="rounded-2xl border border-border bg-bg-secondary/70 p-4">
-                  <p className="text-[11px] uppercase tracking-[0.2em] text-t-secondary">
-                    {copy.actualRange}
-                  </p>
-                  <p className="mt-2 text-xl font-semibold text-t-primary">
-                    {normalizedRange.from}-{normalizedRange.to}
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-border bg-bg-secondary/70 p-4">
-                  <p className="text-[11px] uppercase tracking-[0.2em] text-t-secondary">
-                    {copy.numberedPages}
-                  </p>
-                  <p className="mt-2 text-xl font-semibold text-t-primary">
-                    {normalizedRange.count}
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-border bg-bg-secondary/70 p-4">
-                  <p className="text-[11px] uppercase tracking-[0.2em] text-t-secondary">
-                    {copy.sample}
-                  </p>
-                  <p className="mt-2 text-xl font-semibold text-t-primary">
-                    {positionedLabel}
-                  </p>
-                </div>
-              </div>
+              <button
+                type="button"
+                onClick={reset}
+                className="flex h-10 w-10 items-center justify-center rounded-full text-t-tertiary hover:bg-bg-secondary hover:text-t-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-volt/60"
+                aria-label={t("pagenum.ui.anotherFile")}
+                title={t("pagenum.ui.anotherFile")}
+              >
+                <X className="h-[18px] w-[18px]" aria-hidden="true" />
+              </button>
             </div>
 
-            <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
-              <div className="space-y-5">
-                <div className="glass rounded-2xl p-5 space-y-4">
-                  <div>
-                    <p className="text-sm font-semibold text-t-primary">{copy.quickSetup}</p>
-                    <p className="mt-1 text-xs text-t-secondary">{copy.positionHint}</p>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-2">
-                    {POSITION_GRID.map((item) => (
+            {pageCount > 0 && (
+              <div className="grid gap-5 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+                {/* Live preview */}
+                <div className="glass space-y-3 p-4 lg:sticky lg:top-20 lg:self-start">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className={sectionTitle}>{t("ui.preview")}</p>
+                    <div className="flex items-center gap-1">
                       <button
-                        key={item.value}
                         type="button"
-                        onClick={() => setPosition(item.value)}
-                        className={`rounded-xl border px-3 py-3 text-sm font-semibold transition-all ${
-                          position === item.value
-                            ? "border-accent bg-accent/15 text-t-primary shadow-[0_0_0_1px_rgba(99,102,241,0.16)]"
-                            : "border-border bg-bg-secondary text-t-secondary hover:border-accent/40 hover:text-t-primary"
-                        }`}
+                        onClick={() => setPreviewPage((p) => Math.max(1, p - 1))}
+                        disabled={previewPage <= 1}
+                        className="flex h-9 w-9 items-center justify-center rounded-lg text-t-secondary hover:bg-bg-secondary hover:text-t-primary disabled:opacity-40 rtl:rotate-180"
+                        aria-label={t("pagenum.v2.prevPage")}
                       >
-                        {item.cell}
+                        <ChevronLeft className="h-4 w-4" aria-hidden="true" />
                       </button>
-                    ))}
-                  </div>
-
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <label className="mb-2 block text-sm font-medium text-t-secondary">
-                        {copy.fromLabel}
-                      </label>
-                      <input
-                        type="number"
-                        min={-9999}
-                        value={startFrom}
-                        onChange={(event) => setStartFrom(Number(event.target.value || 1))}
-                        className="w-full rounded-xl border border-border bg-bg-secondary px-3 py-2.5 text-sm text-t-primary focus:border-accent/50 focus:outline-none"
-                      />
-                      <p className="mt-1.5 text-xs text-t-secondary">{copy.startHint}</p>
+                      <span className="min-w-[88px] text-center text-[13px] tabular-nums text-t-secondary" aria-live="polite">
+                        {t("pagenum.v2.previewOf", { n: previewPage, total: pageCount })}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setPreviewPage((p) => Math.min(pageCount, p + 1))}
+                        disabled={previewPage >= pageCount}
+                        className="flex h-9 w-9 items-center justify-center rounded-lg text-t-secondary hover:bg-bg-secondary hover:text-t-primary disabled:opacity-40 rtl:rotate-180"
+                        aria-label={t("pagenum.v2.nextPage")}
+                      >
+                        <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                      </button>
                     </div>
+                  </div>
+                  <div className="flex justify-center rounded-xl bg-bg-secondary p-3">
+                    <div className="relative w-full max-w-[420px]">
+                      <canvas ref={baseCanvasRef} className="block h-auto w-full rounded-sm bg-white shadow-sm" />
+                      <canvas ref={overlayRef} className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden="true" />
+                      {!previewInfo && (
+                        <div className="absolute inset-0 flex min-h-[200px] items-center justify-center">
+                          <Loader2 className="h-5 w-5 animate-spin text-t-tertiary" aria-hidden="true" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <p className="text-center text-[12.5px] text-t-tertiary">
+                    {previewNumbered && sampleLabel
+                      ? t("pagenum.v2.previewLabel", { label: options ? labelFor(options, previewPage, pageCount) : "" })
+                      : t("pagenum.v2.notNumbered")}
+                  </p>
+                </div>
 
-                    <div>
-                      <label className="mb-2 block text-sm font-medium text-t-secondary">
-                        {copy.digits}
-                      </label>
-                      <input
-                        type="range"
-                        min={1}
-                        max={4}
-                        step={1}
-                        value={digits}
-                        onChange={(event) => setDigits(Number(event.target.value))}
-                        className="w-full accent-accent"
-                      />
-                      <div className="mt-2 flex items-center justify-between text-xs text-t-secondary">
-                        <span>1</span>
-                        <span>{digits}</span>
-                        <span>4</span>
+                {/* Settings */}
+                <div className="space-y-5">
+                  <section className="glass space-y-4 p-5">
+                    <p className={sectionTitle}>{t("pagenum.v2.position")}</p>
+                    <div className="flex flex-wrap items-start gap-5">
+                      <div role="radiogroup" aria-label={t("pagenum.v2.position")} className="grid grid-cols-3 gap-2">
+                        {POSITIONS.map((pos) => {
+                          const active = pos.h === h && pos.v === v;
+                          return (
+                            <button
+                              key={`${pos.v}-${pos.h}`}
+                              type="button"
+                              role="radio"
+                              aria-checked={active}
+                              aria-label={t(`watermark.ui.pos.${pos.v}-${pos.h}`)}
+                              title={t(`watermark.ui.pos.${pos.v}-${pos.h}`)}
+                              onClick={() => {
+                                setH(pos.h);
+                                setV(pos.v);
+                              }}
+                              className={`flex h-14 w-12 items-center justify-center rounded-xl border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-volt/60 ${
+                                active ? "border-accent bg-accent/10" : "border-border bg-bg-secondary hover:border-t-tertiary"
+                              }`}
+                            >
+                              <span className="relative block h-10 w-7 rounded-[3px] border border-t-tertiary/60 bg-surface">
+                                <span
+                                  className={`absolute h-[3px] w-2.5 rounded-full ${active ? "bg-volt" : "bg-t-tertiary"} ${
+                                    pos.v === "top" ? "top-1" : "bottom-1"
+                                  } ${pos.h === "left" ? "start-1" : pos.h === "right" ? "end-1" : "start-1/2 -translate-x-1/2 rtl:translate-x-1/2"}`}
+                                />
+                              </span>
+                            </button>
+                          );
+                        })}
                       </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="glass rounded-2xl p-5 space-y-4">
-                  <p className="text-sm font-semibold text-t-primary">{copy.pageRange}</p>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <label className="mb-2 block text-sm font-medium text-t-secondary">
-                        {copy.firstPage}
-                      </label>
-                      <input
-                        type="number"
-                        min={1}
-                        max={pageCount}
-                        value={rangeStart}
-                        onChange={(event) => setRangeStart(Number(event.target.value || 1))}
-                        className="w-full rounded-xl border border-border bg-bg-secondary px-3 py-2.5 text-sm text-t-primary focus:border-accent/50 focus:outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="mb-2 block text-sm font-medium text-t-secondary">
-                        {copy.lastPage}
-                      </label>
-                      <input
-                        type="number"
-                        min={1}
-                        max={pageCount}
-                        value={rangeEnd}
-                        onChange={(event) => setRangeEnd(Number(event.target.value || pageCount))}
-                        className="w-full rounded-xl border border-border bg-bg-secondary px-3 py-2.5 text-sm text-t-primary focus:border-accent/50 focus:outline-none"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-5">
-                <div className="glass rounded-2xl p-5 space-y-4">
-                  <p className="text-sm font-semibold text-t-primary">{copy.formatting}</p>
-                  <div className="flex flex-wrap gap-2">
-                    {([
-                      { value: "page" as const, label: copy.numberOnly },
-                      { value: "page-total" as const, label: copy.numberAndTotal },
-                    ]).map((option) => (
-                      <button
-                        key={option.value}
-                        type="button"
-                        onClick={() => setNumberFormat(option.value)}
-                        className={`rounded-xl border px-3 py-2 text-sm font-medium transition-colors ${
-                          numberFormat === option.value
-                            ? "border-accent bg-accent/15 text-t-primary"
-                            : "border-border bg-bg-secondary text-t-secondary hover:border-accent/40 hover:text-t-primary"
-                        }`}
-                      >
-                        {option.label}
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <label className="mb-2 block text-sm font-medium text-t-secondary">
-                        {copy.prefix}
-                      </label>
-                      <input
-                        type="text"
-                        value={prefix}
-                        onChange={(event) => setPrefix(event.target.value)}
-                        placeholder="Page "
-                        className="w-full rounded-xl border border-border bg-bg-secondary px-3 py-2.5 text-sm text-t-primary placeholder:text-t-secondary/50 focus:border-accent/50 focus:outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="mb-2 block text-sm font-medium text-t-secondary">
-                        {copy.suffix}
-                      </label>
-                      <input
-                        type="text"
-                        value={suffix}
-                        onChange={(event) => setSuffix(event.target.value)}
-                        placeholder=""
-                        className="w-full rounded-xl border border-border bg-bg-secondary px-3 py-2.5 text-sm text-t-primary placeholder:text-t-secondary/50 focus:border-accent/50 focus:outline-none"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="glass rounded-2xl p-5 space-y-4">
-                  <p className="text-sm font-semibold text-t-primary">{copy.appearance}</p>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <label className="mb-2 block text-sm font-medium text-t-secondary">
-                        {copy.font}
-                      </label>
-                      <select
-                        value={fontChoice}
-                        onChange={(event) => setFontChoice(event.target.value as FontChoice)}
-                        className="w-full rounded-xl border border-border bg-bg-secondary px-3 py-2.5 text-sm text-t-primary focus:border-accent/50 focus:outline-none"
-                      >
-                        {FONT_OPTIONS.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="mb-2 block text-sm font-medium text-t-secondary">
-                        {copy.color}
-                      </label>
-                      <div className="flex items-center gap-3 rounded-xl border border-border bg-bg-secondary px-3 py-2">
-                        <input
-                          type="color"
-                          value={color}
-                          onChange={(event) => setColor(event.target.value)}
-                          className="h-9 w-9 rounded-lg border border-border bg-transparent p-0.5"
+                      <div className="min-w-[200px] flex-1">
+                        <Toggle
+                          checked={mirror && h !== "center"}
+                          onChange={setMirror}
+                          disabled={h === "center"}
+                          label={t("pagenum.v2.mirror")}
+                          description={t("pagenum.v2.mirrorHint")}
                         />
-                        <span className="text-sm font-mono text-t-secondary">{color}</span>
                       </div>
                     </div>
-                  </div>
+                  </section>
 
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <div className="mb-2 flex items-center justify-between text-sm text-t-secondary">
-                        <label>{copy.fontSize}</label>
-                        <span className="font-mono">{fontSize}px</span>
+                  <section className="glass space-y-4 p-5">
+                    <p className={sectionTitle}>{t("pagenum.ui.formatting")}</p>
+                    <div role="radiogroup" aria-label={t("pagenum.ui.formatting")} className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                      {presetIds.map((id) => (
+                        <button
+                          key={id}
+                          type="button"
+                          role="radio"
+                          aria-checked={preset === id}
+                          onClick={() => {
+                            if (id === "custom" && preset !== "custom") setCustomTemplate(presetTemplates[preset]);
+                            setPreset(id);
+                          }}
+                          className={`min-h-10 truncate rounded-xl border px-3 py-2 text-[14px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-volt/60 ${
+                            preset === id
+                              ? "border-accent bg-accent text-on-accent"
+                              : "border-border bg-bg-secondary text-t-secondary hover:text-t-primary"
+                          }`}
+                        >
+                          {presetSample(id)}
+                        </button>
+                      ))}
+                    </div>
+                    {preset === "custom" && (
+                      <div>
+                        <label htmlFor="pn-template" className="mb-1.5 block text-[13px] font-medium text-t-secondary">
+                          {t("pagenum.v2.template")}
+                        </label>
+                        <input
+                          id="pn-template"
+                          type="text"
+                          value={customTemplate}
+                          maxLength={80}
+                          onChange={(e) => setCustomTemplate(e.target.value)}
+                          aria-invalid={errors.template ? true : undefined}
+                          className="w-full rounded-xl border border-border bg-bg-secondary px-3 py-2.5 font-mono text-sm text-t-primary focus:border-accent/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-volt/60"
+                        />
+                        <p className={`mt-1.5 text-[12px] ${errors.template ? "text-red-600 dark:text-red-400" : "text-t-tertiary"}`}>
+                          {errors.template ?? t("pagenum.v2.templateHint")}
+                        </p>
                       </div>
-                      <input
-                        type="range"
-                        min={8}
-                        max={28}
-                        step={1}
-                        value={fontSize}
-                        onChange={(event) => setFontSize(Number(event.target.value))}
-                        className="w-full accent-accent"
+                    )}
+                    {usesRaster && (
+                      <p className="flex items-start gap-2 rounded-xl bg-bg-secondary px-3 py-2.5 text-[12.5px] text-t-secondary">
+                        <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                        {t("pagenum.v2.rasterNote")}
+                      </p>
+                    )}
+                    <div>
+                      <p className="mb-1.5 text-[13px] font-medium text-t-secondary">{t("pagenum.ui.digits")}</p>
+                      <Segmented<number>
+                        size="sm"
+                        label={t("pagenum.ui.digits")}
+                        value={digits}
+                        onChange={setDigits}
+                        options={[1, 2, 3, 4].map((d) => ({ value: d, label: "1".padStart(d, "0") }))}
                       />
                     </div>
-                    <div>
-                      <div className="mb-2 flex items-center justify-between text-sm text-t-secondary">
-                        <label>{copy.opacity}</label>
-                        <span className="font-mono">{opacity}%</span>
-                      </div>
-                      <input
-                        type="range"
-                        min={20}
-                        max={100}
-                        step={1}
-                        value={opacity}
-                        onChange={(event) => setOpacity(Number(event.target.value))}
-                        className="w-full accent-accent"
-                      />
-                    </div>
-                  </div>
+                  </section>
 
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <div className="mb-2 flex items-center justify-between text-sm text-t-secondary">
-                        <label>{copy.marginX}</label>
-                        <span className="font-mono">{marginX}px</span>
-                      </div>
-                      <input
-                        type="range"
-                        min={12}
-                        max={96}
-                        step={1}
-                        value={marginX}
-                        onChange={(event) => setMarginX(Number(event.target.value))}
-                        className="w-full accent-accent"
+                  <section className="glass space-y-4 p-5">
+                    <p className={sectionTitle}>{t("pagenum.ui.pageRange")}</p>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <NumberField
+                        id="pn-skip"
+                        label={t("pagenum.v2.skip")}
+                        value={skipText}
+                        onChange={setSkipText}
+                        min={0}
+                        max={pageCount - 1}
+                        error={errors.skip}
+                        hint={t("pagenum.v2.skipHint")}
+                      />
+                      <NumberField
+                        id="pn-last"
+                        label={t("pagenum.v2.lastNumbered")}
+                        value={lastText}
+                        onChange={setLastText}
+                        min={firstPage}
+                        max={pageCount}
+                        error={errors.last}
+                      />
+                      <NumberField
+                        id="pn-start"
+                        label={t("pagenum.ui.fromLabel")}
+                        value={startText}
+                        onChange={setStartText}
+                        error={errors.start}
+                        hint={t("pagenum.ui.startHint")}
+                      />
+                      <NumberField
+                        id="pn-total"
+                        label={t("pagenum.v2.total")}
+                        value={totalText}
+                        onChange={setTotalText}
+                        min={1}
+                        placeholder={t("pagenum.v2.totalAuto", { n: autoTotalValue })}
+                        error={errors.total}
+                        hint={t("pagenum.v2.totalHint")}
                       />
                     </div>
-                    <div>
-                      <div className="mb-2 flex items-center justify-between text-sm text-t-secondary">
-                        <label>{copy.marginY}</label>
-                        <span className="font-mono">{marginY}px</span>
+                    {options && (
+                      <p className="text-[12.5px] text-t-tertiary">
+                        {t("pagenum.v2.summary", { count: numberedCount, from: options.firstPage, to: options.lastPage })}
+                      </p>
+                    )}
+                  </section>
+
+                  <section className="glass space-y-4 p-5">
+                    <p className={sectionTitle}>{t("pagenum.ui.appearance")}</p>
+                    <div className="flex flex-wrap items-end gap-4">
+                      <div>
+                        <p className="mb-1.5 text-[13px] font-medium text-t-secondary">{t("pagenum.ui.font")}</p>
+                        <Segmented<FontId>
+                          size="sm"
+                          label={t("pagenum.ui.font")}
+                          value={font}
+                          onChange={setFont}
+                          options={FONTS.map((id) => ({
+                            value: id,
+                            label: <span style={{ fontFamily: CSS_FONT[id] }}>{FONT_LABEL[id]}</span>,
+                          }))}
+                        />
                       </div>
-                      <input
-                        type="range"
-                        min={12}
-                        max={96}
-                        step={1}
-                        value={marginY}
-                        onChange={(event) => setMarginY(Number(event.target.value))}
-                        className="w-full accent-accent"
-                      />
+                      <label className="block">
+                        <span className="mb-1.5 block text-[13px] font-medium text-t-secondary">{t("ui.color")}</span>
+                        <span className="flex items-center gap-2 rounded-xl border border-border bg-bg-secondary px-2 py-1.5">
+                          <input
+                            type="color"
+                            value={color}
+                            onChange={(e) => setColor(e.target.value)}
+                            className="h-8 w-9 cursor-pointer rounded-md border border-border bg-transparent p-0.5"
+                            aria-label={t("ui.color")}
+                          />
+                          <span className="font-mono text-[13px] text-t-secondary">{color}</span>
+                        </span>
+                      </label>
                     </div>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <Slider label={t("pagenum.ui.fontSize")} value={size} min={6} max={36} onChange={setSize} display={`${size} pt`} />
+                      <Slider label={t("pagenum.ui.opacity")} value={opacity} min={10} max={100} onChange={setOpacity} display={`${opacity}%`} />
+                      <Slider label={t("pagenum.ui.marginX")} value={marginX} min={0} max={144} onChange={setMarginX} display={`${marginX} pt`} disabled={h === "center"} />
+                      <Slider label={t("pagenum.ui.marginY")} value={marginY} min={0} max={144} onChange={setMarginY} display={`${marginY} pt`} />
+                    </div>
+                  </section>
+
+                  <div className="glass space-y-3 p-5">
+                    {failure && (
+                      <p role="alert" className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-[14px] text-red-700 dark:text-red-300">
+                        {failure}
+                      </p>
+                    )}
+                    {processing ? (
+                      <div className="flex items-center gap-3">
+                        <div className="min-w-0 flex-1">
+                          <ProgressBar progress={progress} label={t("pagenum.ui.processing")} />
+                        </div>
+                        <button type="button" onClick={cancel} className={buttonSecondary}>
+                          {t("bg.cancel")}
+                        </button>
+                      </div>
+                    ) : resultFresh ? (
+                      <div className="flex flex-wrap items-center gap-3">
+                        <DownloadButton blob={resultFresh.blob} filename={`${getFileNameWithoutExtension(file.name)}-numbered.pdf`} />
+                        <span className="text-[13px] text-t-secondary">{t("pagenum.ui.resultTitle")}</span>
+                      </div>
+                    ) : (
+                      <>
+                        <button type="button" onClick={run} disabled={!options} className={`${buttonPrimary} w-full`}>
+                          {result ? t("pagenum.v2.applyChanges") : t("pagenum.ui.process")}
+                        </button>
+                        {result && <p className="text-center text-[12.5px] text-t-tertiary">{t("pagenum.v2.stale")}</p>}
+                        {!options && <p className="text-center text-[12.5px] text-t-tertiary">{t("pagenum.ui.invalidRange")}</p>}
+                      </>
+                    )}
                   </div>
                 </div>
-              </div>
-            </div>
-
-            {(progress > 0 || processing) && (
-              <div className="glass rounded-2xl p-4">
-                <ProgressBar progress={progress} label={processing ? copy.processing : undefined} />
               </div>
             )}
-
-            <div className="flex flex-wrap items-center gap-3">
-              {!resultBlob ? (
-                <button
-                  type="button"
-                  onClick={handleAddPageNumbers}
-                  disabled={processing}
-                  className={`inline-flex items-center rounded-2xl px-6 py-3 text-sm font-semibold text-on-accent transition-all ${
-                    processing
-                      ? "cursor-not-allowed bg-bg-secondary text-t-secondary"
-                      : "bg-accent hover:shadow-lg hover:shadow-sm"
-                  }`}
-                >
-                  {processing ? copy.processing : copy.process}
-                </button>
-              ) : (
-                <>
-                  <DownloadButton
-                    blob={resultBlob}
-                    filename={`numbered_${file.name}`}
-                  />
-                  <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
-                    {copy.resultTitle}
-                  </div>
-                </>
-              )}
-            </div>
           </>
         )}
       </div>
