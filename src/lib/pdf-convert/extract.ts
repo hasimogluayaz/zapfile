@@ -64,6 +64,13 @@ const KNOWN_FAMILIES: [RegExp, string][] = [
   [/^notosans/i, "Noto Sans"],
   [/^notoserif/i, "Noto Serif"],
   [/^dejavusans/i, "DejaVu Sans"],
+  // Free metric-compatible twins (LibreOffice, Linux) map back to the fonts Word users have, so
+  // spacing and line breaks match on Windows and macOS.
+  [/^carlito/i, "Calibri"],
+  [/^caladea/i, "Cambria"],
+  [/^liberationsansnarrow/i, "Arial Narrow"],
+  [/^opensymbol/i, "Segoe UI Symbol"],
+  [/^notocoloremoji|^notoemoji/i, "Segoe UI Emoji"],
   [/^liberationsans/i, "Arial"],
   [/^liberationserif/i, "Times New Roman"],
   [/^liberationmono/i, "Courier New"],
