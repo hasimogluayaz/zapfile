@@ -29,7 +29,7 @@ export interface ModelSpec {
  * commit, so a URL's content can never change underneath a cached copy.
  */
 const REPO = "hasimogluayaz/zapfile";
-const MODEL_COMMIT = "0eb75899472993e34031fc56f58a1603477f99bb";
+const MODEL_COMMIT = "96c0b3664c75b2f5de7b935dd59dcbbc428b1fc0";
 
 function githubSources(dir: string, count: number): ModelSource[] {
   const names = Array.from({ length: count }, (_, i) => `${dir}/part-${String(i).padStart(2, "0")}.bin`);
@@ -58,10 +58,10 @@ function overrideSource(): ModelSource[] {
 export const BIREFNET_LITE: ModelSpec = {
   id: "birefnet-lite",
   file: {
-    id: "birefnet-lite-768",
-    bytes: 94_370_922,
-    sha256: "94db4755eef843b440490b19b5bfcf4695ff5a2550238fefeb583663304eba27",
-    sources: [...overrideSource(), ...githubSources("birefnet-lite-768", 5)],
+    id: "birefnet-lite-768-int8",
+    bytes: 50_862_895,
+    sha256: "4729265b3cb408ffe98abc3d47d87d14337a1114ecbc86600cb5022ba11b0353",
+    sources: [...overrideSource(), ...githubSources("birefnet-lite-768-int8", 3)],
   },
   inputSize: { width: 768, height: 768 },
   normalization: IMAGENET,
