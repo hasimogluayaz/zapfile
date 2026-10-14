@@ -1,159 +1,107 @@
 # Devir notu (yeni Claude oturumu için)
 
-> Bu dosya, önceki Claude oturumunda neler yapıldığını ve kaldığımız yeri anlatır.
-> Yeni oturumda önce bunu ve `AGENTS.md`'yi oku. Son güncelleme: 2026-10-14.
+> Önceki Claude oturumlarında yapılanları, kararları ve sıradaki işleri anlatır.
+> Yeni oturumda önce bunu, sonra `AGENTS.md`'yi oku. Son güncelleme: 2026-10-14.
 
-## Çalışma kuralları (kullanıcının tercihleri)
+## Kullanıcı ve çalışma kuralları
 
-- **Kullanıcıya kısa, Türkçe cevap ver.**
-- **Branch:** `claude/vibrant-euler-lw0gi5`; buraya commit + push.
-  - PR zaten açık: https://github.com/hasimogluayaz/zapfile/pull/2. Yeni PR açma.
-  - **Kullanıcı onay vermeden PR'ı merge etme.** `main` = canlı site; Vercel otomatik yayınlar.
-- **Önizleme:** Her push'ta Vercel önizlemesi güncellenir:
-  https://zapfile-git-claude-vibrant-euler-lw0gi5-hasimogluayazs-projects.vercel.app
-- **Hedef:** ZapFile'ı en az iLovePDF kadar iyi yapmak, kusursuz ve hızlı.
-- **Maliyet hassasiyeti:** Kullanıcı sayısıyla büyüyen maliyetten kaçın. Örnek: Vercel bant genişliği.
-  Sabit aylık ücret (VPS) kabul edildi.
-- **İletişim e-postası:** `ayvexdevelopment@gmail.com`. Sitedeki bütün adresler bununla değiştirildi.
+- **Dil:** Kullanıcıya kısa, samimi, Türkçe cevap ver ("knk" diye hitap ediyor).
+- **Teknik seviye:** Kullanıcı teknik değil. Her adımı tıklanacak yer ve kopyalanacak komutla, tek tek anlat; ekran görüntüsü atıyor.
+- **Ortam:** Windows + PowerShell kullanıyor.
+- **Branch:** `claude/vibrant-euler-lw0gi5`. Commit + push buraya.
+  - PR açık: https://github.com/hasimogluayaz/zapfile/pull/2. Yeni PR açma.
+  - **Kullanıcı açıkça onay vermeden PR'ı merge etme.**
+  - `main` = canlı site (Vercel otomatik yayınlar).
+- **Önizleme** (her push'ta güncellenir): https://zapfile-git-claude-vibrant-euler-lw0gi5-hasimogluayazs-projects.vercel.app
+- **Hedef:** ZapFile en az iLovePDF kadar iyi, hızlı ve kusursuz olsun.
+- **Para:** Kullanıcı maliyete çok hassas. Kullanıcı sayısıyla büyüyen maliyet istemiyor (Vercel bant genişliği reddedildi). Sabit aylık VPS kabul edildi.
+  - **Fiyatları ezberden söyleme.** Bir kez yanlış fiyat verildi (Hetzner'i "5 €" dedik, gerçekte daha pahalı), kullanıcı "kandırdın" dedi.
+  - Emin değilsen "kontrol edelim" de.
+- **İletişim e-postası** (sitede): `ayvexdevelopment@gmail.com`.
+
+## Altyapı (nerede ne var)
+
+| Parça | Nerede |
+|---|---|
+| Kod | GitHub `hasimogluayaz/zapfile` (public) |
+| Site | Vercel (Hobby), `main` → zapfile.xyz; `NEXT_PUBLIC_SITE_URL` / `SITE_URL` = https://www.zapfile.xyz |
+| Domain kaydı | Natro (zapfile.xyz), ama nameserver'lar Vercel'de (`ns1/ns2.vercel-dns.com`). **DNS kayıtları Vercel → Domains → zapfile.xyz'den yönetilir**, Natro'dan değil. |
+| Dönüştürme sunucusu | Hetzner Cloud, proje "Default", sunucu `zapfile-api` |
+| Hetzner bakiyesi | Kullanıcı doğrulama için 25 $ kredi yükledi; sunucu bundan düşüyor. İade sorulmadı ya da cevabı bilinmiyor. Hetzner 2FA açık. |
+
+**Dönüştürme sunucusunun ayrıntıları:**
+- Tip: CPX02 (1 vCPU / 1 GB RAM / 20 GB), Nuremberg, Ubuntu 26.04. Fiyat: ~7,49 $ + 0,60 $ IPv4 / ay.
+- Adres: IPv4 `2.31.6.195`, IPv6 `2a01:4f8:1c18:dba::1`.
+- DNS: `api.zapfile.xyz` → A `2.31.6.195` (Vercel DNS). `https://api.zapfile.xyz/health` → `{"ok":true,...}` ✅
+- SSH: `ssh root@2.31.6.195` (kullanıcının bilgisayarındaki ed25519 anahtarıyla).
+  - Kullanıcının ev ağı bu IP'ye ulaşamıyor ("Destination net unreachable"); **telefon hotspot'uyla bağlanıyor**.
+- Kurulum dosyaları ve ayarlar:
+  - Kod: `/opt/zapfile` (sparse clone, sadece `server/`).
+  - Ayarlar: `/opt/zapfile/server/office-api/.env`. `CONCURRENCY=1`, 2 GB swap var.
+  - Docker: `office-api` (LibreOffice, internet erişimi yok) + `caddy` (HTTPS, Let's Encrypt).
+- Güncelleme / yeniden kurulum (sunucuda root olarak):
+  ```bash
+  curl -fsSL https://raw.githubusercontent.com/hasimogluayaz/zapfile/<BRANCH>/server/office-api/setup.sh | bash -s api.zapfile.xyz <BRANCH>
+  ```
+  - Şu an `<BRANCH>` = `claude/vibrant-euler-lw0gi5`. **PR merge edilince `main` ile tekrar çalıştırılmalı.**
+- Loglar:
+  ```bash
+  cd /opt/zapfile/server/office-api && docker compose logs -f
+  ```
+- Büyütmek gerekirse: Hetzner → sunucu → Rescale (ör. CPX12 2 GB), sonra `.env`'de `CONCURRENCY=2`.
 
 ## Bu branch'te yapılanlar (özet)
 
-Ayrıntı için: `git log --oneline origin/main..HEAD` (66+ commit).
+Ayrıntı: `git log --oneline origin/main..HEAD`.
 
-### Görsel tasarım
-- "Voltage" tasarım sistemi kuruldu (bkz. `AGENTS.md`). Arayüz bu sistemle baştan yazıldı:
-  - Header, Home (DropPad), /tools, ToolCard, ToolLayout, Footer
-  - arama
-  - favoriler
-  - dosya devri (file handoff)
+- **Tasarım:**
+  - "Voltage" tasarım sistemi (bkz. `AGENTS.md`).
+  - Header, Home (DropPad), /tools, ToolCard, ToolLayout, Footer, arama, favoriler ve dosya devri baştan yazıldı.
+- **Araçlar:**
+  - 18 araç kaldırıldı ya da birleştirildi (301 yönlendirmeleri `next.config.mjs`'de).
+  - Neredeyse tüm araçlar yeniden yazıldı (resim motoru, PDF, metin, dönüştürücüler).
+- **Yeni PDF araçları:**
+  - PDF → Word / Excel / PowerPoint / Markdown
+  - Word / Excel / PowerPoint / HTML → PDF
+  - Organize, Watermark, Sign, Crop, Compare, Redact, Fill Form, OCR, Repair
+- **Dil:** 9 dil. Tam sözlükler EN/TR/DE/FR; ES/PT/IT/JA kısmi, eksikler İngilizce. Kontrol: `npm run verify:i18n`.
+- **İletişim e-postaları** `ayvexdevelopment@gmail.com` yapıldı.
 
-### Araç seti
-- v2.0'da 18 araç kaldırıldı ya da birleştirildi; eski adresler 301 ile yönlendiriliyor (`next.config.mjs`).
-- Neredeyse bütün araçlar yeniden yazıldı (resim motoru, PDF araçları, metin ve dönüştürücü araçları).
+## Office → PDF: hikâye ve son durum
 
-### Yeni PDF araçları
-- PDF → Word / Excel / PowerPoint / Markdown
-- Word / Excel / PowerPoint / HTML → PDF (LibreOffice WASM)
-- Organize, Watermark, Sign, Crop, Compare, Redact, Fill Form, OCR, Repair
+1. **Başlangıç:** LibreOffice WASM tarayıcıda çalışıyordu. İlk kullanımda ~77 MB indiriyor; kullanıcı çok yavaş buldu.
+2. **Motoru Vercel'den servis etmek** (`bf4728d`): hızlıydı ama bant genişliği maliyeti yüzünden **geri alındı** (`f3ec816`).
+3. **Tarayıcı motorunun indirmesi iyileştirildi:**
+   - Ücretsiz CDN'ler: jsDelivr, 2,5 sn içinde başlamazsa raw.githubusercontent de devreye giriyor (`fetchPart`).
+   - Parçalar paralel iniyor.
+   - İndirme sayfa açılışında değil, kullanıcı niyet gösterince başlıyor (dosya sürükleme ya da seçici açma).
+4. **Sunucuda dönüştürme ("iLovePDF gibi")**, kullanıcının kararıyla kuruldu:
+   - **Sunucu:** `server/office-api/`
+     - Bağımlılıksız Node servisi (`server.mjs`), Dockerfile, docker-compose, Caddyfile, `setup.sh`, README.
+     - Kuyruk, IP başına sınır, 50 MB sınırı, 90 sn zaman aşımı, CORS izin listesi (zapfile + Vercel önizlemeleri), makrolar kapalı, geçici dosyalar hemen silinir.
+   - **Site:** `src/lib/office/server.ts` + `OfficeToPdfTool.tsx`.
+     - "Hızlı" (sunucu, varsayılan) / "Gizli" (tarayıcı) modları; seçim localStorage'da hatırlanır.
+     - Sunucu hatasında tarayıcı motoruna otomatik geçer.
+     - Şifreli belgeler hep tarayıcıda çevrilir.
+     - API adresi varsayılan olarak `https://api.zapfile.xyz` (env: `NEXT_PUBLIC_OFFICE_API_URL`).
+   - **Dürüst metinler:**
+     - Bu 4 sayfada "cihazında çalışır" paneli gizlendi.
+     - Dropzone notu değiştirildi.
+     - Gizlilik politikasına bölüm eklendi (EN/TR/DE/FR).
+     - `tools.ts` meta açıklamaları güncellendi.
+   - **Test edilenler:**
+     - Sunucu yerelde: docx, xlsx, pptx, csv, html ve PDF/A ~2 sn.
+     - Site hızlı mod: yerel API ile ~3 sn, motor indirmesi yok.
 
-### Dil desteği
-- 9 dil var. Tam sözlükler EN/TR/DE/FR; ES/PT/IT/JA kısmi çeviriyle, eksik metinler İngilizce gösteriliyor.
-- `npm run verify:i18n` çeviri anahtarlarını kontrol eder.
+## Sıradaki işler
 
-## Office → PDF: hız sorunu ve kaldığımız yer
-
-### Sorun
-- Tarayıcıda çalışan LibreOffice motoru ilk kullanımda ~77 MB indiriyor.
-- Kullanıcı ilk dönüşümün çok yavaş olduğunu söyledi (ekranda "2 MB / 77 MB").
-- iLovePDF hızlı, çünkü dosyayı kendi sunucusunda dönüştürüyor.
-
-### Denenenler
-
-**1. Motor parçalarını Vercel'den servis etmek** (commit `bf4728d`)
-- Hızlıydı, ama her yeni ziyaretçi Vercel'e 77 MB trafik yazıyor.
-- Kullanıcı maliyet yüzünden istemedi; `f3ec816` ile geri alındı.
-
-**2. Şu anki durum** (commit `f3ec816`, `src/lib/office/engine.ts` ve `OfficeToPdfTool.tsx`)
-- Motor parçaları ücretsiz CDN'lerden geliyor: önce jsDelivr; bir parça 2,5 sn içinde başlamazsa raw.githubusercontent'ten de isteniyor ("hedged" indirme), önce cevap veren kullanılıyor (`fetchPart`).
-- Parçalar paralel iniyor.
-- İndirme sayfa açılışında değil, kullanıcı dosya sürüklediğinde (`dragenter`) ya da dosya seçiciyi açtığında (`pointerdown`/`keydown`) başlıyor (`warmUp`).
-- Açık soru (araştırılmadı): headless Chromium testlerinde dönüşüm bazen "Starting LibreOffice…" ya da "converting…" aşamasında takıldı.
-  - Bu, Vercel'den servis edilen eski sürümde de bir kez oldu.
-  - Gerçek hata mı, test ortamı mı, belli değil. Tekrarlı test henüz yapılmadı.
-
-### Sunucuda dönüştürme: YAPILDI (2026-10-14)
-
-- **Sunucu:** Hetzner Cloud, proje "Default"; CPX02 (1 vCPU / 1 GB), Nuremberg, Ubuntu 26.04, ~8 $/ay.
-  - IPv4 `2.31.6.195`
-  - Kullanıcı SSH'a sadece telefon hotspot'uyla bağlanabildi; ev ağı bu IP'ye "Destination net unreachable" veriyor.
-- **DNS:** Domain Natro'da kayıtlı ama DNS Vercel'de. Vercel → Domains → zapfile.xyz altına `api` A kaydı `2.31.6.195` eklendi.
-  - `https://api.zapfile.xyz/health` → `{"ok":true}` (HTTPS çalışıyor).
-- **Kurulum:** `server/office-api/setup.sh` (branch `claude/vibrant-euler-lw0gi5` ile) çalıştırıldı.
-  - Kod `/opt/zapfile` altında; ayarlar `/opt/zapfile/server/office-api/.env`.
-  - Güncellemek için aynı curl komutu tekrar çalıştırılır (README'de).
-  - PR merge edildikten sonra branch argümanı `main` olmalı.
-- **Site tarafı:**
-  - `src/lib/office/server.ts`
-  - `OfficeToPdfTool.tsx`: Hızlı/Gizli mod; sunucu hatasında tarayıcı motoruna düşer; şifreli belgeler yerelde çevrilir.
-  - Gizlilik sayfası ve `tools.ts` meta açıklamaları güncellendi.
-  - Varsayılan API adresi kodda `https://api.zapfile.xyz`, Vercel'de env değişkeni gerekmiyor.
-- **Bilinen sorun:** Tarayıcı içi LibreOffice motoru bu geliştirme ortamındaki headless Chromium'da dönüştürme sırasında takılıyor.
-  - Eski sürümde de takıldığı için bugünkü değişikliklerden kaynaklanmıyor.
-  - Gerçek tarayıcıda gizli mod ayrıca test edilmeli.
-
-### (Arşiv) Sunucu planı
-
-
-Kullanıcı bunu istedi; maliyet ve alan adı sorularını da sordu, cevaplandı. Son mesajında "başlayayım mı?" sorusuna henüz evet demedi, ama yön bu.
-
-**Maliyet**
-- Hetzner VPS, 2 vCPU / 4 GB, yaklaşık 5 €/ay (fiyatlar yaklaşık; güncel fiyata bakılmalı).
-- ~20 TB trafik dahil. HTTPS (Let's Encrypt) ücretsiz.
-- Alt alan adı: `api.zapfile.xyz`.
-
-**Plan (henüz kod yazılmadı)**
-
-1. **`server/office-api/`** (repoda yeni klasör)
-   - Bağımlılıksız Node `http` servisi; LibreOffice'i (`soffice --headless`) çağırır.
-   - `POST /convert`:
-     - gövde: ham dosya
-     - başlıklar: `X-Filename`, isteğe bağlı `X-Password`
-     - sorgu: `?pdfa=1`
-     - cevap: PDF
-   - Eşzamanlı çalışma:
-     - en fazla çekirdek sayısı kadar dönüşüm; fazlası kuyruğa girer
-     - her slotun kendi LibreOffice profili var (`-env:UserInstallation=file:///tmp/lo-slot-N`)
-   - Sınırlar ve temizlik:
-     - 60 sn zaman aşımı (süreci öldür)
-     - 50 MB dosya sınırı
-     - IP başına istek sınırı
-     - geçici dosyalar `finally` içinde silinir
-     - dosya adı veya içerik loglanmaz
-   - CORS: yalnızca zapfile alan adları ve `*.vercel.app` önizlemeleri (env ile ayarlanır).
-   - PDF/A ve filtre seçimi:
-     - PDF/A, LibreOffice 7.4+ JSON filtre seçenekleriyle (`SelectPdfVersion = 2`).
-     - Filtre uzantıya göre seçilir: `writer_pdf_Export` / `calc_pdf_Export` / `impress_pdf_Export`; HTML için `writer_web_pdf_Export`.
-   - Şifreli belgeler:
-     - `soffice` CLI şifre almıyor; Python UNO betiği (MediaDescriptor `Password`) gerekir.
-     - Alternatif: sunucu `422 {code:"password"}` döner, istemci o dosyayı tarayıcıdaki motorla çevirir.
-   - Güvenlik:
-     - LibreOffice profilinde makrolar kapalı.
-     - Converter container'ı `internal: true` Docker ağında olmalı (dışarı çıkışı yok; belgelerdeki uzak bağlantılar üzerinden SSRF engellenir).
-     - Önünde Caddy (HTTPS) iki ağa bağlı.
-   - Dosyalar:
-     - `Dockerfile` (debian + `libreoffice-nogui` + fontlar: `fonts-dejavu`, `fonts-liberation`, `fonts-noto` vb.)
-     - `docker-compose.yml` (api + caddy)
-     - `Caddyfile`
-     - `README.md`: Hetzner'de adım adım kurulum, DNS A kaydı, tek komut `docker compose up -d`.
-
-2. **İstemci:** `src/lib/office/server.ts`
-   - `serverToPdf(file, {pdfa, password}, signal)`; adres `NEXT_PUBLIC_OFFICE_API_URL` env değişkeninden okunur.
-   - Yükleme ilerlemesi için XHR kullanılabilir.
-
-3. **`OfficeToPdfTool.tsx`**
-   - Env ayarlıysa varsayılan "Hızlı mod (sunucu)", yanında "Gizli mod (cihazda)" seçeneği (Segmented, `localStorage`'da hatırlanır).
-   - Hızlı modda cross-origin isolation gerekmez, sayfa yeniden yüklenmez.
-   - Sunucu hatası, ağ hatası veya şifreli belgede otomatik olarak tarayıcı motoruna düşer.
-
-4. **Metinler**
-   - `FileDropzone` ve Office araçlarındaki "dosyaların cihazından çıkmaz" metni hızlı modda değiştirilmeli.
-   - Yeni metin: dosya HTTPS ile sunucuya gider, çevrilir, hemen silinir, saklanmaz.
-   - i18n: EN/TR/DE/FR eklenecek.
-   - Gizlilik politikası (`src/app/privacy/page.tsx` ve i18n metinleri) güncellenecek.
-   - `tools.ts` ve SSS'deki yerel işlem iddiaları kontrol edilecek.
-
-5. **`AGENTS.md`'deki "Office → PDF" bölümüne** sunucu modu eklenecek.
-
-6. **Kullanıcının yapacakları** (ona adım adım anlatılacak)
-   - Hetzner hesabı açıp sunucu kiralamak.
-   - DNS'te `api.zapfile.xyz` için A kaydı eklemek.
-   - Sunucuda kurulum komutunu çalıştırmak.
-   - Vercel'de `NEXT_PUBLIC_OFFICE_API_URL=https://api.zapfile.xyz` ayarını eklemek.
-
-**Yerel test**
-- Bu geliştirme ortamında `soffice` (LibreOffice 24.2), `python3-uno` ve `docker` var.
-- Örnek docx: `/tmp/claude-0/pw/v/pdf-to-word__complex.docx`. Bu dosya geçici dizinde, yeni ortamda olmayabilir.
-- Playwright: `/opt/node22/lib/node_modules/playwright/index.mjs`.
+1. **Kullanıcı önizlemede test edecek** (Word to PDF): hızlı mod ve gizli mod. Sonucu bekle.
+2. **Gizli mod / tarayıcı motoru şüpheli:**
+   - Bu geliştirme ortamının headless Chromium'unda dönüşüm adımında takılıyor; eski sürüm (`bf4728d`) de takıldığı için yeni bir regresyon değil.
+   - Kullanıcı gerçek tarayıcıda da takıldığını söylerse araştır: `officeToPdf` içindeki `c.convert`, `@matbee/libreoffice-converter` worker'ı.
+3. **Kullanıcı onay verirse PR #2'yi merge et**, sonra sunucuda `setup.sh`'ı `main` ile çalıştır.
+4. İsteğe bağlı: sunucu tarafında şifreli belge desteği (Python UNO, `Password`).
+5. Kullanıcı aynı sunucuyu başka projeleri için de kullanmak istiyor: Caddyfile'a yeni domain bloğu + yeni servis eklenir. RAM 1 GB, dikkat.
 
 ## Faydalı komutlar
 
@@ -161,4 +109,10 @@ Kullanıcı bunu istedi; maliyet ve alan adı sorularını da sordu, cevaplandı
 npx tsc --noEmit -p . && npx eslint src   # tip + lint
 npm run build                             # vendor kopyalama + next build
 npm run verify:i18n
+PORT=8099 node server/office-api/server.mjs   # API'yi yerelde çalıştır (soffice gerekli)
 ```
+
+Notlar:
+- Bu geliştirme ortamında `soffice` (LibreOffice 24.2) ve Playwright var: `/opt/node22/lib/node_modules/playwright/index.mjs`.
+- Dışarıya (api.zapfile.xyz, jsDelivr) bağlantı proxy tarafından engelli olabilir.
+- `pkill -f` kullanma: kendi kabuğunu da öldürüyor. PID ile `kill` yap.
