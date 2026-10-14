@@ -14,7 +14,9 @@ export function downloadBlob(blob: Blob, filename: string) {
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  // Revoking right after click() cancels the download in Safari, Firefox and
+  // sometimes Chrome: the browser reads the blob URL asynchronously.
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
 
 export function getFileExtension(filename: string): string {
