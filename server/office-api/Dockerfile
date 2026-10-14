@@ -2,16 +2,20 @@ FROM ubuntu:24.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 # LibreOffice without GUI, Node to run the API, and fonts that cover Office documents
-# (Carlito/Caladea are metric-compatible with Calibri/Cambria, Liberation with Arial/Times/Courier).
+# (Carlito/Caladea are metric-compatible with Calibri/Cambria, Liberation with Arial/Times/Courier;
+# Montserrat, Open Sans, Roboto and Lato are popular in designed Word documents). A missing font is
+# replaced by a wider one, which makes text overflow its boxes.
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
       libreoffice-writer-nogui libreoffice-calc-nogui libreoffice-impress-nogui \
       nodejs ca-certificates \
       fonts-dejavu fonts-liberation fonts-liberation2 fonts-crosextra-carlito fonts-crosextra-caladea \
       fonts-noto-core fonts-noto-cjk fonts-noto-color-emoji \
+      fonts-montserrat fonts-open-sans fonts-roboto-unhinted fonts-lato \
  && rm -rf /var/lib/apt/lists/*
 
-RUN useradd --create-home --uid 10001 office
+COPY fonts.conf /etc/fonts/conf.d/60-office-aliases.conf
+RUN fc-cache -f && useradd --create-home --uid 10001 office
 WORKDIR /app
 COPY server.mjs .
 USER office

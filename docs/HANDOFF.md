@@ -93,6 +93,16 @@ Ayrıntı: `git log --oneline origin/main..HEAD`.
      - Sunucu yerelde: docx, xlsx, pptx, csv, html ve PDF/A ~2 sn.
      - Site hızlı mod: yerel API ile ~3 sn, motor indirmesi yok.
 
+### Kullanıcının örnek belgesiyle düzeltmeler (2026-10-14)
+- **Örnek belge:** "ÇINAR APT … DIŞ CEPHE FİLELİ SIVA" teklif dosyası; Montserrat fontu, çok sayıda metin kutusu, formüllü tablo.
+- **Montserrat sunucuda yoktu:** Yerine daha geniş Noto Sans geliyordu, yazılar kutulardan taşıyordu. Dockerfile'a Montserrat, Open Sans, Roboto ve Lato fontları ile `fonts.conf` eşlemeleri eklendi.
+  - **Sunucuda `setup.sh` tekrar çalıştırılmalı.**
+- **`=PRODUCT(LEFT)` / `=SUM(LEFT)` tablo formülleri:** LibreOffice "1.150"yi 1,15 sanıyordu, toplam "0₺" çıkıyordu. `src/lib/office/prepare.ts` artık Word'ün kaydettiği sonucu kullanıyor.
+- **Sayfa başlıkları önceki sayfanın altına kayıyordu:** `prepare.ts` Word'ün sayfa başlangıcını koruyor.
+- **Kalan küçük farklar:**
+  - 2. sayfadaki "NEDEN HAŞİMOĞLU" kutusunda son madde sığmıyor (başlık 2 satıra bölünüyor).
+  - 6. sayfada logo, REFERANSLARIMIZ kutusunun beyaz zemini altında kalıyor; Word'de de böyle olabilir, kullanıcıya soruldu.
+
 ## Sıradaki işler
 
 1. **Kullanıcı önizlemede test edecek** (Word to PDF): hızlı mod ve gizli mod. Sonucu bekle.

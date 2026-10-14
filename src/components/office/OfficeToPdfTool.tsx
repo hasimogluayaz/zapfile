@@ -15,6 +15,7 @@ import { persistPendingFiles, restorePersistedFiles, setPendingFiles } from "@/l
 import { useI18n } from "@/lib/i18n";
 import { downloadBlob, formatFileSize, getFileNameWithoutExtension } from "@/lib/utils";
 import { ENGINE_DOWNLOAD_BYTES, OfficeEngineError, canRunOfficeEngine, engineCached, getOfficeEngine, offProgress, officeToPdf, type EngineProgress } from "@/lib/office/engine";
+import { prepareOfficeFile } from "@/lib/office/prepare";
 import { OFFICE_API_URL, OfficeServerError, SERVER_MAX_BYTES, serverToPdf } from "@/lib/office/server";
 
 export type OfficeKind = "word" | "excel" | "powerpoint" | "html";
@@ -192,10 +193,11 @@ export default function OfficeToPdfTool({ kind }: { kind: OfficeKind }) {
         if (!job) break;
         update(job.id, { status: "converting", error: undefined });
         const { pdfa: asPdfa, settingsKey: key } = settingsRef.current;
+        const input = await prepareOfficeFile(job.file);
         let bytes: Uint8Array | null = null;
-        if (modeRef.current === "fast" && !job.password && job.file.size <= SERVER_MAX_BYTES) {
+        if (modeRef.current === "fast" && !job.password && input.size <= SERVER_MAX_BYTES) {
           try {
-            bytes = await serverToPdf(job.file, { pdfa: asPdfa });
+            bytes = await serverToPdf(input, { pdfa: asPdfa });
           } catch (e) {
             const code = e instanceof OfficeServerError ? e.code : "network";
             // The in-browser engine takes over (it can also ask for a document password).
@@ -215,7 +217,7 @@ export default function OfficeToPdfTool({ kind }: { kind: OfficeKind }) {
             await getOfficeEngine(onProgress);
             offProgress(onProgress);
             setEngineError(null);
-            bytes = await officeToPdf(job.file, { pdfa: asPdfa, password: job.password });
+            bytes = await officeToPdf(input, { pdfa: asPdfa, password: job.password });
           }
           const blob = new Blob([bytes as BlobPart], { type: "application/pdf" });
           const info = await inspectPdf(bytes).catch(() => ({ pages: 0, thumb: null }));
