@@ -92,6 +92,16 @@ function groupBlocks(pieces: Line[]): Line[][] {
 /** Symbol/Wingdings bullets map to private-use code points no other font draws: use a real bullet. */
 function bulletFix(runs: TextRun[]): TextRun[] {
   for (const r of runs) r.text = r.text.replace(/[\uE000-\uF8FF]/g, "•");
+  // A list bullet sits apart from its text in the PDF (a tab stop, not a space character): keep a gap.
+  const i = runs.findIndex((r) => r.text.trim());
+  const first = runs[i];
+  if (first) {
+    const bullet = /^(\s*[•◦▪▫●○■□➢➤►✓✔–-])/u;
+    const next = runs[i + 1]?.text ?? "";
+    // The bullet glued to its text, in one run or as a run of its own (often another font).
+    if (/^\s*[•◦▪▫●○■□➢➤►✓✔–-]$/u.test(first.text) && /^[^\s\d]/.test(next)) first.text += "\u00A0\u00A0";
+    else first.text = first.text.replace(new RegExp(bullet.source + "(?=[^\\s\\d])", "u"), "$1\u00A0\u00A0");
+  }
   return runs;
 }
 

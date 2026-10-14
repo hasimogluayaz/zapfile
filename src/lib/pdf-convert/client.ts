@@ -11,10 +11,10 @@ import { PdfLockedError } from "@/lib/pdf-input";
 import { extractPage, renderRegion } from "./extract";
 import { findFigureRegions } from "./layout";
 import type { ImageAsset, PageModel } from "./model";
-import type { ConvertRequest, ConvertResponse, ConvertStats } from "./convert.worker";
+import type { ConvertRequest, ConvertResponse, ConvertStats, DocxLayout } from "./convert.worker";
 import type { XlsxOptions } from "./xlsx";
 
-export type { ConvertStats } from "./convert.worker";
+export type { ConvertStats, DocxLayout } from "./convert.worker";
 export type { XlsxOptions } from "./xlsx";
 
 export interface ConvertProgress {
@@ -30,6 +30,8 @@ export interface ConvertJob {
   /** 1-based page numbers, or null for all pages. */
   pages: number[] | null;
   keepPageBreaks?: boolean;
+  /** Word: flowing text, exact page layout, or pick per document. */
+  docxLayout?: DocxLayout;
   xlsx?: XlsxOptions;
   title: string;
 }
@@ -136,7 +138,7 @@ export async function convertPdf(
     };
     const msg: ConvertRequest =
       job.kind === "docx"
-        ? { kind: "docx", pages, assets: keep, title: job.title, keepPageBreaks: job.keepPageBreaks !== false }
+        ? { kind: "docx", pages, assets: keep, title: job.title, keepPageBreaks: job.keepPageBreaks !== false, layout: job.docxLayout ?? "auto" }
         : job.kind === "pptx"
           ? { kind: "pptx", pages, assets: keep, title: job.title }
           : job.kind === "md"

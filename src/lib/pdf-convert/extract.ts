@@ -181,16 +181,16 @@ function toImageData(img: PdfjsImage): ImageData | null {
   return new ImageData(out, width, height);
 }
 
-/** Does the bitmap have any (meaningfully) transparent pixels? Checked on a small sample. */
-function hasAlpha(source: ImageBitmap | ImageData): boolean {
+/** Does the image have any (meaningfully) transparent pixels? Checked on a small sample. */
+function hasAlpha(source: CanvasImageSource | ImageData, width: number, height: number): boolean {
   if (source instanceof ImageData) {
     const d = source.data;
     const step = Math.max(4, Math.floor(d.length / 4 / 20000) * 4);
     for (let i = 3; i < d.length; i += step) if (d[i]! < 250) return true;
     return false;
   }
-  const w = Math.min(96, source.width);
-  const h = Math.min(96, source.height);
+  const w = Math.max(1, Math.min(96, width));
+  const h = Math.max(1, Math.min(96, height));
   const canvas = new OffscreenCanvas(w, h);
   const ctx = canvas.getContext("2d", { willReadFrequently: true });
   if (!ctx) return false;
@@ -198,6 +198,42 @@ function hasAlpha(source: ImageBitmap | ImageData): boolean {
   const d = ctx.getImageData(0, 0, w, h).data;
   for (let i = 3; i < d.length; i += 4) if (d[i]! < 250) return true;
   return false;
+}
+
+/**
+ * A drop shadow or glow: one flat colour whose alpha fades softly over much of the image. In the PDF a
+ * card or photo is painted over it so only the soft edge shows; we don't carry those rounded cards over,
+ * so on its own the shadow would be a dark blob. Flat-colour icons have hard alpha edges and are kept.
+ */
+function isSoftShadow(source: CanvasImageSource | ImageData, width: number, height: number): boolean {
+  const w = Math.max(1, Math.min(64, width));
+  const h = Math.max(1, Math.min(64, height));
+  const canvas = new OffscreenCanvas(w, h);
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) return false;
+  if (source instanceof ImageData) {
+    const tmp = new OffscreenCanvas(source.width, source.height);
+    tmp.getContext("2d")!.putImageData(source, 0, 0);
+    ctx.drawImage(tmp, 0, 0, w, h);
+  } else ctx.drawImage(source, 0, 0, w, h);
+  const d = ctx.getImageData(0, 0, w, h).data;
+  let soft = 0, visible = 0;
+  const lo = [255, 255, 255], hi = [0, 0, 0];
+  for (let i = 0; i < d.length; i += 4) {
+    const a = d[i + 3]!;
+    if (a > 12 && a < 240) soft++;
+    if (a < 40) continue;
+    visible++;
+    for (let c = 0; c < 3; c++) {
+      lo[c] = Math.min(lo[c]!, d[i + c]!);
+      hi[c] = Math.max(hi[c]!, d[i + c]!);
+    }
+  }
+  const flat = visible > 0 && [0, 1, 2].every((c) => hi[c]! - lo[c]! < 24);
+  if (!flat) return false;
+  // Shadows are (near) black with a blurred band of ~10-30 % of the area; other flat glows need more.
+  const dark = Math.max(hi[0]!, hi[1]!, hi[2]!) < 48;
+  return soft / (w * h) > (dark ? 0.12 : 0.25);
 }
 
 async function encodeImage(
@@ -210,13 +246,25 @@ async function encodeImage(
   let bitmap: ImageBitmap;
   let alpha: boolean;
   if (img.bitmap) {
-    alpha = hasAlpha(img.bitmap);
-    // pdf.js may close its bitmap when the page is cleaned up: take our own copy.
-    bitmap = await createImageBitmap(img.bitmap);
+    // pdf.js hands over an ImageBitmap, or a VideoFrame when the browser's ImageDecoder decoded a
+    // JPEG (no .width there: use the image's own size). Draw it into our own bitmap either way; pdf.js
+    // may close its copy when the page is cleaned up.
+    const src = img.bitmap as unknown as CanvasImageSource;
+    const w = img.width || (img.bitmap as { width?: number }).width || 0;
+    const h = img.height || (img.bitmap as { height?: number }).height || 0;
+    if (!w || !h) return null;
+    alpha = hasAlpha(src, w, h);
+    if (alpha && isSoftShadow(src, w, h)) return null;
+    const canvas = new OffscreenCanvas(w, h);
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+    ctx.drawImage(src, 0, 0, w, h);
+    bitmap = canvas.transferToImageBitmap();
   } else {
     const data = toImageData(img);
     if (!data) return null;
-    alpha = hasAlpha(data);
+    alpha = hasAlpha(data, data.width, data.height);
+    if (alpha && isSoftShadow(data, data.width, data.height)) return null;
     bitmap = await createImageBitmap(data);
   }
   const maxW = Math.max(16, Math.round((placedW / 72) * dpi));

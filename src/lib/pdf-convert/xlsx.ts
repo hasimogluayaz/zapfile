@@ -57,8 +57,14 @@ function detectDecimalComma(texts: string[]): boolean {
   let comma = 0;
   let dot = 0;
   for (const t of texts) {
-    const u = t.replace(/^%/, "");
+    const u = t
+      .trim()
+      .replace(/^%/, "")
+      .replace(/^(?:[$€£¥₺₹₽]|USD|EUR|GBP|TRY|TL|JPY)\s*/i, "")
+      .replace(/\s*(?:[$€£¥₺₹₽]|USD|EUR|GBP|TRY|TL|JPY)$/i, "");
     if (/^\(?-?[^\d]{0,3}\d{1,3}(\.\d{3})+,\d{1,2}\)?%?$/.test(u) || /^\(?-?\d+,\d{1,2}\)?%?$/.test(u)) comma++;
+    // "1.023.000" (several dot groups) or "18.000 ₺" / "45.000 TL": the dot groups thousands.
+    if (/^\(?-?[^\d]{0,3}\d{1,3}(\.\d{3}){2,}\b/.test(u) || (/^\d{1,3}(\.\d{3})+$/.test(u) && /₺|\bTL\b|\bTRY\b|€|\bEUR\b/i.test(t))) comma++;
     if (/^\(?-?[^\d]{0,3}\d{1,3}(,\d{3})+\.\d{1,2}\)?%?$/.test(u) || /^\(?-?\d+\.\d{1,2}\)?%?$/.test(u)) dot++;
   }
   return comma > dot;
@@ -264,7 +270,7 @@ export async function writeXlsx(
           cells += `<c r="${ref}"${s ? ` s="${s}"` : ""}><v>${parsed.value}</v></c>`;
         } else if (text) {
           const s = styleOf(cell.bold, cell.border, 0, cell.shading, text.includes("\n"));
-          cells += `<c r="${ref}" t="inlineStr"${s ? ` s="${s}"` : ""}><is><t xml:space="preserve">${esc(text)}</t></is></c>`;
+          cells += `<c r="${ref}" t="inlineStr"${s ? ` s="${s}"` : ""}><is><t xml:space="preserve">${esc(text.replace(/[\uE000-\uF8FF]/g, "•"))}</t></is></c>`;
         } else if (cell.border || cell.shading) {
           const s = styleOf(false, cell.border, 0, cell.shading, false);
           cells += `<c r="${ref}"${s ? ` s="${s}"` : ""}/>`;

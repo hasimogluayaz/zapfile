@@ -31,7 +31,7 @@ import { useI18n } from "@/lib/i18n";
 import { formatFileSize, getFileNameWithoutExtension } from "@/lib/utils";
 import { PdfLockedError } from "@/lib/pdf-input";
 import { parsePageRanges, rangesToPages } from "@/lib/split-pdf-ranges";
-import { convertPdf, openForConversion, type ConvertProgress, type ConvertStats, type XlsxOptions } from "@/lib/pdf-convert/client";
+import { convertPdf, openForConversion, type ConvertProgress, type ConvertStats, type DocxLayout, type XlsxOptions } from "@/lib/pdf-convert/client";
 import { renderRegion } from "@/lib/pdf-convert/extract";
 
 type Kind = "docx" | "xlsx" | "pptx" | "md";
@@ -61,6 +61,7 @@ export default function PdfConvertTool({ kind }: { kind: Kind }) {
   const [pageMode, setPageMode] = useState<"all" | "custom">("all");
   const [rangeText, setRangeText] = useState("");
   const [keepPageBreaks, setKeepPageBreaks] = useState(true);
+  const [docxLayout, setDocxLayout] = useState<DocxLayout>("auto");
   const [sheetLayout, setSheetLayout] = useState<XlsxOptions["layout"]>("page");
   const [tablesOnly, setTablesOnly] = useState(false);
   const [numbers, setNumbers] = useState(true);
@@ -93,7 +94,7 @@ export default function PdfConvertTool({ kind }: { kind: Kind }) {
     return pages.length ? { pages, error: null } : { pages: null, error: t("p2o.rangeEmpty") };
   }, [loaded, pageMode, rangeText, t]);
 
-  const settingsKey = JSON.stringify([kind, range.pages, keepPageBreaks, sheetLayout, tablesOnly, numbers, mdImages]);
+  const settingsKey = JSON.stringify([kind, range.pages, keepPageBreaks, docxLayout, sheetLayout, tablesOnly, numbers, mdImages]);
   const fresh = result && result.key === settingsKey ? result : null;
   const running = progress !== null;
 
@@ -112,6 +113,7 @@ export default function PdfConvertTool({ kind }: { kind: Kind }) {
             kind,
             pages: range.pages,
             keepPageBreaks,
+            docxLayout,
             xlsx: { layout: sheetLayout, tablesOnly, numbers },
             mdImages,
             title,
@@ -137,7 +139,7 @@ export default function PdfConvertTool({ kind }: { kind: Kind }) {
         }
       }
     },
-    [kind, keepPageBreaks, numbers, mdImages, range.pages, sheetLayout, tablesOnly, t],
+    [kind, keepPageBreaks, docxLayout, numbers, mdImages, range.pages, sheetLayout, tablesOnly, t],
   );
 
   const handleFiles = useCallback(
@@ -301,12 +303,31 @@ export default function PdfConvertTool({ kind }: { kind: Kind }) {
             </div>
 
             {kind === "docx" ? (
-              <Toggle
-                checked={keepPageBreaks}
-                onChange={setKeepPageBreaks}
-                label={t("p2o.keepBreaks")}
-                description={t("p2o.keepBreaksHint")}
-              />
+              <>
+                <div className="space-y-2">
+                  <p className={sectionTitle}>{t("p2o.layout")}</p>
+                  <Segmented<DocxLayout>
+                    label={t("p2o.layout")}
+                    value={docxLayout}
+                    onChange={setDocxLayout}
+                    size="sm"
+                    options={[
+                      { value: "auto", label: t("p2o.layoutAuto") },
+                      { value: "flow", label: t("p2o.layoutFlow") },
+                      { value: "exact", label: t("p2o.layoutExact") },
+                    ]}
+                  />
+                  <p className="text-[12.5px] text-t-tertiary">{t(docxLayout === "flow" ? "p2o.layoutFlowHint" : docxLayout === "exact" ? "p2o.layoutExactHint" : "p2o.layoutAutoHint")}</p>
+                </div>
+                {docxLayout !== "exact" && !fresh?.stats.exactLayout && (
+                  <Toggle
+                    checked={keepPageBreaks}
+                    onChange={setKeepPageBreaks}
+                    label={t("p2o.keepBreaks")}
+                    description={t("p2o.keepBreaksHint")}
+                  />
+                )}
+              </>
             ) : kind === "pptx" ? null : kind === "md" ? (
               <Toggle checked={mdImages} onChange={setMdImages} label={t("p2o.mdImages")} description={t("p2o.mdImagesHint")} />
             ) : (
@@ -375,7 +396,13 @@ export default function PdfConvertTool({ kind }: { kind: Kind }) {
                 </div>
                 {stats && (
                   <ul className="flex flex-wrap gap-2 text-[12.5px] text-t-secondary">
-                    {kind === "docx" || kind === "md" ? (
+                    {stats.exactLayout ? (
+                      <>
+                        <Chip icon={<Presentation className="h-3.5 w-3.5" />} text={t("p2o.statExact")} />
+                        {(stats.textBoxes ?? 0) > 0 && <Chip icon={<FileText className="h-3.5 w-3.5" />} text={tn("p2o.statTextBoxes", stats.textBoxes ?? 0)} />}
+                        {stats.images > 0 && <Chip icon={<ImageIcon className="h-3.5 w-3.5" />} text={tn("p2o.statImages", stats.images)} />}
+                      </>
+                    ) : kind === "docx" || kind === "md" ? (
                       <>
                         {stats.headings > 0 && <Chip icon={<Heading className="h-3.5 w-3.5" />} text={tn("p2o.statHeadings", stats.headings)} />}
                         {stats.paragraphs > 0 && <Chip icon={<FileText className="h-3.5 w-3.5" />} text={tn("p2o.statParagraphs", stats.paragraphs)} />}

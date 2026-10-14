@@ -103,6 +103,17 @@ Ayrıntı: `git log --oneline origin/main..HEAD`.
   - 2. sayfadaki "NEDEN HAŞİMOĞLU" kutusunda son madde sığmıyor (başlık 2 satıra bölünüyor).
   - 6. sayfada logo, REFERANSLARIMIZ kutusunun beyaz zemini altında kalıyor; Word'de de böyle olabilir, kullanıcıya soruldu.
 
+### PDF → Word / Excel / PowerPoint denetimi (2026-10-14)
+Kullanıcının teklif PDF'i ve düz metin bir raporla test edildi. Bulunan ve düzeltilen hatalar:
+- **JPEG fotoğraflar ve logolar hiç çıkmıyordu (en büyük hata):** pdf.js 5 JPEG'leri `VideoFrame` olarak veriyor, `.width` yok, kod çöküyordu. `extract.ts` düzeltildi.
+- **Gölge resimleri kartların üstünde siyah leke oluyordu:** Bu yumuşak gölgeler artık atlanıyor.
+- **Tasarımlı PDF'ler Word'de dağılıyordu (6 sayfa → 13):**
+  - Yeni `docx-layout.ts` ile birebir düzen modu eklendi.
+  - Otomatik seçim (`prefersExactLayout`) ve arayüzde "Düzen" seçeneği var: Otomatik / Akan metin / Birebir.
+- **Excel'de Türkçe sayılar yanlış okunuyordu:** "1.150" → 1,15; "18.000₺" → 18 çıkıyordu. Ondalık tespiti düzeltildi; PUA madde işaretleri • yapıldı.
+- **PowerPoint ve Word birebir modunda madde işareti metne yapışıktı:** Araya boşluk eklendi.
+- **Kalan farklar:** Yuvarlak köşeli kart çerçeveleri (vektör şekiller) taşınmıyor; metinler ve resimler doğru yerde.
+
 ## Sıradaki işler
 
 1. **Kullanıcı önizlemede test edecek** (Word to PDF): hızlı mod ve gizli mod. Sonucu bekle.
