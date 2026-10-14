@@ -118,6 +118,8 @@ Kullanıcının teklif PDF'i ve düz metin bir raporla test edildi. Bulunan ve d
 
 - **Dürüst gizlilik metinleri (9 dil):** Ana sayfa, alt bilgi, Hakkında, Şartlar, Gizlilik, SSS, site meta açıklamaları ve blog hâlâ "hiçbir şey yüklenmez / sunucu yok" diyordu. Artık: araçların çoğu cihazda çalışır; Word/Excel/PowerPoint/HTML → PDF hızlı modda Almanya'daki kendi sunucumuzu kullanır ve dosyayı hemen siler; gizli mod tarayıcıda çalışır. Kullanılmayan eski anahtarlar (`cta.*`, `home.privacy.step*` vb.) silindi. **Yeni metinlerde "hiçbir dosya yüklenmez" gibi genel iddia yazma.**
 - **PDF sıkıştırma:** ASCII85/ASCIIHex sarmalı resimler (Distiller, reportlab, bazı tarayıcılar) hiç sıkıştırılmıyordu (%0). Düzeltildi: test dosyası 5,4 MB → 0,36 MB; kayıpsız modda sarmal kayıpsız atılıyor (~%20).
+- **Telefonda taşma** (Resim Boyutlandırma, Kolaj, Meme) düzeltildi; `downloadBlob` URL'yi artık 60 sn sonra bırakıyor (Safari/Firefox).
+- **Arka plan silme modeli 94 MB → 51 MB:** ağırlıklar int8 (`models/tools/int8store.py`), hesaplama yine float32, maske IoU ≥ 0,999. Sunucuya taşıma ölçüldü ve reddedildi: model 1,38 GB RAM ve 1 çekirdekte ~14 sn/foto istiyor, 1 GB sunucuya sığmaz.
 - **Test notu:** `next dev` modunda pdf.js "Object.defineProperty called on non-object" hatası veriyor; sadece dev'e özgü, `npm run build && npx next start` ile araçlar çalışıyor. Testleri prod derlemeyle yap.
 
 ## Sıradaki işler
