@@ -1,5 +1,7 @@
 # ZapFile — Project Context
 
+> **Continuing previous work?** Read `docs/HANDOFF.md` first: current branch, open decisions and the next task (server-side Office → PDF).
+
 ## Overview
 
 ZapFile (zapfile.xyz) is a free, browser-based file processing tool suite. All processing happens client-side — no server uploads. Deployed on Vercel via GitHub (main branch auto-deploys).
