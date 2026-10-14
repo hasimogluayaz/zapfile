@@ -8,6 +8,7 @@
 import { PDFDocument } from "pdf-lib";
 import type { FromWorker, ImageJobRequest, RunOptions, ToWorker } from "./protocol";
 import {
+  codecBytes,
   collectGarbage,
   decodeFlateToRgba,
   findImages,
@@ -16,6 +17,7 @@ import {
   stripJpegApp1,
   stripMetadata,
   stripThumbnails,
+  unwrapAscii,
   type ImageCandidate,
 } from "./pdf-images";
 
@@ -76,7 +78,7 @@ async function processCandidate(
 
   let result: { jpeg: ArrayBuffer | null; width: number; height: number };
   if (c.kind === "jpeg") {
-    const jpeg = stripJpegApp1(c.stream.contents);
+    const jpeg = stripJpegApp1(codecBytes(c));
     const data = jpeg.slice().buffer as ArrayBuffer;
     result = await requestJob(
       { kind: "jpeg", data, width: c.width, height: c.height, targetW: target.w, targetH: target.h },
@@ -130,6 +132,7 @@ async function run(bytes: ArrayBuffer, options: RunOptions) {
         const c = found.candidates[index++];
         try {
           if (await processCandidate(doc, c, placements.get(c.ref.tag), options)) replaced++;
+          else unwrapAscii(doc, c);
         } catch (error) {
           console.warn("Image skipped", error);
         }
@@ -138,6 +141,14 @@ async function run(bytes: ArrayBuffer, options: RunOptions) {
       }
     };
     await Promise.all([lane(), lane()]);
+  } else if (options.mode === "lossless") {
+    for (const c of findImages(doc).candidates) {
+      try {
+        unwrapAscii(doc, c);
+      } catch (error) {
+        console.warn("Image skipped", error);
+      }
+    }
   }
   if (options.removeMetadata) stripMetadata(doc);
   stripThumbnails(doc);

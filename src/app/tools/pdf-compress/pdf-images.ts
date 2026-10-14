@@ -33,7 +33,12 @@ export interface ImageCandidate {
   /** PNG predictor (≥ 10) or 1 (none) for Flate images. */
   predictor: number;
   bytes: number;
+  /** ASCII85 / ASCIIHex layers wrapped around the image data (outermost first). */
+  asciiLayers: AsciiFilter[];
 }
+
+type AsciiFilter = "ASCII85Decode" | "ASCIIHexDecode";
+const ASCII_FILTERS = new Set<string>(["ASCII85Decode", "ASCIIHexDecode", "A85", "AHx"]);
 
 const N = (name: string) => PDFName.of(name);
 
@@ -42,25 +47,99 @@ function num(dict: PDFDict, key: string): number | undefined {
   return v instanceof PDFNumber ? v.asNumber() : undefined;
 }
 
-function singleFilter(dict: PDFDict): string | null | undefined {
+/**
+ * The image's real codec, plus any ASCII85/ASCIIHex text layers in front of it
+ * (PostScript-era producers such as Distiller, reportlab and many scanners wrap
+ * images that way). Other filter chains are left alone (null).
+ */
+function imageFilter(dict: PDFDict): { filter: string; ascii: AsciiFilter[] } | null | undefined {
   const f = dict.lookup(N("Filter"));
   if (!f) return undefined;
-  if (f instanceof PDFName) return f.decodeText();
-  if (f instanceof PDFArray && f.size() === 1) {
-    const only = f.lookup(0);
-    return only instanceof PDFName ? only.decodeText() : null;
+  if (f instanceof PDFName) return { filter: f.decodeText(), ascii: [] };
+  if (!(f instanceof PDFArray) || f.size() === 0) return null;
+  const names: string[] = [];
+  for (let i = 0; i < f.size(); i++) {
+    const n = f.lookup(i);
+    if (!(n instanceof PDFName)) return null;
+    names.push(n.decodeText());
   }
-  return null; // filter chains are left alone
+  const filter = names.pop()!;
+  if (!names.every((n) => ASCII_FILTERS.has(n))) return null;
+  const ascii = names.map((n): AsciiFilter => (n === "ASCII85Decode" || n === "A85" ? "ASCII85Decode" : "ASCIIHexDecode"));
+  return { filter, ascii };
 }
 
+/** DecodeParms of the last (codec) filter. */
 function decodeParms(dict: PDFDict): PDFDict | undefined {
   const p = dict.lookup(N("DecodeParms"));
   if (p instanceof PDFDict) return p;
-  if (p instanceof PDFArray && p.size() === 1) {
-    const only = p.lookup(0);
-    if (only instanceof PDFDict) return only;
+  if (p instanceof PDFArray && p.size() >= 1) {
+    const last = p.lookup(p.size() - 1);
+    if (last instanceof PDFDict) return last;
   }
   return undefined;
+}
+
+function decodeAscii85(input: Uint8Array): Uint8Array {
+  const out = new Uint8Array(Math.ceil((input.length * 4) / 5) + 4);
+  let o = 0;
+  let group = 0;
+  let n = 0;
+  let i = 0;
+  // Optional "<~" prefix.
+  if (input[0] === 0x3c && input[1] === 0x7e) i = 2;
+  for (; i < input.length; i++) {
+    const c = input[i];
+    if (c === 0x7e) break; // "~>" end of data
+    if (c <= 0x20) continue; // whitespace
+    if (c === 0x7a && n === 0) {
+      // "z" = four zero bytes
+      out[o++] = 0; out[o++] = 0; out[o++] = 0; out[o++] = 0;
+      continue;
+    }
+    if (c < 0x21 || c > 0x75) throw new Error("Bad ASCII85 data");
+    group = group * 85 + (c - 0x21);
+    if (++n === 5) {
+      out[o++] = group >>> 24;
+      out[o++] = (group >>> 16) & 0xff;
+      out[o++] = (group >>> 8) & 0xff;
+      out[o++] = group & 0xff;
+      group = 0;
+      n = 0;
+    }
+  }
+  if (n > 0) {
+    // Pad a partial group with "u" and keep n - 1 bytes.
+    for (let k = n; k < 5; k++) group = group * 85 + 84;
+    const bytes = [group >>> 24, (group >>> 16) & 0xff, (group >>> 8) & 0xff, group & 0xff];
+    for (let k = 0; k < n - 1; k++) out[o++] = bytes[k];
+  }
+  return out.subarray(0, o);
+}
+
+function decodeAsciiHex(input: Uint8Array): Uint8Array {
+  const out = new Uint8Array(Math.ceil(input.length / 2));
+  let o = 0;
+  let hi = -1;
+  for (const c of input) {
+    if (c === 0x3e) break; // ">" end of data
+    const v = c >= 0x30 && c <= 0x39 ? c - 0x30 : c >= 0x41 && c <= 0x46 ? c - 55 : c >= 0x61 && c <= 0x66 ? c - 87 : -1;
+    if (v < 0) continue; // whitespace
+    if (hi < 0) hi = v;
+    else {
+      out[o++] = (hi << 4) | v;
+      hi = -1;
+    }
+  }
+  if (hi >= 0) out[o++] = hi << 4;
+  return out.subarray(0, o);
+}
+
+/** The stream's bytes with its ASCII text layers removed (still JPEG / Flate coded). */
+export function codecBytes(c: ImageCandidate): Uint8Array {
+  let data = c.stream.contents;
+  for (const layer of c.asciiLayers) data = layer === "ASCII85Decode" ? decodeAscii85(data) : decodeAsciiHex(data);
+  return data;
 }
 
 /** Component count of a colour space we can re-encode, or null. */
@@ -136,7 +215,8 @@ export function findImages(doc: PDFDocument): { all: number; allBytes: number; c
     if (width < 16 || height < 16 || width * height < 64 * 64) continue;
     if (obj.contents.length < 4096) continue;
 
-    const filter = singleFilter(dict);
+    const codec = imageFilter(dict);
+    const filter = codec?.filter;
     if (filter !== "DCTDecode" && filter !== "FlateDecode") continue;
     const cs = colorSpaceInfo(doc, dict.get(N("ColorSpace")));
     if (!cs) continue;
@@ -170,6 +250,7 @@ export function findImages(doc: PDFDocument): { all: number; allBytes: number; c
       keepColorSpace: cs.rgbFamily,
       predictor,
       bytes: obj.contents.length,
+      asciiLayers: codec!.ascii,
     });
   }
   return { all, allBytes, candidates };
@@ -547,6 +628,19 @@ export function replaceWithJpeg(doc: PDFDocument, c: ImageCandidate, jpeg: Uint8
   if (!c.keepColorSpace) dict.set(N("ColorSpace"), N("DeviceRGB"));
   dict.set(N("Length"), PDFNumber.of(jpeg.length));
   doc.context.assign(c.ref, PDFRawStream.of(dict, jpeg));
+}
+
+/** Losslessly drop an image's ASCII85/ASCIIHex layers (they add 25–100 % to its size). */
+export function unwrapAscii(doc: PDFDocument, c: ImageCandidate) {
+  if (c.asciiLayers.length === 0) return;
+  const data = codecBytes(c);
+  const dict = c.stream.dict.clone(doc.context);
+  const parms = decodeParms(c.stream.dict);
+  dict.set(N("Filter"), N(c.kind === "jpeg" ? "DCTDecode" : "FlateDecode"));
+  if (parms) dict.set(N("DecodeParms"), parms);
+  else dict.delete(N("DecodeParms"));
+  dict.set(N("Length"), PDFNumber.of(data.length));
+  doc.context.assign(c.ref, PDFRawStream.of(dict, data));
 }
 
 /** Remove document info, XMP packets and private application data. */
