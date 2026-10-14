@@ -2,7 +2,7 @@
  * Word / Excel / PowerPoint → PDF with LibreOffice compiled to WebAssembly, entirely in the browser.
  *
  * The engine's two big files live gzipped in models/libreoffice-<version>/ of this repository and are
- * fetched from a pinned commit (jsDelivr, fallback raw.githubusercontent). The gzip stream is verified by
+ * fetched from a pinned commit via free CDNs (jsDelivr, hedged with raw.githubusercontent). The gzip stream is verified by
  * SHA-256, kept in Cache Storage and unpacked with DecompressionStream; the unpacked bytes are handed to
  * LibreOffice's worker as blob: URLs. The loader scripts are served from /vendor/libreoffice-<version>/.
  *
@@ -33,19 +33,6 @@ const FILES: EngineFile[] = [
 
 /** Total one-time download, for the UI. */
 export const ENGINE_DOWNLOAD_BYTES = FILES.reduce((s, f) => s + f.gzBytes, 0);
-
-function sourcesFor(f: EngineFile): string[][] {
-  const names = Array.from({ length: f.parts }, (_, i) => `${f.name}-part-${String(i).padStart(2, "0")}.bin`);
-  const dir = `models/libreoffice-${VERSION}`;
-  const override = process.env.NEXT_PUBLIC_OFFICE_ENGINE_URL; // e.g. a self-hosted copy of the same parts
-  return [
-    ...(override ? [names.map((n) => `${override.replace(/\/$/, "")}/${n}`)] : []),
-    // Same origin first (copied into the deployment at build time): the site's own CDN, no cold cache.
-    names.map((n) => `/vendor/libreoffice-${VERSION}/engine/${n}`),
-    names.map((n) => `https://cdn.jsdelivr.net/gh/${REPO}@${COMMIT}/${dir}/${n}`),
-    names.map((n) => `https://raw.githubusercontent.com/${REPO}/${COMMIT}/${dir}/${n}`),
-  ];
-}
 
 const cacheKey = (f: EngineFile) => `https://office.zapfile.invalid/${VERSION}/${f.name}-${f.sha256.slice(0, 16)}.gz`;
 
@@ -80,28 +67,93 @@ async function openCache(): Promise<Cache | null> {
   }
 }
 
+/** Mirrors for one part, in order of preference. All free CDNs serving the pinned commit. */
+function mirrorsFor(f: EngineFile, part: number): string[] {
+  const name = `${f.name}-part-${String(part).padStart(2, "0")}.bin`;
+  const dir = `models/libreoffice-${VERSION}`;
+  const override = process.env.NEXT_PUBLIC_OFFICE_ENGINE_URL; // e.g. a self-hosted copy of the same parts
+  return [
+    ...(override ? [`${override.replace(/\/$/, "")}/${name}`] : []),
+    `https://cdn.jsdelivr.net/gh/${REPO}@${COMMIT}/${dir}/${name}`,
+    `https://raw.githubusercontent.com/${REPO}/${COMMIT}/${dir}/${name}`,
+  ];
+}
+
+/** If a mirror has not started sending within this time, ask the next one too and keep the faster. */
+const HEDGE_MS = 2500;
+
+/**
+ * Download one part. Mirrors are "hedged": a slow start (e.g. a CDN edge filling its cache) brings in
+ * the next mirror in parallel, whichever answers first is used and the other is cancelled.
+ */
+async function fetchPart(urls: string[], onBytes: (n: number) => void, signal: AbortSignal): Promise<Blob> {
+  const failures: string[] = [];
+  const attempts = urls.map(() => new AbortController());
+  const abortAll = () => attempts.forEach((a) => a.abort());
+  signal.addEventListener("abort", abortAll, { once: true });
+  try {
+    const res = await new Promise<{ res: Response; i: number }>((resolve, reject) => {
+      let next = 0;
+      let pending = 0;
+      let won = false;
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      const launch = () => {
+        if (won || next >= urls.length) return;
+        const i = next++;
+        pending++;
+        clearTimeout(timer);
+        timer = setTimeout(launch, HEDGE_MS);
+        fetch(urls[i]!, { mode: "cors", credentials: "omit", signal: attempts[i]!.signal })
+          .then((r) => {
+            if (!r.ok || !r.body) throw new Error(`HTTP ${r.status}`);
+            if (won) return void attempts[i]!.abort();
+            won = true;
+            clearTimeout(timer);
+            attempts.forEach((a, j) => j !== i && a.abort());
+            resolve({ res: r, i });
+          })
+          .catch((e) => {
+            failures.push(`${new URL(urls[i]!).host}: ${(e as Error).message}`);
+            pending--;
+            if (won) return;
+            if (next < urls.length) launch();
+            else if (pending === 0) {
+              clearTimeout(timer);
+              reject(new Error(failures.join("; ")));
+            }
+          });
+      };
+      launch();
+    });
+    const reader = res.res.body!.getReader();
+    const chunks: Uint8Array[] = [];
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value);
+      onBytes(value.length);
+    }
+    return new Blob(chunks as BlobPart[]);
+  } finally {
+    signal.removeEventListener("abort", abortAll);
+  }
+}
+
 async function downloadGz(f: EngineFile, onBytes: (n: number) => void): Promise<Blob> {
   const failures: string[] = [];
-  for (const urls of sourcesFor(f)) {
+  // Second round skips the first mirror, in case it served a bad copy.
+  for (const skip of [0, 1]) {
     let got = 0;
     const ac = new AbortController();
     try {
       // All parts at once: several connections fill the line much faster than one.
       const chunks = await Promise.all(
-        urls.map(async (url) => {
-          const res = await fetch(url, { mode: "cors", credentials: "omit", signal: ac.signal });
-          if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
-          const reader = res.body.getReader();
-          const parts: Uint8Array[] = [];
-          for (;;) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            parts.push(value);
-            got += value.length;
-            onBytes(value.length);
-          }
-          return new Blob(parts as BlobPart[]);
-        }),
+        Array.from({ length: f.parts }, (_, i) =>
+          fetchPart(mirrorsFor(f, i).slice(skip), (n) => {
+            got += n;
+            onBytes(n);
+          }, ac.signal),
+        ),
       ).catch((e) => {
         ac.abort();
         throw e;
@@ -110,8 +162,8 @@ async function downloadGz(f: EngineFile, onBytes: (n: number) => void): Promise<
       if (blob.size !== f.gzBytes || (await sha256Hex(blob)) !== f.sha256) throw new Error("integrity check failed");
       return blob;
     } catch (e) {
-      onBytes(-got); // roll back progress for the next source
-      failures.push(`${urls[0] ? new URL(urls[0], location.href).host : "?"}: ${(e as Error).message}`);
+      onBytes(-got); // roll back progress for the next round
+      failures.push((e as Error).message);
     }
   }
   throw new OfficeEngineError("download", failures.join("; "));

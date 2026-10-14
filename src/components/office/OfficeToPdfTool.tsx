@@ -122,18 +122,24 @@ export default function OfficeToPdfTool({ kind }: { kind: OfficeKind }) {
 
   useEffect(() => () => jobsRef.current.forEach((j) => j.thumb && URL.revokeObjectURL(j.thumb)), []);
 
-  // Start downloading and booting the engine as soon as the page opens, so it is usually ready by the
-  // time a file is picked. Skipped on data-saver / slow connections; dropping a file starts it anyway.
+  // Start downloading and booting the engine as soon as the user shows intent (drags a file over the
+  // page, or taps the drop area to open the file picker), so it loads while they pick the file. Not on
+  // page load: visitors who only look would download the engine for nothing.
   const [prefetching, setPrefetching] = useState(false);
-  useEffect(() => {
-    if (support !== "ok") return;
-    const conn = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
-    if (conn?.saveData || /(^|-)(2g|3g)$/.test(conn?.effectiveType ?? "")) return;
-    const onProgress = (p: EngineProgress) => setEngine(p);
+  const warmedUp = useRef(false);
+  const warmUp = useCallback(() => {
+    if (warmedUp.current || support !== "ok") return;
+    warmedUp.current = true;
     setPrefetching(true);
-    getOfficeEngine(onProgress).catch(() => setPrefetching(false)); // errors surface when a file is converted
-    return () => offProgress(onProgress);
+    getOfficeEngine((p) => setEngine(p)).catch(() => {
+      warmedUp.current = false;
+      setPrefetching(false); // errors surface when a file is converted
+    });
   }, [support]);
+  useEffect(() => {
+    window.addEventListener("dragenter", warmUp);
+    return () => window.removeEventListener("dragenter", warmUp);
+  }, [warmUp]);
 
   const update = (id: number, patch: Partial<Job>) => setJobs((prev) => prev.map((j) => (j.id === id ? { ...j, ...patch } : j)));
 
@@ -259,7 +265,9 @@ export default function OfficeToPdfTool({ kind }: { kind: OfficeKind }) {
 
   return (
     <div className="space-y-5">
-      <FileDropzone onFilesSelected={addFiles} accept={accept} multiple formats={formats} label={t(`office.drop.${kind}`)} />
+      <div onPointerDown={warmUp} onKeyDown={warmUp}>
+        <FileDropzone onFilesSelected={addFiles} accept={accept} multiple formats={formats} label={t(`office.drop.${kind}`)} />
+      </div>
 
       {kind === "html" && jobs.length === 0 && <p className="text-[13px] text-t-tertiary">{t("office.htmlNote")}</p>}
 
