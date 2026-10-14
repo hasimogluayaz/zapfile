@@ -1,0 +1,13 @@
+# HTTPS certificates are issued and renewed automatically (Let's Encrypt).
+{$API_DOMAIN} {
+	request_body {
+		max_size 60MB
+	}
+	header -Server
+	reverse_proxy office-api:8080
+}
+
+# More projects on this server: add a block per domain, e.g.
+# api.example.com {
+# 	reverse_proxy other-service:3000
+# }
