@@ -5,7 +5,7 @@ import AboutClient from "./AboutClient";
 export const metadata: Metadata = {
   title: "About ZapFile - Free Browser-Based File Tools",
   description:
-    "Learn about ZapFile - free, private, browser-based file tools. No uploads, no servers, no accounts needed.",
+    "Learn about ZapFile - free, private, browser-based file tools. Most tools run in your browser, and none need an account.",
   alternates: {
     canonical: `${SITE_URL}/about`,
   },

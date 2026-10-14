@@ -43,25 +43,25 @@ const toolFaqs: Record<string, FaqItem[]> = {
   "word-to-pdf": [
     {
       question: "How do I convert Word to PDF for free?",
-      answer: "Drop one or more DOCX, DOC, ODT or RTF files into ZapFile's Word to PDF tool. LibreOffice, running inside your browser, lays out every page and you download the PDFs one by one, as a ZIP, or combined into a single PDF. Nothing is uploaded and there is no watermark.",
+      answer: "Drop one or more DOCX, DOC, ODT or RTF files into ZapFile's Word to PDF tool. LibreOffice lays out every page and you download the PDFs one by one, as a ZIP, or combined into a single PDF. There is no watermark and no sign-up.",
     },
     {
       question: "Will the PDF look the same as in Word?",
       answer: "The document is laid out by LibreOffice, the same engine many converters run on their servers: fonts, tables, images, headers, footers, footnotes, page numbers and page breaks are kept. Common Microsoft fonts are replaced by metric-compatible ones (for example Carlito for Calibri), so lines and pages break in the same places.",
     },
     {
-      question: "Why is there a download the first time?",
-      answer: "The conversion engine is about 77 MB. It is downloaded once, checked and stored in your browser, so later visits start instantly and even work offline. Your documents themselves never leave your device.",
+      question: "Is my document uploaded?",
+      answer: "In fast mode (the default) the document is sent over HTTPS to our own conversion server in Germany, converted in a couple of seconds and deleted right away together with the PDF. Nothing is stored or looked at. Prefer to keep it on your device? Choose private mode: the conversion engine (about 77 MB) is downloaded once into your browser and the document never leaves your computer.",
     },
     {
       question: "Can I convert a password-protected document or make a PDF/A?",
-      answer: "Yes. Enter the document's password when asked and it is opened locally. Turn on PDF/A to get an archival PDF/A-2b file with every font embedded.",
+      answer: "Yes. Enter the document's password when asked; protected documents are always opened and converted locally in your browser. Turn on PDF/A to get an archival PDF/A-2b file with every font embedded.",
     },
   ],
   "excel-to-pdf": [
     {
       question: "How do I convert Excel to PDF?",
-      answer: "Drop XLSX, XLS, ODS or CSV files into ZapFile's Excel to PDF tool. Each workbook is converted in your browser with LibreOffice and you download the PDF. Nothing is uploaded.",
+      answer: "Drop XLSX, XLS, ODS or CSV files into ZapFile's Excel to PDF tool. Each workbook is converted with LibreOffice in a couple of seconds and you download the PDF. Files sent to our server in fast mode are deleted right after; private mode converts in your browser instead.",
     },
     {
       question: "Are all sheets and formulas included?",
@@ -75,7 +75,7 @@ const toolFaqs: Record<string, FaqItem[]> = {
   "powerpoint-to-pdf": [
     {
       question: "How do I convert PowerPoint to PDF?",
-      answer: "Drop PPTX, PPT or ODP presentations into ZapFile's PowerPoint to PDF tool. Each slide becomes one PDF page, converted in your browser with LibreOffice. Nothing is uploaded and there is no watermark.",
+      answer: "Drop PPTX, PPT or ODP presentations into ZapFile's PowerPoint to PDF tool. Each slide becomes one PDF page, converted with LibreOffice. There is no watermark, and private mode keeps the file in your browser if you prefer.",
     },
     {
       question: "Are images, shapes and slide designs kept?",
@@ -163,7 +163,7 @@ const toolFaqs: Record<string, FaqItem[]> = {
   "html-to-pdf": [
     {
       question: "How do I convert an HTML file to PDF?",
-      answer: "Drop .html files into ZapFile's HTML to PDF tool. LibreOffice, running in your browser, lays out the page and you download the PDF. Nothing is uploaded.",
+      answer: "Drop .html files into ZapFile's HTML to PDF tool. LibreOffice lays out the page and you download the PDF. Choose private mode to convert it in your browser instead of on our server.",
     },
     {
       question: "Why are some pictures or styles missing?",

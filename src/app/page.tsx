@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { EyeOff, HardDrive, ServerOff, UserX } from "lucide-react";
+import { HardDrive, Laptop, Server, UserX } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ToolCard from "@/components/ToolCard";
@@ -193,7 +193,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Privacy: the reason ZapFile exists */}
+        {/* Privacy: what runs where */}
         <section className="mx-auto max-w-6xl px-4 pb-20 sm:px-6">
           <div className="overflow-hidden rounded-[32px] bg-ink px-6 py-12 text-white ring-1 ring-white/5 sm:px-12 sm:py-16">
             <div className="grid gap-12 lg:grid-cols-[1fr_1.4fr] lg:gap-16">
@@ -207,8 +207,8 @@ export default function Home() {
               </div>
               <ul className="grid gap-8 sm:grid-cols-3 lg:gap-6">
                 {[
-                  { Icon: EyeOff, title: "home.privacy.zeroUploads.title", desc: "home.privacy.zeroUploads.desc" },
-                  { Icon: ServerOff, title: "home.privacy.noServer.title", desc: "home.privacy.noServer.desc" },
+                  { Icon: Laptop, title: "home.privacy.zeroUploads.title", desc: "home.privacy.zeroUploads.desc" },
+                  { Icon: Server, title: "home.privacy.noServer.title", desc: "home.privacy.noServer.desc" },
                   { Icon: UserX, title: "home.privacy.noAccount.title", desc: "home.privacy.noAccount.desc" },
                 ].map(({ Icon, title, desc }) => (
                   <li key={title}>

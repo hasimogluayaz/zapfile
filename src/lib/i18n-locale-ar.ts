@@ -1940,10 +1940,11 @@ export const arLocaleStrings: Record<string, string> = {
   "compimg.webpHint": "عادةً ما يكون WebP أصغر بنسبة 25–35٪ من JPG/PNG بنفس الجودة.",
   "csvview.preview": "معاينة الجدول",
   "pw.checkTitle": "اختبر كلمة مرورك",
-  "home.hero.title": "اعمل على ملفاتك دون رفعها.",
-  "home.hero.subtitle": "{count} أداة مجانية لملفات PDF والصور والصوت والمهام اليومية. كل شيء يعمل داخل متصفحك.",
+  "home.hero.title": "أدوات مجانية لكل ملف.",
+  "home.hero.subtitle": "{count} أداة مجانية لملفات PDF والصور والصوت والمهام اليومية. يعمل معظمها مباشرة في متصفحك، دون تسجيل.",
   "home.drop.title": "أفلت ملفًا لترى ما يمكنك فعله به",
   "home.drop.browse": "اختر ملفًا",
+  "home.drop.privacy": "يبقى على هذا الجهاز حتى تختار أداة",
   "home.drop.matches": "افتحه في",
   "home.drop.multi": "{count} ملفات",
   "home.drop.none": "لا توجد أداة تفتح ملفات {ext} بعد. جرّب البحث بالأسفل.",
@@ -2060,7 +2061,7 @@ export const arLocaleStrings: Record<string, string> = {
     "سريعة وخاصة ومجانية. كل شيء يعمل في متصفحك — بلا رفع ملفات، بلا حسابات، بلا حدود.",
   "hero.cta": "تصفح جميع الأدوات",
   "hero.toolCount": "{count} أداة متاحة",
-  "hero.trust1": "ملفاتك تبقى على جهازك",
+  "hero.trust1": "تعمل معظم الأدوات على جهازك",
   "hero.trust2": "معالجة فورية",
   "hero.trust3": "بلا حدود، مجاني للأبد",
 
@@ -2083,29 +2084,19 @@ export const arLocaleStrings: Record<string, string> = {
   "tool.result": "النتيجة",
   "tool.saved": "تم الحفظ",
 
-  "home.privacy.badge": "الخصوصية أولاً",
-  "home.privacy.heading": "ملفاتك لا تغادر متصفحك أبداً",
-  "home.privacy.zeroUploads.title": "صفر رفع",
-  "home.privacy.zeroUploads.desc": "تُعالَج الملفات محلياً عبر واجهات المتصفح",
-  "home.privacy.noServer.title": "بلا تخزين على الخادم",
-  "home.privacy.noServer.desc": "لا يُرسل شيء إلى خوادمنا ولا يُخزن عليها",
+  "home.privacy.heading": "الخصوصية في التصميم",
+  "home.privacy.zeroUploads.title": "تعمل على جهازك",
+  "home.privacy.zeroUploads.desc": "تعالج أدوات PDF والصور والصوت والأدوات المساعدة الملفات محلياً. لا يُرسل شيء.",
+  "home.privacy.noServer.title": "خادمنا الخاص، دون أي تخزين",
+  "home.privacy.noServer.desc": "تستخدم تحويلات Word وExcel وPowerPoint إلى PDF خادمنا في ألمانيا للسرعة. تُحذف الملفات فوراً، أو اختر الوضع الخاص.",
   "home.privacy.noAccount.title": "بلا حساب",
   "home.privacy.noAccount.desc": "استخدم كل الأدوات دون تسجيل أو دخول",
-  "home.privacy.howTitle": "كيف يعمل",
-  "home.privacy.step1": "اختر الملفات",
-  "home.privacy.step2": "عالج محلياً",
-  "home.privacy.step3": "نزّل النتائج",
   "home.privacy.howDesc":
-    "تتولى WebAssembly وواجهة Canvas كل المعالجة في متصفحك — بلا رفع.",
-  "home.privacy.comparison":
-    "على عكس أدوات أخرى، يعالج ZapFile كل شيء في متصفحك. ملفاتك تبقى على جهازك.",
+    "تعمل كل الأدوات تقريباً داخل متصفحك، فلا تغادر تلك الملفات جهازك أبداً. وحدها أدوات تحويل Office إلى PDF تستخدم خادمنا الخاص، وتحذف ملفك فور تحويله.",
 
-  "cta.title": "هل أنت مستعد للبدء؟",
-  "cta.subtitle":
-    "{count} أداة مجانية في متناول اليد. بلا تسجيل، بلا رفع، بلا تعقيد.",
 
   "footer.brand":
-    "أدوات ملفات سريعة ومجانية وخاصة. كل شيء في متصفحك — ملفاتك لا تغادر جهازك.",
+    "أدوات ملفات سريعة ومجانية وخاصة. يعمل معظمها مباشرة في متصفحك.",
   "footer.product": "المنتج",
   "footer.legal": "قانوني",
   "footer.popular": "شائعة",
@@ -2116,7 +2107,7 @@ export const arLocaleStrings: Record<string, string> = {
   "footer.privacy": "سياسة الخصوصية",
   "footer.compare": "ZapFile مقابل Smallpdf",
   "footer.terms": "شروط الخدمة",
-  "footer.copyright": "تتم كل المعالجة في متصفحك.",
+  "footer.copyright": "مجاني، بلا تسجيل، بلا علامات مائية.",
   "footer.freeTools": "{count} أداة مجانية",
   "footer.noSignup": "بلا تسجيل",
 
@@ -2132,7 +2123,7 @@ export const arLocaleStrings: Record<string, string> = {
     "نعم، كل أدوات ZapFile مجانية بالكامل دون تكاليف خفية أو اشتراكات.",
   "faq.safe.q": "هل بياناتي آمنة؟",
   "faq.safe.a":
-    "بالتأكيد. تتم كل المعالجة مباشرة في متصفحك. لا تُرفع ملفاتك إلى أي خادم.",
+    "نعم. تعالج كل الأدوات تقريباً ملفاتك مباشرة في متصفحك، فلا تُرفع أبداً. تستخدم أدوات تحويل Word وExcel وPowerPoint وHTML إلى PDF في الوضع السريع خادمنا في ألمانيا: يُرسل الملف عبر HTTPS ويُحذف فور التحويل. اختر الوضع الخاص في تلك الصفحات ليبقى كل شيء على جهازك.",
   "faq.account.q": "هل أحتاج إنشاء حساب؟",
   "faq.account.a": "لا. ZapFile لا يطلب تسجيلاً أو دخولاً أو إنشاء حساب.",
   "faq.offline.q": "هل تعمل الأداة دون اتصال؟",

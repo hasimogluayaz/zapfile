@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     template: "%s | ZapFile",
   },
   description:
-    "Fast, free, and private file tools. Compress PDFs, convert images, generate QR codes and more. All processing happens in your browser — no uploads, no limits.",
+    "Fast, free, and private file tools. Compress PDFs, convert images, generate QR codes and more. Most tools run right in your browser, with no sign-up and no watermarks.",
   keywords: [
     "file tools",
     "compress pdf",
@@ -62,7 +62,7 @@ export const metadata: Metadata = {
     siteName: "ZapFile",
     title: "ZapFile - Free Online File Tools",
     description:
-      "Fast, free, and private file tools. All processing happens in your browser.",
+      "Fast, free, and private file tools. Most run right in your browser.",
     images: [
       {
         url: "/og-image.png",
@@ -76,7 +76,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "ZapFile - Free Online File Tools",
     description:
-      "Fast, free, and private file tools. All processing happens in your browser.",
+      "Fast, free, and private file tools. Most run right in your browser.",
     images: ["/og-image.png"],
   },
   robots: {
@@ -121,7 +121,7 @@ const jsonLd = {
   name: "ZapFile",
   url: SITE_URL,
   description:
-    "Fast, free, and private file tools. Compress PDFs, convert images, generate QR codes and more. All processing happens in your browser.",
+    "Fast, free, and private file tools. Compress PDFs, convert images, generate QR codes and more. Most tools run right in your browser.",
   applicationCategory: "UtilityApplication",
   operatingSystem: "Any",
   offers: {

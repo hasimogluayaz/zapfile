@@ -208,7 +208,7 @@ For technical users, tools like Ghostscript or the Python library PyPDF2 can mer
 
 Many popular online PDF tools upload your files to remote servers for processing. That means your documents pass through third-party infrastructure, and you have to trust that they are deleted afterward. For sensitive documents like contracts, tax forms, or medical records, this is a real concern.
 
-Browser-based tools eliminate this risk entirely. When you use [ZapFile](/), your files never leave your device. The processing happens using JavaScript and WebAssembly running in your browser tab. Once you close the tab, nothing remains on any server because nothing was ever sent.
+Browser-based tools eliminate this risk. When you use ZapFile's [PDF](/tools/merge-pdf), [image](/tools/compress-image) and utility tools, your files never leave your device. The processing happens using JavaScript and WebAssembly running in your browser tab. Once you close the tab, nothing remains on any server because nothing was ever sent. (The one exception is the fast mode of the Office to PDF converters, which send the document to our own server and delete it right after conversion; their private mode runs in the browser too.)
 
 ## Tips for a Clean Merge
 
@@ -290,7 +290,7 @@ Some of the most time-saving tools are the small utilities you reach for occasio
 
 The trend in 2025 is clearly toward browser-based processing. Modern browsers can handle tasks that previously required desktop software or server-side processing. The advantages are clear:
 
-- **Privacy** - Your files never leave your device.
+- **Privacy** - Almost every tool runs on your device, so your files never leave it.
 - **Speed** - No upload or download wait times.
 - **No limits** - No artificial file-size caps.
 - **No installs** - Works on any device with a modern browser.
