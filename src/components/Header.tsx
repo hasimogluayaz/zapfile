@@ -41,6 +41,23 @@ const catKeys: Record<ToolCategory, string> = {
   utility: "cat.utility",
 };
 
+/** Shown straight in the header (desktop) and on top of the mobile menu: what most people come for. */
+const POPULAR = ["merge-pdf", "split-pdf", "pdf-compress", "compress-image"];
+/** How many of POPULAR fit in the desktop header next to the menus and search. */
+const POPULAR_IN_HEADER = 3;
+const CONVERT_TO_PDF = ["image-to-pdf", "word-to-pdf", "powerpoint-to-pdf", "excel-to-pdf", "html-to-pdf"];
+const CONVERT_FROM_PDF = ["pdf-to-images", "pdf-to-word", "pdf-to-powerpoint", "pdf-to-excel", "pdf-to-markdown", "ocr-pdf"];
+/** PDF tools in the all-tools menu, in groups like the competition uses (task first, not A-Z). */
+const PDF_GROUPS: { key: string; slugs: string[] }[] = [
+  { key: "nav.grp.organize", slugs: ["merge-pdf", "split-pdf", "organize-pdf", "rotate-pdf", "pdf-page-numbers", "crop-pdf"] },
+  { key: "nav.grp.optimize", slugs: ["pdf-compress", "repair-pdf", "ocr-pdf"] },
+  { key: "nav.convertTo", slugs: CONVERT_TO_PDF },
+  { key: "nav.convertFrom", slugs: [...CONVERT_FROM_PDF.filter((s) => s !== "ocr-pdf"), "pdf-text-extractor"] },
+  { key: "nav.grp.edit", slugs: ["fill-pdf", "sign-pdf", "watermark-pdf", "compare-pdf", "redact-pdf"] },
+  { key: "nav.grp.security", slugs: ["pdf-encrypt"] },
+];
+const toolBySlug = (slug: string) => tools.find((tool) => tool.slug === slug);
+
 export function Logo({ size = 28 }: { size?: number }) {
   return (
     <span className="flex items-center gap-2">
@@ -306,6 +323,24 @@ function MobileMenu({
           {t("nav.searchShort")}
         </button>
 
+        <div className="grid grid-cols-2 gap-2">
+          {POPULAR.map((slug) => {
+            const tool = toolBySlug(slug);
+            if (!tool) return null;
+            return (
+              <Link
+                key={slug}
+                href={`/tools/${slug}`}
+                onClick={onClose}
+                className="flex items-center gap-2.5 rounded-xl border border-border bg-surface px-3 py-3 text-[14px] font-medium text-t-primary"
+              >
+                <ToolIcon slug={slug} className="h-[18px] w-[18px] shrink-0" />
+                <span className="truncate">{toolField(t, slug, tool, "name")}</span>
+              </Link>
+            );
+          })}
+        </div>
+
         <div className="overflow-hidden rounded-2xl border border-border bg-surface">
           {categories.map((cat, i) => {
             const catTools = tools.filter((tool) => tool.category === cat);
@@ -374,14 +409,62 @@ function MobileMenu({
   );
 }
 
+// ─── Convert menu (to PDF / from PDF) ─────────────────────────
+function ConvertMenu({ onNavigate }: { onNavigate: () => void }) {
+  const { t } = useI18n();
+  const column = (title: string, slugs: string[]) => (
+    <div className="min-w-0">
+      <p className="mb-1.5 px-2 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-t-tertiary">{title}</p>
+      {slugs.map((slug) => {
+        const tool = toolBySlug(slug);
+        if (!tool) return null;
+        return (
+          <Link
+            key={slug}
+            href={`/tools/${slug}`}
+            onClick={onNavigate}
+            className="flex items-center gap-2.5 rounded-lg px-2 py-2 text-[13.5px] font-medium text-t-secondary hover:bg-bg-secondary hover:text-t-primary"
+          >
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] bg-bg-secondary text-t-primary">
+              <ToolIcon slug={slug} className="h-[15px] w-[15px]" />
+            </span>
+            <span className="truncate">{toolField(t, slug, tool, "name")}</span>
+          </Link>
+        );
+      })}
+    </div>
+  );
+  return (
+    <div className="grid w-[min(520px,calc(100vw-2rem))] grid-cols-2 gap-3 rounded-[20px] border border-border bg-surface p-3 shadow-float animate-pop-in">
+      {column(t("nav.convertTo"), CONVERT_TO_PDF)}
+      {column(t("nav.convertFrom"), CONVERT_FROM_PDF)}
+    </div>
+  );
+}
+
 // ─── Tools mega menu ───────────────────────────────────────────
 function ToolsMenu({ onNavigate }: { onNavigate: () => void }) {
   const { t } = useI18n();
   const { favorites, ready } = useFavoriteTools();
   const favoriteTools = tools.filter((tool) => favorites.includes(tool.slug));
+  const menuLink = (slug: string) => {
+    const tool = toolBySlug(slug);
+    if (!tool) return null;
+    return (
+      <Link
+        key={slug}
+        href={`/tools/${slug}`}
+        onClick={onNavigate}
+        className="flex items-center gap-2 truncate rounded-lg px-2 py-1.5 text-[13px] text-t-secondary hover:bg-bg-secondary hover:text-t-primary"
+      >
+        <ToolIcon slug={slug} className="h-3.5 w-3.5 shrink-0" />
+        <span className="truncate">{toolField(t, slug, tool, "name")}</span>
+      </Link>
+    );
+  };
 
   return (
-    <div className="w-[min(880px,calc(100vw-2rem))] rounded-[20px] border border-border bg-surface p-2 shadow-float animate-pop-in">
+    <div className="w-[min(1060px,calc(100vw-2rem))] rounded-[20px] border border-border bg-surface p-2 shadow-float animate-pop-in">
       {ready && favoriteTools.length > 0 && (
         <div className="mb-1 flex flex-wrap items-center gap-1.5 rounded-2xl bg-bg-secondary/70 p-2.5">
           <Star className="mx-1 h-4 w-4 fill-volt text-volt-ink" aria-label={t("nav.favorites")} />
@@ -398,28 +481,33 @@ function ToolsMenu({ onNavigate }: { onNavigate: () => void }) {
           ))}
         </div>
       )}
-      <div className="grid max-h-[min(70vh,560px)] grid-cols-4 gap-1 overflow-y-auto p-2">
-        {categories.map((cat) => (
-          <div key={cat} className="min-w-0">
-            <p className="mb-1.5 flex items-center gap-2 px-2 text-[12px] font-semibold text-t-tertiary">
+      <div className="grid max-h-[min(72vh,600px)] grid-cols-3 gap-x-1 gap-y-3 overflow-y-auto p-2 lg:grid-cols-5">
+        {[PDF_GROUPS.slice(0, 2), PDF_GROUPS.slice(2, 4), PDF_GROUPS.slice(4)].map((col, i) => (
+          <div key={i} className="min-w-0 space-y-3">
+            {col.map((g) => (
+              <div key={g.key}>
+                <p className="mb-1 px-2 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-t-tertiary">{t(g.key)}</p>
+                {g.slugs.map((slug) => menuLink(slug))}
+              </div>
+            ))}
+          </div>
+        ))}
+        {(["image", "video", "utility"] as ToolCategory[]).map((cat) => (
+          <div key={cat} className={`min-w-0 ${cat === "video" ? "lg:hidden" : ""}`}>
+            <p className="mb-1 flex items-center gap-2 px-2 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-t-tertiary">
               <CategoryIcon category={cat} className="h-3.5 w-3.5" />
               {t(catKeys[cat])}
             </p>
-            <div>
-              {tools
-                .filter((tool) => tool.category === cat)
-                .map((tool) => (
-                  <Link
-                    key={tool.slug}
-                    href={`/tools/${tool.slug}`}
-                    onClick={onNavigate}
-                    className="flex items-center gap-2 truncate rounded-lg px-2 py-1.5 text-[13px] text-t-secondary hover:bg-bg-secondary hover:text-t-primary"
-                  >
-                    <ToolIcon slug={tool.slug} className="h-3.5 w-3.5 shrink-0" />
-                    <span className="truncate">{toolField(t, tool.slug, tool, "name")}</span>
-                  </Link>
-                ))}
-            </div>
+            {tools.filter((tool) => tool.category === cat).map((tool) => menuLink(tool.slug))}
+            {cat === "utility" && (
+              <div className="mt-3 hidden lg:block">
+                <p className="mb-1 flex items-center gap-2 px-2 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-t-tertiary">
+                  <CategoryIcon category="video" className="h-3.5 w-3.5" />
+                  {t(catKeys.video)}
+                </p>
+                {tools.filter((tool) => tool.category === "video").map((tool) => menuLink(tool.slug))}
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -431,6 +519,14 @@ function ToolsMenu({ onNavigate }: { onNavigate: () => void }) {
         >
           {t("nav.viewAll", { count: tools.length })}
         </Link>
+        <span className="flex items-center gap-4 text-[13px]">
+          <Link href="/workflows" onClick={onNavigate} className="text-t-secondary hover:text-t-primary hover:underline">
+            {t("nav.workflows")}
+          </Link>
+          <Link href="/blog" onClick={onNavigate} className="text-t-secondary hover:text-t-primary hover:underline">
+            {t("nav.blog")}
+          </Link>
+        </span>
       </div>
     </div>
   );
@@ -439,11 +535,14 @@ function ToolsMenu({ onNavigate }: { onNavigate: () => void }) {
 // ─── Header ────────────────────────────────────────────────────
 export default function Header() {
   const pathname = usePathname();
-  const [showMenu, setShowMenu] = useState(false);
+  // Open dropdown: the tools mega menu, the convert menu, or none.
+  const [openMenu, setOpenMenu] = useState<"tools" | "convert" | null>(null);
+  const showMenu = openMenu !== null;
+  const hoverTimer = useRef<number | undefined>(undefined);
   const [showSearch, setShowSearch] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLElement>(null);
   const { t } = useI18n();
   const { theme, toggleTheme } = useTheme();
   const [searchModKey, setSearchModKey] = useState("Ctrl");
@@ -489,11 +588,11 @@ export default function Header() {
     if (!showMenu) return;
     const onDown = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setShowMenu(false);
+        setOpenMenu(null);
       }
     };
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setShowMenu(false);
+      if (e.key === "Escape") setOpenMenu(null);
     };
     document.addEventListener("mousedown", onDown);
     document.addEventListener("keydown", onKey);
@@ -504,7 +603,7 @@ export default function Header() {
   }, [showMenu]);
 
   useEffect(() => {
-    setShowMenu(false);
+    setOpenMenu(null);
   }, [pathname]);
 
   const navLink = (href: string, label: string) => {
@@ -513,7 +612,7 @@ export default function Header() {
       <Link
         href={href}
         aria-current={active ? "page" : undefined}
-        className={`rounded-full px-3 py-1.5 text-[13.5px] font-medium transition-colors ${
+        className={`whitespace-nowrap rounded-full px-3 py-1.5 text-[13.5px] font-medium transition-colors ${
           active
             ? "bg-bg-secondary text-t-primary"
             : "text-t-secondary hover:text-t-primary"
@@ -535,41 +634,62 @@ export default function Header() {
               <Logo />
             </Link>
 
-            {/* Desktop nav */}
-            <nav className="hidden items-center gap-0.5 md:flex" aria-label={t("nav.primaryLabel")}>
-              <div className="relative" ref={menuRef}>
-                <button
-                  type="button"
-                  onClick={() => setShowMenu((v) => !v)}
-                  aria-expanded={showMenu}
-                  aria-haspopup="true"
-                  className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-[13.5px] font-medium transition-colors ${
-                    showMenu || pathname === "/tools"
-                      ? "bg-bg-secondary text-t-primary"
-                      : "text-t-secondary hover:text-t-primary"
-                  }`}
-                >
-                  {t("nav.allTools")}
-                  <ChevronDown
-                    className={`h-3.5 w-3.5 transition-transform ${showMenu ? "rotate-180" : ""}`}
-                    aria-hidden="true"
-                  />
-                </button>
-                {showMenu && (
-                  <div className="absolute start-0 top-full z-50 pt-2">
-                    <ToolsMenu onNavigate={() => setShowMenu(false)} />
+            {/* Desktop nav: popular tools first, then the convert and all-tools menus (hover or click). */}
+            <nav ref={menuRef} className="hidden items-center gap-0.5 md:flex" aria-label={t("nav.primaryLabel")}>
+              {POPULAR.slice(0, POPULAR_IN_HEADER).map((slug) => {
+                const tool = toolBySlug(slug);
+                return tool ? <span key={slug} className="hidden xl:inline-flex">{navLink(`/tools/${slug}`, toolField(t, slug, tool, "name"))}</span> : null;
+              })}
+              {(["convert", "tools"] as const).map((key) => {
+                const open = openMenu === key;
+                const active = key === "tools" && pathname === "/tools";
+                return (
+                  <div
+                    key={key}
+                    className="relative"
+                    onMouseEnter={() => {
+                      window.clearTimeout(hoverTimer.current);
+                      hoverTimer.current = window.setTimeout(() => setOpenMenu(key), 80);
+                    }}
+                    onMouseLeave={() => {
+                      window.clearTimeout(hoverTimer.current);
+                      hoverTimer.current = window.setTimeout(() => setOpenMenu((m) => (m === key ? null : m)), 180);
+                    }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setOpenMenu(open ? null : key)}
+                      aria-expanded={open}
+                      aria-haspopup="true"
+                      className={`flex items-center gap-1 whitespace-nowrap rounded-full px-3 py-1.5 text-[13.5px] font-medium transition-colors ${
+                        open || active ? "bg-bg-secondary text-t-primary" : "text-t-secondary hover:text-t-primary"
+                      }`}
+                    >
+                      {t(key === "convert" ? "nav.convert" : "nav.allTools")}
+                      <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden="true" />
+                    </button>
+                    {open && (
+                      <div
+                        className={
+                          key === "convert"
+                            ? "absolute start-0 top-full z-50 pt-2"
+                            : // The big menu is centred under the header; still a child here, so hovering it keeps it open.
+                              "fixed inset-x-0 top-14 z-50 flex justify-center px-4 pt-2"
+                        }
+                      >
+                        {key === "convert" ? <ConvertMenu onNavigate={() => setOpenMenu(null)} /> : <ToolsMenu onNavigate={() => setOpenMenu(null)} />}
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-              {navLink("/workflows", t("nav.workflows"))}
-              {navLink("/blog", t("nav.blog"))}
+                );
+              })}
             </nav>
 
             <div className="ms-auto flex items-center gap-1.5">
               <button
                 type="button"
                 onClick={() => setShowSearch(true)}
-                className="hidden h-9 items-center gap-2 rounded-full border border-border bg-surface pe-1.5 ps-3 text-[13px] text-t-tertiary shadow-sm transition-colors hover:border-t-primary/25 hover:text-t-secondary sm:flex lg:w-56"
+                className="hidden h-9 items-center gap-2 rounded-full border border-border bg-surface pe-1.5 ps-3 text-[13px] text-t-tertiary shadow-sm transition-colors hover:border-t-primary/25 hover:text-t-secondary sm:flex lg:w-48"
                 aria-label={t("a11y.searchTools")}
               >
                 <Search className="h-4 w-4" strokeWidth={2} aria-hidden="true" />

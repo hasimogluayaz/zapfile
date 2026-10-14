@@ -6,6 +6,9 @@ export const localeOverrides: Partial<
 > = {
   es: {
     "nav.allTools": "Todas las herramientas",
+    "nav.convert": "Convertir PDF",
+    "nav.convertTo": "Convertir a PDF",
+    "nav.convertFrom": "Convertir desde PDF",
     "nav.browseAll": "Ver todas",
     "nav.viewAll": "Ver las {count} herramientas",
     "nav.menu": "Menú",
@@ -2172,6 +2175,9 @@ export const localeOverrides: Partial<
   },
   pt: {
     "nav.allTools": "Todas as ferramentas",
+    "nav.convert": "Converter PDF",
+    "nav.convertTo": "Converter para PDF",
+    "nav.convertFrom": "Converter de PDF",
     "nav.browseAll": "Ver todas",
     "nav.viewAll": "Ver as {count} ferramentas",
     "nav.menu": "Menu",
@@ -4338,6 +4344,9 @@ export const localeOverrides: Partial<
   },
   it: {
     "nav.allTools": "Tutti gli strumenti",
+    "nav.convert": "Converti PDF",
+    "nav.convertTo": "Converti in PDF",
+    "nav.convertFrom": "Converti da PDF",
     "nav.browseAll": "Sfoglia tutto",
     "nav.viewAll": "Vedi tutti i {count} strumenti",
     "nav.menu": "Menu",
@@ -6504,6 +6513,9 @@ export const localeOverrides: Partial<
   },
   ja: {
     "nav.allTools": "すべてのツール",
+    "nav.convert": "PDF変換",
+    "nav.convertTo": "PDFに変換",
+    "nav.convertFrom": "PDFから変換",
     "nav.browseAll": "一覧を見る",
     "nav.viewAll": "{count} 件のツールを見る",
     "nav.menu": "メニュー",

@@ -5,6 +5,9 @@
 
 export const arLocaleStrings: Record<string, string> = {
   "nav.allTools": "جميع الأدوات",
+  "nav.convert": "تحويل PDF",
+  "nav.convertTo": "تحويل إلى PDF",
+  "nav.convertFrom": "تحويل من PDF",
   "tool.repair-pdf.name": "إصلاح PDF",
   "tool.repair-pdf.desc": "أصلح ملفات PDF التي لا تُفتح أو تظهر أخطاء واستعد أكبر عدد من الصفحات",
   "repair.drop": "أفلت ملف PDF تالفًا",
