@@ -7,7 +7,7 @@ import { useI18n } from "@/lib/i18n";
 export default function HtmlToPdfPage() {
   const { t } = useI18n();
   return (
-    <ToolLayout toolName={t("tool.html-to-pdf.name")} toolDescription={t("tool.html-to-pdf.desc")}>
+    <ToolLayout toolName={t("tool.html-to-pdf.name")} toolDescription={t("tool.html-to-pdf.desc")} showTrustPanel={false}>
       <OfficeToPdfTool kind="html" />
     </ToolLayout>
   );

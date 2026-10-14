@@ -61,7 +61,28 @@ Ayrıntı için: `git log --oneline origin/main..HEAD` (66+ commit).
   - Bu, Vercel'den servis edilen eski sürümde de bir kez oldu.
   - Gerçek hata mı, test ortamı mı, belli değil. Tekrarlı test henüz yapılmadı.
 
-### KARAR: Sunucuda dönüştürme ("iLovePDF gibi")
+### Sunucuda dönüştürme: YAPILDI (2026-10-14)
+
+- **Sunucu:** Hetzner Cloud, proje "Default"; CPX02 (1 vCPU / 1 GB), Nuremberg, Ubuntu 26.04, ~8 $/ay.
+  - IPv4 `2.31.6.195`
+  - Kullanıcı SSH'a sadece telefon hotspot'uyla bağlanabildi; ev ağı bu IP'ye "Destination net unreachable" veriyor.
+- **DNS:** Domain Natro'da kayıtlı ama DNS Vercel'de. Vercel → Domains → zapfile.xyz altına `api` A kaydı `2.31.6.195` eklendi.
+  - `https://api.zapfile.xyz/health` → `{"ok":true}` (HTTPS çalışıyor).
+- **Kurulum:** `server/office-api/setup.sh` (branch `claude/vibrant-euler-lw0gi5` ile) çalıştırıldı.
+  - Kod `/opt/zapfile` altında; ayarlar `/opt/zapfile/server/office-api/.env`.
+  - Güncellemek için aynı curl komutu tekrar çalıştırılır (README'de).
+  - PR merge edildikten sonra branch argümanı `main` olmalı.
+- **Site tarafı:**
+  - `src/lib/office/server.ts`
+  - `OfficeToPdfTool.tsx`: Hızlı/Gizli mod; sunucu hatasında tarayıcı motoruna düşer; şifreli belgeler yerelde çevrilir.
+  - Gizlilik sayfası ve `tools.ts` meta açıklamaları güncellendi.
+  - Varsayılan API adresi kodda `https://api.zapfile.xyz`, Vercel'de env değişkeni gerekmiyor.
+- **Bilinen sorun:** Tarayıcı içi LibreOffice motoru bu geliştirme ortamındaki headless Chromium'da dönüştürme sırasında takılıyor.
+  - Eski sürümde de takıldığı için bugünkü değişikliklerden kaynaklanmıyor.
+  - Gerçek tarayıcıda gizli mod ayrıca test edilmeli.
+
+### (Arşiv) Sunucu planı
+
 
 Kullanıcı bunu istedi; maliyet ve alan adı sorularını da sordu, cevaplandı. Son mesajında "başlayayım mı?" sorusuna henüz evet demedi, ama yön bu.
 

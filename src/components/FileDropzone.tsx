@@ -27,6 +27,8 @@ interface FileDropzoneProps {
   maxSize?: number;
   label?: string;
   formats?: string[];
+  /** Replaces the default "files never leave your browser" line (e.g. for server-side tools). */
+  privacyNote?: string;
 }
 
 function getAcceptedExtensions(accept?: Accept): string[] {
@@ -45,6 +47,7 @@ export default function FileDropzone({
   maxSize,
   label,
   formats = [],
+  privacyNote,
 }: FileDropzoneProps) {
   const { t } = useI18n();
   const acceptedExtensions = getAcceptedExtensions(accept);
@@ -189,7 +192,7 @@ export default function FileDropzone({
         )}
         <p className="flex items-center gap-1.5 text-[12px] text-t-tertiary">
           <Lock className="h-3.5 w-3.5" strokeWidth={2} aria-hidden="true" />
-          {t("tool.privacy")}
+          {privacyNote ?? t("tool.privacy")}
         </p>
       </div>
     </div>

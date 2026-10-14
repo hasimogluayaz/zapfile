@@ -646,9 +646,9 @@ export const tools: Tool[] = [
     emoji: "🌐",
     category: "pdf",
     acceptedFormats: [".html", ".htm", ".xhtml"],
-    metaTitle: "HTML to PDF Converter - Free, Private | ZapFile",
+    metaTitle: "HTML to PDF Converter - Free, Fast | ZapFile",
     metaDescription:
-      "Convert saved web pages and HTML files to PDF in your browser with LibreOffice: headings, tables, lists, links and embedded images. Batch convert, no upload.",
+      "Convert saved web pages and HTML files to PDF in seconds with LibreOffice: headings, tables, lists, links and embedded images. Batch convert; files are deleted right after, or convert privately in your browser.",
   },
   {
     slug: "pdf-to-word",
@@ -703,7 +703,7 @@ export const tools: Tool[] = [
     acceptedFormats: [".docx", ".doc", ".odt", ".rtf", ".txt"],
     metaTitle: "Word to PDF Converter - Free, Exact Layout | ZapFile",
     metaDescription:
-      "Convert DOCX, DOC, ODT and RTF to PDF in your browser with LibreOffice: fonts, tables, images, headers and page breaks kept. Batch convert, PDF/A, no upload, no watermark.",
+      "Convert DOCX, DOC, ODT and RTF to PDF in seconds with LibreOffice: fonts, tables, images, headers and page breaks kept. Batch convert, PDF/A, no watermark; files are deleted right after, or convert privately in your browser.",
   },
   {
     slug: "excel-to-pdf",
@@ -714,7 +714,7 @@ export const tools: Tool[] = [
     acceptedFormats: [".xlsx", ".xls", ".ods", ".csv"],
     metaTitle: "Excel to PDF Converter - Free, All Sheets | ZapFile",
     metaDescription:
-      "Convert XLSX, XLS, ODS and CSV spreadsheets to PDF in your browser: every sheet, calculated formulas, number formats, colors and print areas. Batch convert, no upload.",
+      "Convert XLSX, XLS, ODS and CSV spreadsheets to PDF in seconds: every sheet, calculated formulas, number formats, colors and print areas. Batch convert; files are deleted right after, or convert privately in your browser.",
   },
   {
     slug: "powerpoint-to-pdf",
@@ -725,7 +725,7 @@ export const tools: Tool[] = [
     acceptedFormats: [".pptx", ".ppt", ".odp"],
     metaTitle: "PowerPoint to PDF Converter - Free, Slides Kept | ZapFile",
     metaDescription:
-      "Convert PPTX, PPT and ODP presentations to PDF in your browser: one page per slide with shapes, images, text and themes kept. Batch convert, no upload, no watermark.",
+      "Convert PPTX, PPT and ODP presentations to PDF in seconds: one page per slide with shapes, images, text and themes kept. Batch convert, no watermark; files are deleted right after, or convert privately in your browser.",
   },
   {
     slug: "ocr-pdf",

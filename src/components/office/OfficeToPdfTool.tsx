@@ -1,19 +1,21 @@
 "use client";
 
 /**
- * Word / Excel / PowerPoint → PDF. LibreOffice runs in the browser (src/lib/office/engine.ts);
- * several files convert one after another, each with a first-page preview.
+ * Word / Excel / PowerPoint / HTML → PDF. Fast mode converts on our server (src/lib/office/server.ts);
+ * private mode, and the fallback when the server can't be reached, runs LibreOffice in the browser
+ * (src/lib/office/engine.ts). Several files convert one after another, each with a first-page preview.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { AlertTriangle, Check, Code2, Combine, Download, FileText, KeyRound, Loader2, Presentation, RefreshCw, Sheet, Trash2, X } from "lucide-react";
+import { AlertTriangle, Check, Code2, Combine, Download, FileText, KeyRound, Loader2, Presentation, RefreshCw, Sheet, ShieldCheck, Trash2, X, Zap } from "lucide-react";
 import FileDropzone from "@/components/FileDropzone";
 import ProgressBar from "@/components/ProgressBar";
-import { Toggle, buttonPrimary, buttonSecondary, sectionTitle } from "@/components/ui/controls";
-import { persistPendingFiles, restorePersistedFiles } from "@/lib/file-handoff";
+import { Segmented, Toggle, buttonPrimary, buttonSecondary, sectionTitle } from "@/components/ui/controls";
+import { persistPendingFiles, restorePersistedFiles, setPendingFiles } from "@/lib/file-handoff";
 import { useI18n } from "@/lib/i18n";
 import { downloadBlob, formatFileSize, getFileNameWithoutExtension } from "@/lib/utils";
 import { ENGINE_DOWNLOAD_BYTES, OfficeEngineError, canRunOfficeEngine, engineCached, getOfficeEngine, offProgress, officeToPdf, type EngineProgress } from "@/lib/office/engine";
+import { OFFICE_API_URL, OfficeServerError, SERVER_MAX_BYTES, serverToPdf } from "@/lib/office/server";
 
 export type OfficeKind = "word" | "excel" | "powerpoint" | "html";
 
@@ -65,10 +67,15 @@ interface Job {
   password?: string;
   key?: string;
   error?: string;
+  /** Needs the in-browser engine (e.g. a password), which this page can't run until it reloads. */
+  needsPrivate?: boolean;
 }
+
+type Mode = "fast" | "private";
 
 let nextId = 1;
 const RELOAD_FLAG = "zapfile:coi-reload";
+const MODE_KEY = "zapfile:office-mode";
 
 async function inspectPdf(bytes: Uint8Array): Promise<{ pages: number; thumb: string | null }> {
   const { openPdf } = await import("@/lib/pdfjs");
@@ -94,48 +101,76 @@ export default function OfficeToPdfTool({ kind }: { kind: OfficeKind }) {
   const [pdfa, setPdfa] = useState(false);
   const [engine, setEngine] = useState<EngineProgress | null>(null);
   const [engineError, setEngineError] = useState<OfficeEngineError | null>(null);
-  const [support, setSupport] = useState<"checking" | "ok" | "isolation" | "browser">("checking");
   const [cached, setCached] = useState<boolean | null>(null);
   const [merging, setMerging] = useState(false);
+  // "fast": convert on our server (default when it is configured); "private": in this browser only.
+  const [mode, setModeState] = useState<Mode>(OFFICE_API_URL ? "fast" : "private");
+  const modeRef = useRef(mode);
+  modeRef.current = mode;
+  const [ready, setReady] = useState(false);
+  // Can this page run the in-browser engine? null = not checked yet.
+  const [local, setLocal] = useState<{ ok: boolean; reason?: "isolation" | "browser" } | null>(null);
+  const localRef = useRef(local);
+  localRef.current = local;
   const jobsRef = useRef(jobs);
   jobsRef.current = jobs;
   const busy = useRef(false);
+  const fallbackNoted = useRef(false);
 
-  // LibreOffice needs a cross-origin isolated page. Client-side navigation keeps the previous page's
-  // (non-isolated) context, so load this page fresh once if needed.
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(MODE_KEY);
+      if (saved === "private" || (saved === "fast" && OFFICE_API_URL)) setModeState(saved);
+    } catch {
+      /* storage blocked */
+    }
+    // Files handed over from the home page survive the reload below.
+    void restorePersistedFiles().then(() => setReady(true));
+  }, []);
+
+  const setMode = (m: Mode) => {
+    setModeState(m);
+    try {
+      localStorage.setItem(MODE_KEY, m);
+    } catch {
+      /* storage blocked */
+    }
+  };
+
+  // The in-browser engine needs a cross-origin isolated page. Client-side navigation keeps the previous
+  // page's (non-isolated) context, so in private mode load this page fresh once if needed.
   useEffect(() => {
     const can = canRunOfficeEngine();
+    setLocal(can);
     if (can.ok) {
       sessionStorage.removeItem(RELOAD_FLAG);
-      // Files handed over from the home page survive the reload below.
-      void restorePersistedFiles().then(() => setSupport("ok"));
       void engineCached().then(setCached);
       return;
     }
-    if (can.reason === "isolation" && !sessionStorage.getItem(RELOAD_FLAG)) {
+    if (mode === "private" && can.reason === "isolation" && !sessionStorage.getItem(RELOAD_FLAG)) {
       sessionStorage.setItem(RELOAD_FLAG, "1");
+      const keep = jobsRef.current.filter((j) => j.status !== "done").map((j) => j.file);
+      if (keep.length) setPendingFiles(keep);
       void persistPendingFiles().then(() => location.reload());
-      return;
     }
-    setSupport(can.reason ?? "browser");
-  }, []);
+  }, [mode]);
 
   useEffect(() => () => jobsRef.current.forEach((j) => j.thumb && URL.revokeObjectURL(j.thumb)), []);
 
-  // Start downloading and booting the engine as soon as the user shows intent (drags a file over the
-  // page, or taps the drop area to open the file picker), so it loads while they pick the file. Not on
-  // page load: visitors who only look would download the engine for nothing.
+  // Private mode: start downloading and booting the engine as soon as the user shows intent (drags a file
+  // over the page, or taps the drop area to open the file picker), so it loads while they pick the file.
+  // Not on page load: visitors who only look would download the engine for nothing.
   const [prefetching, setPrefetching] = useState(false);
   const warmedUp = useRef(false);
   const warmUp = useCallback(() => {
-    if (warmedUp.current || support !== "ok") return;
+    if (warmedUp.current || mode !== "private" || !local?.ok) return;
     warmedUp.current = true;
     setPrefetching(true);
     getOfficeEngine((p) => setEngine(p)).catch(() => {
       warmedUp.current = false;
       setPrefetching(false); // errors surface when a file is converted
     });
-  }, [support]);
+  }, [mode, local]);
   useEffect(() => {
     window.addEventListener("dragenter", warmUp);
     return () => window.removeEventListener("dragenter", warmUp);
@@ -156,13 +191,32 @@ export default function OfficeToPdfTool({ kind }: { kind: OfficeKind }) {
         const job = jobsRef.current.find((j) => j.status === "queued");
         if (!job) break;
         update(job.id, { status: "converting", error: undefined });
+        const { pdfa: asPdfa, settingsKey: key } = settingsRef.current;
+        let bytes: Uint8Array | null = null;
+        if (modeRef.current === "fast" && !job.password && job.file.size <= SERVER_MAX_BYTES) {
+          try {
+            bytes = await serverToPdf(job.file, { pdfa: asPdfa });
+          } catch (e) {
+            const code = e instanceof OfficeServerError ? e.code : "network";
+            // The in-browser engine takes over (it can also ask for a document password).
+            if (!localRef.current?.ok) {
+              update(job.id, { status: "error", error: t(code === "password" ? "office.needsPrivate" : code === "convert" ? "office.convertFailed" : "office.serverFailed"), needsPrivate: code === "password" });
+              continue;
+            }
+            if (code !== "password" && code !== "convert" && !fallbackNoted.current) {
+              fallbackNoted.current = true;
+              toast(t("office.serverFallback"));
+            }
+          }
+        }
         try {
-          const onProgress = (p: EngineProgress) => setEngine(p);
-          await getOfficeEngine(onProgress);
-          offProgress(onProgress);
-          setEngineError(null);
-          const { pdfa: asPdfa, settingsKey: key } = settingsRef.current;
-          const bytes = await officeToPdf(job.file, { pdfa: asPdfa, password: job.password });
+          if (!bytes) {
+            const onProgress = (p: EngineProgress) => setEngine(p);
+            await getOfficeEngine(onProgress);
+            offProgress(onProgress);
+            setEngineError(null);
+            bytes = await officeToPdf(job.file, { pdfa: asPdfa, password: job.password });
+          }
           const blob = new Blob([bytes as BlobPart], { type: "application/pdf" });
           const info = await inspectPdf(bytes).catch(() => ({ pages: 0, thumb: null }));
           const old = jobsRef.current.find((j) => j.id === job.id)?.thumb;
@@ -205,7 +259,7 @@ export default function OfficeToPdfTool({ kind }: { kind: OfficeKind }) {
       if (j?.thumb) URL.revokeObjectURL(j.thumb);
       return prev.filter((x) => x.id !== id);
     });
-  const retry = (id: number, password?: string) => update(id, { status: "queued", password, error: undefined });
+  const retry = (id: number, password?: string) => update(id, { status: "queued", password, error: undefined, needsPrivate: false });
 
   const done = jobs.filter((j) => j.status === "done" && j.pdf);
   const pdfName = (j: Job) => `${getFileNameWithoutExtension(j.file.name)}.pdf`;
@@ -236,25 +290,7 @@ export default function OfficeToPdfTool({ kind }: { kind: OfficeKind }) {
   const mb = (n: number) => `${Math.round(n / 1_000_000)} MB`;
   const preparing = (prefetching || jobs.some((j) => j.status === "converting")) && engine && engine.phase !== "ready" && !engineError;
 
-  if (support === "isolation" || support === "browser") {
-    return (
-      <div role="alert" className="glass flex items-start gap-3 p-5 text-[14px]">
-        <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-t-secondary" aria-hidden="true" />
-        <div className="space-y-2">
-          <p className="font-medium text-t-primary">{t("office.unsupported")}</p>
-          <p className="text-t-secondary">{t("office.unsupportedHint")}</p>
-          {support === "isolation" && (
-            <button type="button" className={buttonSecondary} onClick={() => location.reload()}>
-              <RefreshCw className="h-4 w-4" aria-hidden="true" />
-              {t("office.reload")}
-            </button>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  if (support === "checking") {
+  if (!ready || (mode === "private" && local === null)) {
     return (
       <div className="glass flex h-56 items-center justify-center gap-2 text-[14px] text-t-secondary" role="status">
         <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
@@ -263,15 +299,60 @@ export default function OfficeToPdfTool({ kind }: { kind: OfficeKind }) {
     );
   }
 
+  const modeSwitch = OFFICE_API_URL ? (
+    <div className="space-y-1.5">
+      <Segmented
+        label={t("office.mode")}
+        value={mode}
+        onChange={setMode}
+        options={[
+          { value: "fast", label: t("office.mode.fast"), icon: <Zap className="h-4 w-4" aria-hidden="true" /> },
+          { value: "private", label: t("office.mode.private"), icon: <ShieldCheck className="h-4 w-4" aria-hidden="true" /> },
+        ]}
+      />
+      <p className="text-[12.5px] text-t-tertiary">{mode === "fast" ? t("office.mode.fastHint") : t("office.mode.privateHint", { size: mb(ENGINE_DOWNLOAD_BYTES) })}</p>
+    </div>
+  ) : null;
+
+  if (mode === "private" && local && !local.ok) {
+    return (
+      <div className="space-y-5">
+        {modeSwitch}
+        <div role="alert" className="glass flex items-start gap-3 p-5 text-[14px]">
+          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-t-secondary" aria-hidden="true" />
+          <div className="space-y-2">
+            <p className="font-medium text-t-primary">{t("office.unsupported")}</p>
+            <p className="text-t-secondary">{t("office.unsupportedHint")}</p>
+            {local.reason === "isolation" && (
+              <button type="button" className={buttonSecondary} onClick={() => location.reload()}>
+                <RefreshCw className="h-4 w-4" aria-hidden="true" />
+                {t("office.reload")}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-5">
+      {modeSwitch}
+
       <div onPointerDown={warmUp} onKeyDown={warmUp}>
-        <FileDropzone onFilesSelected={addFiles} accept={accept} multiple formats={formats} label={t(`office.drop.${kind}`)} />
+        <FileDropzone
+          onFilesSelected={addFiles}
+          accept={accept}
+          multiple
+          formats={formats}
+          label={t(`office.drop.${kind}`)}
+          privacyNote={mode === "fast" ? t("office.serverPrivacy") : undefined}
+        />
       </div>
 
       {kind === "html" && jobs.length === 0 && <p className="text-[13px] text-t-tertiary">{t("office.htmlNote")}</p>}
 
-      {jobs.length === 0 && cached === false && !preparing && (
+      {mode === "private" && jobs.length === 0 && cached === false && !preparing && (
         <p className="flex items-start gap-2 text-[13px] text-t-tertiary">
           <Download className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
           {t("office.firstRun", { size: mb(ENGINE_DOWNLOAD_BYTES) })}
@@ -337,6 +418,12 @@ export default function OfficeToPdfTool({ kind }: { kind: OfficeKind }) {
                     {j.status === "converting" && ` · ${t("office.converting")}`}
                   </p>
                   {j.status === "error" && <p className="mt-1 text-[12.5px] text-red-700 dark:text-red-400">{j.error}</p>}
+                  {j.status === "error" && j.needsPrivate && (
+                    <button type="button" className={`${buttonSecondary} mt-2`} onClick={() => setMode("private")}>
+                      <ShieldCheck className="h-4 w-4" aria-hidden="true" />
+                      {t("office.usePrivate")}
+                    </button>
+                  )}
                   {j.status === "password" && (
                     <form
                       className="mt-2 flex flex-wrap items-center gap-2"
