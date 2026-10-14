@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { HardDrive, Laptop, Server, UserX } from "lucide-react";
+import { HardDrive, MonitorSmartphone, ShieldCheck, UserX } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ToolCard from "@/components/ToolCard";
@@ -207,8 +207,8 @@ export default function Home() {
               </div>
               <ul className="grid gap-8 sm:grid-cols-3 lg:gap-6">
                 {[
-                  { Icon: Laptop, title: "home.privacy.zeroUploads.title", desc: "home.privacy.zeroUploads.desc" },
-                  { Icon: Server, title: "home.privacy.noServer.title", desc: "home.privacy.noServer.desc" },
+                  { Icon: MonitorSmartphone, title: "home.privacy.zeroUploads.title", desc: "home.privacy.zeroUploads.desc" },
+                  { Icon: ShieldCheck, title: "home.privacy.noServer.title", desc: "home.privacy.noServer.desc" },
                   { Icon: UserX, title: "home.privacy.noAccount.title", desc: "home.privacy.noAccount.desc" },
                 ].map(({ Icon, title, desc }) => (
                   <li key={title}>

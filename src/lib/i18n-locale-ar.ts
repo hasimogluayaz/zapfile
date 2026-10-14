@@ -2084,15 +2084,15 @@ export const arLocaleStrings: Record<string, string> = {
   "tool.result": "النتيجة",
   "tool.saved": "تم الحفظ",
 
-  "home.privacy.heading": "الخصوصية في التصميم",
-  "home.privacy.zeroUploads.title": "تعمل على جهازك",
-  "home.privacy.zeroUploads.desc": "تعالج أدوات PDF والصور والصوت والأدوات المساعدة الملفات محلياً. لا يُرسل شيء.",
-  "home.privacy.noServer.title": "خادمنا الخاص، دون أي تخزين",
-  "home.privacy.noServer.desc": "تستخدم تحويلات Word وExcel وPowerPoint إلى PDF خادمنا في ألمانيا للسرعة. تُحذف الملفات فوراً، أو اختر الوضع الخاص.",
+  "home.privacy.heading": "ملفاتك في أمان",
+  "home.privacy.zeroUploads.title": "المعالجة على جهازك",
+  "home.privacy.zeroUploads.desc": "لا ترسل أدوات PDF والصور والصوت ملفاتك إلى أي مكان.",
+  "home.privacy.noServer.title": "لا تخزين",
+  "home.privacy.noServer.desc": "تُرسل تحويلات Office عبر اتصال مشفّر وتُحذف فوراً.",
   "home.privacy.noAccount.title": "بلا حساب",
-  "home.privacy.noAccount.desc": "استخدم كل الأدوات دون تسجيل أو دخول",
+  "home.privacy.noAccount.desc": "استخدم كل الأدوات دون تسجيل أو دخول.",
   "home.privacy.howDesc":
-    "تعمل كل الأدوات تقريباً داخل متصفحك، فلا تغادر تلك الملفات جهازك أبداً. وحدها أدوات تحويل Office إلى PDF تستخدم خادمنا الخاص، وتحذف ملفك فور تحويله.",
+    "تعالج معظم الأدوات ملفاتك مباشرة في متصفحك. الأدوات الوحيدة التي تستخدم خادماً هي محوّلات Office إلى PDF، وهي تحذف ملفك فور انتهاء التحويل.",
 
 
   "footer.brand":
