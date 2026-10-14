@@ -8,7 +8,7 @@
 - **Dil:** Kullanıcıya kısa, samimi, Türkçe cevap ver ("knk" diye hitap ediyor).
 - **Teknik seviye:** Kullanıcı teknik değil. Her adımı tıklanacak yer ve kopyalanacak komutla, tek tek anlat; ekran görüntüsü atıyor.
 - **Ortam:** Windows + PowerShell kullanıyor.
-- **Branch:** `claude/vibrant-euler-lw0gi5`. Commit + push buraya.
+- **Branch:** son oturum `claude/eloquent-mayer-wuiscz` (önceki: `claude/vibrant-euler-lw0gi5`). Commit + push oturumun branch'ine.
   - PR #2 (https://github.com/hasimogluayaz/zapfile/pull/2) kullanıcının onayıyla 2026-10-14'te **merge edildi**; her şey `main`'de ve canlıda.
   - Yeni iş için branch `main`'den yeniden başlatılır; gerekirse **yeni PR** açılır. Kullanıcı açıkça onay vermeden merge etme.
   - `main` = canlı site (Vercel otomatik yayınlar).
@@ -114,7 +114,15 @@ Kullanıcının teklif PDF'i ve düz metin bir raporla test edildi. Bulunan ve d
 - **PowerPoint ve Word birebir modunda madde işareti metne yapışıktı:** Araya boşluk eklendi.
 - **Kalan farklar:** Yuvarlak köşeli kart çerçeveleri (vektör şekiller) taşınmıyor; metinler ve resimler doğru yerde.
 
+## 2026-10-14 (2. oturum): `claude/eloquent-mayer-wuiscz`
+
+- **Dürüst gizlilik metinleri (9 dil):** Ana sayfa, alt bilgi, Hakkında, Şartlar, Gizlilik, SSS, site meta açıklamaları ve blog hâlâ "hiçbir şey yüklenmez / sunucu yok" diyordu. Artık: araçların çoğu cihazda çalışır; Word/Excel/PowerPoint/HTML → PDF hızlı modda Almanya'daki kendi sunucumuzu kullanır ve dosyayı hemen siler; gizli mod tarayıcıda çalışır. Kullanılmayan eski anahtarlar (`cta.*`, `home.privacy.step*` vb.) silindi. **Yeni metinlerde "hiçbir dosya yüklenmez" gibi genel iddia yazma.**
+- **PDF sıkıştırma:** ASCII85/ASCIIHex sarmalı resimler (Distiller, reportlab, bazı tarayıcılar) hiç sıkıştırılmıyordu (%0). Düzeltildi: test dosyası 5,4 MB → 0,36 MB; kayıpsız modda sarmal kayıpsız atılıyor (~%20).
+- **Test notu:** `next dev` modunda pdf.js "Object.defineProperty called on non-object" hatası veriyor; sadece dev'e özgü, `npm run build && npx next start` ile araçlar çalışıyor. Testleri prod derlemeyle yap.
+
 ## Sıradaki işler
+
+0. **PDF sıkıştırma, CMYK resimler:** Baskı PDF'lerindeki (InDesign broşürleri) DeviceCMYK JPEG'ler aday sayılmıyor (`colorSpaceInfo`). RGB'ye çevirip sıkıştırmak büyük kazanç; renk kayması ve Adobe ters-CMYK dikkatle test edilmeli.
 
 1. **Kullanıcı önizlemede test edecek** (Word to PDF): hızlı mod ve gizli mod. Sonucu bekle.
 2. **Gizli mod / tarayıcı motoru şüpheli:**
