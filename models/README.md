@@ -5,7 +5,7 @@ from a pinned commit of this repository via jsDelivr (fallback:
 raw.githubusercontent.com), cached in Cache Storage and verified by SHA-256
 before use. They are excluded from Vercel deployments (`.vercelignore`).
 
-## birefnet-lite-768/ — Background Remover
+## birefnet-lite-768-int8/ — Background Remover
 
 | | |
 |---|---|
@@ -14,8 +14,8 @@ before use. They are excluded from Vercel deployments (`.vercelignore`).
 | License | MIT (see `birefnet-lite-768/LICENSE`) |
 | Input | `input_image` float32 [1, 3, 768, 768], RGB, ImageNet mean/std |
 | Output | `output_image` float32 [1, 1, 768, 768], logits (apply sigmoid) |
-| File | 94,370,922 bytes, SHA-256 `94db4755eef843b440490b19b5bfcf4695ff5a2550238fefeb583663304eba27` |
-| Parts | `part-00.bin` … `part-04.bin`, concatenate in order |
+| File | 50,862,895 bytes, SHA-256 `4729265b3cb408ffe98abc3d47d87d14337a1114ecbc86600cb5022ba11b0353` |
+| Parts | `part-00.bin` … `part-02.bin`, concatenate in order |
 
 Why a re-export instead of the published ONNX files:
 
@@ -29,13 +29,20 @@ Why a re-export instead of the published ONNX files:
   edge detail is recovered by ZapFile's guided-filter refinement.
 - `tools/fp16store.py` stores weights as float16 with a Cast to float32 at
   load time: half the download, compute stays float32 (max |Δprob| < 1e-6).
+- `tools/int8store.py` then stores the Conv/MatMul/Gemm weights as symmetric
+  per-channel int8 with DequantizeLinear (folded at load, compute stays
+  float32); biases, norms and the grid_sample constants stay float16.
+  94 MB → 51 MB; mask IoU vs the fp16 file ≥ 0.999 on photos (scikit-image
+  astronaut, chelsea, coffee), mean |Δprob| < 0.001. (The previous fp16 file
+  is `birefnet-lite-768/` at commit 0eb7589.)
 
 Reproduce:
 
 ```sh
 python tools/export.py BiRefNet-general-bb_swin_v1_tiny-epoch_232.pth 768 brn768.onnx
-python tools/fp16store.py brn768.onnx model.onnx
-split -b 19000000 -d -a 2 --additional-suffix=.bin model.onnx birefnet-lite-768/part-
+python tools/fp16store.py brn768.onnx fp16.onnx
+python tools/int8store.py fp16.onnx model.onnx
+split -b 19000000 -d -a 2 --additional-suffix=.bin model.onnx birefnet-lite-768-int8/part-
 ```
 
 `export.py` expects the BiRefNet source tree in `./src` (commit used:
