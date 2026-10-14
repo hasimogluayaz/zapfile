@@ -1,10 +1,10 @@
-"""Store Conv/MatMul/Gemm weights as per-channel int8 + DequantizeLinear.
+"""Store Conv/MatMul/Gemm weights as per-channel int8 + Cast/Mul.
 
 Input: the fp16-stored model from fp16store.py (fp16 initializer + Cast).
 Only weights feeding the weight input of Conv, MatMul or Gemm are quantized
 (symmetric, per output channel); everything else (biases, norms, the
-grid_sample coordinate constants) stays float16. Dequantization happens once
-at load time, so compute stays float32 — only the download shrinks.
+grid_sample coordinate constants) stays float16. The Cast/Mul pair is
+constant-folded at load time, so compute stays float32 — only the download shrinks.
 """
 import sys, onnx, numpy as np
 from collections import defaultdict
@@ -57,12 +57,14 @@ for n in g.node:
             base = n.output[0]
             add_inits += [
                 numpy_helper.from_array(q, base + "__q"),
-                numpy_helper.from_array(scale.astype(np.float32), base + "__scale"),
-                numpy_helper.from_array(np.zeros_like(scale, dtype=np.int8), base + "__zp"),
+                numpy_helper.from_array(scale.astype(np.float32).reshape(shape), base + "__scale"),
             ]
-            new_nodes.append(helper.make_node(
-                "DequantizeLinear", [base + "__q", base + "__scale", base + "__zp"], [base],
-                axis=axis, name=base + "__dq"))
+            # Plain Cast + Mul instead of DequantizeLinear: onnxruntime keeps
+            # DequantizeLinear in the graph and fuses it into int8 kernels
+            # (2x slower, 2x the memory here), while Cast + Mul on constants is
+            # folded into an ordinary float32 weight when the session loads.
+            new_nodes.append(helper.make_node("Cast", [base + "__q"], [base + "__qf"], to=TensorProto.FLOAT, name=base + "__cast"))
+            new_nodes.append(helper.make_node("Mul", [base + "__qf", base + "__scale"], [base], name=base + "__mul"))
             drop_inits.add(n.input[0])
             quantized += 1
             continue

@@ -14,7 +14,7 @@ before use. They are excluded from Vercel deployments (`.vercelignore`).
 | License | MIT (see `birefnet-lite-768/LICENSE`) |
 | Input | `input_image` float32 [1, 3, 768, 768], RGB, ImageNet mean/std |
 | Output | `output_image` float32 [1, 1, 768, 768], logits (apply sigmoid) |
-| File | 50,862,895 bytes, SHA-256 `4729265b3cb408ffe98abc3d47d87d14337a1114ecbc86600cb5022ba11b0353` |
+| File | 50,743,355 bytes, SHA-256 `05367cd399191f2260c3e66bbb887a7e3fc5b46ea14aa4309745a3e208012b77` |
 | Parts | `part-00.bin` … `part-02.bin`, concatenate in order |
 
 Why a re-export instead of the published ONNX files:
@@ -30,7 +30,7 @@ Why a re-export instead of the published ONNX files:
 - `tools/fp16store.py` stores weights as float16 with a Cast to float32 at
   load time: half the download, compute stays float32 (max |Δprob| < 1e-6).
 - `tools/int8store.py` then stores the Conv/MatMul/Gemm weights as symmetric
-  per-channel int8 with DequantizeLinear (folded at load, compute stays
+  per-channel int8 with Cast + Mul (folded at load, compute stays
   float32); biases, norms and the grid_sample constants stay float16.
   94 MB → 51 MB; mask IoU vs the fp16 file ≥ 0.999 on photos (scikit-image
   astronaut, chelsea, coffee), mean |Δprob| < 0.001. (The previous fp16 file
