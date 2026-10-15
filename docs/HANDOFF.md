@@ -117,9 +117,10 @@ Kullanıcının teklif PDF'i ve düz metin bir raporla test edildi. Bulunan ve d
 ## Kullanıcı getirme (2026-10-15)
 
 - **Search Console:** 115 sayfadan sadece 12'si dizindeydi. Site haritası 2 Mayıs'tan beri "Getirilemedi" durumundaydı. Kullanıcı 15 Ekim'de `sitemap.xml`'i yeniden gönderdi; canlı URL testi "Google tarafından kullanılabilir" sonucunu verdi. Kullanıcı yanlışlıkla `/tools/pdf-to-word` ve `/tools/merge-pdf` adreslerini site haritası diye ekledi, bunları silmesi söylendi. Birkaç gün sonra "Sayfa sayısı" ekranına tekrar bakılacak.
-- **Dil adresleri** (bu branch'te, `main`'e henüz alınmadı): 70 aracın hepsi `/tr/…`, `/de/…`, `/fr/…` adreslerinde, o dilde başlık/açıklama, hreflang ve site haritasıyla. ES/PT/IT/JA (~%65 çeviri) ve AR (~%72) için önce çeviriler tamamlanmalı. Ayrıntı `AGENTS.md` → "Localized tool URLs".
-- **Kullanıcıya önerilen diğer işler:** Bing Webmaster (GSC'den import), AlternativeTo / SaaSHub / Uneed listeleri, Türkçe sayfalar yayına girince Reddit/Ekşi/DonanımHaber paylaşımları, Product Hunt en sona. Ofis → PDF hızlı modu sunucu kullandığı için tanıtımda "hiçbir dosya yüklenmez" denmemeli.
-- **Sonraki adımlar:** ES/PT/IT/JA/AR çevirilerini tamamlayıp adres açmak; dil ana sayfaları ve `/tr` araç listesi; blog yazılarının Türkçe adresleri; IndexNow.
+- **Dil adresleri** (bu branch'te, `main`'e henüz alınmadı): 70 aracın hepsi 8 dilde kendi adresinde (`/tr/pdf-birlestir`, `/de/…`, `/fr/…`, `/es/unir-pdf`, `/pt/…`, `/it/…`, `/ja/merge-pdf`, `/ar/merge-pdf`), o dilde başlık/açıklama, hreflang ve site haritasıyla (679 adres). Vercel'de 404 hatası yaşandı: `dynamicParams = false` kullanma (nedeni sayfa dosyasında yazıyor).
+- **Çeviriler tamamlandı (2026-10-15):** Arayüzde 9 dilde de İngilizce metin kalmadı. Eksikler `src/lib/i18n-completions/<dil>.json`'da; `npm run verify:i18n` eksik kalırsa hata veriyor. Bütün sayfalar her dilde Playwright ile tarandı. Değişiklik Günlüğü yeniden yazıldı ve 9 dile çevrildi; blog etiketleri ve özetleri de çevrildi.
+- **Kalan tek eksik:** Blog yazılarının metni (33 yazı) hâlâ sadece İngilizce; başlık ve özetleri çevrili.
+- **Sonraki adımlar:** Blog yazılarını 8 dile çevirip `/tr/blog/...` gibi kendi adreslerinde açmak; dil ana sayfaları (`/tr`); IndexNow.
 
 ## Sıradaki işler
 
