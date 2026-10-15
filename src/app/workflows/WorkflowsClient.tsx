@@ -44,7 +44,7 @@ const FLOWS: FlowDef[] = [
 ];
 
 export default function WorkflowsClient() {
-  const { t } = useI18n();
+  const { t, toolHref } = useI18n();
 
   return (
     <>
@@ -84,14 +84,14 @@ export default function WorkflowsClient() {
                           {si + 1}
                         </span>
                         <Link
-                          href={`/tools/${slug}`}
+                          href={toolHref(slug)}
                           className="font-medium text-accent hover:text-accent-hover transition-colors"
                         >
                           {name}
                         </Link>
                         <span className="text-t-tertiary hidden sm:inline">—</span>
                         <Link
-                          href={`/tools/${slug}`}
+                          href={toolHref(slug)}
                           className="text-[12px] text-t-tertiary hover:text-t-secondary transition-colors sm:ms-0"
                         >
                           {t("workflows.openTool")} →

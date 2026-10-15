@@ -9,8 +9,8 @@
 - **Teknik seviye:** Kullanıcı teknik değil. Her adımı tıklanacak yer ve kopyalanacak komutla, tek tek anlat; ekran görüntüsü atıyor.
 - **Ortam:** Windows + PowerShell kullanıyor.
 - **Branch:** `claude/vibrant-euler-lw0gi5`. Commit + push buraya.
-  - PR açık: https://github.com/hasimogluayaz/zapfile/pull/2. Yeni PR açma.
-  - **Kullanıcı açıkça onay vermeden PR'ı merge etme.**
+  - PR #2 (https://github.com/hasimogluayaz/zapfile/pull/2) kullanıcının onayıyla 2026-10-14'te **merge edildi**; her şey `main`'de ve canlıda.
+  - Yeni iş için branch `main`'den yeniden başlatılır; gerekirse **yeni PR** açılır. Kullanıcı açıkça onay vermeden merge etme.
   - `main` = canlı site (Vercel otomatik yayınlar).
 - **Önizleme** (her push'ta güncellenir): https://zapfile-git-claude-vibrant-euler-lw0gi5-hasimogluayazs-projects.vercel.app
 - **Hedef:** ZapFile en az iLovePDF kadar iyi, hızlı ve kusursuz olsun.
@@ -43,7 +43,7 @@
   ```bash
   curl -fsSL https://raw.githubusercontent.com/hasimogluayaz/zapfile/<BRANCH>/server/office-api/setup.sh | bash -s api.zapfile.xyz <BRANCH>
   ```
-  - Şu an `<BRANCH>` = `claude/vibrant-euler-lw0gi5`. **PR merge edilince `main` ile tekrar çalıştırılmalı.**
+  - PR #2 merge edildi: artık `<BRANCH>` = `main` (kullanıcıya bir kez `main` ile çalıştırması söylendi).
 - Loglar:
   ```bash
   cd /opt/zapfile/server/office-api && docker compose logs -f
@@ -114,13 +114,22 @@ Kullanıcının teklif PDF'i ve düz metin bir raporla test edildi. Bulunan ve d
 - **PowerPoint ve Word birebir modunda madde işareti metne yapışıktı:** Araya boşluk eklendi.
 - **Kalan farklar:** Yuvarlak köşeli kart çerçeveleri (vektör şekiller) taşınmıyor; metinler ve resimler doğru yerde.
 
+## Kullanıcı getirme (2026-10-15)
+
+- **Search Console:** 115 sayfadan sadece 12'si dizindeydi. Site haritası 2 Mayıs'tan beri "Getirilemedi" durumundaydı. Kullanıcı 15 Ekim'de `sitemap.xml`'i yeniden gönderdi; canlı URL testi "Google tarafından kullanılabilir" sonucunu verdi. Kullanıcı yanlışlıkla `/tools/pdf-to-word` ve `/tools/merge-pdf` adreslerini site haritası diye ekledi, bunları silmesi söylendi. Birkaç gün sonra "Sayfa sayısı" ekranına tekrar bakılacak.
+- **Dil adresleri** (bu branch'te, `main`'e henüz alınmadı): 70 aracın hepsi 8 dilde kendi adresinde (`/tr/pdf-birlestir`, `/de/…`, `/fr/…`, `/es/unir-pdf`, `/pt/…`, `/it/…`, `/ja/merge-pdf`, `/ar/merge-pdf`), o dilde başlık/açıklama, hreflang ve site haritasıyla (679 adres). Vercel'de 404 hatası yaşandı: `dynamicParams = false` kullanma (nedeni sayfa dosyasında yazıyor).
+- **Çeviriler tamamlandı (2026-10-15):** Arayüzde 9 dilde de İngilizce metin kalmadı. Eksikler `src/lib/i18n-completions/<dil>.json`'da; `npm run verify:i18n` eksik kalırsa hata veriyor. Bütün sayfalar her dilde Playwright ile tarandı. Değişiklik Günlüğü yeniden yazıldı ve 9 dile çevrildi; blog etiketleri ve özetleri de çevrildi.
+- **Kalan tek eksik:** Blog yazılarının metni (33 yazı) hâlâ sadece İngilizce; başlık ve özetleri çevrili.
+- **Sonraki adımlar:** Blog yazılarını 8 dile çevirip `/tr/blog/...` gibi kendi adreslerinde açmak; dil ana sayfaları (`/tr`); IndexNow.
+
 ## Sıradaki işler
 
 1. **Kullanıcı önizlemede test edecek** (Word to PDF): hızlı mod ve gizli mod. Sonucu bekle.
 2. **Gizli mod / tarayıcı motoru şüpheli:**
    - Bu geliştirme ortamının headless Chromium'unda dönüşüm adımında takılıyor; eski sürüm (`bf4728d`) de takıldığı için yeni bir regresyon değil.
    - Kullanıcı gerçek tarayıcıda da takıldığını söylerse araştır: `officeToPdf` içindeki `c.convert`, `@matbee/libreoffice-converter` worker'ı.
-3. **Kullanıcı onay verirse PR #2'yi merge et**, sonra sunucuda `setup.sh`'ı `main` ile çalıştır.
+3. PR #2 merge edildi (2026-10-14). Sunucuda `setup.sh` `main` ile çalıştırılmalı (kullanıcıya söylendi).
+6. **Kullanıcının istediği sistemli test:** Bütün dönüştürücüleri farklı gerçek belgelerle (fatura, CV, rapor, Excel, sunum, taranmış PDF) deneyip hataları düzelt. Kullanıcıdan örnek dosya istendi.
 4. İsteğe bağlı: sunucu tarafında şifreli belge desteği (Python UNO, `Password`).
 5. Kullanıcı aynı sunucuyu başka projeleri için de kullanmak istiyor: Caddyfile'a yeni domain bloğu + yeni servis eklenir. RAM 1 GB, dikkat.
 

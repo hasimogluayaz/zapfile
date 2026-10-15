@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "verify:i18n": "node scripts/verify-i18n-tool-keys.mjs",
+    "verify:i18n": "node scripts/verify-i18n-tool-keys.mjs && node scripts/verify-i18n-complete.mjs",
     "analyze": "cross-env ANALYZE=true next build",
     "vendor": "node scripts/copy-vendor-assets.mjs",
     "predev": "npm run -s vendor",

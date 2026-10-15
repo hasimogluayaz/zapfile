@@ -26,7 +26,7 @@ export default function DropPad({
   query: string;
   onQueryChange: (q: string) => void;
 }) {
-  const { t } = useI18n();
+  const { t, toolHref } = useI18n();
   const router = useRouter();
   const [files, setFiles] = useState<File[]>([]);
 
@@ -45,7 +45,7 @@ export default function DropPad({
 
   const openTool = (slug: string) => {
     setPendingFiles(files);
-    router.push(`/tools/${slug}`);
+    router.push(toolHref(slug));
   };
 
   const fileLabel =

@@ -2,8 +2,9 @@ import type { BlogPost } from "./blog";
 import type { Locale } from "./locales";
 import { BLOG_LOCALE_A } from "./blog-post-locales-a";
 import { BLOG_LOCALE_B } from "./blog-post-locales-b";
+import { BLOG_LOCALE_AR, BLOG_LOCALE_C } from "./blog-post-locales-c";
 
-const LOCALE = { ...BLOG_LOCALE_A, ...BLOG_LOCALE_B };
+const LOCALE = { ...BLOG_LOCALE_A, ...BLOG_LOCALE_B, ...BLOG_LOCALE_C };
 
 export function getLocalizedBlogSummary(
   post: BlogPost,
@@ -12,7 +13,7 @@ export function getLocalizedBlogSummary(
   if (locale === "en") {
     return { title: post.title, description: post.description };
   }
-  const row = LOCALE[post.slug]?.[locale];
+  const row = LOCALE[post.slug]?.[locale] ?? (locale === "ar" ? BLOG_LOCALE_AR[post.slug] : undefined);
   if (row) {
     return row;
   }

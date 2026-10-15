@@ -22,7 +22,17 @@ const ISOLATION_HEADERS = [
   { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
   { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
 ];
-const OFFICE_TOOL_PATHS = ["/tools/word-to-pdf", "/tools/excel-to-pdf", "/tools/powerpoint-to-pdf", "/tools/html-to-pdf"];
+const OFFICE_TOOL_SLUGS = ["word-to-pdf", "excel-to-pdf", "powerpoint-to-pdf", "html-to-pdf"];
+// The same tools on their localized URLs (/tr/word-pdf-cevir), see src/lib/localized-routes.ts.
+const localizedToolSlugs = JSON.parse(
+  fs.readFileSync(new URL("./src/lib/localized-tool-slugs.json", import.meta.url), "utf8"),
+);
+const OFFICE_TOOL_PATHS = [
+  ...OFFICE_TOOL_SLUGS.map((slug) => `/tools/${slug}`),
+  ...Object.entries(localizedToolSlugs).flatMap(([locale, slugs]) =>
+    OFFICE_TOOL_SLUGS.map((slug) => `/${locale}/${slugs[slug]}`),
+  ),
+];
 
 const pkgVersion = (name) =>
   JSON.parse(fs.readFileSync(new URL(`./node_modules/${name}/package.json`, import.meta.url), "utf8")).version;

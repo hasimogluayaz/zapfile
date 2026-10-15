@@ -52,13 +52,20 @@ src/
 
 ## i18n System
 
-- Full dictionaries in `src/lib/i18n.tsx` for: EN, TR, DE, FR
-- ES, PT, IT, JA: merged at load time with `mergeLocale(en, localeOverrides.*)` so every key exists; missing strings use English until translated in `i18n-overrides.ts`
-- `useI18n()` hook returns `{ locale, setLocale, t }`
+- 9 languages, all complete: EN/TR/DE/FR dictionaries in `src/lib/i18n.tsx`, ES/PT/IT/JA in `i18n-overrides.ts`, AR in `i18n-locale-ar.ts`, plus later strings per language in `src/lib/i18n-completions/<locale>.json`. Everything is merged over English (`mergeLocale`).
+- **Every new key needs all 9 languages.** `npm run verify:i18n` fails when a string the code uses is untranslated in any language or loses a `{placeholder}`.
+- `useI18n()` hook returns `{ locale, setLocale, t, toolHref }`
 - Tool names/descriptions keyed as `tool.[slug].name` / `tool.[slug].desc`
 - `toolField()` helper in `tool-i18n.ts` for fallback-aware tool metadata
 - Locale priority: explicit user choice (localStorage) → URL ?lang= param → geo cookie → browser lang → English
-- `document.documentElement.dir` is set to `ltr` for all locales (no RTL UI language enabled)
+- Arabic is right-to-left: `isRtlLocale` sets `dir="rtl"`; use logical CSS properties.
+
+## Localized tool URLs (`src/lib/localized-routes.ts`)
+
+- Every language has its own tool URLs (`/tr/pdf-birlestir`, `/de/pdf-zusammenfuegen`, `/es/unir-pdf`, …; Japanese and Arabic use the English slug: `/ja/merge-pdf`) so Google indexes each language. English stays on `/tools/<slug>`. Slug table: `src/lib/localized-tool-slugs.json` (also read by `next.config.mjs` for the Office tools' isolation headers). Search titles/descriptions: `src/lib/tool-seo-<locale>.ts`.
+- Route: `src/app/[locale]/[toolSlug]/` renders the same tool component (`tool-pages.ts`, lazy per tool). `I18nProvider` takes the language from the path (server render included); middleware passes it to the root layout for `<html lang>`.
+- Link to tools with `toolHref(slug)` from `useI18n()`, never a hard-coded `/tools/${slug}`. Tool pages get hreflang alternates (`toolLanguagePaths`) and the sitemap lists every language version.
+- To add a language: finish its UI translation first, then add its slug table to the JSON, the locale to `TOOL_URL_LOCALES`, a `tool-seo-<locale>.ts` and its entry in the route's `seo` map.
 
 ## Tools
 

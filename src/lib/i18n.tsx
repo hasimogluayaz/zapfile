@@ -7,6 +7,7 @@ import {
   createContext,
   useContext,
 } from "react";
+import { usePathname } from "next/navigation";
 import type { Locale } from "./locales";
 import { SUPPORTED_LOCALES, isRtlLocale } from "./locales";
 import { localeOverrides } from "./i18n-overrides";
@@ -14,6 +15,8 @@ import { partialStaticPageLocales } from "./i18n-partial-static-pages";
 import { partialBlogChromeLocales } from "./i18n-partial-blog-chrome";
 import { arLocaleStrings } from "./i18n-locale-ar";
 import { LOCALE_COOKIE, LOCALE_PREF_COOKIE } from "./locale-cookies";
+import { localeCompletions } from "./i18n-completions";
+import { parseLocalizedToolPath, toolHref as buildToolHref, toolPathForLocale } from "./localized-routes";
 
 export type { Locale } from "./locales";
 
@@ -3567,7 +3570,8 @@ function mergeLocale(
   return out;
 }
 
-const translations: Record<Locale, Record<string, string>> = {
+/** Each language's own strings, before the English fallback is filled in. */
+const ownStrings: Record<Locale, Record<string, string>> = {
   en,
   tr: {
     // Header
@@ -13537,32 +13541,51 @@ const translations: Record<Locale, Record<string, string>> = {
     "privacy.contactBody":
       "Pour toute question sur cette politique : ayvexdevelopment@gmail.com.",
   },
-  es: mergeLocale(en, {
+  es: {
     ...localeOverrides.es,
     ...partialStaticPageLocales.es,
     ...partialBlogChromeLocales.es,
-  }),
-  pt: mergeLocale(en, {
+  },
+  pt: {
     ...localeOverrides.pt,
     ...partialStaticPageLocales.pt,
     ...partialBlogChromeLocales.pt,
-  }),
-  it: mergeLocale(en, {
+  },
+  it: {
     ...localeOverrides.it,
     ...partialStaticPageLocales.it,
     ...partialBlogChromeLocales.it,
-  }),
-  ja: mergeLocale(en, {
+  },
+  ja: {
     ...localeOverrides.ja,
     ...partialStaticPageLocales.ja,
     ...partialBlogChromeLocales.ja,
-  }),
-  ar: mergeLocale(en, {
+  },
+  ar: {
     ...arLocaleStrings,
     ...partialStaticPageLocales.ar,
     ...partialBlogChromeLocales.ar,
-  }),
+  },
 };
+
+/** Own strings + later completions (`i18n-completions/`), English for anything still missing. */
+const translations = Object.fromEntries(
+  SUPPORTED_LOCALES.map((locale) => [
+    locale,
+    locale === "en" ? en : mergeLocale(en, { ...ownStrings[locale], ...localeCompletions[locale] }),
+  ]),
+) as Record<Locale, Record<string, string>>;
+
+/** Keys that still show English in `locale` (checked by `npm run verify:i18n`). */
+export function untranslatedKeys(locale: Locale): string[] {
+  const own = { ...ownStrings[locale], ...localeCompletions[locale] };
+  return Object.keys(en).filter((key) => own[key] === undefined);
+}
+
+/** Every language's final strings, for checks (`npm run verify:i18n`). */
+export function allTranslations(): Record<Locale, Record<string, string>> {
+  return translations;
+}
 
 /** Every locale has a full key set; merged locales inherit English for keys not overridden. */
 function resolveTranslation(locale: Locale, key: string): string {
@@ -13582,12 +13605,15 @@ interface I18nContextType {
   locale: Locale;
   setLocale: (locale: Locale) => void;
   t: (key: string, params?: Record<string, string | number>) => string;
+  /** Link to a tool in the current language (`/tr/pdf-birlestir` or `/tools/merge-pdf`). */
+  toolHref: (slug: string) => string;
 }
 
 const I18nContext = createContext<I18nContextType>({
   locale: "en",
   setLocale: () => {},
   t: (key) => key,
+  toolHref: (slug) => `/tools/${slug}`,
 });
 
 function readCookieValue(name: string): string | null {
@@ -13694,7 +13720,11 @@ export function I18nProvider({
 }) {
   const bootLocale =
     initialLocale && SUPPORTED_LOCALES.includes(initialLocale) ? initialLocale : "en";
-  const [locale, setLocaleState] = useState<Locale>(bootLocale);
+  const [preferredLocale, setLocaleState] = useState<Locale>(bootLocale);
+  // A localized URL (`/tr/pdf-birlestir`) fixes the language, on the server
+  // render too, so search engines see that page in its own language.
+  const pathname = usePathname();
+  const locale: Locale = parseLocalizedToolPath(pathname)?.locale ?? preferredLocale;
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -13731,9 +13761,12 @@ export function I18nProvider({
     }
 
     setLocaleState(resolved);
-    document.documentElement.lang = resolved;
-    document.documentElement.dir = isRtlLocale(resolved) ? "rtl" : "ltr";
   }, [bootLocale]);
+
+  useEffect(() => {
+    document.documentElement.lang = locale;
+    document.documentElement.dir = isRtlLocale(locale) ? "rtl" : "ltr";
+  }, [locale]);
 
   const setLocale = useCallback((newLocale: Locale) => {
     if (!SUPPORTED_LOCALES.includes(newLocale)) return;
@@ -13742,11 +13775,15 @@ export function I18nProvider({
     localStorage.setItem("zapfile-locale-explicit", "true");
     setLocalePrefCookie(newLocale);
     if (typeof window !== "undefined") {
+      // Tool pages have their own URL per language: go there.
+      const target = toolPathForLocale(window.location.pathname, newLocale);
+      if (target && target !== window.location.pathname) {
+        window.location.assign(target);
+        return;
+      }
       const url = new URL(window.location.href);
       url.searchParams.set("lang", newLocale);
       window.history.replaceState({}, "", url);
-      document.documentElement.lang = newLocale;
-      document.documentElement.dir = isRtlLocale(newLocale) ? "rtl" : "ltr";
     }
   }, []);
 
@@ -13763,8 +13800,10 @@ export function I18nProvider({
     [locale],
   );
 
+  const toolHref = useCallback((slug: string) => buildToolHref(slug, locale), [locale]);
+
   return (
-    <I18nContext.Provider value={{ locale, setLocale, t }}>
+    <I18nContext.Provider value={{ locale, setLocale, t, toolHref }}>
       {children}
     </I18nContext.Provider>
   );

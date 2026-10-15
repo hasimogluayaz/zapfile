@@ -10,6 +10,7 @@ import {
   parseReadMinutes,
 } from "@/lib/blog-formatting";
 import { useI18n } from "@/lib/i18n";
+import { blogTagLabel } from "@/lib/blog-tags";
 
 export default function BlogClient() {
   const { t, locale } = useI18n();
@@ -43,7 +44,7 @@ export default function BlogClient() {
                         key={tag}
                         className="text-[11px] font-medium uppercase tracking-wide text-accent bg-accent-light px-2 py-0.5 rounded-full"
                       >
-                        {tag}
+                        {blogTagLabel(tag, locale)}
                       </span>
                     ))}
                   </div>

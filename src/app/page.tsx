@@ -32,7 +32,7 @@ function bySlugs(slugs: string[]): Tool[] {
 }
 
 export default function Home() {
-  const { t } = useI18n();
+  const { t, toolHref } = useI18n();
   const { recentSlugs, ready: recentReady } = useRecentTools();
   const { favorites, ready: favReady } = useFavoriteTools();
   const [query, setQuery] = useState("");
@@ -93,7 +93,7 @@ export default function Home() {
               {yourTools.map(({ tool, fav }) => (
                 <Link
                   key={tool.slug}
-                  href={`/tools/${tool.slug}`}
+                  href={toolHref(tool.slug)}
                   className="flex shrink-0 items-center gap-2 rounded-full border border-border bg-surface py-1.5 pe-3.5 ps-1.5 text-[13.5px] font-medium text-t-primary shadow-sm transition-colors hover:border-t-primary/25"
                 >
                   <span
