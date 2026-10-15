@@ -9,7 +9,7 @@ import { useFavoriteTools } from "@/hooks/useFavoriteTools";
 import ToolIcon from "@/components/ToolIcon";
 
 export default function ToolCard({ tool }: { tool: Tool }) {
-  const { t } = useI18n();
+  const { t, toolHref } = useI18n();
   const { isFavorite, toggleFavorite, ready } = useFavoriteTools();
   const name = toolField(t, tool.slug, tool, "name");
   const desc = toolField(t, tool.slug, tool, "desc");
@@ -18,7 +18,7 @@ export default function ToolCard({ tool }: { tool: Tool }) {
   return (
     <div className="group relative">
       <Link
-        href={`/tools/${tool.slug}`}
+        href={toolHref(tool.slug)}
         className="flex h-full items-start gap-3.5 rounded-2xl p-3 pe-10 transition-colors hover:bg-bg-secondary active:bg-bg-tertiary"
       >
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-surface text-t-primary shadow-sm transition-colors group-hover:border-transparent group-hover:bg-t-primary group-hover:text-bg">

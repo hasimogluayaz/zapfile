@@ -1,11 +1,11 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { Toaster } from "react-hot-toast";
 import ClientProviders from "@/components/ClientProviders";
 import type { Locale } from "@/lib/locales";
 import { SUPPORTED_LOCALES, isRtlLocale } from "@/lib/locales";
-import { LOCALE_COOKIE } from "@/lib/locale-cookies";
+import { LOCALE_COOKIE, URL_LOCALE_HEADER } from "@/lib/locale-cookies";
 import SkipToContent from "@/components/SkipToContent";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -166,9 +166,13 @@ export default async function RootLayout({
   const raw = cookieStore.get(LOCALE_COOKIE)?.value;
   const initialLocale: Locale =
     raw && SUPPORTED_LOCALES.includes(raw as Locale) ? (raw as Locale) : "en";
+  // Set by middleware on localized URLs (`/tr/...`), whose language is fixed.
+  const urlLocale = (await headers()).get(URL_LOCALE_HEADER);
+  const pageLocale: Locale =
+    urlLocale && SUPPORTED_LOCALES.includes(urlLocale as Locale) ? (urlLocale as Locale) : initialLocale;
 
   return (
-    <html className={`${geistSans.variable} ${geistMono.variable}`} lang={initialLocale} dir={isRtlLocale(initialLocale) ? "rtl" : "ltr"} suppressHydrationWarning translate="no">
+    <html className={`${geistSans.variable} ${geistMono.variable}`} lang={pageLocale} dir={isRtlLocale(pageLocale) ? "rtl" : "ltr"} suppressHydrationWarning translate="no">
       <head>
         <meta name="google" content="notranslate" />
         {/* Apply saved/system theme before first paint to avoid a light flash */}

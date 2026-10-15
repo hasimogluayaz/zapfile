@@ -21,6 +21,7 @@ import { toolField } from "@/lib/tool-i18n";
 import { useFavoriteTools } from "@/hooks/useFavoriteTools";
 import { useRecentTools } from "@/hooks/useRecentTools";
 import { toolSlugFromPathname } from "@/lib/tool-slug";
+import { parseLocalizedToolPath } from "@/lib/localized-routes";
 import { getToolFaqs } from "@/lib/tool-faqs";
 
 interface ToolLayoutProps {
@@ -46,9 +47,11 @@ export default function ToolLayout({
   faq,
   showTrustPanel = true,
 }: ToolLayoutProps) {
-  const { t, locale } = useI18n();
+  const { t, locale, toolHref } = useI18n();
   const pathname = usePathname();
   const slug = toolSlugFromPathname(pathname);
+  // Localized URLs (`/tr/...`) get no English FAQPage from a tool layout.
+  const localizedRoute = parseLocalizedToolPath(pathname) !== null;
   const { trackTool } = useRecentTools();
   const { isFavorite, toggleFavorite, ready: favReady } = useFavoriteTools();
   const [openFaqIndices, setOpenFaqIndices] = useState<Set<number>>(new Set());
@@ -195,7 +198,7 @@ export default function ToolLayout({
                         return (
                           <Link
                             key={tool.slug}
-                            href={`/tools/${tool.slug}`}
+                            href={toolHref(tool.slug)}
                             aria-current={active ? "page" : undefined}
                             className={`relative flex items-center gap-2.5 rounded-lg px-2.5 py-[7px] text-[13px] transition-colors ${
                               active
@@ -331,7 +334,7 @@ export default function ToolLayout({
                       );
                     })}
                   </div>
-                  {!toolFaqs && (
+                  {(!toolFaqs || localizedRoute) && (
                     <script
                       type="application/ld+json"
                       dangerouslySetInnerHTML={{

@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { tools, type Tool, type ToolCategory } from "@/lib/tools";
 import { useI18n } from "@/lib/i18n";
+import { parseLocalizedToolPath } from "@/lib/localized-routes";
 import { toolField } from "@/lib/tool-i18n";
 import { useFavoriteTools } from "@/hooks/useFavoriteTools";
 import { useRecentTools } from "@/hooks/useRecentTools";
@@ -87,7 +88,7 @@ function SearchModal({ onClose }: { onClose: () => void }) {
   const listRef = useRef<HTMLDivElement>(null);
   const backdropRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-  const { t } = useI18n();
+  const { t, toolHref } = useI18n();
   const { recentSlugs } = useRecentTools();
   const { favorites } = useFavoriteTools();
 
@@ -124,7 +125,7 @@ function SearchModal({ onClose }: { onClose: () => void }) {
 
   const go = (slug: string) => {
     onClose();
-    router.push(`/tools/${slug}`);
+    router.push(toolHref(slug));
   };
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -210,7 +211,7 @@ function SearchModal({ onClose }: { onClose: () => void }) {
                   data-index={index}
                   role="option"
                   aria-selected={selected}
-                  href={`/tools/${tool.slug}`}
+                  href={toolHref(tool.slug)}
                   onClick={onClose}
                   onMouseMove={() => setActive(index)}
                   className={`flex items-center gap-3 rounded-xl px-2.5 py-2 ${
@@ -278,7 +279,7 @@ function MobileMenu({
   onSearch: () => void;
 }) {
   const [expandedCat, setExpandedCat] = useState<ToolCategory | null>(null);
-  const { t } = useI18n();
+  const { t, toolHref } = useI18n();
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -330,7 +331,7 @@ function MobileMenu({
             return (
               <Link
                 key={slug}
-                href={`/tools/${slug}`}
+                href={toolHref(slug)}
                 onClick={onClose}
                 className="flex items-center gap-2.5 rounded-xl border border-border bg-surface px-3 py-3 text-[14px] font-medium text-t-primary"
               >
@@ -367,7 +368,7 @@ function MobileMenu({
                     {catTools.map((tool) => (
                       <Link
                         key={tool.slug}
-                        href={`/tools/${tool.slug}`}
+                        href={toolHref(tool.slug)}
                         onClick={onClose}
                         className="flex items-center gap-3 px-4 py-2.5 ps-[60px] text-[14px] text-t-secondary hover:bg-bg-secondary hover:text-t-primary"
                       >
@@ -411,7 +412,7 @@ function MobileMenu({
 
 // ─── Convert menu (to PDF / from PDF) ─────────────────────────
 function ConvertMenu({ onNavigate }: { onNavigate: () => void }) {
-  const { t } = useI18n();
+  const { t, toolHref } = useI18n();
   const column = (title: string, slugs: string[]) => (
     <div className="min-w-0">
       <p className="mb-1.5 px-2 text-[11.5px] font-semibold uppercase tracking-[0.06em] text-t-tertiary">{title}</p>
@@ -421,7 +422,7 @@ function ConvertMenu({ onNavigate }: { onNavigate: () => void }) {
         return (
           <Link
             key={slug}
-            href={`/tools/${slug}`}
+            href={toolHref(slug)}
             onClick={onNavigate}
             className="flex items-center gap-2.5 rounded-lg px-2 py-2 text-[13.5px] font-medium text-t-secondary hover:bg-bg-secondary hover:text-t-primary"
           >
@@ -444,7 +445,7 @@ function ConvertMenu({ onNavigate }: { onNavigate: () => void }) {
 
 // ─── Tools mega menu ───────────────────────────────────────────
 function ToolsMenu({ onNavigate }: { onNavigate: () => void }) {
-  const { t } = useI18n();
+  const { t, toolHref } = useI18n();
   const { favorites, ready } = useFavoriteTools();
   const favoriteTools = tools.filter((tool) => favorites.includes(tool.slug));
   const menuLink = (slug: string) => {
@@ -453,7 +454,7 @@ function ToolsMenu({ onNavigate }: { onNavigate: () => void }) {
     return (
       <Link
         key={slug}
-        href={`/tools/${slug}`}
+        href={toolHref(slug)}
         onClick={onNavigate}
         className="flex items-center gap-2 truncate rounded-lg px-2 py-1.5 text-[13px] text-t-secondary hover:bg-bg-secondary hover:text-t-primary"
       >
@@ -471,7 +472,7 @@ function ToolsMenu({ onNavigate }: { onNavigate: () => void }) {
           {favoriteTools.map((tool) => (
             <Link
               key={tool.slug}
-              href={`/tools/${tool.slug}`}
+              href={toolHref(tool.slug)}
               onClick={onNavigate}
               className="flex items-center gap-1.5 rounded-lg bg-surface px-2.5 py-1.5 text-[12.5px] font-medium text-t-primary shadow-sm hover:bg-surface-hover"
             >
@@ -543,7 +544,7 @@ export default function Header() {
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const menuRef = useRef<HTMLElement>(null);
-  const { t } = useI18n();
+  const { t, toolHref } = useI18n();
   const { theme, toggleTheme } = useTheme();
   const [searchModKey, setSearchModKey] = useState("Ctrl");
 
@@ -623,7 +624,7 @@ export default function Header() {
     );
   };
 
-  const isToolPage = pathname?.startsWith("/tools/");
+  const isToolPage = pathname?.startsWith("/tools/") || parseLocalizedToolPath(pathname) !== null;
 
   return (
     <>
@@ -638,7 +639,7 @@ export default function Header() {
             <nav ref={menuRef} className="hidden items-center gap-0.5 md:flex" aria-label={t("nav.primaryLabel")}>
               {POPULAR.slice(0, POPULAR_IN_HEADER).map((slug) => {
                 const tool = toolBySlug(slug);
-                return tool ? <span key={slug} className="hidden xl:inline-flex">{navLink(`/tools/${slug}`, toolField(t, slug, tool, "name"))}</span> : null;
+                return tool ? <span key={slug} className="hidden xl:inline-flex">{navLink(toolHref(slug), toolField(t, slug, tool, "name"))}</span> : null;
               })}
               {(["convert", "tools"] as const).map((key) => {
                 const open = openMenu === key;

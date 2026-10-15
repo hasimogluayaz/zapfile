@@ -60,6 +60,13 @@ src/
 - Locale priority: explicit user choice (localStorage) → URL ?lang= param → geo cookie → browser lang → English
 - `document.documentElement.dir` is set to `ltr` for all locales (no RTL UI language enabled)
 
+## Localized tool URLs (`src/lib/localized-routes.ts`)
+
+- Turkish tool pages have their own URLs (`/tr/pdf-birlestir`) so Google indexes them in Turkish; other languages still switch in place on `/tools/<slug>`. Slug table: `src/lib/localized-tool-slugs.json` (also read by `next.config.mjs` for the Office tools' isolation headers). Search titles/descriptions: `src/lib/tool-seo-tr.ts`.
+- Route: `src/app/[locale]/[toolSlug]/` renders the same tool component (`tool-pages.ts`, lazy per tool). `I18nProvider` takes the language from the path (server render included); middleware passes it to the root layout for `<html lang>`.
+- Link to tools with `toolHref(slug)` from `useI18n()`, never a hard-coded `/tools/${slug}`. Tool pages get hreflang alternates (`toolLanguagePaths`) and the sitemap lists every language version.
+- To add a language: add its slug table to the JSON, the locale to `TOOL_URL_LOCALES`, and a `tool-seo-<locale>.ts`.
+
 ## Tools
 
 Canonical list: `src/lib/tools.ts` — 70 tools across 4 categories (PDF, Image, Video/Audio, Utility). FFmpeg/AI/browser-fetch tools were removed in v1.4.0. v2.0 retired 13 off-brand or third-party-dependent tools and merged 5 duplicates; their URLs 301-redirect via `redirects()` in `next.config.mjs` — add a redirect whenever a tool slug is removed or renamed.

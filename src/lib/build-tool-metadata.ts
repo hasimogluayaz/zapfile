@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getToolBySlug } from "@/lib/tools";
 import { SITE_URL } from "@/lib/site-url";
 import { getToolFaqs } from "@/lib/tool-faqs";
+import { toolLanguagePaths } from "@/lib/localized-routes";
 
 const BASE = SITE_URL;
 
@@ -74,6 +75,9 @@ export function buildToolMetadata(slug: string): Metadata {
     },
     alternates: {
       canonical: `${BASE}/tools/${slug}`,
+      languages: Object.fromEntries(
+        Object.entries(toolLanguagePaths(slug)).map(([lang, path]) => [lang, `${BASE}${path}`]),
+      ),
     },
   };
 }

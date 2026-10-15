@@ -26,7 +26,7 @@ const resourceLinks = [
 ];
 
 export default function Footer() {
-  const { t } = useI18n();
+  const { t, toolHref } = useI18n();
 
   return (
     <footer className="mt-auto border-t border-border">
@@ -58,7 +58,7 @@ export default function Footer() {
                 return (
                   <li key={slug}>
                     <Link
-                      href={`/tools/${slug}`}
+                      href={toolHref(slug)}
                       className="text-[13.5px] text-t-secondary transition-colors hover:text-t-primary"
                     >
                       {toolField(t, slug, tool, "name")}

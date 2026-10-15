@@ -3,7 +3,8 @@ import type { NextRequest } from "next/server";
 import { localeFromCountryCode } from "@/lib/region-locale";
 import type { Locale } from "@/lib/locales";
 import { SUPPORTED_LOCALES } from "@/lib/locales";
-import { LOCALE_COOKIE, LOCALE_PREF_COOKIE } from "@/lib/locale-cookies";
+import { LOCALE_COOKIE, LOCALE_PREF_COOKIE, URL_LOCALE_HEADER } from "@/lib/locale-cookies";
+import { parseLocalizedToolPath } from "@/lib/localized-routes";
 
 function detectCountry(request: NextRequest): string | undefined {
   const g = request.geo;
@@ -16,7 +17,17 @@ function detectCountry(request: NextRequest): string | undefined {
 }
 
 export function middleware(request: NextRequest) {
-  const res = NextResponse.next();
+  // Localized tool URLs (`/tr/pdf-birlestir`): tell the root layout the page's
+  // language for `<html lang>`.
+  const urlLocale = parseLocalizedToolPath(request.nextUrl.pathname)?.locale;
+  let res: NextResponse;
+  if (urlLocale) {
+    const headers = new Headers(request.headers);
+    headers.set(URL_LOCALE_HEADER, urlLocale);
+    res = NextResponse.next({ request: { headers } });
+  } else {
+    res = NextResponse.next();
+  }
   const country = detectCountry(request);
   const pref = request.cookies.get(LOCALE_PREF_COOKIE)?.value;
   const locale: Locale =
