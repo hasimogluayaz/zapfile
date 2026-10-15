@@ -120,7 +120,10 @@ Kullanıcının teklif PDF'i ve düz metin bir raporla test edildi. Bulunan ve d
 - **Dil adresleri** (PR #3 ile `main`'e alındı, canlıda): 70 aracın hepsi 8 dilde kendi adresinde (`/tr/pdf-birlestir`, `/de/…`, `/fr/…`, `/es/unir-pdf`, `/pt/…`, `/it/…`, `/ja/merge-pdf`, `/ar/merge-pdf`), o dilde başlık/açıklama, hreflang ve site haritasıyla (679 adres). Vercel'de 404 hatası yaşandı: `dynamicParams = false` kullanma (nedeni sayfa dosyasında yazıyor).
 - **Çeviriler tamamlandı (2026-10-15):** Arayüzde 9 dilde de İngilizce metin kalmadı. Eksikler `src/lib/i18n-completions/<dil>.json`'da; `npm run verify:i18n` eksik kalırsa hata veriyor. Bütün sayfalar her dilde Playwright ile tarandı. Değişiklik Günlüğü yeniden yazıldı ve 9 dile çevrildi; blog etiketleri ve özetleri de çevrildi.
 - **Blog çevrildi (2026-10-15):** 33 yazının hepsi 8 dilde kendi adresinde (`/tr/blog`, `/de/blog/<yazı>` …), içindeki araç linkleri o dilin araç adresine gidiyor, hreflang + site haritası (951 adres) var. Çevirilerde iddialar İngilizce yazılarla aynı (İngilizce yazılardaki hatalı iddialar da düzeltildi: dönüştürücü formatları, Office hızlı modu sunucuya yükler, OCR/arka plan silme tarayıcıda). Yazı gövdesindeki tekrar eden başlık (iki h1) kaldırıldı.
-- **Sonraki adımlar:** Dil ana sayfaları (`/tr`); IndexNow; Search Console'da yeni dil sayfaları için dizine ekleme isteği; Reddit/AlternativeTo tanıtımı.
+- **Dil ana sayfaları (2026-10-15):** `/tr`, `/de`, `/fr`, `/es`, `/pt`, `/it`, `/ja`, `/ar`; o dilde başlık/açıklama, hreflang, site haritası (959 adres). Logo ve "Ana sayfa" linkleri dilin ana sayfasına gidiyor.
+- **IndexNow (2026-10-15):** `main`'e her push'tan 5 dk sonra GitHub Action site haritasındaki tüm adresleri Bing/Yandex'e bildiriyor. Sonuç: GitHub → Actions → IndexNow.
+- **Tanıtım metinleri:** `docs/TANITIM.md` (Reddit, AlternativeTo, Product Hunt, Türkçe forumlar). Kullanıcı paylaşacak.
+- **Sonraki adımlar:** Search Console'da yeni dil sayfaları için dizine ekleme isteği; `/tools` sayfasının dil adresleri (şu an `?lang=`).
 
 ## Sıradaki işler
 

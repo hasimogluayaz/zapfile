@@ -47,7 +47,7 @@ export default function ToolLayout({
   faq,
   showTrustPanel = true,
 }: ToolLayoutProps) {
-  const { t, locale, toolHref } = useI18n();
+  const { t, locale, toolHref, homeHref } = useI18n();
   const pathname = usePathname();
   const slug = toolSlugFromPathname(pathname);
   // Localized URLs (`/tr/...`) get no English FAQPage from a tool layout.
@@ -232,7 +232,7 @@ export default function ToolLayout({
                 aria-label={t("breadcrumb.label")}
                 className="mb-4 flex flex-wrap items-center gap-1 text-[12.5px] text-t-tertiary"
               >
-                <Link href="/" className="hover:text-t-primary">
+                <Link href={homeHref()} className="hover:text-t-primary">
                   {t("tool.home")}
                 </Link>
                 <ChevronRight className="h-3.5 w-3.5 rtl:rotate-180" aria-hidden="true" />

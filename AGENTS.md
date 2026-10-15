@@ -66,7 +66,12 @@ src/
 - Route: `src/app/[locale]/[toolSlug]/` renders the same tool component (`tool-pages.ts`, lazy per tool). `I18nProvider` takes the language from the path (server render included); middleware passes it to the root layout for `<html lang>`.
 - Link to tools with `toolHref(slug)` from `useI18n()`, never a hard-coded `/tools/${slug}`. Tool pages get hreflang alternates (`toolLanguagePaths`) and the sitemap lists every language version.
 - To add a language: finish its UI translation first, then add its slug table to the JSON, the locale to `TOOL_URL_LOCALES`, a `tool-seo-<locale>.ts` and its entry in the route's `seo` map.
+- Home pages too: `/tr`, `/de`, … (`src/app/[locale]/page.tsx`, same `HomeClient` as `/`; titles/descriptions in `src/lib/home-seo.ts`). Link home with `homeHref()` from `useI18n()`, never `href="/"`. Switching language on a home, tool or blog page goes to that page's URL in the new language (`pathForLocale`).
 - The blog has the same per-language URLs: `/tr/blog`, `/de/blog/<post-slug>` (post slugs stay English). Post bodies: `src/lib/blog-i18n/<locale>.ts` (markdown keyed by slug, server-only; `localizedPostContent` rewrites `/tools/<slug>` links to that language's tool URL). Titles/summaries: `blog-post-locales*.ts`; index SEO: `blog-seo.ts`; shared page code: `src/app/blog/blog-pages.tsx`. Link with `blogHref()` from `useI18n()`. A new English post needs its body in every `blog-i18n/<locale>.ts` (same headings and tool links): `npm run verify:i18n` (`scripts/verify-blog-i18n.mjs`) fails otherwise, and a missing translation 404s.
+
+## IndexNow
+
+`public/<key>.txt` is the IndexNow key. `.github/workflows/indexnow.yml` runs on pushes to `main` that touch `src/` (and on demand): it waits 5 minutes for the Vercel deploy, then `scripts/indexnow.mjs` submits every sitemap URL to Bing/Yandex & co. Google doesn't use IndexNow (Search Console + sitemap).
 
 ## Tools
 
