@@ -15,6 +15,7 @@ import { partialStaticPageLocales } from "./i18n-partial-static-pages";
 import { partialBlogChromeLocales } from "./i18n-partial-blog-chrome";
 import { arLocaleStrings } from "./i18n-locale-ar";
 import { LOCALE_COOKIE, LOCALE_PREF_COOKIE } from "./locale-cookies";
+import { localeCompletions } from "./i18n-completions";
 import { parseLocalizedToolPath, toolHref as buildToolHref, toolPathForLocale } from "./localized-routes";
 
 export type { Locale } from "./locales";
@@ -3569,7 +3570,8 @@ function mergeLocale(
   return out;
 }
 
-const translations: Record<Locale, Record<string, string>> = {
+/** Each language's own strings, before the English fallback is filled in. */
+const ownStrings: Record<Locale, Record<string, string>> = {
   en,
   tr: {
     // Header
@@ -13539,32 +13541,51 @@ const translations: Record<Locale, Record<string, string>> = {
     "privacy.contactBody":
       "Pour toute question sur cette politique : ayvexdevelopment@gmail.com.",
   },
-  es: mergeLocale(en, {
+  es: {
     ...localeOverrides.es,
     ...partialStaticPageLocales.es,
     ...partialBlogChromeLocales.es,
-  }),
-  pt: mergeLocale(en, {
+  },
+  pt: {
     ...localeOverrides.pt,
     ...partialStaticPageLocales.pt,
     ...partialBlogChromeLocales.pt,
-  }),
-  it: mergeLocale(en, {
+  },
+  it: {
     ...localeOverrides.it,
     ...partialStaticPageLocales.it,
     ...partialBlogChromeLocales.it,
-  }),
-  ja: mergeLocale(en, {
+  },
+  ja: {
     ...localeOverrides.ja,
     ...partialStaticPageLocales.ja,
     ...partialBlogChromeLocales.ja,
-  }),
-  ar: mergeLocale(en, {
+  },
+  ar: {
     ...arLocaleStrings,
     ...partialStaticPageLocales.ar,
     ...partialBlogChromeLocales.ar,
-  }),
+  },
 };
+
+/** Own strings + later completions (`i18n-completions/`), English for anything still missing. */
+const translations = Object.fromEntries(
+  SUPPORTED_LOCALES.map((locale) => [
+    locale,
+    locale === "en" ? en : mergeLocale(en, { ...ownStrings[locale], ...localeCompletions[locale] }),
+  ]),
+) as Record<Locale, Record<string, string>>;
+
+/** Keys that still show English in `locale` (checked by `npm run verify:i18n`). */
+export function untranslatedKeys(locale: Locale): string[] {
+  const own = { ...ownStrings[locale], ...localeCompletions[locale] };
+  return Object.keys(en).filter((key) => own[key] === undefined);
+}
+
+/** Every language's final strings, for checks (`npm run verify:i18n`). */
+export function allTranslations(): Record<Locale, Record<string, string>> {
+  return translations;
+}
 
 /** Every locale has a full key set; merged locales inherit English for keys not overridden. */
 function resolveTranslation(locale: Locale, key: string): string {
