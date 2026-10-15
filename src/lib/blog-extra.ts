@@ -21,7 +21,7 @@ Safari can open **ZapFile** and similar tools that run in the browser. Your PDF 
 
 ## Steps
 
-1. Open **Compress PDF** or a comparable tool in Safari.
+1. Open [Compress PDF](/tools/pdf-compress) or a comparable tool in Safari.
 2. Choose your PDF from Files or Photos.
 3. Download the smaller file.
 
@@ -170,7 +170,7 @@ Many tools force accounts for analytics or upsells. **No sign-up** tools reduce 
 
 ## ZapFile
 
-[ZapFile](/) offers dozens of PDF and image tools without accounts. Processing runs in your browser.
+[ZapFile](/) offers dozens of PDF and image tools without accounts. Almost everything runs in your browser; only the optional fast mode of Office to PDF converts on our server and deletes the file right after.
 
 ## Summary
 
@@ -225,7 +225,7 @@ Sharing files publicly can expose more than you intend.
 
 ## Tools
 
-[EXIF Viewer](/tools/exif-viewer) helps you inspect and understand embedded data in images.
+[EXIF Viewer](/tools/exif-viewer) shows the data embedded in images and saves a clean copy without it. Re-encoding an image with [Compress Image](/tools/compress-image) also strips EXIF.
 
 ## Summary
 
@@ -314,7 +314,7 @@ Use the right tool for each direction in your workflow.`,
 
 ## ZapFile
 
-ZapFile is built so your files stay on your device — privacy by design.
+ZapFile is built so your files stay on your device — privacy by design. Even OCR runs in the browser. The only exception is the optional fast mode of Word, Excel, PowerPoint and HTML to PDF, which converts on our server and deletes the file right after.
 
 ## Summary
 
@@ -711,7 +711,7 @@ If you have a multi-page document photographed as separate images (a scanned con
 
 ## Image Quality in the Output PDF
 
-ZapFile embeds your images into the PDF without re-encoding them, so the output quality matches your original files. For the sharpest PDFs:
+ZapFile keeps JPEG photos as they are whenever it can and keeps PNG images lossless; WebP and AVIF are embedded as high-quality JPEG. For the sharpest PDFs:
 
 - Start with the highest-resolution version of your image
 - Use PNG for screenshots or graphics with text (lossless)
@@ -731,7 +731,7 @@ If you need the reverse — extracting images from a PDF — use [ZapFile's PDF 
 ## Summary
 
 - Convert single images or combine multiple images into one PDF
-- Quality is preserved since images are embedded without re-encoding
+- Quality is preserved: JPEG photos are kept as they are and PNG stays lossless
 - [ZapFile's Image to PDF Tool](/tools/image-to-pdf) is free, private, and works in your browser`,
   },
   {
@@ -992,13 +992,13 @@ Most business templates (letterheads, reports, proposals) are distributed as Wor
 ## Converting Between Formats
 
 ### Word → PDF
-The most reliable method is to use "Save as PDF" or "Export to PDF" directly in Microsoft Word or LibreOffice. This embeds fonts and produces a clean PDF.
+Use "Save as PDF" in Microsoft Word or LibreOffice, or [ZapFile's Word to PDF tool](/tools/word-to-pdf) if you don't have Word installed. Fonts, tables and page breaks are kept.
 
 ### PDF → Images
 Need to use a PDF page as an image? Use [ZapFile's PDF to Images tool](/tools/pdf-to-images) to export any page as PNG or JPG.
 
-### PDF → Editable (Caution)
-Converting PDF back to an editable Word document is imperfect. Layout, fonts, and formatting often break, especially in complex documents. This is a limitation of PDF's fixed nature — it wasn't designed to be edited.
+### PDF → Word
+PDF wasn't designed to be edited, so converting back to Word is harder. [ZapFile's PDF to Word tool](/tools/pdf-to-word) turns ordinary documents into flowing, editable text with headings, lists and tables, and keeps designed pages (brochures, offers) in their exact layout. Always check the result of complex documents.
 
 ## Quick Reference
 
@@ -1024,7 +1024,7 @@ When collecting signed forms or compiling a report from multiple PDFs, use [ZapF
 
 - Use PDF for final, formatted documents that need to look the same everywhere
 - Use Word for documents that need editing, collaboration, or filling in
-- Convert between formats carefully — PDF → Word conversion is inherently imperfect`,
+- Convert between formats with the right tool, and check the result when going from PDF back to Word`,
   },
 ];
 

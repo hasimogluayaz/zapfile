@@ -279,7 +279,7 @@ function MobileMenu({
   onSearch: () => void;
 }) {
   const [expandedCat, setExpandedCat] = useState<ToolCategory | null>(null);
-  const { t, toolHref } = useI18n();
+  const { t, toolHref, blogHref } = useI18n();
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -393,7 +393,7 @@ function MobileMenu({
           ].map((link, i) => (
             <Link
               key={link.href}
-              href={link.href}
+              href={link.href === "/blog" ? blogHref() : link.href}
               onClick={onClose}
               className={`block px-4 py-3.5 text-[15px] text-t-primary hover:bg-bg-secondary ${
                 i > 0 ? "border-t border-border" : ""
@@ -445,7 +445,7 @@ function ConvertMenu({ onNavigate }: { onNavigate: () => void }) {
 
 // ─── Tools mega menu ───────────────────────────────────────────
 function ToolsMenu({ onNavigate }: { onNavigate: () => void }) {
-  const { t, toolHref } = useI18n();
+  const { t, toolHref, blogHref } = useI18n();
   const { favorites, ready } = useFavoriteTools();
   const favoriteTools = tools.filter((tool) => favorites.includes(tool.slug));
   const menuLink = (slug: string) => {
@@ -524,7 +524,7 @@ function ToolsMenu({ onNavigate }: { onNavigate: () => void }) {
           <Link href="/workflows" onClick={onNavigate} className="text-t-secondary hover:text-t-primary hover:underline">
             {t("nav.workflows")}
           </Link>
-          <Link href="/blog" onClick={onNavigate} className="text-t-secondary hover:text-t-primary hover:underline">
+          <Link href={blogHref()} onClick={onNavigate} className="text-t-secondary hover:text-t-primary hover:underline">
             {t("nav.blog")}
           </Link>
         </span>

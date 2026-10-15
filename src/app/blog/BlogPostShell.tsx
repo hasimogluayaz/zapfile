@@ -23,7 +23,7 @@ export default function BlogPostShell({
   contentHtml,
   relatedPosts,
 }: Props) {
-  const { t, locale } = useI18n();
+  const { t, locale, blogHref } = useI18n();
   const main = getLocalizedBlogSummary(post, locale);
   const readMin = parseReadMinutes(post.readTime);
 
@@ -47,7 +47,7 @@ export default function BlogPostShell({
               /
             </span>
             <Link
-              href="/blog"
+              href={blogHref()}
               className="hover:text-t-primary transition-colors shrink-0"
             >
               {t("blog.breadcrumbBlog")}
@@ -106,7 +106,7 @@ export default function BlogPostShell({
                   return (
                     <Link
                       key={rp.slug}
-                      href={`/blog/${rp.slug}`}
+                      href={blogHref(rp.slug)}
                       className="glass rounded-2xl p-5 hover:shadow-[var(--shadow-card-hover)] transition-all duration-200 group border border-border/40"
                     >
                       <h3 className="text-[14px] font-semibold text-t-primary mb-2 group-hover:text-accent transition-colors leading-snug line-clamp-3">
@@ -125,7 +125,7 @@ export default function BlogPostShell({
 
           <div className="pt-4 text-center">
             <Link
-              href="/blog"
+              href={blogHref()}
               className="inline-flex items-center gap-2 text-[13px] font-medium text-accent hover:text-accent-hover transition-colors"
             >
               <span aria-hidden className="text-base leading-none">

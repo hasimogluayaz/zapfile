@@ -26,7 +26,7 @@ const resourceLinks = [
 ];
 
 export default function Footer() {
-  const { t, toolHref } = useI18n();
+  const { t, toolHref, blogHref } = useI18n();
 
   return (
     <footer className="mt-auto border-t border-border">
@@ -77,7 +77,7 @@ export default function Footer() {
               {resourceLinks.map((link) => (
                 <li key={link.href}>
                   <Link
-                    href={link.href}
+                    href={link.href === "/blog" ? blogHref() : link.href}
                     className="text-[13.5px] text-t-secondary transition-colors hover:text-t-primary"
                   >
                     {t(link.key)}

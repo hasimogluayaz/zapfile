@@ -4,7 +4,7 @@ import { localeFromCountryCode } from "@/lib/region-locale";
 import type { Locale } from "@/lib/locales";
 import { SUPPORTED_LOCALES } from "@/lib/locales";
 import { LOCALE_COOKIE, LOCALE_PREF_COOKIE, URL_LOCALE_HEADER } from "@/lib/locale-cookies";
-import { parseLocalizedToolPath } from "@/lib/localized-routes";
+import { urlLocaleFromPathname } from "@/lib/localized-routes";
 
 function detectCountry(request: NextRequest): string | undefined {
   const g = request.geo;
@@ -17,9 +17,9 @@ function detectCountry(request: NextRequest): string | undefined {
 }
 
 export function middleware(request: NextRequest) {
-  // Localized tool URLs (`/tr/pdf-birlestir`): tell the root layout the page's
-  // language for `<html lang>`.
-  const urlLocale = parseLocalizedToolPath(request.nextUrl.pathname)?.locale;
+  // Localized URLs (`/tr/pdf-birlestir`, `/tr/blog/...`): tell the root layout
+  // the page's language for `<html lang>`.
+  const urlLocale = urlLocaleFromPathname(request.nextUrl.pathname);
   let res: NextResponse;
   if (urlLocale) {
     const headers = new Headers(request.headers);
