@@ -3,7 +3,13 @@ import { tools } from "@/lib/tools";
 import { getImageConversions } from "@/lib/conversions";
 import { getAllPosts } from "@/lib/blog";
 import { SITE_URL } from "@/lib/site-url";
-import { localizedToolParams, toolLanguagePaths } from "@/lib/localized-routes";
+import {
+  TOOL_URL_LOCALES,
+  blogHref,
+  blogLanguagePaths,
+  localizedToolParams,
+  toolLanguagePaths,
+} from "@/lib/localized-routes";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = SITE_URL;
@@ -44,14 +50,34 @@ export default function sitemap(): MetadataRoute.Sitemap {
     }));
   } catch {}
 
+  const blogLanguages = (slug?: string) =>
+    Object.fromEntries(
+      Object.entries(blogLanguagePaths(slug))
+        .filter(([lang]) => lang !== "x-default")
+        .map(([lang, path]) => [lang, `${baseUrl}${path}`]),
+    );
+
+  // Blog index and posts exist in every language (English at /blog).
+  const blogLocales = ["en", ...TOOL_URL_LOCALES] as const;
+  const blogIndexPages: MetadataRoute.Sitemap = blogLocales.map((locale) => ({
+    url: `${baseUrl}${blogHref(locale)}`,
+    lastModified: new Date(),
+    changeFrequency: "weekly" as const,
+    priority: 0.7,
+    alternates: { languages: blogLanguages() },
+  }));
+
   let blogPostPages: MetadataRoute.Sitemap = [];
   try {
-    blogPostPages = getAllPosts().map((post) => ({
-      url: `${baseUrl}/blog/${post.slug}`,
-      lastModified: new Date(post.date),
-      changeFrequency: "weekly" as const,
-      priority: 0.6,
-    }));
+    blogPostPages = getAllPosts().flatMap((post) =>
+      blogLocales.map((locale) => ({
+        url: `${baseUrl}${blogHref(locale, post.slug)}`,
+        lastModified: new Date(post.date),
+        changeFrequency: "weekly" as const,
+        priority: 0.6,
+        alternates: { languages: blogLanguages(post.slug) },
+      })),
+    );
   } catch {}
 
   return [
@@ -70,12 +96,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...toolPages,
     ...localizedToolPages,
     ...imageConversionPages,
-    {
-      url: `${baseUrl}/blog`,
-      lastModified: new Date(),
-      changeFrequency: "weekly" as const,
-      priority: 0.7,
-    },
+    ...blogIndexPages,
     ...blogPostPages,
     {
       url: `${baseUrl}/privacy`,

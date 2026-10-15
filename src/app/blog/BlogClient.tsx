@@ -13,7 +13,7 @@ import { useI18n } from "@/lib/i18n";
 import { blogTagLabel } from "@/lib/blog-tags";
 
 export default function BlogClient() {
-  const { t, locale } = useI18n();
+  const { t, locale, blogHref } = useI18n();
   const posts = getAllPosts();
 
   return (
@@ -35,7 +35,7 @@ export default function BlogClient() {
               return (
                 <Link
                   key={post.slug}
-                  href={`/blog/${post.slug}`}
+                  href={blogHref(post.slug)}
                   className="glass rounded-2xl p-6 hover:shadow-[var(--shadow-card-hover)] transition-all duration-200 group border border-border/30"
                 >
                   <div className="flex flex-wrap gap-2 mb-3">

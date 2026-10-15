@@ -117,10 +117,10 @@ Kullanıcının teklif PDF'i ve düz metin bir raporla test edildi. Bulunan ve d
 ## Kullanıcı getirme (2026-10-15)
 
 - **Search Console:** 115 sayfadan sadece 12'si dizindeydi. Site haritası 2 Mayıs'tan beri "Getirilemedi" durumundaydı. Kullanıcı 15 Ekim'de `sitemap.xml`'i yeniden gönderdi; canlı URL testi "Google tarafından kullanılabilir" sonucunu verdi. Kullanıcı yanlışlıkla `/tools/pdf-to-word` ve `/tools/merge-pdf` adreslerini site haritası diye ekledi, bunları silmesi söylendi. Birkaç gün sonra "Sayfa sayısı" ekranına tekrar bakılacak.
-- **Dil adresleri** (bu branch'te, `main`'e henüz alınmadı): 70 aracın hepsi 8 dilde kendi adresinde (`/tr/pdf-birlestir`, `/de/…`, `/fr/…`, `/es/unir-pdf`, `/pt/…`, `/it/…`, `/ja/merge-pdf`, `/ar/merge-pdf`), o dilde başlık/açıklama, hreflang ve site haritasıyla (679 adres). Vercel'de 404 hatası yaşandı: `dynamicParams = false` kullanma (nedeni sayfa dosyasında yazıyor).
+- **Dil adresleri** (PR #3 ile `main`'e alındı, canlıda): 70 aracın hepsi 8 dilde kendi adresinde (`/tr/pdf-birlestir`, `/de/…`, `/fr/…`, `/es/unir-pdf`, `/pt/…`, `/it/…`, `/ja/merge-pdf`, `/ar/merge-pdf`), o dilde başlık/açıklama, hreflang ve site haritasıyla (679 adres). Vercel'de 404 hatası yaşandı: `dynamicParams = false` kullanma (nedeni sayfa dosyasında yazıyor).
 - **Çeviriler tamamlandı (2026-10-15):** Arayüzde 9 dilde de İngilizce metin kalmadı. Eksikler `src/lib/i18n-completions/<dil>.json`'da; `npm run verify:i18n` eksik kalırsa hata veriyor. Bütün sayfalar her dilde Playwright ile tarandı. Değişiklik Günlüğü yeniden yazıldı ve 9 dile çevrildi; blog etiketleri ve özetleri de çevrildi.
-- **Kalan tek eksik:** Blog yazılarının metni (33 yazı) hâlâ sadece İngilizce; başlık ve özetleri çevrili.
-- **Sonraki adımlar:** Blog yazılarını 8 dile çevirip `/tr/blog/...` gibi kendi adreslerinde açmak; dil ana sayfaları (`/tr`); IndexNow.
+- **Blog çevrildi (2026-10-15):** 33 yazının hepsi 8 dilde kendi adresinde (`/tr/blog`, `/de/blog/<yazı>` …), içindeki araç linkleri o dilin araç adresine gidiyor, hreflang + site haritası (951 adres) var. Çevirilerde iddialar İngilizce yazılarla aynı (İngilizce yazılardaki hatalı iddialar da düzeltildi: dönüştürücü formatları, Office hızlı modu sunucuya yükler, OCR/arka plan silme tarayıcıda). Yazı gövdesindeki tekrar eden başlık (iki h1) kaldırıldı.
+- **Sonraki adımlar:** Dil ana sayfaları (`/tr`); IndexNow; Search Console'da yeni dil sayfaları için dizine ekleme isteği; Reddit/AlternativeTo tanıtımı.
 
 ## Sıradaki işler
 

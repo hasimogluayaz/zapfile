@@ -262,7 +262,7 @@ Image optimization is essential for web performance and saving storage space. Lo
 [ZapFile's image tools](/tools/compress-image) include:
 
 - **Image Compressor** - Reduce JPEG, PNG, and WebP file sizes with adjustable quality.
-- **Image Converter** - Switch between formats (JPG, PNG, WebP, BMP, TIFF) instantly.
+- **Image Converter** - Switch between JPG, PNG, WebP and AVIF instantly.
 - **Image Resizer** - Set exact dimensions or scale by percentage.
 - **EXIF Viewer** - View, analyze, and strip metadata from your photos directly in the browser.
 
@@ -356,7 +356,7 @@ Consider what files people commonly process online:
 - **Photos** that may contain EXIF metadata with GPS coordinates and timestamps.
 - **Business documents** with proprietary information.
 
-Uploading any of these to a cloud-based tool creates a copy on someone else's server. With a browser-based tool like [ZapFile](/), these files stay on your device throughout the entire process.
+Uploading any of these to a cloud-based tool creates a copy on someone else's server. With a browser-based tool like [ZapFile](/), these files stay on your device throughout the entire process. (The one exception on ZapFile is the optional fast mode of Word, Excel, PowerPoint and HTML to PDF, which converts on our server and deletes the file right after; their private mode converts in your browser instead.)
 
 ## How to Verify a Tool Is Truly Browser-Based
 
@@ -380,7 +380,7 @@ Browser-based processing is not without limitations:
 
 - **Processing speed** depends on your device. A low-powered phone will be slower than a cloud server with dedicated hardware.
 - **Very large files** may strain devices with limited RAM.
-- **Some operations** (like OCR or advanced AI features) may still require server-side processing.
+- **Heavy operations** like OCR or AI background removal download a model or engine the first time, which takes a moment. ZapFile runs both in the browser.
 
 For the vast majority of common file tasks, however, browser-based tools are fast enough and the privacy benefits are significant.
 
