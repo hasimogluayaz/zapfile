@@ -62,10 +62,10 @@ src/
 
 ## Localized tool URLs (`src/lib/localized-routes.ts`)
 
-- Turkish tool pages have their own URLs (`/tr/pdf-birlestir`) so Google indexes them in Turkish; other languages still switch in place on `/tools/<slug>`. Slug table: `src/lib/localized-tool-slugs.json` (also read by `next.config.mjs` for the Office tools' isolation headers). Search titles/descriptions: `src/lib/tool-seo-tr.ts`.
+- Turkish, German and French tool pages have their own URLs (`/tr/pdf-birlestir`, `/de/pdf-zusammenfuegen`, `/fr/fusionner-pdf`) so Google indexes them in that language; other languages (partial translations) still switch in place on `/tools/<slug>`. Slug table: `src/lib/localized-tool-slugs.json` (also read by `next.config.mjs` for the Office tools' isolation headers). Search titles/descriptions: `src/lib/tool-seo-<locale>.ts`.
 - Route: `src/app/[locale]/[toolSlug]/` renders the same tool component (`tool-pages.ts`, lazy per tool). `I18nProvider` takes the language from the path (server render included); middleware passes it to the root layout for `<html lang>`.
 - Link to tools with `toolHref(slug)` from `useI18n()`, never a hard-coded `/tools/${slug}`. Tool pages get hreflang alternates (`toolLanguagePaths`) and the sitemap lists every language version.
-- To add a language: add its slug table to the JSON, the locale to `TOOL_URL_LOCALES`, and a `tool-seo-<locale>.ts`.
+- To add a language: finish its UI translation first, then add its slug table to the JSON, the locale to `TOOL_URL_LOCALES`, a `tool-seo-<locale>.ts` and its entry in the route's `seo` map.
 
 ## Tools
 

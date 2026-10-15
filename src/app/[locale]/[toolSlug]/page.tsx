@@ -8,6 +8,8 @@ import {
   toolSlugFromLocalized,
 } from "@/lib/localized-routes";
 import { toolSeoTr } from "@/lib/tool-seo-tr";
+import { toolSeoDe } from "@/lib/tool-seo-de";
+import { toolSeoFr } from "@/lib/tool-seo-fr";
 import { toolPages } from "./tool-pages";
 
 /**
@@ -20,9 +22,11 @@ type Params = { locale: string; toolSlug: string };
 
 const seo: Record<string, Record<string, { title: string; description: string }>> = {
   tr: toolSeoTr,
+  de: toolSeoDe,
+  fr: toolSeoFr,
 };
 
-const OG_LOCALE: Record<string, string> = { tr: "tr_TR" };
+const OG_LOCALE: Record<string, string> = { tr: "tr_TR", de: "de_DE", fr: "fr_FR" };
 
 export const dynamicParams = false;
 

@@ -117,9 +117,9 @@ Kullanıcının teklif PDF'i ve düz metin bir raporla test edildi. Bulunan ve d
 ## Kullanıcı getirme (2026-10-15)
 
 - **Search Console:** 115 sayfadan sadece 12'si dizindeydi. Site haritası 2 Mayıs'tan beri "Getirilemedi" durumundaydı. Kullanıcı 15 Ekim'de `sitemap.xml`'i yeniden gönderdi; canlı URL testi "Google tarafından kullanılabilir" sonucunu verdi. Kullanıcı yanlışlıkla `/tools/pdf-to-word` ve `/tools/merge-pdf` adreslerini site haritası diye ekledi, bunları silmesi söylendi. Birkaç gün sonra "Sayfa sayısı" ekranına tekrar bakılacak.
-- **Türkçe adresler** (bu branch'te, `main`'e henüz alınmadı): 70 aracın hepsi `/tr/<türkçe-slug>` adresinde, Türkçe başlık/açıklama, hreflang ve site haritasıyla. Ayrıntı `AGENTS.md` → "Localized tool URLs".
+- **Dil adresleri** (bu branch'te, `main`'e henüz alınmadı): 70 aracın hepsi `/tr/…`, `/de/…`, `/fr/…` adreslerinde, o dilde başlık/açıklama, hreflang ve site haritasıyla. ES/PT/IT/JA (~%65 çeviri) ve AR (~%72) için önce çeviriler tamamlanmalı. Ayrıntı `AGENTS.md` → "Localized tool URLs".
 - **Kullanıcıya önerilen diğer işler:** Bing Webmaster (GSC'den import), AlternativeTo / SaaSHub / Uneed listeleri, Türkçe sayfalar yayına girince Reddit/Ekşi/DonanımHaber paylaşımları, Product Hunt en sona. Ofis → PDF hızlı modu sunucu kullandığı için tanıtımda "hiçbir dosya yüklenmez" denmemeli.
-- **Sonraki adımlar:** Almanca/Fransızca adresler; Türkçe ana sayfa ve `/tr` araç listesi; blog yazılarının Türkçe adresleri; IndexNow.
+- **Sonraki adımlar:** ES/PT/IT/JA/AR çevirilerini tamamlayıp adres açmak; dil ana sayfaları ve `/tr` araç listesi; blog yazılarının Türkçe adresleri; IndexNow.
 
 ## Sıradaki işler
 

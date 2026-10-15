@@ -7,7 +7,7 @@ import type { Locale } from "./locales";
  * the English URL. The slug table lives in `localized-tool-slugs.json`
  * (next.config.mjs reads it too, for the Office tools' isolation headers).
  */
-export const TOOL_URL_LOCALES = ["tr"] as const satisfies readonly Locale[];
+export const TOOL_URL_LOCALES = ["tr", "de", "fr"] as const satisfies readonly Locale[];
 export type ToolUrlLocale = (typeof TOOL_URL_LOCALES)[number];
 
 const toLocal = localizedToolSlugs as Record<ToolUrlLocale, Record<string, string>>;
