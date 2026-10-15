@@ -9,6 +9,11 @@ import {
 import { toolSeoTr } from "@/lib/tool-seo-tr";
 import { toolSeoDe } from "@/lib/tool-seo-de";
 import { toolSeoFr } from "@/lib/tool-seo-fr";
+import { toolSeoEs } from "@/lib/tool-seo-es";
+import { toolSeoPt } from "@/lib/tool-seo-pt";
+import { toolSeoIt } from "@/lib/tool-seo-it";
+import { toolSeoJa } from "@/lib/tool-seo-ja";
+import { toolSeoAr } from "@/lib/tool-seo-ar";
 import { toolPages } from "./tool-pages";
 
 /**
@@ -23,9 +28,23 @@ const seo: Record<string, Record<string, { title: string; description: string }>
   tr: toolSeoTr,
   de: toolSeoDe,
   fr: toolSeoFr,
+  es: toolSeoEs,
+  pt: toolSeoPt,
+  it: toolSeoIt,
+  ja: toolSeoJa,
+  ar: toolSeoAr,
 };
 
-const OG_LOCALE: Record<string, string> = { tr: "tr_TR", de: "de_DE", fr: "fr_FR" };
+const OG_LOCALE: Record<string, string> = {
+  tr: "tr_TR",
+  de: "de_DE",
+  fr: "fr_FR",
+  es: "es_ES",
+  pt: "pt_BR",
+  it: "it_IT",
+  ja: "ja_JP",
+  ar: "ar_AR",
+};
 
 // Rendered per request like every page (the root layout reads cookies).
 // Don't add `dynamicParams = false`: with nothing prerendered, Vercel then
