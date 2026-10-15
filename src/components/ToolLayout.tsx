@@ -108,7 +108,7 @@ export default function ToolLayout({
 
     const commonFaqs = [
       { q: t("faq.free.q"), a: t("faq.free.a") },
-      { q: t("faq.safe.q"), a: t("faq.safe.a") },
+      { q: t("faq.safe.q"), a: t(showTrustPanel ? "faq.safe.a" : "faq.safe.aServer") },
       { q: t("faq.account.q"), a: t("faq.account.a") },
     ];
 
@@ -151,7 +151,7 @@ export default function ToolLayout({
       ...specific,
       ...[...commonFaqs, ...categoryFaqs].filter((f) => !seen.has(f.q)),
     ];
-  }, [faq, currentTool, t, locale, toolFaqs, slug]);
+  }, [faq, currentTool, t, locale, toolFaqs, slug, showTrustPanel]);
 
   const toggleFaq = (index: number) => {
     setOpenFaqIndices((prev) => {

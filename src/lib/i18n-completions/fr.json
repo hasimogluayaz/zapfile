@@ -87,5 +87,20 @@
   "pw.days": "{n} jours",
   "pw.years": "{n} ans",
   "pw.centuries": "Des siècles",
-  "pw.millennia": "Des millénaires+"
+  "pw.millennia": "Des millénaires+",
+  "home.hero.subtitleLocal": "{count} outils gratuits pour les PDF, les images, l'audio et le quotidien. Presque tous fonctionnent directement dans votre navigateur.",
+  "home.trust.notStored": "Fichiers jamais stockés sur un serveur",
+  "home.privacyLocal.heading": "Conçu pour la confidentialité",
+  "home.privacyLocal.desc": "WebAssembly et l'API Canvas font le travail directement dans votre navigateur. Seule exception : le mode rapide de Word, Excel, PowerPoint et HTML vers PDF, que vous pouvez désactiver.",
+  "home.privacyLocal.local.title": "Traité dans votre navigateur",
+  "home.privacyLocal.local.desc": "Presque tous les outils traitent vos fichiers localement, sans les envoyer",
+  "home.privacyLocal.notStored.title": "Rien n'est stocké",
+  "home.privacyLocal.notStored.desc": "Le mode rapide Office vers PDF convertit sur notre serveur et supprime aussitôt le fichier ; le mode privé le fait aussi dans votre navigateur",
+  "footer.brandLocal": "Des outils de fichiers rapides, gratuits et privés. Presque tout s'exécute dans votre navigateur, et aucun fichier n'est stocké sur un serveur.",
+  "footer.noteLocal": "La plupart des outils traitent vos fichiers dans votre navigateur.",
+  "home.drop.privacy": "Déposer un fichier ici ne l'envoie pas",
+  "faq.safe.aServer": "En mode rapide (par défaut), votre fichier passe par une connexion chiffrée vers notre serveur de conversion et est supprimé dès que le PDF est prêt ; rien n'est stocké. Choisissez le mode privé pour convertir entièrement dans votre navigateur : le fichier ne quitte alors jamais votre appareil.",
+  "about.introLocal": "ZapFile est une collection d'outils de fichiers gratuits, rapides et privés. Presque tous fonctionnent entièrement dans votre navigateur, sans envoi ni compte. Ouvrez un outil et c'est parti.",
+  "about.howBodyLocal": "Presque tout est traité directement dans votre navigateur grâce aux technologies web modernes. Quand vous compressez une image ou fusionnez des PDF, vos fichiers ne quittent jamais votre appareil, vous n'attendez aucun serveur et les outils fonctionnent même hors ligne une fois la page chargée. Seule exception : Word, Excel, PowerPoint et HTML vers PDF, dont le mode rapide par défaut convertit sur notre serveur et supprime aussitôt le fichier, tandis que le mode privé convertit dans votre navigateur.",
+  "about.privacyBodyLocal": "La confidentialité n'est pas une fonctionnalité de ZapFile, c'en est le fondement. Nous ne gardons pas vos fichiers, nous ne vous demandons pas de compte, et le seul outil qui peut utiliser notre serveur l'indique clairement et vous permet de convertir sur votre appareil."
 }

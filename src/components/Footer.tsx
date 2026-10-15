@@ -37,7 +37,7 @@ export default function Footer() {
               <Logo />
             </Link>
             <p className="mt-4 max-w-[34ch] text-[14px] leading-relaxed text-t-secondary">
-              {t("footer.brand")}
+              {t("footer.brandLocal")}
             </p>
             <a
               href={t("footer.newsletterHint")}
@@ -90,7 +90,7 @@ export default function Footer() {
 
         <div className="mt-12 flex flex-col justify-between gap-2 border-t border-border pt-6 text-[12.5px] text-t-tertiary sm:flex-row">
           <p>&copy; {new Date().getFullYear()} ZapFile</p>
-          <p>{t("footer.copyright")}</p>
+          <p>{t("footer.noteLocal")}</p>
         </div>
       </div>
     </footer>

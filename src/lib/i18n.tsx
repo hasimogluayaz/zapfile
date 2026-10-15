@@ -2025,7 +2025,6 @@ const en: Record<string, string> = {
     "csvview.preview": "Table preview",
     "pw.checkTitle": "Test your own password",
     "home.hero.title": "Work on your files without uploading them.",
-    "home.hero.subtitle": "{count} free tools for PDFs, images, audio and everyday tasks. Everything runs right here in your browser.",
     "home.drop.title": "Drop a file to see what you can do with it",
     "home.drop.browse": "Choose a file",
     "home.drop.matches": "Open it in",
@@ -2091,13 +2090,8 @@ const en: Record<string, string> = {
     "hero.title1": "The file tools you",
     "hero.title2": "actually want",
     "hero.title3": "to use",
-    "hero.subtitle":
-      "Fast, private, and free. Everything runs directly in your browser — no file uploads, no accounts, no limits.",
     "hero.cta": "Browse All Tools",
     "hero.toolCount": "{count} tools available",
-    "hero.trust1": "Your files stay on your device",
-    "hero.trust2": "Instant processing",
-    "hero.trust3": "No limits, forever free",
 
     // Tool categories
     "cat.pdf": "PDF Tools",
@@ -2122,13 +2116,21 @@ const en: Record<string, string> = {
 
     // Privacy section
     "home.privacy.badge": "Privacy First",
-    "home.privacy.heading": "Your Files Never Leave Your Browser",
-    "home.privacy.zeroUploads.title": "Zero Uploads",
-    "home.privacy.zeroUploads.desc":
-      "Files are processed locally using browser APIs",
-    "home.privacy.noServer.title": "No Server Storage",
-    "home.privacy.noServer.desc":
-      "Nothing is ever sent to or stored on our servers",
+    "about.introLocal": "ZapFile is a collection of free, fast and private file tools. Almost all of them run entirely in your browser, with no uploads and no account. Just open a tool and start working.",
+    "about.howBodyLocal": "Almost everything is processed directly in your browser with modern web technologies. When you compress an image or merge PDFs, your files never leave your device, there's no waiting for a server, and the tools keep working offline once the page has loaded. The one exception is Word, Excel, PowerPoint and HTML to PDF: its default fast mode converts on our server and deletes the file right away, and its Private mode converts in your browser instead.",
+    "about.privacyBodyLocal": "Privacy is the foundation of ZapFile, not a feature. We don't keep your files, we don't ask you to create an account, and the only tool that can use our server says so clearly and lets you switch to on-device conversion.",
+    "footer.brandLocal": "Fast, free and private file tools. Almost everything runs in your browser, and files are never stored on a server.",
+    "footer.noteLocal": "Most tools process your files in your browser.",
+    "home.drop.privacy": "Dropping a file here doesn't upload it",
+    "faq.safe.aServer": "In fast mode, the default, your file goes over an encrypted connection to our conversion server and is deleted as soon as the PDF is ready; nothing is stored. Choose Private mode to convert entirely in your browser so the file never leaves your device.",
+    "home.hero.subtitleLocal": "{count} free tools for PDFs, images, audio and everyday tasks. Almost all of them run right here in your browser.",
+    "home.trust.notStored": "Files never stored on a server",
+    "home.privacyLocal.heading": "Private by design",
+    "home.privacyLocal.desc": "WebAssembly and the Canvas API do the work right in your browser. The one exception is fast mode for Word, Excel, PowerPoint and HTML to PDF, which you can switch off.",
+    "home.privacyLocal.local.title": "Processed in your browser",
+    "home.privacyLocal.local.desc": "Almost every tool works on your files locally, without uploading them",
+    "home.privacyLocal.notStored.title": "Nothing stored",
+    "home.privacyLocal.notStored.desc": "Office to PDF fast mode converts on our server and deletes the file right away; Private mode keeps that in your browser too",
     "home.privacy.noAccount.title": "No Account Required",
     "home.privacy.noAccount.desc":
       "Use all tools without signing up or logging in",
@@ -2136,10 +2138,6 @@ const en: Record<string, string> = {
     "home.privacy.step1": "Select Files",
     "home.privacy.step2": "Process Locally",
     "home.privacy.step3": "Download Results",
-    "home.privacy.howDesc":
-      "WebAssembly and Canvas API handle all processing directly in your browser — nothing is uploaded.",
-    "home.privacy.comparison":
-      "Unlike other tools, ZapFile processes everything in your browser. Your files stay on your device.",
     "home.suggest.title": "Suggest a Tool",
     "home.suggest.subtitle": "Missing a tool? Let us know what you need.",
     "home.suggest.thanks": "Thanks for your suggestion!",
@@ -2154,8 +2152,6 @@ const en: Record<string, string> = {
       "{count} free tools at your fingertips. No sign-ups, no uploads, no hassle.",
 
     // Footer
-    "footer.brand":
-      "Fast, free, and private file tools. Everything runs in your browser — your files never leave your device.",
     "footer.product": "Product",
     "footer.legal": "Legal",
     "footer.popular": "Popular Tools",
@@ -2166,7 +2162,6 @@ const en: Record<string, string> = {
     "footer.privacy": "Privacy Policy",
     "footer.compare": "ZapFile vs Smallpdf",
     "footer.terms": "Terms of Service",
-    "footer.copyright": "All processing happens in your browser.",
     "footer.freeTools": "{count} Free Tools",
     "footer.noSignup": "No Sign-up Required",
 
@@ -3486,17 +3481,11 @@ const en: Record<string, string> = {
 
     // Static pages — About
     "about.title": "About ZapFile",
-    "about.intro":
-      "ZapFile is a collection of free, fast, and private file tools that run entirely in your browser. No uploads, no servers, no accounts needed. Just open a tool and start working.",
     "about.missionTitle": "Our Mission",
     "about.missionBody":
       "We believe everyone should have access to powerful file tools without sacrificing their privacy or paying for subscriptions. ZapFile provides a comprehensive suite of tools for working with PDFs, images, audio, and more — completely free and accessible to everyone.",
     "about.howTitle": "How It Works",
-    "about.howBody":
-      "Everything processes directly in your browser using modern web technologies. When you compress an image or merge PDFs, your files never leave your device. There are no uploads to remote servers and no waiting for server-side processing. This means your files stay private, and tools work even without an internet connection after the page loads.",
     "about.privacyTitle": "Privacy First",
-    "about.privacyBody":
-      "Privacy is not just a feature — it's the foundation of ZapFile. We don't collect your data, we don't process your files on our servers, and we don't require you to create an account. Your files are yours and they stay on your device.",
     "about.builtTitle": "Built With",
     "about.builtBody":
       "ZapFile is built with Next.js and leverages powerful browser APIs including Canvas, Web Audio, and WebAssembly. These technologies enable us to perform complex file operations — from image processing to PDF manipulation — entirely client-side.",
@@ -5542,7 +5531,6 @@ const ownStrings: Record<Locale, Record<string, string>> = {
     "csvview.preview": "Tablo önizlemesi",
     "pw.checkTitle": "Kendi şifrenizi test edin",
     "home.hero.title": "Dosyalarınızla yüklemeden çalışın.",
-    "home.hero.subtitle": "PDF, görsel, ses ve günlük işler için {count} ücretsiz araç. Her şey doğrudan tarayıcınızda çalışır.",
     "home.drop.title": "Ne yapabileceğinizi görmek için bir dosya bırakın",
     "home.drop.browse": "Dosya seç",
     "home.drop.matches": "Şununla aç",
@@ -5580,13 +5568,8 @@ const ownStrings: Record<Locale, Record<string, string>> = {
     "hero.title1": "Kullanmak istediğiniz",
     "hero.title2": "dosya araçları",
     "hero.title3": "",
-    "hero.subtitle":
-      "Hızlı, gizli ve ücretsiz. Her şey tarayıcınızda çalışır — yükleme yok, hesap gerekmiyor.",
     "hero.cta": "Tüm Araçları Gör",
     "hero.toolCount": "{count} araç mevcut",
-    "hero.trust1": "Dosyalarınız cihazınızda kalır",
-    "hero.trust2": "Anında işleme",
-    "hero.trust3": "Sınır yok, sonsuza kadar ücretsiz",
 
     "trust.panelTitle": "Cihazınızda çalışır, sunucularımızda değil",
     "trust.panelLead":
@@ -5649,13 +5632,6 @@ const ownStrings: Record<Locale, Record<string, string>> = {
 
     // Privacy section
     "home.privacy.badge": "Önce Gizlilik",
-    "home.privacy.heading": "Dosyalarınız Asla Tarayıcınızdan Çıkmaz",
-    "home.privacy.zeroUploads.title": "Sıfır Yükleme",
-    "home.privacy.zeroUploads.desc":
-      "Dosyalar tarayıcı API'leri kullanılarak yerel olarak işlenir",
-    "home.privacy.noServer.title": "Sunucu Depolaması Yok",
-    "home.privacy.noServer.desc":
-      "Hiçbir şey sunucularımıza gönderilmez veya depolanmaz",
     "home.privacy.noAccount.title": "Hesap Gerekmez",
     "home.privacy.noAccount.desc":
       "Tüm araçları kayıt olmadan veya giriş yapmadan kullanın",
@@ -5663,10 +5639,6 @@ const ownStrings: Record<Locale, Record<string, string>> = {
     "home.privacy.step1": "Dosyaları Seçin",
     "home.privacy.step2": "Yerel Olarak İşleyin",
     "home.privacy.step3": "Sonuçları İndirin",
-    "home.privacy.howDesc":
-      "WebAssembly ve Canvas API tüm işlemleri doğrudan tarayıcınızda gerçekleştirir — hiçbir şey yüklenmez.",
-    "home.privacy.comparison":
-      "Diğer araçların aksine, ZapFile her şeyi tarayıcınızda işler. Dosyalarınız cihazınızda kalır.",
     "home.suggest.title": "Araç Öner",
     "home.suggest.subtitle": "Eksik bir araç mı var? İhtiyacınız olanı bize bildirin.",
     "home.suggest.thanks": "Öneriniz için teşekkürler!",
@@ -5681,8 +5653,6 @@ const ownStrings: Record<Locale, Record<string, string>> = {
       "{count} ücretsiz araç parmaklarınızın ucunda. Kayıt yok, yükleme yok.",
 
     // Footer
-    "footer.brand":
-      "Hızlı, ücretsiz ve gizli dosya araçları. Her şey tarayıcınızda çalışır — dosyalarınız cihazınızdan asla çıkmaz.",
     "footer.product": "Ürün",
     "footer.legal": "Hukuk",
     "footer.popular": "Popüler Araçlar",
@@ -5693,7 +5663,6 @@ const ownStrings: Record<Locale, Record<string, string>> = {
     "footer.privacy": "Gizlilik Politikası",
     "footer.compare": "ZapFile vs Smallpdf",
     "footer.terms": "Kullanım Şartları",
-    "footer.copyright": "Tüm işlemler tarayıcınızda gerçekleşir.",
     "footer.freeTools": "{count} Ücretsiz Araç",
     "footer.noSignup": "Kayıt Gerekmiyor",
 
@@ -6970,17 +6939,11 @@ const ownStrings: Record<Locale, Record<string, string>> = {
     "conversion.privacyLine": "Dosyalarınız tarayıcınızdan çıkmaz. %100 gizli.",
 
     "about.title": "ZapFile Hakkında",
-    "about.intro":
-      "ZapFile; tamamen tarayıcınızda çalışan ücretsiz, hızlı ve gizli dosya araçları koleksiyonudur. Yükleme yok, sunucu yok, hesap gerekmez. Bir aracı açıp hemen kullanmaya başlayın.",
     "about.missionTitle": "Misyonumuz",
     "about.missionBody":
       "Herkesin güçlü dosya araçlarına gizlilikten ödün vermeden ve abonelik ödemeden erişebilmesi gerektiğine inanıyoruz. ZapFile; PDF, görüntü, ses ve daha fazlası için kapsamlı bir araç seti sunar — tamamen ücretsiz ve herkes için erişilebilir.",
     "about.howTitle": "Nasıl Çalışır",
-    "about.howBody":
-      "Her şey modern web teknolojileriyle doğrudan tarayıcınızda işlenir. Bir görüntü sıkıştırdığınızda veya PDF birleştirdiğinizde dosyalarınız cihazınızdan çıkmaz. Uzak sunucuya yükleme yok, sunucu tarafı işlem beklemesi yok. Dosyalarınız gizli kalır; sayfa yüklendikten sonra internet olmadan da araçlar çalışabilir.",
     "about.privacyTitle": "Önce Gizlilik",
-    "about.privacyBody":
-      "Gizlilik yalnızca bir özellik değil — ZapFile'ın temelidir. Verilerinizi toplamıyoruz, dosyalarınızı sunucularımızda işlemiyoruz ve hesap oluşturmanızı istemiyoruz. Dosyalarınız size aittir ve cihazınızda kalır.",
     "about.builtTitle": "Neyle Yapıldı",
     "about.builtBody":
       "ZapFile Next.js ile geliştirilir; Canvas, Web Audio ve WebAssembly gibi tarayıcı API'lerinden yararlanır. Bu teknolojiler; görüntü işlemeden PDF düzenlemeye kadar karmaşık işlemleri tamamen istemci tarafında yapmamızı sağlar.",
@@ -9006,7 +8969,6 @@ const ownStrings: Record<Locale, Record<string, string>> = {
     "csvview.preview": "Tabellenvorschau",
     "pw.checkTitle": "Eigenes Passwort testen",
     "home.hero.title": "Bearbeite deine Dateien, ohne sie hochzuladen.",
-    "home.hero.subtitle": "{count} kostenlose Tools für PDFs, Bilder, Audio und Alltägliches. Alles läuft direkt in deinem Browser.",
     "home.drop.title": "Datei ablegen und sehen, was du damit machen kannst",
     "home.drop.browse": "Datei auswählen",
     "home.drop.matches": "Öffnen mit",
@@ -9042,12 +9004,8 @@ const ownStrings: Record<Locale, Record<string, string>> = {
     "hero.title1": "Die Datei-Werkzeuge, die du",
     "hero.title2": "wirklich nutzen",
     "hero.title3": "möchtest",
-    "hero.subtitle": "Schnell, privat und kostenlos. Alles läuft direkt in deinem Browser – keine Datei-Uploads, keine Konten, keine Beschränkungen.",
     "hero.cta": "Alle Werkzeuge ansehen",
     "hero.toolCount": "{count} Werkzeuge verfügbar",
-    "hero.trust1": "Deine Dateien bleiben auf deinem Gerät",
-    "hero.trust2": "Sofortige Verarbeitung",
-    "hero.trust3": "Keine Beschränkungen, für immer kostenlos",
 
     "trust.panelTitle": "Läuft auf Ihrem Gerät, nicht auf unseren Servern",
     "trust.panelLead":
@@ -9105,22 +9063,14 @@ const ownStrings: Record<Locale, Record<string, string>> = {
     "tool.result": "Ergebnis",
     "tool.saved": "Gespeichert",
     "home.privacy.badge": "Privatsphäre zuerst",
-    "home.privacy.heading": "Deine Dateien verlassen niemals deinen Browser",
-    "home.privacy.zeroUploads.title": "Keine Uploads",
-    "home.privacy.zeroUploads.desc": "Dateien werden lokal mit Browser-APIs verarbeitet",
-    "home.privacy.noServer.title": "Kein Server-Speicher",
-    "home.privacy.noServer.desc": "Nichts wird jemals an unsere Server gesendet oder dort gespeichert",
     "home.privacy.noAccount.title": "Kein Konto erforderlich",
     "home.privacy.noAccount.desc": "Alle Werkzeuge ohne Registrierung oder Anmeldung nutzen",
     "home.privacy.howTitle": "Wie es funktioniert",
     "home.privacy.step1": "Dateien auswählen",
     "home.privacy.step2": "Lokal verarbeiten",
     "home.privacy.step3": "Ergebnisse herunterladen",
-    "home.privacy.howDesc": "WebAssembly und Canvas API verarbeiten alles direkt in deinem Browser – nichts wird hochgeladen.",
-    "home.privacy.comparison": "Im Gegensatz zu anderen Werkzeugen verarbeitet ZapFile alles in deinem Browser. Deine Dateien bleiben auf deinem Gerät.",
     "cta.title": "Bereit loszulegen?",
     "cta.subtitle": "{count} kostenlose Werkzeuge jederzeit griffbereit. Keine Anmeldung, keine Uploads, kein Aufwand.",
-    "footer.brand": "Schnelle, kostenlose und private Dateiwerkzeuge. Alles läuft in deinem Browser – deine Dateien verlassen niemals dein Gerät.",
     "footer.product": "Produkt",
     "footer.legal": "Rechtliches",
     "footer.popular": "Beliebte Werkzeuge",
@@ -9131,7 +9081,6 @@ const ownStrings: Record<Locale, Record<string, string>> = {
     "footer.privacy": "Datenschutzrichtlinie",
     "footer.compare": "ZapFile vs Smallpdf",
     "footer.terms": "Nutzungsbedingungen",
-    "footer.copyright": "Alle Verarbeitungen finden in deinem Browser statt.",
     "footer.freeTools": "{count} Kostenlose Werkzeuge",
     "footer.noSignup": "Keine Registrierung erforderlich",
     "tools.title": "Alle Werkzeuge",
@@ -10221,17 +10170,11 @@ const ownStrings: Record<Locale, Record<string, string>> = {
     "conversion.privacyLine": "Dateien verlassen Ihren Browser nicht. 100 % privat.",
 
     "about.title": "Über ZapFile",
-    "about.intro":
-      "ZapFile ist eine Sammlung kostenloser, schneller und privater Datei-Tools, die vollständig in Ihrem Browser laufen. Keine Uploads, keine Server, keine Konten nötig. Einfach ein Tool öffnen und loslegen.",
     "about.missionTitle": "Unsere Mission",
     "about.missionBody":
       "Wir glauben, dass jeder Zugang zu leistungsstarken Datei-Tools haben sollte, ohne Privatsphäre zu opfern oder Abos zu zahlen. ZapFile bietet eine umfassende Palette für PDFs, Bilder, Audio und mehr — völlig kostenlos und für alle zugänglich.",
     "about.howTitle": "So funktioniert es",
-    "about.howBody":
-      "Alles wird direkt in Ihrem Browser mit modernen Webtechnologien verarbeitet. Wenn Sie ein Bild komprimieren oder PDFs zusammenführen, verlassen Ihre Dateien Ihr Gerät nicht. Keine Uploads auf Remote-Server und kein Warten auf serverseitige Verarbeitung. Ihre Dateien bleiben privat; nach dem Laden der Seite funktionieren die Tools oft auch offline.",
     "about.privacyTitle": "Privatsphäre zuerst",
-    "about.privacyBody":
-      "Privatsphäre ist nicht nur ein Feature — sie ist die Grundlage von ZapFile. Wir sammeln Ihre Daten nicht, verarbeiten Ihre Dateien nicht auf unseren Servern und verlangen kein Konto. Ihre Dateien gehören Ihnen und bleiben auf Ihrem Gerät.",
     "about.builtTitle": "Technik",
     "about.builtBody":
       "ZapFile ist mit Next.js gebaut und nutzt leistungsstarke Browser-APIs wie Canvas, Web Audio und WebAssembly. So können wir komplexe Dateioperationen — von Bildverarbeitung bis PDF — vollständig clientseitig ausführen.",
@@ -12257,7 +12200,6 @@ const ownStrings: Record<Locale, Record<string, string>> = {
     "csvview.preview": "Aperçu du tableau",
     "pw.checkTitle": "Testez votre propre mot de passe",
     "home.hero.title": "Travaillez sur vos fichiers sans les envoyer.",
-    "home.hero.subtitle": "{count} outils gratuits pour les PDF, les images, l'audio et le quotidien. Tout s'exécute dans votre navigateur.",
     "home.drop.title": "Déposez un fichier pour voir ce que vous pouvez en faire",
     "home.drop.browse": "Choisir un fichier",
     "home.drop.matches": "L'ouvrir dans",
@@ -12293,12 +12235,8 @@ const ownStrings: Record<Locale, Record<string, string>> = {
     "hero.title1": "Les outils de fichiers que vous",
     "hero.title2": "voulez vraiment",
     "hero.title3": "utiliser",
-    "hero.subtitle": "Rapide, privé et gratuit. Tout s'exécute directement dans votre navigateur — pas d'envoi de fichiers, pas de comptes, pas de limites.",
     "hero.cta": "Parcourir tous les outils",
     "hero.toolCount": "{count} outils disponibles",
-    "hero.trust1": "Vos fichiers restent sur votre appareil",
-    "hero.trust2": "Traitement instantané",
-    "hero.trust3": "Sans limites, gratuit pour toujours",
 
     "trust.panelTitle": "S'exécute sur votre appareil, pas sur nos serveurs",
     "trust.panelLead":
@@ -12356,22 +12294,14 @@ const ownStrings: Record<Locale, Record<string, string>> = {
     "tool.result": "Résultat",
     "tool.saved": "Enregistré",
     "home.privacy.badge": "La confidentialité avant tout",
-    "home.privacy.heading": "Vos fichiers ne quittent jamais votre navigateur",
-    "home.privacy.zeroUploads.title": "Zéro téléchargement",
-    "home.privacy.zeroUploads.desc": "Les fichiers sont traités localement à l'aide des API du navigateur",
-    "home.privacy.noServer.title": "Aucun stockage serveur",
-    "home.privacy.noServer.desc": "Rien n'est jamais envoyé ni stocké sur nos serveurs",
     "home.privacy.noAccount.title": "Aucun compte requis",
     "home.privacy.noAccount.desc": "Utilisez tous les outils sans vous inscrire ni vous connecter",
     "home.privacy.howTitle": "Comment ça fonctionne",
     "home.privacy.step1": "Sélectionner les fichiers",
     "home.privacy.step2": "Traiter localement",
     "home.privacy.step3": "Télécharger les résultats",
-    "home.privacy.howDesc": "WebAssembly et l'API Canvas gèrent tout le traitement directement dans votre navigateur — rien n'est téléchargé.",
-    "home.privacy.comparison": "Contrairement à d'autres outils, ZapFile traite tout dans votre navigateur. Vos fichiers restent sur votre appareil.",
     "cta.title": "Prêt à commencer ?",
     "cta.subtitle": "{count} outils gratuits à portée de main. Sans inscription, sans téléchargement, sans tracas.",
-    "footer.brand": "Outils de fichiers rapides, gratuits et privés. Tout s'exécute dans votre navigateur — vos fichiers ne quittent jamais votre appareil.",
     "footer.product": "Produit",
     "footer.legal": "Légal",
     "footer.popular": "Outils populaires",
@@ -12382,7 +12312,6 @@ const ownStrings: Record<Locale, Record<string, string>> = {
     "footer.privacy": "Politique de confidentialité",
     "footer.compare": "ZapFile vs Smallpdf",
     "footer.terms": "Conditions d'utilisation",
-    "footer.copyright": "Tout le traitement se fait dans votre navigateur.",
     "footer.freeTools": "{count} outils gratuits",
     "footer.noSignup": "Aucune inscription requise",
     "tools.title": "Tous les outils",
@@ -13473,17 +13402,11 @@ const ownStrings: Record<Locale, Record<string, string>> = {
     "conversion.privacyLine": "Vos fichiers ne quittent pas le navigateur. 100 % privé.",
 
     "about.title": "À propos de ZapFile",
-    "about.intro":
-      "ZapFile est une collection d'outils de fichiers gratuits, rapides et privés qui s'exécutent entièrement dans votre navigateur. Pas d'envoi vers un serveur, pas de compte requis. Ouvrez un outil et commencez.",
     "about.missionTitle": "Notre mission",
     "about.missionBody":
       "Nous pensons que tout le monde devrait avoir accès à des outils puissants sans sacrifier la vie privée ni payer un abonnement. ZapFile propose une suite complète pour les PDF, images, audio et plus — entièrement gratuite et accessible à tous.",
     "about.howTitle": "Fonctionnement",
-    "about.howBody":
-      "Tout est traité directement dans votre navigateur avec les technologies web modernes. Lorsque vous compressez une image ou fusionnez des PDF, vos fichiers ne quittent pas votre appareil. Pas d'envoi vers des serveurs distants ni d'attente de traitement côté serveur. Vos fichiers restent privés ; les outils fonctionnent souvent hors ligne après le chargement de la page.",
     "about.privacyTitle": "La confidentialité d'abord",
-    "about.privacyBody":
-      "La confidentialité n'est pas qu'une fonctionnalité — c'est le fondement de ZapFile. Nous ne collectons pas vos données, nous ne traitons pas vos fichiers sur nos serveurs et nous n'exigeons pas de compte. Vos fichiers sont à vous et restent sur votre appareil.",
     "about.builtTitle": "Technologies",
     "about.builtBody":
       "ZapFile est construit avec Next.js et exploite les API du navigateur : Canvas, Web Audio, WebAssembly. Ces technologies permettent des opérations complexes — du traitement d'images à la manipulation de PDF — entièrement côté client.",

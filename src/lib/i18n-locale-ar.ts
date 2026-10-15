@@ -1941,7 +1941,6 @@ export const arLocaleStrings: Record<string, string> = {
   "csvview.preview": "معاينة الجدول",
   "pw.checkTitle": "اختبر كلمة مرورك",
   "home.hero.title": "اعمل على ملفاتك دون رفعها.",
-  "home.hero.subtitle": "{count} أداة مجانية لملفات PDF والصور والصوت والمهام اليومية. كل شيء يعمل داخل متصفحك.",
   "home.drop.title": "أفلت ملفًا لترى ما يمكنك فعله به",
   "home.drop.browse": "اختر ملفًا",
   "home.drop.matches": "افتحه في",
@@ -2056,13 +2055,8 @@ export const arLocaleStrings: Record<string, string> = {
   "hero.title1": "أدوات الملفات التي",
   "hero.title2": "ترغب فعلاً",
   "hero.title3": "باستخدامها",
-  "hero.subtitle":
-    "سريعة وخاصة ومجانية. كل شيء يعمل في متصفحك — بلا رفع ملفات، بلا حسابات، بلا حدود.",
   "hero.cta": "تصفح جميع الأدوات",
   "hero.toolCount": "{count} أداة متاحة",
-  "hero.trust1": "ملفاتك تبقى على جهازك",
-  "hero.trust2": "معالجة فورية",
-  "hero.trust3": "بلا حدود، مجاني للأبد",
 
   "cat.pdf": "أدوات PDF",
   "cat.image": "أدوات الصور",
@@ -2084,28 +2078,17 @@ export const arLocaleStrings: Record<string, string> = {
   "tool.saved": "تم الحفظ",
 
   "home.privacy.badge": "الخصوصية أولاً",
-  "home.privacy.heading": "ملفاتك لا تغادر متصفحك أبداً",
-  "home.privacy.zeroUploads.title": "صفر رفع",
-  "home.privacy.zeroUploads.desc": "تُعالَج الملفات محلياً عبر واجهات المتصفح",
-  "home.privacy.noServer.title": "بلا تخزين على الخادم",
-  "home.privacy.noServer.desc": "لا يُرسل شيء إلى خوادمنا ولا يُخزن عليها",
   "home.privacy.noAccount.title": "بلا حساب",
   "home.privacy.noAccount.desc": "استخدم كل الأدوات دون تسجيل أو دخول",
   "home.privacy.howTitle": "كيف يعمل",
   "home.privacy.step1": "اختر الملفات",
   "home.privacy.step2": "عالج محلياً",
   "home.privacy.step3": "نزّل النتائج",
-  "home.privacy.howDesc":
-    "تتولى WebAssembly وواجهة Canvas كل المعالجة في متصفحك — بلا رفع.",
-  "home.privacy.comparison":
-    "على عكس أدوات أخرى، يعالج ZapFile كل شيء في متصفحك. ملفاتك تبقى على جهازك.",
 
   "cta.title": "هل أنت مستعد للبدء؟",
   "cta.subtitle":
     "{count} أداة مجانية في متناول اليد. بلا تسجيل، بلا رفع، بلا تعقيد.",
 
-  "footer.brand":
-    "أدوات ملفات سريعة ومجانية وخاصة. كل شيء في متصفحك — ملفاتك لا تغادر جهازك.",
   "footer.product": "المنتج",
   "footer.legal": "قانوني",
   "footer.popular": "شائعة",
@@ -2116,7 +2099,6 @@ export const arLocaleStrings: Record<string, string> = {
   "footer.privacy": "سياسة الخصوصية",
   "footer.compare": "ZapFile مقابل Smallpdf",
   "footer.terms": "شروط الخدمة",
-  "footer.copyright": "تتم كل المعالجة في متصفحك.",
   "footer.freeTools": "{count} أداة مجانية",
   "footer.noSignup": "بلا تسجيل",
 

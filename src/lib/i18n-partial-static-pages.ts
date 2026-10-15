@@ -8,17 +8,11 @@ export const partialStaticPageLocales: Record<
 > = {
   es: {
     "about.title": "Acerca de ZapFile",
-    "about.intro":
-      "ZapFile es una colección de herramientas de archivos gratuitas, rápidas y privadas que se ejecutan por completo en tu navegador. Sin subidas a servidores, sin cuentas. Abre una herramienta y empieza.",
     "about.missionTitle": "Nuestra misión",
     "about.missionBody":
       "Creemos que todos deberían tener acceso a herramientas potentes sin sacrificar la privacidad ni pagar suscripciones. ZapFile ofrece un conjunto completo para PDF, imágenes, audio y más — totalmente gratis y accesible.",
     "about.howTitle": "Cómo funciona",
-    "about.howBody":
-      "Todo se procesa en tu navegador con tecnologías web modernas. Al comprimir una imagen o fusionar PDF, tus archivos no salen de tu dispositivo. No hay subidas a servidores remotos. Tus archivos permanecen privados; tras cargar la página, muchas herramientas funcionan incluso sin conexión.",
     "about.privacyTitle": "Privacidad primero",
-    "about.privacyBody":
-      "La privacidad no es solo una función: es la base de ZapFile. No recopilamos tus datos, no procesamos tus archivos en nuestros servidores y no exigimos cuenta. Tus archivos son tuyos y se quedan en tu dispositivo.",
     "about.builtTitle": "Tecnología",
     "about.builtBody":
       "ZapFile está hecho con Next.js y aprovecha APIs del navegador como Canvas, Web Audio y WebAssembly. Así podemos realizar operaciones complejas — de imágenes a PDF — enteramente en el cliente.",
@@ -72,17 +66,11 @@ export const partialStaticPageLocales: Record<
 
   pt: {
     "about.title": "Sobre o ZapFile",
-    "about.intro":
-      "O ZapFile é uma coleção de ferramentas de arquivos gratuitas, rápidas e privadas que rodam inteiramente no seu navegador. Sem envios a servidores, sem contas. Abra uma ferramenta e comece.",
     "about.missionTitle": "Nossa missão",
     "about.missionBody":
       "Acreditamos que todos devem ter acesso a ferramentas poderosas sem abrir mão da privacidade ou pagar assinaturas. O ZapFile oferece um conjunto completo para PDF, imagens, áudio e mais — totalmente grátis e acessível.",
     "about.howTitle": "Como funciona",
-    "about.howBody":
-      "Tudo é processado no seu navegador com tecnologias web modernas. Ao comprimir uma imagem ou mesclar PDFs, seus arquivos não saem do seu dispositivo. Não há envio a servidores remotos. Seus arquivos permanecem privados; após carregar a página, muitas ferramentas funcionam até sem internet.",
     "about.privacyTitle": "Privacidade em primeiro lugar",
-    "about.privacyBody":
-      "Privacidade não é só um recurso — é a base do ZapFile. Não coletamos seus dados, não processamos seus arquivos em nossos servidores e não exigimos conta. Seus arquivos são seus e ficam no seu dispositivo.",
     "about.builtTitle": "Tecnologia",
     "about.builtBody":
       "O ZapFile é feito com Next.js e usa APIs do navegador como Canvas, Web Audio e WebAssembly. Assim realizamos operações complexas — de imagens a PDF — totalmente no cliente.",
@@ -136,17 +124,11 @@ export const partialStaticPageLocales: Record<
 
   it: {
     "about.title": "Informazioni su ZapFile",
-    "about.intro":
-      "ZapFile è una raccolta di strumenti per file gratuiti, veloci e riservati che funzionano interamente nel browser. Nessun caricamento su server, nessun account. Apri uno strumento e inizia.",
     "about.missionTitle": "La nostra missione",
     "about.missionBody":
       "Crediamo che tutti debbano avere accesso a strumenti potenti senza sacrificare la privacy o pagare abbonamenti. ZapFile offre una suite completa per PDF, immagini, audio e altro — del tutto gratuita e accessibile.",
     "about.howTitle": "Come funziona",
-    "about.howBody":
-      "Tutto viene elaborato nel browser con tecnologie web moderne. Quando comprimi un'immagine o unisci PDF, i file non lasciano il dispositivo. Nessun invio a server remoti. I file restano privati; dopo il caricamento della pagina molti strumenti funzionano anche offline.",
     "about.privacyTitle": "La privacy prima di tutto",
-    "about.privacyBody":
-      "La privacy non è solo una funzione: è alla base di ZapFile. Non raccogliamo i tuoi dati, non elaboriamo i file sui nostri server e non richiediamo account. I file sono tuoi e restano sul tuo dispositivo.",
     "about.builtTitle": "Tecnologie",
     "about.builtBody":
       "ZapFile è costruito con Next.js e sfrutta API del browser come Canvas, Web Audio e WebAssembly. Così possiamo eseguire operazioni complesse — da immagini a PDF — interamente lato client.",
@@ -200,17 +182,11 @@ export const partialStaticPageLocales: Record<
 
   ja: {
     "about.title": "ZapFile について",
-    "about.intro":
-      "ZapFile は、ブラウザ内だけで動く無料・高速・プライバシー重視のファイルツール集です。サーバーへのアップロードもアカウントも不要です。ツールを開いてすぐ使えます。",
     "about.missionTitle": "ミッション",
     "about.missionBody":
       "誰もがプライバシーを犠牲にしたり有料契約を強いられたりせず、強力なファイルツールを使えるべきだと考えています。ZapFile は PDF・画像・音声など幅広いツールを無料で提供します。",
     "about.howTitle": "仕組み",
-    "about.howBody":
-      "処理はすべて最新の Web 技術を使い、ブラウザ内で直接行われます。画像の圧縮や PDF の結合時も、ファイルはあなたの端末から出ません。リモートサーバーへのアップロードはありません。ページ読み込み後はオフラインでも使えるツールもあります。",
     "about.privacyTitle": "プライバシー第一",
-    "about.privacyBody":
-      "プライバシーは機能の一つではなく、ZapFile の根幹です。データを収集せず、サーバー上でファイルを処理せず、アカウントも不要です。ファイルはあなたのものであり端末に留まります。",
     "about.builtTitle": "技術スタック",
     "about.builtBody":
       "ZapFile は Next.js で構築し、Canvas、Web Audio、WebAssembly などのブラウザ API を活用しています。画像処理から PDF 操作まで、複雑な処理もクライアント側だけで完結します。",
@@ -264,17 +240,11 @@ export const partialStaticPageLocales: Record<
 
   ar: {
     "about.title": "عن ZapFile",
-    "about.intro":
-      "ZapFile مجموعة من أدوات الملفات المجانية والسريعة والخاصة التي تعمل بالكامل في متصفحك. بلا رفع إلى خوادم وبلا حسابات. افتح أداة وابدأ.",
     "about.missionTitle": "مهمتنا",
     "about.missionBody":
       "نؤمن بأن الجميع يستحق أدواتاً قوية دون التنازل عن الخصوصية أو دفع اشتراكات. يقدّم ZapFile مجموعة كاملة لملفات PDF والصور والصوت وأكثر — مجاناً بالكامل ومتاح للجميع.",
     "about.howTitle": "كيف يعمل",
-    "about.howBody":
-      "يُعالَج كل شيء في متصفحك بتقنيات الويب الحديثة. عند ضغط صورة أو دمج ملفات PDF، تبقى ملفاتك على جهازك. لا يُرفع شيء إلى خوادم بعيدة. تبقى ملفاتك خاصة؛ وبعد تحميل الصفحة تعمل كثير من الأدوات حتى دون اتصال.",
     "about.privacyTitle": "الخصوصية أولاً",
-    "about.privacyBody":
-      "الخصوصية ليست مجرد ميزة — إنها أساس ZapFile. لا نجمع بياناتك، ولا نعالج ملفاتك على خوادمنا، ولا نطلب حساباً. ملفاتك ملكك وتبقى على جهازك.",
     "about.builtTitle": "التقنيات",
     "about.builtBody":
       "يُبنى ZapFile باستخدام Next.js ويستفيد من واجهات المتصفح: Canvas وWeb Audio وWebAssembly. هكذا ننفّذ عمليات معقدة — من الصور إلى PDF — بالكامل على جهازك.",

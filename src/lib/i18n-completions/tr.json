@@ -35,5 +35,20 @@
   "photofilter.altSource": "Orijinal fotoğraf",
   "blur.redo": "Yinele",
   "blur.feather": "Kenar yumuşatma",
-  "blur.blackout": "Siyahla kapat"
+  "blur.blackout": "Siyahla kapat",
+  "home.hero.subtitleLocal": "PDF, görsel, ses ve günlük işler için {count} ücretsiz araç. Neredeyse hepsi doğrudan tarayıcınızda çalışır.",
+  "home.trust.notStored": "Dosyalar sunucuda saklanmaz",
+  "home.privacyLocal.heading": "Gizlilik için tasarlandı",
+  "home.privacyLocal.desc": "WebAssembly ve Canvas API işi doğrudan tarayıcınızda yapar. Tek istisna Word, Excel, PowerPoint ve HTML → PDF'in hızlı modudur; isterseniz kapatabilirsiniz.",
+  "home.privacyLocal.local.title": "Tarayıcıda işlenir",
+  "home.privacyLocal.local.desc": "Neredeyse tüm araçlar dosyalarınızı yüklemeden, cihazınızda işler",
+  "home.privacyLocal.notStored.title": "Hiçbir şey saklanmaz",
+  "home.privacyLocal.notStored.desc": "Office → PDF hızlı modu dosyayı sunucumuzda çevirip hemen siler; Gizli mod bunu da tarayıcıda yapar",
+  "footer.brandLocal": "Hızlı, ücretsiz ve gizli dosya araçları. Neredeyse her şey tarayıcınızda çalışır, dosyalar hiçbir sunucuda saklanmaz.",
+  "footer.noteLocal": "Araçların çoğu dosyalarınızı tarayıcınızda işler.",
+  "home.drop.privacy": "Buraya bıraktığınız dosya yüklenmez",
+  "faq.safe.aServer": "Varsayılan hızlı modda dosyanız şifreli bağlantıyla dönüştürme sunucumuza gider ve PDF hazır olur olmaz silinir; hiçbir şey saklanmaz. Dosyanın cihazınızdan hiç çıkmamasını istiyorsanız Gizli modu seçin, dönüştürme tamamen tarayıcınızda yapılır.",
+  "about.introLocal": "ZapFile; ücretsiz, hızlı ve gizli dosya araçlarından oluşan bir koleksiyondur. Neredeyse hepsi tamamen tarayıcınızda çalışır: yükleme yok, hesap yok. Bir aracı açıp hemen kullanmaya başlayın.",
+  "about.howBodyLocal": "Neredeyse her şey modern web teknolojileriyle doğrudan tarayıcınızda işlenir. Bir görsel sıkıştırdığınızda veya PDF birleştirdiğinizde dosyalarınız cihazınızdan çıkmaz, sunucu beklemesi olmaz ve sayfa yüklendikten sonra araçlar internetsiz de çalışır. Tek istisna Word, Excel, PowerPoint ve HTML → PDF'tir: varsayılan hızlı mod dosyayı sunucumuzda çevirip hemen siler, Gizli mod ise tarayıcınızda çevirir.",
+  "about.privacyBodyLocal": "Gizlilik ZapFile'ın bir özelliği değil, temelidir. Dosyalarınızı saklamıyoruz, hesap açmanızı istemiyoruz; sunucumuzu kullanabilen tek araç bunu açıkça söyler ve cihazda dönüştürmeye geçmenize izin verir."
 }

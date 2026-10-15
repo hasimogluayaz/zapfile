@@ -92,7 +92,7 @@ export default function DropPad({
           </button>
           <p className="mt-4 flex items-center gap-1.5 text-[12.5px] text-t-tertiary">
             <Lock className="h-3.5 w-3.5" strokeWidth={2} aria-hidden="true" />
-            {t("tool.privacy")}
+            {t("home.drop.privacy")}
           </p>
         </div>
       ) : (

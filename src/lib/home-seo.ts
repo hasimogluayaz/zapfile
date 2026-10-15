@@ -5,7 +5,7 @@ export const homeSeo: Record<Locale, { title: string; description: string }> = {
   en: {
     title: "ZapFile - Free Online File Tools | Fast, Private, Browser-Based",
     description:
-      "Fast, free, and private file tools. Compress PDFs, convert images, generate QR codes and more. All processing happens in your browser — no uploads, no limits.",
+      "Fast, free, and private file tools. Compress PDFs, convert images, generate QR codes and more. Almost every tool runs in your browser without uploading your files. No sign-up.",
   },
   tr: {
     title: "ZapFile – Ücretsiz Online PDF, Resim ve Dosya Araçları",

@@ -43,15 +43,15 @@ const toolFaqs: Record<string, FaqItem[]> = {
   "word-to-pdf": [
     {
       question: "How do I convert Word to PDF for free?",
-      answer: "Drop one or more DOCX, DOC, ODT or RTF files into ZapFile's Word to PDF tool. LibreOffice, running inside your browser, lays out every page and you download the PDFs one by one, as a ZIP, or combined into a single PDF. Nothing is uploaded and there is no watermark.",
+      answer: "Drop one or more DOCX, DOC, ODT or RTF files into ZapFile's Word to PDF tool. In the default fast mode they are converted with LibreOffice on our server and deleted right after; in Private mode LibreOffice runs inside your browser and nothing is uploaded. You download the PDFs one by one, as a ZIP, or combined into a single PDF, with no watermark.",
     },
     {
       question: "Will the PDF look the same as in Word?",
       answer: "The document is laid out by LibreOffice, the same engine many converters run on their servers: fonts, tables, images, headers, footers, footnotes, page numbers and page breaks are kept. Common Microsoft fonts are replaced by metric-compatible ones (for example Carlito for Calibri), so lines and pages break in the same places.",
     },
     {
-      question: "Why is there a download the first time?",
-      answer: "The conversion engine is about 77 MB. It is downloaded once, checked and stored in your browser, so later visits start instantly and even work offline. Your documents themselves never leave your device.",
+      question: "Is my document uploaded?",
+      answer: "Only in fast mode, the default: the file goes over an encrypted connection to our conversion server, which has no internet access, and is deleted as soon as the PDF is sent back. Nothing is stored. Switch to Private mode to convert entirely in your browser; the first time, the conversion engine (about 77 MB) is downloaded once and cached.",
     },
     {
       question: "Can I convert a password-protected document or make a PDF/A?",
@@ -61,7 +61,7 @@ const toolFaqs: Record<string, FaqItem[]> = {
   "excel-to-pdf": [
     {
       question: "How do I convert Excel to PDF?",
-      answer: "Drop XLSX, XLS, ODS or CSV files into ZapFile's Excel to PDF tool. Each workbook is converted in your browser with LibreOffice and you download the PDF. Nothing is uploaded.",
+      answer: "Drop XLSX, XLS, ODS or CSV files into ZapFile's Excel to PDF tool. Each workbook is converted with LibreOffice: on our server in the default fast mode (the file is deleted right after), or entirely in your browser in Private mode. You download the PDF.",
     },
     {
       question: "Are all sheets and formulas included?",
@@ -75,7 +75,7 @@ const toolFaqs: Record<string, FaqItem[]> = {
   "powerpoint-to-pdf": [
     {
       question: "How do I convert PowerPoint to PDF?",
-      answer: "Drop PPTX, PPT or ODP presentations into ZapFile's PowerPoint to PDF tool. Each slide becomes one PDF page, converted in your browser with LibreOffice. Nothing is uploaded and there is no watermark.",
+      answer: "Drop PPTX, PPT or ODP presentations into ZapFile's PowerPoint to PDF tool. Each slide becomes one PDF page, converted with LibreOffice: on our server in the default fast mode (the file is deleted right after), or entirely in your browser in Private mode. There is no watermark.",
     },
     {
       question: "Are images, shapes and slide designs kept?",
@@ -163,7 +163,7 @@ const toolFaqs: Record<string, FaqItem[]> = {
   "html-to-pdf": [
     {
       question: "How do I convert an HTML file to PDF?",
-      answer: "Drop .html files into ZapFile's HTML to PDF tool. LibreOffice, running in your browser, lays out the page and you download the PDF. Nothing is uploaded.",
+      answer: "Drop .html files into ZapFile's HTML to PDF tool. LibreOffice lays out the page, on our server in the default fast mode (the file is deleted right after) or in your browser in Private mode, and you download the PDF.",
     },
     {
       question: "Why are some pictures or styles missing?",
