@@ -13,7 +13,7 @@ export default function AboutClient() {
       <main id="main-content" className="flex-1" tabIndex={-1}>
         <div className="max-w-3xl mx-auto px-5 py-16">
           <h1 className="text-3xl font-bold text-t-primary mb-4">{t("about.title")}</h1>
-          <p className="text-t-secondary leading-relaxed mb-4">{t("about.intro")}</p>
+          <p className="text-t-secondary leading-relaxed mb-4">{t("about.introLocal")}</p>
 
           <h2 className="text-xl font-semibold text-t-primary mt-12 mb-4">
             {t("about.missionTitle")}
@@ -23,12 +23,12 @@ export default function AboutClient() {
           <h2 className="text-xl font-semibold text-t-primary mt-12 mb-4">
             {t("about.howTitle")}
           </h2>
-          <p className="text-t-secondary leading-relaxed mb-4">{t("about.howBody")}</p>
+          <p className="text-t-secondary leading-relaxed mb-4">{t("about.howBodyLocal")}</p>
 
           <h2 className="text-xl font-semibold text-t-primary mt-12 mb-4">
             {t("about.privacyTitle")}
           </h2>
-          <p className="text-t-secondary leading-relaxed mb-4">{t("about.privacyBody")}</p>
+          <p className="text-t-secondary leading-relaxed mb-4">{t("about.privacyBodyLocal")}</p>
 
           <h2 className="text-xl font-semibold text-t-primary mt-12 mb-4">
             {t("about.builtTitle")}

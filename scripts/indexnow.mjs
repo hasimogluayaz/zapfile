@@ -19,10 +19,19 @@ const sitemap = await (await fetch(`${site}/sitemap.xml`)).text();
 const urls = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
 if (!urls.length) throw new Error("Sitemap has no URLs");
 
-const res = await fetch("https://api.indexnow.org/indexnow", {
-  method: "POST",
-  headers: { "Content-Type": "application/json; charset=utf-8" },
-  body: JSON.stringify({ host: new URL(site).host, key, keyLocation: `${site}/${keyFile}`, urlList: urls.slice(0, 10000) }),
-});
-console.log(`IndexNow: ${urls.length} URLs → HTTP ${res.status} ${await res.text()}`);
-if (res.status !== 200 && res.status !== 202) process.exit(1);
+const body = JSON.stringify({ host: new URL(site).host, key, keyLocation: `${site}/${keyFile}`, urlList: urls.slice(0, 10000) });
+// The first submission of a new key answers 403 SiteVerificationNotCompleted
+// until IndexNow has fetched the key file: wait and try again.
+for (let attempt = 1; attempt <= 6; attempt++) {
+  const res = await fetch("https://api.indexnow.org/indexnow", {
+    method: "POST",
+    headers: { "Content-Type": "application/json; charset=utf-8" },
+    body,
+  });
+  const text = await res.text();
+  console.log(`IndexNow: ${urls.length} URLs → HTTP ${res.status} ${text}`);
+  if (res.status === 200 || res.status === 202) process.exit(0);
+  if (!text.includes("SiteVerificationNotCompleted")) process.exit(1);
+  await new Promise((r) => setTimeout(r, 120_000));
+}
+process.exit(1);

@@ -621,5 +621,20 @@
   "conversion.otherConversions": "Otras conversiones de imagen",
   "conversion.privacyLine": "Tus archivos nunca salen de tu navegador. 100 % privado.",
   "privacy.officeTitle": "Word, Excel, PowerPoint y HTML a PDF",
-  "privacy.officeBody": "Estas cuatro herramientas tienen un modo rápido (el predeterminado): el documento se envía por una conexión cifrada (HTTPS) a nuestro servidor de conversión en Alemania, se convierte a PDF y se elimina de inmediato junto con el resultado. No se guarda, registra ni revisa nada, y el servidor no tiene acceso propio a Internet. Si lo prefieres, elige el modo privado en la página de la herramienta y la conversión se hará por completo en tu navegador. El resto de herramientas de ZapFile funcionan siempre solo en tu dispositivo."
+  "privacy.officeBody": "Estas cuatro herramientas tienen un modo rápido (el predeterminado): el documento se envía por una conexión cifrada (HTTPS) a nuestro servidor de conversión en Alemania, se convierte a PDF y se elimina de inmediato junto con el resultado. No se guarda, registra ni revisa nada, y el servidor no tiene acceso propio a Internet. Si lo prefieres, elige el modo privado en la página de la herramienta y la conversión se hará por completo en tu navegador. El resto de herramientas de ZapFile funcionan siempre solo en tu dispositivo.",
+  "home.hero.subtitleLocal": "{count} herramientas gratis para PDF, imágenes, audio y tareas diarias. Casi todas funcionan directamente en tu navegador.",
+  "home.trust.notStored": "Los archivos nunca se guardan en un servidor",
+  "home.privacyLocal.heading": "Pensado para la privacidad",
+  "home.privacyLocal.desc": "WebAssembly y la API Canvas hacen el trabajo directamente en tu navegador. La única excepción es el modo rápido de Word, Excel, PowerPoint y HTML a PDF, que puedes desactivar.",
+  "home.privacyLocal.local.title": "Procesado en tu navegador",
+  "home.privacyLocal.local.desc": "Casi todas las herramientas procesan tus archivos localmente, sin subirlos",
+  "home.privacyLocal.notStored.title": "No se guarda nada",
+  "home.privacyLocal.notStored.desc": "El modo rápido de Office a PDF convierte en nuestro servidor y borra el archivo al instante; el modo privado lo hace también en tu navegador",
+  "footer.brandLocal": "Herramientas de archivos rápidas, gratis y privadas. Casi todo funciona en tu navegador y los archivos nunca se guardan en un servidor.",
+  "footer.noteLocal": "La mayoría de las herramientas procesan tus archivos en tu navegador.",
+  "home.drop.privacy": "Soltar un archivo aquí no lo sube",
+  "faq.safe.aServer": "En el modo rápido (predeterminado), tu archivo viaja cifrado a nuestro servidor de conversión y se borra en cuanto el PDF está listo; no se guarda nada. Elige el modo privado para convertir por completo en tu navegador y que el archivo no salga nunca de tu dispositivo.",
+  "about.introLocal": "ZapFile es una colección de herramientas de archivos gratis, rápidas y privadas. Casi todas funcionan por completo en tu navegador, sin subir nada y sin cuenta. Abre una herramienta y empieza.",
+  "about.howBodyLocal": "Casi todo se procesa directamente en tu navegador con tecnologías web modernas. Cuando comprimes una imagen o unes PDF, tus archivos no salen de tu dispositivo, no esperas a ningún servidor y las herramientas funcionan incluso sin conexión una vez cargada la página. La única excepción es Word, Excel, PowerPoint y HTML a PDF: su modo rápido predeterminado convierte en nuestro servidor y borra el archivo al instante, y su modo privado convierte en tu navegador.",
+  "about.privacyBodyLocal": "La privacidad no es una función de ZapFile, es su base. No guardamos tus archivos, no te pedimos una cuenta, y la única herramienta que puede usar nuestro servidor lo indica claramente y te deja convertir en tu dispositivo."
 }

@@ -67,12 +67,12 @@ export default function Home() {
               {t("home.hero.title")}
             </h1>
             <p className="mt-6 max-w-[46ch] text-[17px] leading-relaxed text-t-secondary sm:text-[18px]">
-              {t("home.hero.subtitle", { count: tools.length })}
+              {t("home.hero.subtitleLocal", { count: tools.length })}
             </p>
             <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-[13.5px] text-t-secondary">
               <li className="flex items-center gap-2">
                 <HardDrive className="h-4 w-4 text-t-primary" strokeWidth={1.75} aria-hidden="true" />
-                {t("hero.trust1")}
+                {t("home.trust.notStored")}
               </li>
               <li className="flex items-center gap-2">
                 <UserX className="h-4 w-4 text-t-primary" strokeWidth={1.75} aria-hidden="true" />
@@ -199,16 +199,16 @@ export default function Home() {
             <div className="grid gap-12 lg:grid-cols-[1fr_1.4fr] lg:gap-16">
               <div>
                 <h2 className="max-w-[16ch] text-[30px] font-semibold leading-[1.08] tracking-[-0.035em] sm:text-[40px]">
-                  {t("home.privacy.heading")}
+                  {t("home.privacyLocal.heading")}
                 </h2>
                 <p className="mt-5 max-w-[44ch] text-[15px] leading-relaxed text-white/65">
-                  {t("home.privacy.howDesc")}
+                  {t("home.privacyLocal.desc")}
                 </p>
               </div>
               <ul className="grid gap-8 sm:grid-cols-3 lg:gap-6">
                 {[
-                  { Icon: EyeOff, title: "home.privacy.zeroUploads.title", desc: "home.privacy.zeroUploads.desc" },
-                  { Icon: ServerOff, title: "home.privacy.noServer.title", desc: "home.privacy.noServer.desc" },
+                  { Icon: EyeOff, title: "home.privacyLocal.local.title", desc: "home.privacyLocal.local.desc" },
+                  { Icon: ServerOff, title: "home.privacyLocal.notStored.title", desc: "home.privacyLocal.notStored.desc" },
                   { Icon: UserX, title: "home.privacy.noAccount.title", desc: "home.privacy.noAccount.desc" },
                 ].map(({ Icon, title, desc }) => (
                   <li key={title}>

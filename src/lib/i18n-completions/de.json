@@ -87,5 +87,20 @@
   "pw.days": "{n} Tage",
   "pw.years": "{n} Jahre",
   "pw.centuries": "Jahrhunderte",
-  "pw.millennia": "Jahrtausende+"
+  "pw.millennia": "Jahrtausende+",
+  "home.hero.subtitleLocal": "{count} kostenlose Tools für PDFs, Bilder, Audio und Alltägliches. Fast alle laufen direkt in deinem Browser.",
+  "home.trust.notStored": "Dateien werden nie auf einem Server gespeichert",
+  "home.privacyLocal.heading": "Auf Datenschutz ausgelegt",
+  "home.privacyLocal.desc": "WebAssembly und die Canvas-API erledigen die Arbeit direkt in deinem Browser. Einzige Ausnahme ist der Schnellmodus für Word, Excel, PowerPoint und HTML in PDF, den du abschalten kannst.",
+  "home.privacyLocal.local.title": "Im Browser verarbeitet",
+  "home.privacyLocal.local.desc": "Fast jedes Tool bearbeitet deine Dateien lokal, ohne sie hochzuladen",
+  "home.privacyLocal.notStored.title": "Nichts wird gespeichert",
+  "home.privacyLocal.notStored.desc": "Der Schnellmodus für Office in PDF konvertiert auf unserem Server und löscht die Datei sofort; im privaten Modus passiert auch das im Browser",
+  "footer.brandLocal": "Schnelle, kostenlose und private Dateiwerkzeuge. Fast alles läuft in deinem Browser, und Dateien werden nie auf einem Server gespeichert.",
+  "footer.noteLocal": "Die meisten Tools verarbeiten deine Dateien im Browser.",
+  "home.drop.privacy": "Eine hier abgelegte Datei wird nicht hochgeladen",
+  "faq.safe.aServer": "Im Schnellmodus (Standard) geht deine Datei verschlüsselt an unseren Konvertierungsserver und wird gelöscht, sobald die PDF fertig ist; nichts wird gespeichert. Wähle den privaten Modus, um komplett im Browser zu konvertieren – dann verlässt die Datei dein Gerät nie.",
+  "about.introLocal": "ZapFile ist eine Sammlung kostenloser, schneller und privater Dateiwerkzeuge. Fast alle laufen komplett in deinem Browser – ohne Upload und ohne Konto. Tool öffnen und loslegen.",
+  "about.howBodyLocal": "Fast alles wird mit modernen Webtechnologien direkt in deinem Browser verarbeitet. Wenn du ein Bild komprimierst oder PDFs zusammenfügst, verlassen deine Dateien nie dein Gerät, du wartest auf keinen Server, und nach dem Laden der Seite funktionieren die Tools sogar offline. Einzige Ausnahme ist Word, Excel, PowerPoint und HTML in PDF: Der Standard-Schnellmodus konvertiert auf unserem Server und löscht die Datei sofort, der private Modus konvertiert stattdessen im Browser.",
+  "about.privacyBodyLocal": "Datenschutz ist bei ZapFile keine Funktion, sondern die Grundlage. Wir behalten deine Dateien nicht, verlangen kein Konto, und das einzige Tool, das unseren Server nutzen kann, sagt das klar und lässt dich auf Konvertierung im Gerät umschalten."
 }
