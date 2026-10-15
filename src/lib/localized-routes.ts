@@ -61,9 +61,25 @@ export function parseLocalizedBlogPath(
   return { locale: parts[0], slug: parts[2] ?? null };
 }
 
-/** The language a localized URL fixes (tool or blog page), else null. */
+/** `/tr` → "tr" (a language's home page); null for any other path. */
+export function parseLocalizedHomePath(pathname: string | null | undefined): ToolUrlLocale | null {
+  const parts = (pathname ?? "").split("/").filter(Boolean);
+  return parts.length === 1 && isToolUrlLocale(parts[0]) ? parts[0] : null;
+}
+
+/** The language a localized URL fixes (home, tool or blog page), else null. */
 export function urlLocaleFromPathname(pathname: string | null | undefined): ToolUrlLocale | null {
-  return parseLocalizedToolPath(pathname)?.locale ?? parseLocalizedBlogPath(pathname)?.locale ?? null;
+  return (
+    parseLocalizedHomePath(pathname) ??
+    parseLocalizedToolPath(pathname)?.locale ??
+    parseLocalizedBlogPath(pathname)?.locale ??
+    null
+  );
+}
+
+/** Home page in the given UI language: `/tr`, `/de`, … or `/`. */
+export function homeHref(locale: Locale): string {
+  return isToolUrlLocale(locale) ? `/${locale}` : "/";
 }
 
 /** Blog index (no slug) or post in the given UI language. */
@@ -74,9 +90,10 @@ export function blogHref(locale: Locale, slug?: string): string {
 
 /**
  * The same page in another language: `/tools/merge-pdf` ⇄ `/tr/pdf-birlestir`,
- * `/blog/x` ⇄ `/de/blog/x`. Null when the page has no per-language URLs.
+ * `/blog/x` ⇄ `/de/blog/x`, `/` ⇄ `/fr`. Null when the page has no per-language URLs.
  */
 export function pathForLocale(pathname: string, locale: Locale): string | null {
+  if (pathname === "/" || parseLocalizedHomePath(pathname)) return homeHref(locale);
   const localized = parseLocalizedToolPath(pathname);
   if (localized) return toolHref(localized.slug, locale);
   const m = /^\/tools\/([^/]+)\/?$/.exec(pathname);
@@ -86,6 +103,14 @@ export function pathForLocale(pathname: string, locale: Locale): string | null {
   const b = /^\/blog(?:\/([^/]+))?\/?$/.exec(pathname);
   if (b) return blogHref(locale, b[1]);
   return null;
+}
+
+/** hreflang map (paths) for the home page: `/` is English and the x-default. */
+export function homeLanguagePaths(): Record<string, string> {
+  const paths: Record<string, string> = { en: "/" };
+  for (const locale of TOOL_URL_LOCALES) paths[locale] = homeHref(locale);
+  paths["x-default"] = "/";
+  return paths;
 }
 
 /** hreflang map (paths) for the blog index or a post: English URL is the x-default. */

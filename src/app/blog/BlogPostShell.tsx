@@ -23,7 +23,7 @@ export default function BlogPostShell({
   contentHtml,
   relatedPosts,
 }: Props) {
-  const { t, locale, blogHref } = useI18n();
+  const { t, locale, blogHref, homeHref } = useI18n();
   const main = getLocalizedBlogSummary(post, locale);
   const readMin = parseReadMinutes(post.readTime);
 
@@ -38,7 +38,7 @@ export default function BlogPostShell({
             className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-t-tertiary mb-8"
           >
             <Link
-              href="/"
+              href={homeHref()}
               className="hover:text-t-primary transition-colors shrink-0"
             >
               {t("blog.breadcrumbHome")}

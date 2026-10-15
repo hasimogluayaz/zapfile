@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { SITE_URL } from "@/lib/site-url";
 
 export const metadata: Metadata = {
-  title: "All Free Online File Tools | ZapFile",
+  title: { absolute: "All Free Online File Tools | ZapFile" },
   description:
     "Browse all free online file tools: PDF, image, video, and utility tools. Fast, private, and browser-based.",
   openGraph: {

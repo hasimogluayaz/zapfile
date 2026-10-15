@@ -1,0 +1,20 @@
+# After main deploys to Vercel, tell Bing & co. (IndexNow) which pages exist.
+name: IndexNow
+
+on:
+  push:
+    branches: [main]
+    paths: ["src/**", "public/*.txt"]
+  workflow_dispatch:
+
+jobs:
+  submit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      # Give Vercel time to finish the production deploy of this commit.
+      - run: sleep 300
+      - run: node scripts/indexnow.mjs

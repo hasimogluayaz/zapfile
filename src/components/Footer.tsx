@@ -26,14 +26,14 @@ const resourceLinks = [
 ];
 
 export default function Footer() {
-  const { t, toolHref, blogHref } = useI18n();
+  const { t, toolHref, blogHref, homeHref } = useI18n();
 
   return (
     <footer className="mt-auto border-t border-border">
       <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
         <div className="grid grid-cols-2 gap-10 md:grid-cols-[1.4fr_1fr_1fr]">
           <div className="col-span-2 md:col-span-1">
-            <Link href="/" className="inline-flex rounded-lg" aria-label="ZapFile">
+            <Link href={homeHref()} className="inline-flex rounded-lg" aria-label="ZapFile">
               <Logo />
             </Link>
             <p className="mt-4 max-w-[34ch] text-[14px] leading-relaxed text-t-secondary">

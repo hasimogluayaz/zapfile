@@ -7,6 +7,8 @@ import {
   TOOL_URL_LOCALES,
   blogHref,
   blogLanguagePaths,
+  homeHref,
+  homeLanguagePaths,
   localizedToolParams,
   toolLanguagePaths,
 } from "@/lib/localized-routes";
@@ -57,9 +59,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
         .map(([lang, path]) => [lang, `${baseUrl}${path}`]),
     );
 
-  // Blog index and posts exist in every language (English at /blog).
-  const blogLocales = ["en", ...TOOL_URL_LOCALES] as const;
-  const blogIndexPages: MetadataRoute.Sitemap = blogLocales.map((locale) => ({
+  // Home, blog index and posts exist in every language (English at / and /blog).
+  const pageLocales = ["en", ...TOOL_URL_LOCALES] as const;
+  const blogIndexPages: MetadataRoute.Sitemap = pageLocales.map((locale) => ({
     url: `${baseUrl}${blogHref(locale)}`,
     lastModified: new Date(),
     changeFrequency: "weekly" as const,
@@ -70,7 +72,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   let blogPostPages: MetadataRoute.Sitemap = [];
   try {
     blogPostPages = getAllPosts().flatMap((post) =>
-      blogLocales.map((locale) => ({
+      pageLocales.map((locale) => ({
         url: `${baseUrl}${blogHref(locale, post.slug)}`,
         lastModified: new Date(post.date),
         changeFrequency: "weekly" as const,
@@ -80,13 +82,22 @@ export default function sitemap(): MetadataRoute.Sitemap {
     );
   } catch {}
 
+  const absolute = (path: string) => (path === "/" ? baseUrl : `${baseUrl}${path}`);
+  const homeLanguages = Object.fromEntries(
+    Object.entries(homeLanguagePaths())
+      .filter(([lang]) => lang !== "x-default")
+      .map(([lang, path]) => [lang, absolute(path)]),
+  );
+  const homePages: MetadataRoute.Sitemap = pageLocales.map((locale) => ({
+    url: absolute(homeHref(locale)),
+    lastModified: new Date(),
+    changeFrequency: "weekly" as const,
+    priority: 1,
+    alternates: { languages: homeLanguages },
+  }));
+
   return [
-    {
-      url: baseUrl,
-      lastModified: new Date(),
-      changeFrequency: "weekly" as const,
-      priority: 1,
-    },
+    ...homePages,
     {
       url: `${baseUrl}/tools`,
       lastModified: new Date(),

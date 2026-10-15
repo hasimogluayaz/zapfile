@@ -544,7 +544,7 @@ export default function Header() {
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const menuRef = useRef<HTMLElement>(null);
-  const { t, toolHref } = useI18n();
+  const { t, toolHref, homeHref } = useI18n();
   const { theme, toggleTheme } = useTheme();
   const [searchModKey, setSearchModKey] = useState("Ctrl");
 
@@ -631,7 +631,7 @@ export default function Header() {
       <header className="sticky top-0 z-40 border-b border-border/70 bg-bg/80 backdrop-blur-xl backdrop-saturate-150">
         <div className={`mx-auto px-4 sm:px-6 ${isToolPage ? "max-w-[1780px]" : "max-w-6xl"}`}>
           <div className="flex h-14 items-center gap-2">
-            <Link href="/" className="me-3 shrink-0 rounded-lg" aria-label="ZapFile">
+            <Link href={homeHref()} className="me-3 shrink-0 rounded-lg" aria-label="ZapFile">
               <Logo />
             </Link>
 

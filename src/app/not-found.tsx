@@ -7,7 +7,7 @@ import Illustration from "@/components/Illustration";
 import { useI18n } from "@/lib/i18n";
 
 export default function NotFound() {
-  const { t } = useI18n();
+  const { t, homeHref } = useI18n();
   return (
     <>
       <Header />
@@ -22,7 +22,7 @@ export default function NotFound() {
         </p>
         <div className="flex items-center gap-3">
           <Link
-            href="/"
+            href={homeHref()}
             className="px-5 py-2.5 rounded-lg text-[13px] font-medium text-on-accent bg-accent hover:opacity-90 transition-opacity"
           >
             {t("404.cta")}

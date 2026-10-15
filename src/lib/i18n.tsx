@@ -16,7 +16,7 @@ import { partialBlogChromeLocales } from "./i18n-partial-blog-chrome";
 import { arLocaleStrings } from "./i18n-locale-ar";
 import { LOCALE_COOKIE, LOCALE_PREF_COOKIE } from "./locale-cookies";
 import { localeCompletions } from "./i18n-completions";
-import { blogHref as buildBlogHref, pathForLocale, toolHref as buildToolHref, urlLocaleFromPathname } from "./localized-routes";
+import { blogHref as buildBlogHref, homeHref as buildHomeHref, pathForLocale, toolHref as buildToolHref, urlLocaleFromPathname } from "./localized-routes";
 
 export type { Locale } from "./locales";
 
@@ -13609,6 +13609,8 @@ interface I18nContextType {
   toolHref: (slug: string) => string;
   /** Blog index (no slug) or post in the current language (`/tr/blog/...` or `/blog/...`). */
   blogHref: (slug?: string) => string;
+  /** Home page in the current language (`/tr` or `/`). */
+  homeHref: () => string;
 }
 
 const I18nContext = createContext<I18nContextType>({
@@ -13617,6 +13619,7 @@ const I18nContext = createContext<I18nContextType>({
   t: (key) => key,
   toolHref: (slug) => `/tools/${slug}`,
   blogHref: (slug) => (slug ? `/blog/${slug}` : "/blog"),
+  homeHref: () => "/",
 });
 
 function readCookieValue(name: string): string | null {
@@ -13805,9 +13808,10 @@ export function I18nProvider({
 
   const toolHref = useCallback((slug: string) => buildToolHref(slug, locale), [locale]);
   const blogHref = useCallback((slug?: string) => buildBlogHref(locale, slug), [locale]);
+  const homeHref = useCallback(() => buildHomeHref(locale), [locale]);
 
   return (
-    <I18nContext.Provider value={{ locale, setLocale, t, toolHref, blogHref }}>
+    <I18nContext.Provider value={{ locale, setLocale, t, toolHref, blogHref, homeHref }}>
       {children}
     </I18nContext.Provider>
   );

@@ -13,7 +13,7 @@ import { useI18n } from "@/lib/i18n";
 import { blogTagLabel } from "@/lib/blog-tags";
 
 export default function BlogClient() {
-  const { t, locale, blogHref } = useI18n();
+  const { t, locale, blogHref, homeHref } = useI18n();
   const posts = getAllPosts();
 
   return (
@@ -69,7 +69,7 @@ export default function BlogClient() {
 
           <div className="mt-12 text-center">
             <Link
-              href="/"
+              href={homeHref()}
               className="text-[13px] font-medium text-accent hover:text-accent-hover transition-colors"
             >
               &larr; {t("blog.backHome")}
