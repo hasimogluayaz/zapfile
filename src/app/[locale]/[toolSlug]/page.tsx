@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { getToolBySlug } from "@/lib/tools";
 import { SITE_URL } from "@/lib/site-url";
 import {
-  localizedToolParams,
   toolLanguagePaths,
   toolSlugFromLocalized,
 } from "@/lib/localized-routes";
@@ -28,11 +27,10 @@ const seo: Record<string, Record<string, { title: string; description: string }>
 
 const OG_LOCALE: Record<string, string> = { tr: "tr_TR", de: "de_DE", fr: "fr_FR" };
 
-export const dynamicParams = false;
-
-export function generateStaticParams(): Params[] {
-  return localizedToolParams().map(({ locale, localSlug }) => ({ locale, toolSlug: localSlug }));
-}
+// Rendered per request like every page (the root layout reads cookies).
+// Don't add `dynamicParams = false`: with nothing prerendered, Vercel then
+// answers 404 for every path. Unknown slugs hit notFound() below.
+export const dynamic = "force-dynamic";
 
 function resolve(params: Params) {
   const slug = toolSlugFromLocalized(params.locale, params.toolSlug);
