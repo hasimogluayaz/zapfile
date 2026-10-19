@@ -1,7 +1,7 @@
 /*
- * Every language at once, for the server (the root layout hands the page's
- * language to the I18nProvider) and for `npm run verify:i18n`. Never import
- * this from client code: it would ship all nine languages to every visitor.
+ * Every language at once, for `npm run verify:i18n`. Never import this from
+ * app code: it would ship all nine languages to every visitor (pages load
+ * theirs with `loadMessages`).
  */
 import type { Locale } from "../locales";
 import { SUPPORTED_LOCALES } from "../locales";
@@ -26,10 +26,6 @@ const translations = Object.fromEntries(
     locale === "en" ? en : mergeLocale(en, { ...ownStrings[locale], ...localeCompletions[locale] }),
   ]),
 ) as Record<Locale, Messages>;
-
-export function messagesFor(locale: Locale): Messages {
-  return translations[locale];
-}
 
 /** Keys that still show English in `locale` (checked by `npm run verify:i18n`). */
 export function untranslatedKeys(locale: Locale): string[] {

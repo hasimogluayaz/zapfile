@@ -10,9 +10,7 @@ import { homeMetadata } from "../home-page";
  * path that reaches this route is a 404.
  */
 
-// Rendered per request like every page; don't add `dynamicParams = false`
-// (see `[toolSlug]/page.tsx`).
-export const dynamic = "force-dynamic";
+// The languages come from the layout's generateStaticParams.
 
 type Params = { locale: string };
 

@@ -18,16 +18,18 @@ ZapFile (zapfile.xyz) is a free, browser-based file processing tool suite. All p
 ```
 src/
 ├── app/
-│   ├── layout.tsx          # Root layout (metadata, JSON-LD, ClientProviders wrapper)
-│   ├── page.tsx            # Home page (client component, uses i18n)
-│   ├── not-found.tsx       # Custom 404
-│   ├── robots.ts           # SEO robots
-│   ├── sitemap.xml/route.ts # Dynamic sitemap (all tools auto-included)
-│   ├── privacy/page.tsx
-│   ├── terms/page.tsx
-│   └── tools/
-│       ├── page.tsx         # Browse all tools
-│       └── [slug]/page.tsx  # 70 individual tool pages
+│   ├── root-shell.tsx      # <html> shell (metadata, JSON-LD, ClientProviders) shared by both root layouts
+│   ├── (site)/             # English pages, root layout lang="en"
+│   │   ├── layout.tsx
+│   │   ├── page.tsx         # Home (HomeClient)
+│   │   ├── not-found.tsx    # Custom 404 (components/NotFoundPage.tsx)
+│   │   ├── privacy/ terms/ about/ changelog/ workflows/ blog/
+│   │   └── tools/
+│   │       ├── page.tsx     # Browse all tools
+│   │       └── <slug>/      # 70 tool pages (one folder each)
+│   ├── [locale]/           # /tr, /de, … root layout lang=<locale> (home, tools, blog)
+│   ├── robots.ts, sitemap.ts, feed.xml/
+│   └── api/og/             # Open Graph images
 ├── components/
 │   ├── Header.tsx           # Sticky header, language switcher, category dropdown
 │   ├── Footer.tsx           # Multi-column footer
@@ -64,11 +66,20 @@ src/
 ## Localized tool URLs (`src/lib/localized-routes.ts`)
 
 - Every language has its own tool URLs (`/tr/pdf-birlestir`, `/de/pdf-zusammenfuegen`, `/es/unir-pdf`, …; Japanese and Arabic use the English slug: `/ja/merge-pdf`) so Google indexes each language. English stays on `/tools/<slug>`. Slug table: `src/lib/localized-tool-slugs.json` (also read by `next.config.mjs` for the Office tools' isolation headers). Search titles/descriptions: `src/lib/tool-seo-<locale>.ts`.
-- Route: `src/app/[locale]/[toolSlug]/` renders the same tool component (`tool-pages.ts`, lazy per tool). `I18nProvider` takes the language from the path (server render included); middleware passes it to the root layout for `<html lang>`.
+- Route: `src/app/[locale]/[toolSlug]/` renders the same tool component (`tool-page.tsx`, a client module so next/dynamic loads one tool per page). `I18nProvider` takes the language from the path; `[locale]/layout.tsx` sets `<html lang>`.
 - Link to tools with `toolHref(slug)` from `useI18n()`, never a hard-coded `/tools/${slug}`. Tool pages get hreflang alternates (`toolLanguagePaths`) and the sitemap lists every language version.
 - To add a language: finish its UI translation first, then add its slug table to the JSON, the locale to `TOOL_URL_LOCALES`, a `tool-seo-<locale>.ts` and its entry in the route's `seo` map.
 - Home pages too: `/tr`, `/de`, … (`src/app/[locale]/page.tsx`, same `HomeClient` as `/`; titles/descriptions in `src/lib/home-seo.ts`). Link home with `homeHref()` from `useI18n()`, never `href="/"`. Switching language on a home, tool or blog page goes to that page's URL in the new language (`pathForLocale`).
-- The blog has the same per-language URLs: `/tr/blog`, `/de/blog/<post-slug>` (post slugs stay English). Post bodies: `src/lib/blog-i18n/<locale>.ts` (markdown keyed by slug, server-only; `localizedPostContent` rewrites `/tools/<slug>` links to that language's tool URL). Titles/summaries: `blog-post-locales*.ts`; index SEO: `blog-seo.ts`; shared page code: `src/app/blog/blog-pages.tsx`. Link with `blogHref()` from `useI18n()`. A new English post needs its body in every `blog-i18n/<locale>.ts` (same headings and tool links): `npm run verify:i18n` (`scripts/verify-blog-i18n.mjs`) fails otherwise, and a missing translation 404s.
+- The blog has the same per-language URLs: `/tr/blog`, `/de/blog/<post-slug>` (post slugs stay English). Post bodies: `src/lib/blog-i18n/<locale>.ts` (markdown keyed by slug, server-only; `localizedPostContent` rewrites `/tools/<slug>` links to that language's tool URL). Titles/summaries: `blog-post-locales*.ts`; index SEO: `blog-seo.ts`; shared page code: `src/app/(site)/blog/blog-pages.tsx`. Link with `blogHref()` from `useI18n()`. A new English post needs its body in every `blog-i18n/<locale>.ts` (same headings and tool links): `npm run verify:i18n` (`scripts/verify-blog-i18n.mjs`) fails otherwise, and a missing translation 404s.
+
+## Static rendering (keep it)
+
+- Every page is prerendered at build time (967 pages) and served from Vercel's CDN: no function invocation per visit or per link prefetch. Before, the root layout read cookies, which made every page and every prefetch (30–50 per page view) a serverless render.
+- Two root layouts share `app/root-shell.tsx`: `(site)/layout.tsx` (English) and `[locale]/layout.tsx` (other languages, `generateStaticParams`). Never call `cookies()`/`headers()` or use `force-dynamic` in pages or layouts. Localized pages list their params with `generateStaticParams`; unknown params render on demand and 404.
+- The visitor's language on English URLs is applied in the browser (`I18nProvider`: saved choice, geo cookie set by `middleware.ts`, time zone, browser language), loading that language's chunk.
+- Dictionaries never travel as props: the provider loads the page's language with `use(loadMessages(...))` (one cached JS chunk per language), so HTML and RSC payloads stay small and prefetches cost a few KB.
+- Unmatched URLs render `NotFoundPage` client-side with a 404 status: Next 14 has no app-wide not-found without a single root layout.
+- No third-party requests on page load: fonts are self-hosted (Geist via `next/font/local`, Noto Sans Arabic via `@fontsource`, downloaded only for Arabic text).
 
 ## IndexNow
 

@@ -1,6 +1,8 @@
 "use client";
 
+/// <reference types="react/canary" />
 import {
+  use,
   useState,
   useEffect,
   useCallback,
@@ -16,7 +18,18 @@ import { blogHref as buildBlogHref, homeHref as buildHomeHref, pathForLocale, to
 
 export type { Locale } from "./locales";
 
-// Dictionaries live in `i18n-dicts/` (one module per language).
+// Dictionaries live in `i18n-dicts/` (one module per language). Each loads as
+// its own chunk: cached by the browser once, and never part of a page's HTML
+// or RSC payload (prefetching 30 links would otherwise fetch it 30 times).
+const requested: Partial<Record<Locale, Promise<Messages>>> = {};
+function messagesOf(locale: Locale): Promise<Messages> {
+  return (requested[locale] ??= loadMessages(locale)
+    .catch(() => loadMessages(locale))
+    .catch(() => {
+      delete requested[locale];
+      return {};
+    }));
+}
 
 // ─── Context ────────────────────────────────────────────────────
 interface I18nContextType {
@@ -138,15 +151,16 @@ export function I18nProvider({
   children,
   initialLocale = "en",
   pageLocale,
-  pageMessages,
 }: {
   children: React.ReactNode;
   /** From server cookie — aligns first paint with middleware locale. */
   initialLocale?: Locale;
-  /** The language the server rendered this page in, and its strings. */
+  /** The language the page is prerendered in. */
   pageLocale: Locale;
-  pageMessages: Messages;
 }) {
+  // Suspends until the page's strings are there: on the server while
+  // prerendering, in the browser until the chunk arrives (before hydration).
+  const pageMessages = use(messagesOf(pageLocale));
   const bootLocale =
     initialLocale && SUPPORTED_LOCALES.includes(initialLocale) ? initialLocale : "en";
   const [preferredLocale, setLocaleState] = useState<Locale>(bootLocale);
@@ -167,7 +181,7 @@ export function I18nProvider({
       return;
     }
     let cancelled = false;
-    loadMessages(wanted)
+    messagesOf(wanted)
       .then((messages) => {
         if (cancelled) return;
         setLoaded((prev) => ({ ...prev, [wanted]: messages }));

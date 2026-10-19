@@ -3,8 +3,7 @@ import type { NextRequest } from "next/server";
 import { localeFromCountryCode } from "@/lib/region-locale";
 import type { Locale } from "@/lib/locales";
 import { SUPPORTED_LOCALES } from "@/lib/locales";
-import { LOCALE_COOKIE, LOCALE_PREF_COOKIE, URL_LOCALE_HEADER } from "@/lib/locale-cookies";
-import { urlLocaleFromPathname } from "@/lib/localized-routes";
+import { LOCALE_COOKIE, LOCALE_PREF_COOKIE } from "@/lib/locale-cookies";
 
 function detectCountry(request: NextRequest): string | undefined {
   const g = request.geo;
@@ -16,18 +15,13 @@ function detectCountry(request: NextRequest): string | undefined {
   return undefined;
 }
 
+/**
+ * Remembers the visitor's likely language (explicit choice, else country) in a
+ * cookie the I18nProvider reads in the browser. Pages are prerendered and
+ * don't depend on it.
+ */
 export function middleware(request: NextRequest) {
-  // Localized URLs (`/tr/pdf-birlestir`, `/tr/blog/...`): tell the root layout
-  // the page's language for `<html lang>`.
-  const urlLocale = urlLocaleFromPathname(request.nextUrl.pathname);
-  let res: NextResponse;
-  if (urlLocale) {
-    const headers = new Headers(request.headers);
-    headers.set(URL_LOCALE_HEADER, urlLocale);
-    res = NextResponse.next({ request: { headers } });
-  } else {
-    res = NextResponse.next();
-  }
+  const res = NextResponse.next();
   const country = detectCountry(request);
   const pref = request.cookies.get(LOCALE_PREF_COOKIE)?.value;
   const locale: Locale =
@@ -35,12 +29,14 @@ export function middleware(request: NextRequest) {
       ? (pref as Locale)
       : localeFromCountryCode(country);
 
-  res.cookies.set(LOCALE_COOKIE, locale, {
-    path: "/",
-    maxAge: 60 * 60 * 24 * 180,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-  });
+  if (request.cookies.get(LOCALE_COOKIE)?.value !== locale) {
+    res.cookies.set(LOCALE_COOKIE, locale, {
+      path: "/",
+      maxAge: 60 * 60 * 24 * 180,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+    });
+  }
 
   return res;
 }
@@ -53,6 +49,11 @@ export const config = {
      * - Static assets (fonts, images, icons, manifests)
      * - SEO files (sitemap.xml, robots.txt, feed.xml)
      */
-    "/((?!_next/static|_next/image|_next/data|favicon.ico|sw\\.js|sitemap\\.xml|robots\\.txt|feed\\.xml|.*\\.(?:ico|png|jpg|jpeg|gif|svg|webp|woff2?|ttf|eot|webmanifest|txt|xml)$).*)",
+    {
+      source:
+        "/((?!_next/static|_next/image|_next/data|api/|vendor/|tessdata/|favicon.ico|sw\\.js|sitemap\\.xml|robots\\.txt|feed\\.xml|.*\\.(?:ico|png|jpg|jpeg|gif|svg|webp|woff2?|ttf|eot|webmanifest|txt|xml|js|mjs|wasm|json|gz)$).*)",
+      // Page loads only: client-side navigations and prefetches don't need the cookie.
+      missing: [{ type: "header", key: "rsc" }],
+    },
   ],
 };

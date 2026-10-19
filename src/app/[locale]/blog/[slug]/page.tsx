@@ -1,9 +1,12 @@
 import { notFound } from "next/navigation";
-import { BlogPostPage, blogPostMetadata } from "@/app/blog/blog-pages";
+import { BlogPostPage, blogPostMetadata } from "@/app/(site)/blog/blog-pages";
+import { getAllPosts } from "@/lib/blog";
 import { isToolUrlLocale } from "@/lib/localized-routes";
 
-// Rendered per request like every page; see the note in ../../[toolSlug]/page.tsx.
-export const dynamic = "force-dynamic";
+/** Every post in every language (the layout supplies the languages). */
+export function generateStaticParams() {
+  return getAllPosts().map((post) => ({ slug: post.slug }));
+}
 
 type Params = { locale: string; slug: string };
 
