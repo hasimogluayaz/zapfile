@@ -1,7 +1,7 @@
 # Devir notu (yeni Claude oturumu için)
 
 > Önceki Claude oturumlarında yapılanları, kararları ve sıradaki işleri anlatır.
-> Yeni oturumda önce bunu, sonra `AGENTS.md`'yi oku. Son güncelleme: 2026-10-14.
+> Yeni oturumda önce bunu, sonra `AGENTS.md`'yi oku. Son güncelleme: 2026-10-19.
 
 ## Kullanıcı ve çalışma kuralları
 
@@ -125,7 +125,22 @@ Kullanıcının teklif PDF'i ve düz metin bir raporla test edildi. Bulunan ve d
 - **Tanıtım metinleri:** `docs/TANITIM.md` (Reddit, AlternativeTo, Product Hunt, Türkçe forumlar). Kullanıcı paylaşacak.
 - **Sonraki adımlar:** Search Console'da yeni dil sayfaları için dizine ekleme isteği; `/tools` sayfasının dil adresleri (şu an `?lang=`).
 
+## Detaylı tarama ve düzeltmeler (2026-10-19)
+
+Branch `main`'den yeniden başlatıldı (PR #3–#6 merge edilmişti). Kullanıcı "detaylı tara, eksikleri gider" dedi. Yapılanlar (hepsi branch'te, **henüz PR yok / main'de değil**):
+- **Sayfa başına tek dil:** Her sayfa 9 dilin sözlüğünü (~480 KB gzip) indiriyordu. Sözlükler `src/lib/i18n-dicts/<dil>.ts`'e bölündü; sayfa yalnız kendi dilini ayrı bir JS parçası olarak yüklüyor.
+- **Bütün sayfalar statik (CDN):** Kök layout çerez okuduğu için her ziyaret ve her link ön yüklemesi (sayfa başına 32–53) Vercel'de bir sunucu render'ıydı. Artık 967 sayfa build'de üretiliyor. Yapı: `app/(site)/` (İngilizce, kendi kök layout'u) + `app/[locale]/layout.tsx`; ortak kabuk `app/root-shell.tsx`. Ayrıntı: AGENTS.md "Static rendering". Bir sayfa ziyaretinin trafiği ~2,2–3,3 MB → ~580 KB (yerel ölçüm).
+- **Google Fonts kaldırıldı:** Arapça font `@fontsource` ile kendi sunucumuzdan, sadece Arapça metinde iniyor. Hiçbir sayfa dış siteye istek atmıyor.
+- **JSON-LD:** 70 aracın 48'inde SoftwareApplication/FAQ yapılandırılmış verisi yoktu; hepsine eklendi.
+- **OCR:** `.tif/.tiff` kabul ediliyordu ama Chrome/Firefox çözemediği için hep hata veriyordu; `utif2` ile çözülüyor (çok sayfalı TIFF → çok sayfalı PDF).
+- **Mobil:** Almanca Lorem Ipsum butonları taşıyordu; "içeriğe atla" linki RTL'de yana itiliyordu. Düzeltildi.
+- Küçükler: varsayılan `SITE_URL` www; eski Windows log dosyaları, bozuk/tehlikeli eski betikler (`compare-i18n-keys`, `generate-tool-layouts`) silindi; geçersiz `serverExternalPackages` ayarı kaldırıldı.
+- **Test edilenler:** 959 site haritası adresi 200; 398 sayfa tarayıcıda (JS hatası, hydration, çevrilmemiş anahtar, h1, lang) temiz; telefon genişliğinde taşma yok; ~45 dosya aracı gerçek dosyalarla uçtan uca (indirilen çıktılar kontrol edildi: karartılan metin dosyada yok, şifreli PDF şifreyle açılıyor, form Türkçe karakterle dolu); Office → PDF yerel API ile; dönüştürme sunucusuna dosya sızdırma denemeleri (ODT bağlı bölüm, Word INCLUDETEXT, HTML iframe) başarısız = güvenli.
+- **Bilinen sınır:** Bilinmeyen adresler 404 kodu dönüyor ve 404 sayfası tarayıcıda çiziliyor (Next 14'te iki kök layout ile sunucuda çizilemiyor).
+
 ## Sıradaki işler
+
+0. **Bu oturumun branch'i önizlemede kontrol edilip `main`'e alınmalı** (kullanıcı onayıyla PR). Önizlemede dil değiştirme, `/tr/...` sayfaları, 404 ve Word → PDF denenmeli.
 
 1. **Kullanıcı önizlemede test edecek** (Word to PDF): hızlı mod ve gizli mod. Sonucu bekle.
 2. **Gizli mod / tarayıcı motoru şüpheli:**
