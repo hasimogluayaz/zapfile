@@ -54,8 +54,49 @@ interface Result {
   words: number;
 }
 
+const isTiff = (f: File) => f.type === "image/tiff" || /\.tiff?$/i.test(f.name);
+
+/**
+ * A TIFF scan (browsers other than Safari can't decode TIFF) becomes one PDF
+ * page per TIFF page, sized from its resolution tags.
+ */
+async function tiffToPdf(file: File): Promise<Uint8Array> {
+  const [{ PDFDocument }, UTIF] = await Promise.all([import("pdf-lib"), import("utif2")]);
+  const buf = await file.arrayBuffer();
+  const ifds = UTIF.decode(buf).filter((ifd) => ifd.t256 && ifd.t257);
+  if (!ifds.length) throw new Error("No TIFF pages");
+  const doc = await PDFDocument.create();
+  for (const ifd of ifds) {
+    UTIF.decodeImage(buf, ifd);
+    const w = ifd.width as number, h = ifd.height as number;
+    const c = document.createElement("canvas");
+    c.width = w;
+    c.height = h;
+    const rgba = new Uint8ClampedArray(w * h * 4);
+    rgba.set(UTIF.toRGBA8(ifd));
+    c.getContext("2d")!.putImageData(new ImageData(rgba, w, h), 0, 0);
+    const jpeg = await encodeCanvas(c, "image/jpeg", 0.92);
+    c.width = c.height = 0;
+    const img = await doc.embedJpg(await jpeg.arrayBuffer());
+    // XResolution is a rational [num, den]; unit 3 means per centimetre.
+    const res = ifd.t282 as number[] | undefined;
+    let dpi = res && res[0] ? res[0] / (res[1] || 1) : 200;
+    if ((ifd.t296 as number[] | undefined)?.[0] === 3) dpi *= 2.54;
+    if (!(dpi >= 50 && dpi <= 1200)) dpi = 200;
+    doc.addPage([(w * 72) / dpi, (h * 72) / dpi]).drawImage(img, { x: 0, y: 0, width: (w * 72) / dpi, height: (h * 72) / dpi });
+  }
+  return doc.save();
+}
+
 /** An image becomes a one-page PDF of its size (72 dpi), so the same pipeline applies. */
 async function imageToPdf(file: File): Promise<Uint8Array> {
+  if (isTiff(file)) {
+    try {
+      return await tiffToPdf(file);
+    } catch {
+      // Safari decodes TIFF natively: try that below.
+    }
+  }
   const { PDFDocument } = await import("pdf-lib");
   const d = await decodeImage(file);
   const c = document.createElement("canvas");
@@ -95,13 +136,13 @@ export default function OcrPdfPage() {
       if (!f) return;
       setOpening(true);
       setResult(null);
+      const isPdf = f.type === "application/pdf" || /\.pdf$/i.test(f.name);
       try {
-        const isPdf = f.type === "application/pdf" || /\.pdf$/i.test(f.name);
         const bytes = isPdf ? await editablePdfBytes(f) : await imageToPdf(f);
         const pdf = await openPdf(bytes);
         setDoc({ file: f, bytes, pdf, pages: pdf.numPages, fromImage: !isPdf });
       } catch (error) {
-        toast.error(t(pdfInputErrorKey(error)));
+        toast.error(t(isPdf ? pdfInputErrorKey(error) : "dropper.loadFail"));
       } finally {
         setOpening(false);
       }

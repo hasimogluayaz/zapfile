@@ -51,6 +51,7 @@
     "react-dropzone": "^15.0.0",
     "react-hot-toast": "^2.6.0",
     "tesseract.js": "7.0.0",
+    "utif2": "4.1.0",
     "yaml": "^2.9.1"
   },
   "devDependencies": {
