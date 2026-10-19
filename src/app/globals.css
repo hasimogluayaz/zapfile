@@ -1,5 +1,3 @@
-/* @import must precede all other rules or browsers ignore it */
-@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -258,10 +256,12 @@ summary:focus-visible,
 }
 
 /* Skip to main content (accessibility) */
+/* Hidden above the page (not off to the side: in RTL that would widen the page). */
 .skip-link {
   position: absolute;
-  inset-inline-start: -9999px;
+  inset-inline-start: 0;
   top: 0;
+  transform: translateY(-110%);
   z-index: 100;
   padding: 0.75rem 1rem;
   background: var(--volt);
@@ -272,7 +272,7 @@ summary:focus-visible,
   text-decoration: none;
 }
 .skip-link:focus {
-  inset-inline-start: 0;
+  transform: none;
 }
 
 /* High contrast (system preference) */

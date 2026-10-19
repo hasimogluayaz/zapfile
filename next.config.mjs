@@ -56,8 +56,6 @@ const nextConfig = {
     }),
   },
   transpilePackages: ["lamejs"],
-  // Exclude onnxruntime-node from server-side bundling (native Node addon)
-  serverExternalPackages: ["onnxruntime-node", "onnxruntime-web"],
 
   async headers() {
     return [

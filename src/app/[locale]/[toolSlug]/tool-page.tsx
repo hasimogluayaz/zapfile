@@ -1,0 +1,86 @@
+"use client";
+
+/* Tool page components by catalog slug, for the localized routes. Each one is
+ * loaded on its own (next/dynamic), so a page only ships its own tool's code.
+ * This has to be a client module: a server component's next/dynamic map
+ * would hand every page all 70 tools' code. */
+import dynamic from "next/dynamic";
+import type { ComponentType } from "react";
+
+const toolPages: Record<string, ComponentType> = {
+  "merge-pdf": dynamic(() => import("@/app/(site)/tools/merge-pdf/page")),
+  "split-pdf": dynamic(() => import("@/app/(site)/tools/split-pdf/page")),
+  "pdf-to-images": dynamic(() => import("@/app/(site)/tools/pdf-to-images/page")),
+  "organize-pdf": dynamic(() => import("@/app/(site)/tools/organize-pdf/page")),
+  "rotate-pdf": dynamic(() => import("@/app/(site)/tools/rotate-pdf/page")),
+  "fill-pdf": dynamic(() => import("@/app/(site)/tools/fill-pdf/page")),
+  "sign-pdf": dynamic(() => import("@/app/(site)/tools/sign-pdf/page")),
+  "watermark-pdf": dynamic(() => import("@/app/(site)/tools/watermark-pdf/page")),
+  "crop-pdf": dynamic(() => import("@/app/(site)/tools/crop-pdf/page")),
+  "compare-pdf": dynamic(() => import("@/app/(site)/tools/compare-pdf/page")),
+  "pdf-page-numbers": dynamic(() => import("@/app/(site)/tools/pdf-page-numbers/page")),
+  "compress-image": dynamic(() => import("@/app/(site)/tools/compress-image/page")),
+  "resize-image": dynamic(() => import("@/app/(site)/tools/resize-image/page")),
+  "convert-image": dynamic(() => import("@/app/(site)/tools/convert-image/ConvertImagePage")),
+  "crop-image": dynamic(() => import("@/app/(site)/tools/crop-image/page")),
+  "rotate-image": dynamic(() => import("@/app/(site)/tools/rotate-image/page")),
+  "watermark-image": dynamic(() => import("@/app/(site)/tools/watermark-image/page")),
+  "image-to-pdf": dynamic(() => import("@/app/(site)/tools/image-to-pdf/page")),
+  "blur-image": dynamic(() => import("@/app/(site)/tools/blur-image/page")),
+  "favicon-generator": dynamic(() => import("@/app/(site)/tools/favicon-generator/page")),
+  "exif-viewer": dynamic(() => import("@/app/(site)/tools/exif-viewer/page")),
+  "image-collage": dynamic(() => import("@/app/(site)/tools/image-collage/page")),
+  "meme-generator": dynamic(() => import("@/app/(site)/tools/meme-generator/page")),
+  "image-to-base64": dynamic(() => import("@/app/(site)/tools/image-to-base64/page")),
+  "qr-generator": dynamic(() => import("@/app/(site)/tools/qr-generator/page")),
+  "svg-to-png": dynamic(() => import("@/app/(site)/tools/svg-to-png/page")),
+  "base64-encode": dynamic(() => import("@/app/(site)/tools/base64-encode/page")),
+  "color-picker": dynamic(() => import("@/app/(site)/tools/color-picker/page")),
+  "json-formatter": dynamic(() => import("@/app/(site)/tools/json-formatter/page")),
+  "hash-generator": dynamic(() => import("@/app/(site)/tools/hash-generator/page")),
+  "word-counter": dynamic(() => import("@/app/(site)/tools/word-counter/page")),
+  "password-generator": dynamic(() => import("@/app/(site)/tools/password-generator/page")),
+  "diff-checker": dynamic(() => import("@/app/(site)/tools/diff-checker/page")),
+  "markdown-editor": dynamic(() => import("@/app/(site)/tools/markdown-editor/page")),
+  "url-encoder": dynamic(() => import("@/app/(site)/tools/url-encoder/page")),
+  "timestamp-converter": dynamic(() => import("@/app/(site)/tools/timestamp-converter/page")),
+  "lorem-ipsum": dynamic(() => import("@/app/(site)/tools/lorem-ipsum/page")),
+  "regex-tester": dynamic(() => import("@/app/(site)/tools/regex-tester/page")),
+  "csv-json": dynamic(() => import("@/app/(site)/tools/csv-json/page")),
+  "xml-formatter": dynamic(() => import("@/app/(site)/tools/xml-formatter/page")),
+  "yaml-formatter": dynamic(() => import("@/app/(site)/tools/yaml-formatter/page")),
+  "unit-converter": dynamic(() => import("@/app/(site)/tools/unit-converter/page")),
+  "qr-scanner": dynamic(() => import("@/app/(site)/tools/qr-scanner/page")),
+  "jwt-decoder": dynamic(() => import("@/app/(site)/tools/jwt-decoder/page")),
+  "uuid-generator": dynamic(() => import("@/app/(site)/tools/uuid-generator/page")),
+  "css-minifier": dynamic(() => import("@/app/(site)/tools/css-minifier/page")),
+  "base-converter": dynamic(() => import("@/app/(site)/tools/base-converter/page")),
+  "color-palette": dynamic(() => import("@/app/(site)/tools/color-palette/page")),
+  "color-contrast": dynamic(() => import("@/app/(site)/tools/color-contrast/page")),
+  "text-case": dynamic(() => import("@/app/(site)/tools/text-case/page")),
+  "background-remover": dynamic(() => import("@/app/(site)/tools/background-remover/page")),
+  "color-dropper": dynamic(() => import("@/app/(site)/tools/color-dropper/page")),
+  "photo-filter": dynamic(() => import("@/app/(site)/tools/photo-filter/page")),
+  "redact-pdf": dynamic(() => import("@/app/(site)/tools/redact-pdf/page")),
+  "pdf-encrypt": dynamic(() => import("@/app/(site)/tools/pdf-encrypt/page")),
+  "html-to-pdf": dynamic(() => import("@/app/(site)/tools/html-to-pdf/page")),
+  "pdf-to-word": dynamic(() => import("@/app/(site)/tools/pdf-to-word/page")),
+  "pdf-to-excel": dynamic(() => import("@/app/(site)/tools/pdf-to-excel/page")),
+  "pdf-to-markdown": dynamic(() => import("@/app/(site)/tools/pdf-to-markdown/page")),
+  "pdf-to-powerpoint": dynamic(() => import("@/app/(site)/tools/pdf-to-powerpoint/page")),
+  "word-to-pdf": dynamic(() => import("@/app/(site)/tools/word-to-pdf/page")),
+  "excel-to-pdf": dynamic(() => import("@/app/(site)/tools/excel-to-pdf/page")),
+  "powerpoint-to-pdf": dynamic(() => import("@/app/(site)/tools/powerpoint-to-pdf/page")),
+  "ocr-pdf": dynamic(() => import("@/app/(site)/tools/ocr-pdf/page")),
+  "pdf-text-extractor": dynamic(() => import("@/app/(site)/tools/pdf-text-extractor/page")),
+  "repair-pdf": dynamic(() => import("@/app/(site)/tools/repair-pdf/page")),
+  "pdf-compress": dynamic(() => import("@/app/(site)/tools/pdf-compress/page")),
+  "video-to-gif": dynamic(() => import("@/app/(site)/tools/video-to-gif/page")),
+  "audio-recorder": dynamic(() => import("@/app/(site)/tools/audio-recorder/page")),
+  "text-to-speech": dynamic(() => import("@/app/(site)/tools/text-to-speech/page")),
+};
+
+export default function LocalizedToolPage({ slug }: { slug: string }) {
+  const Page = toolPages[slug];
+  return Page ? <Page /> : null;
+}

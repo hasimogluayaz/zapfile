@@ -25,9 +25,11 @@ export function useTheme() {
 export default function ClientProviders({
   children,
   initialLocale = "en",
+  pageLocale,
 }: {
   children: React.ReactNode;
   initialLocale?: Locale;
+  pageLocale: Locale;
 }) {
   const [theme, setTheme] = useState<Theme>("light");
   const [mounted, setMounted] = useState(false);
@@ -65,7 +67,7 @@ export default function ClientProviders({
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
-      <I18nProvider initialLocale={initialLocale}>
+      <I18nProvider initialLocale={initialLocale} pageLocale={pageLocale}>
         <ErrorBoundary>{children}</ErrorBoundary>
       </I18nProvider>
     </ThemeContext.Provider>

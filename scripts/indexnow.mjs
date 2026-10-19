@@ -9,7 +9,7 @@ const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const keyFile = fs.readdirSync(path.join(root, "public")).find((f) => /^[0-9a-f]{32}\.txt$/.test(f));
 if (!keyFile) throw new Error("No IndexNow key file in public/");
 const key = keyFile.slice(0, -4);
-const site = (process.env.SITE_URL || "https://zapfile.xyz").replace(/\/$/, "");
+const site = (process.env.SITE_URL || "https://www.zapfile.xyz").replace(/\/$/, "");
 
 // The new deploy must serve the key before submitting.
 const keyRes = await fetch(`${site}/${keyFile}`);
