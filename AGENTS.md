@@ -44,15 +44,16 @@ src/
 │   ├── tool-i18n.ts         # toolField() helper for localized tool names/descriptions
 │   ├── file-handoff.ts      # Home drop pad → tool page file handoff (in-memory)
 │   ├── search.ts            # searchTools(): diacritic-insensitive ranked tool search (header modal, home, /tools)
-│   ├── i18n.tsx             # Full dictionaries (EN/TR/DE/FR) + context/hooks
-│   ├── i18n-overrides.ts    # Partial translations for ES/PT/IT/JA
+│   ├── i18n.tsx             # I18nProvider + useI18n (no strings)
+│   ├── i18n-dicts/          # One dictionary module per language (en.ts, tr.ts, …), load.ts, all.ts
 │   └── locales.ts           # Locale type, SUPPORTED_LOCALES, LOCALE_LABELS, isRtlLocale
 └── app/globals.css          # Theme variables, utility classes (.glass, .gradient-text, etc.)
 ```
 
 ## i18n System
 
-- 9 languages, all complete: EN/TR/DE/FR dictionaries in `src/lib/i18n.tsx`, ES/PT/IT/JA in `i18n-overrides.ts`, AR in `i18n-locale-ar.ts`, plus later strings per language in `src/lib/i18n-completions/<locale>.json`. Everything is merged over English (`mergeLocale`).
+- 9 languages, all complete: one dictionary per language in `src/lib/i18n-dicts/<locale>.ts` (`en.ts` holds every key), plus later strings in `src/lib/i18n-completions/<locale>.json`. Everything is merged over English (`mergeLocale`).
+- A page only downloads its own language: the root layout passes that language's strings (`messagesFor` from `i18n-dicts/all.ts`, server only) to the provider, and `loadMessages` (`i18n-dicts/load.ts`) fetches another language as its own chunk when the user switches. Never import `i18n-dicts/all.ts` or a dictionary module from client code (it put ~480 KB gzipped on every page before).
 - **Every new key needs all 9 languages.** `npm run verify:i18n` fails when a string the code uses is untranslated in any language or loses a `{placeholder}`.
 - `useI18n()` hook returns `{ locale, setLocale, t, toolHref }`
 - Tool names/descriptions keyed as `tool.[slug].name` / `tool.[slug].desc`

@@ -11,6 +11,7 @@ import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 import { SITE_URL } from "@/lib/site-url";
+import { messagesFor } from "@/lib/i18n-dicts/all";
 import "./globals.css";
 
 const geistSans = localFont({
@@ -227,7 +228,7 @@ export default async function RootLayout({
         />
       </head>
       <body className="antialiased min-h-screen flex flex-col">
-        <ClientProviders initialLocale={initialLocale}>
+        <ClientProviders initialLocale={initialLocale} pageLocale={pageLocale} pageMessages={messagesFor(pageLocale)}>
           <SkipToContent />
           <Toaster
             position="bottom-right"

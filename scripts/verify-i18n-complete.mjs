@@ -1,5 +1,5 @@
 // Every language must translate every string the site actually shows, and keep
-// its {placeholders}. Loads src/lib/i18n.tsx through the TypeScript compiler.
+// its {placeholders}. Loads src/lib/i18n-dicts/all.ts through the TypeScript compiler.
 import fs from "node:fs";
 import path from "node:path";
 import Module, { createRequire } from "node:module";
@@ -26,12 +26,12 @@ Module._resolveFilename = function (request, ...rest) {
   return resolve.call(this, request, ...rest);
 };
 
-const { untranslatedKeys, allTranslations } = require(path.join(root, "src/lib/i18n.tsx"));
+const { untranslatedKeys, allTranslations } = require(path.join(root, "src/lib/i18n-dicts/all.ts"));
 const { SUPPORTED_LOCALES } = require(path.join(root, "src/lib/locales.ts"));
 
 // Keys the code uses: quoted literally, or under a prefix built with a template (t(`qr.v2.${…}`)).
 const dictionaryFiles = new Set(
-  ["i18n.tsx", "i18n-overrides.ts", "i18n-partial-static-pages.ts", "i18n-partial-blog-chrome.ts", "i18n-locale-ar.ts"].map((f) =>
+  ["i18n-partial-static-pages.ts", "i18n-partial-blog-chrome.ts"].map((f) =>
     path.join(root, "src/lib", f),
   ),
 );
@@ -40,7 +40,7 @@ let code = "";
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const p = path.join(dir, entry.name);
     if (entry.isDirectory()) {
-      if (entry.name !== "i18n-completions") walk(p);
+      if (entry.name !== "i18n-completions" && entry.name !== "i18n-dicts") walk(p);
     } else if (/\.(ts|tsx)$/.test(entry.name) && !dictionaryFiles.has(p)) {
       code += fs.readFileSync(p, "utf8") + "\n";
     }

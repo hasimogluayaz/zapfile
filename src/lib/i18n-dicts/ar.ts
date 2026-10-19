@@ -1,9 +1,8 @@
-/**
- * Arabic UI strings layered on English via mergeLocale.
- * Legal/static pages: i18n-partial-static-pages (ar).
- */
+import { partialBlogChromeLocales } from "../i18n-partial-blog-chrome";
+import { partialStaticPageLocales } from "../i18n-partial-static-pages";
 
-export const arLocaleStrings: Record<string, string> = {
+/** AR strings (missing keys show English). */
+const ar: Record<string, string> = {
   "nav.allTools": "جميع الأدوات",
   "nav.convert": "تحويل PDF",
   "nav.convertTo": "تحويل إلى PDF",
@@ -2405,4 +2404,8 @@ export const arLocaleStrings: Record<string, string> = {
     "اضبط منزلق الجودة لموازنة الحجم والتفاصيل.",
   "conversion.otherConversions": "تحويلات صور أخرى",
   "conversion.privacyLine": "ملفاتك لا تغادر متصفحك. خاص 100٪.",
+  ...partialStaticPageLocales.ar,
+  ...partialBlogChromeLocales.ar,
 };
+
+export default ar;

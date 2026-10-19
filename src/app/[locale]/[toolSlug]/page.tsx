@@ -14,7 +14,7 @@ import { toolSeoPt } from "@/lib/tool-seo-pt";
 import { toolSeoIt } from "@/lib/tool-seo-it";
 import { toolSeoJa } from "@/lib/tool-seo-ja";
 import { toolSeoAr } from "@/lib/tool-seo-ar";
-import { toolPages } from "./tool-pages";
+import ToolPage from "./tool-page";
 
 /**
  * A tool in another language on its own URL (`/tr/pdf-birlestir`), so search
@@ -55,9 +55,8 @@ function resolve(params: Params) {
   const slug = toolSlugFromLocalized(params.locale, params.toolSlug);
   const tool = slug ? getToolBySlug(slug) : undefined;
   const meta = slug ? seo[params.locale]?.[slug] : undefined;
-  const Page = slug ? toolPages[slug] : undefined;
-  if (!slug || !tool || !meta || !Page) return null;
-  return { slug, tool, meta, Page };
+  if (!slug || !tool || !meta) return null;
+  return { slug, tool, meta };
 }
 
 function absoluteLanguages(slug: string): Record<string, string> {
@@ -97,7 +96,7 @@ export function generateMetadata({ params }: { params: Params }): Metadata {
 export default function LocalizedToolPage({ params }: { params: Params }) {
   const r = resolve(params);
   if (!r) notFound();
-  const { Page, meta } = r;
+  const { slug, meta } = r;
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
@@ -112,7 +111,7 @@ export default function LocalizedToolPage({ params }: { params: Params }) {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <Page />
+      <ToolPage slug={slug} />
     </>
   );
 }

@@ -1,9 +1,13 @@
+"use client";
+
 /* Tool page components by catalog slug, for the localized routes. Each one is
- * loaded on its own (next/dynamic), so a page only ships its own tool's code. */
+ * loaded on its own (next/dynamic), so a page only ships its own tool's code.
+ * This has to be a client module: a server component's next/dynamic map
+ * would hand every page all 70 tools' code. */
 import dynamic from "next/dynamic";
 import type { ComponentType } from "react";
 
-export const toolPages: Record<string, ComponentType> = {
+const toolPages: Record<string, ComponentType> = {
   "merge-pdf": dynamic(() => import("@/app/tools/merge-pdf/page")),
   "split-pdf": dynamic(() => import("@/app/tools/split-pdf/page")),
   "pdf-to-images": dynamic(() => import("@/app/tools/pdf-to-images/page")),
@@ -75,3 +79,8 @@ export const toolPages: Record<string, ComponentType> = {
   "audio-recorder": dynamic(() => import("@/app/tools/audio-recorder/page")),
   "text-to-speech": dynamic(() => import("@/app/tools/text-to-speech/page")),
 };
+
+export default function LocalizedToolPage({ slug }: { slug: string }) {
+  const Page = toolPages[slug];
+  return Page ? <Page /> : null;
+}
