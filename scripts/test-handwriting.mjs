@@ -110,6 +110,9 @@ assert.deepEqual(P.cleanNoteLines(["L He comes."]), ["L He comes."], "one mark a
   const pairs = [["kodor", "kadar"], ["olmosi", "olması"], ["sovos", "savaş"], ["Vor", "Var"], ["holk", "halk"], ["masa", "masa"]];
   assert.deepEqual(L.learnConfusions(pairs), { a: { o: 0.6 } });
   assert.deepEqual(L.learnConfusions([["masa", "masa"], ["kadar", "kadar"], ["araba", "araba"]]), {}, "a tidy hand teaches nothing");
+  // Evidence from the words alone: "kodor" can only be "kadar"; real words count as read right.
+  const freq = L.parseLexicon("kadar\nmasa\nolması\nkoltuk\n");
+  assert.deepEqual(L.lexicalPairs(["kodor masa olmosi koltuk xyzt"], freq), [["kodor", "kadar"], ["masa", "masa"], ["olmosi", "olmasi"], ["koltuk", "koltuk"]]);
   {
     // "korsi": both vowels read as sure "o"s. Plain scoring keeps it; with this hand's confusion it is "karşı".
     const rare = L.parseLexicon("=200000\n0karşı\n");

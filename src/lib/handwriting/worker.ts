@@ -5,7 +5,7 @@
  * lines with ONNX Runtime Web, all off the main thread. Nothing leaves the device.
  */
 import type * as OrtModule from "onnxruntime-web";
-import { correctLine, learnConfusions, looksTurkish, parseLexicon, sparsifyScores, type Confusions, type Lexicon, type SparseScores } from "./language";
+import { correctLine, learnConfusions, lexicalPairs, looksTurkish, parseLexicon, sparsifyScores, type Confusions, type Lexicon, type SparseScores } from "./language";
 import { DETECT_MAX_SIDE, OCR_ALL_FILES, OCR_CACHE, OCR_LEXICON_TR, ocrCacheKey, ocrFiles, type OcrModelFile, type OcrScript } from "./models";
 import {
   boxesFromProbability,
@@ -375,7 +375,7 @@ async function polish(lines: OcrLineResult[], kept: LineScores, script: OcrScrip
   };
   const first = pass({});
   // Second pass with what the page taught us about this hand (an "a" that looks like "o").
-  const confusions = learnConfusions(first.words);
+  const confusions = learnConfusions([...first.words, ...lexicalPairs(lines.map((l) => l.text), lex)]);
   return Object.keys(confusions).length ? pass(confusions).out : first.out;
 }
 

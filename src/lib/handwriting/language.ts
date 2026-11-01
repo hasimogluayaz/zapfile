@@ -360,6 +360,45 @@ export function learnConfusions(words: [string, string][], { minSamples = 8, min
 
 const CONFUSABLE = new Set(Object.keys(CONFUSED));
 
+/**
+ * Evidence for `learnConfusions` from the words alone, without the
+ * recognizer's scores: a common word read as is ("kadar" → itself), or a
+ * non-word that becomes a common word by swapping only confusable vowels
+ * ("kodor" → "kadar"). Works even when the recognizer was sure of every "o"
+ * (a hand whose "a" is a closed loop), where re-scoring can't start.
+ */
+export function lexicalPairs(texts: string[], lexicon: Lexicon, { maxRank = 30_000, maxSwaps = 8 } = {}): [string, string][] {
+  const pairs: [string, string][] = [];
+  const common = (w: string) => {
+    const e = lexicon.forms.get(w);
+    return e && e.rank <= maxRank ? e : null;
+  };
+  for (const text of texts) {
+    for (const raw of text.split(/[^\p{L}]+/u)) {
+      if ([...raw].length < 3) continue;
+      const w = foldTurkish(raw);
+      if (lexicon.forms.has(w)) {
+        if (common(w)) pairs.push([w, w]);
+        continue;
+      }
+      const letters = [...w];
+      const at = letters.flatMap((c, i) => (CONFUSED[c] ? [i] : []));
+      if (!at.length || at.length > maxSwaps) continue;
+      let best: { word: string; rank: number } | null = null;
+      for (let mask = 1; mask < 1 << at.length; mask++) {
+        const t = letters.slice();
+        at.forEach((i, b) => {
+          if (mask & (1 << b)) t[i] = CONFUSED[t[i]];
+        });
+        const e = common(t.join(""));
+        if (e && (!best || e.rank < best.rank)) best = { word: t.join(""), rank: e.rank };
+      }
+      if (best) pairs.push([w, best.word]);
+    }
+  }
+  return pairs;
+}
+
 // ── Language detection ─────────────────────────────────────────────────────
 
 const TURKISH_WORDS = new Set(
