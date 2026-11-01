@@ -297,8 +297,9 @@ async function read(img: Rgba, boxes: TextBox[], script: OcrScript, onBatch?: (d
     batch.forEach((b, k) => {
       // Only the steps covering this crop's content (the rest is padding).
       const used = Math.min(steps, Math.ceil((b.content / tw) * steps) + 1);
-      const { text, confidence } = ctcDecode(scores.subarray(k * steps * classes, (k * steps + used) * classes), used, classes, alphabet);
-      results[b.i] = { box: b.box, text, confidence };
+      const { text, confidence, positions } = ctcDecode(scores.subarray(k * steps * classes, (k * steps + used) * classes), used, classes, alphabet, { typeRatio: 0.05 });
+      // Positions are along the content, which fills the box.
+      results[b.i] = { box: b.box, text, confidence, positions: positions.map((p) => Math.min(1, (p * used * tw) / (steps * b.content))) };
     });
     doneCount += batch.length;
     onBatch?.(doneCount);

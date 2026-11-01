@@ -9,6 +9,8 @@ export interface OcrLineResult {
   box: TextBox;
   text: string;
   confidence: number;
+  /** Position of each character along the box, 0 … 1. */
+  positions?: number[];
 }
 
 export type OcrRequest =

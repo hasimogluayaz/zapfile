@@ -31,6 +31,8 @@ export interface RecognizedLine {
   box: TextBox;
   text: string;
   confidence: number;
+  /** Position of each character of `text` along the box, 0 (start) … 1 (end). */
+  positions?: number[];
 }
 
 export const DET_MEAN = [0.485, 0.456, 0.406];
@@ -397,27 +399,118 @@ export function cropLine(img: Rgba, box: TextBox, out: Float32Array, tensorWidth
  * Greedy CTC decode of `[steps, classes]` scores. `alphabet[0]` is the blank;
  * the last class is a space.
  */
-export function ctcDecode(scores: Float32Array, steps: number, classes: number, alphabet: string[]): { text: string; confidence: number } {
-  let text = "";
-  let conf = 0, n = 0, last = -1;
+export interface DecodeOptions {
+  /**
+   * Weight of the space class against blank/letters. Handwriting puts little
+   * room between words, so the recognizer is often only 30–40 % sure of a
+   * space that is there ("rainingnow").
+   */
+  spaceBoost?: number;
+  /**
+   * Inside a word that is mostly letters, a digit becomes the likeliest
+   * letter at its time steps if that letter has at least this share of the
+   * digit's probability ("d0" → "do"), and the other way round in numbers
+   * ("1o" → "10").
+   */
+  typeRatio?: number;
+}
+
+const isDigit = (c: string) => c >= "0" && c <= "9";
+const isLetter = (c: string) => /\p{L}/u.test(c);
+
+/**
+ * Greedy CTC decode of `[steps, classes]` probabilities (`alphabet[0]` is
+ * the blank), with word-level consistency between letters and digits.
+ */
+export function ctcDecode(
+  scores: Float32Array,
+  steps: number,
+  classes: number,
+  alphabet: string[],
+  { spaceBoost = 1, typeRatio = 0 }: DecodeOptions = {},
+): { text: string; confidence: number; positions: number[] } {
+  let space = -1;
+  for (let c = 1; c < alphabet.length && c < classes; c++) if (alphabet[c] === " ") { space = c; break; }
+  // Greedy path, remembering each emitted character's time steps.
+  const chars: { cls: number; p: number; from: number; to: number }[] = [];
+  let last = -1;
   for (let t = 0; t < steps; t++) {
-    let best = 0, bestScore = -Infinity;
     const row = t * classes;
+    let best = 0, bestScore = -Infinity;
     for (let c = 0; c < classes; c++) {
-      const s = scores[row + c];
-      if (s > bestScore) {
-        bestScore = s;
+      const v = c === space ? scores[row + c] * spaceBoost : scores[row + c];
+      if (v > bestScore) {
+        bestScore = v;
         best = c;
       }
     }
-    if (best !== 0 && best !== last) {
-      text += alphabet[best] ?? "";
-      conf += bestScore;
-      n++;
-    }
+    if (best !== 0 && best === last && chars.length) chars[chars.length - 1].to = t;
+    else if (best !== 0) chars.push({ cls: best, p: Math.min(1, scores[row + best]), from: t, to: t });
     last = best;
   }
-  return { text: text.replace(/\s+/g, " ").trim(), confidence: n ? conf / n : 0 };
+  const out = chars.map((c) => alphabet[c.cls] ?? "");
+  if (typeRatio > 0) {
+    // Best class of a kind over a character's steps.
+    const bestOf = (from: number, to: number, kind: (c: string) => boolean) => {
+      let bc = -1, bp = 0;
+      for (let t = from; t <= to; t++) {
+        for (let c = 1; c < classes; c++) {
+          const v = scores[t * classes + c];
+          if (v > bp && kind(alphabet[c] ?? "")) {
+            bp = v;
+            bc = c;
+          }
+        }
+      }
+      return { bc, bp };
+    };
+    // Words: runs of letters and digits.
+    let k = 0;
+    while (k < out.length) {
+      if (!isLetter(out[k]) && !isDigit(out[k])) {
+        k++;
+        continue;
+      }
+      let e = k;
+      while (e < out.length && (isLetter(out[e]) || isDigit(out[e]))) e++;
+      // Characters the recognizer is sure about decide whether the word is
+      // letters or a number; the unsure ones of the other kind follow.
+      const alts: { bc: number; bp: number }[] = [];
+      let sureLetters = 0, sureDigits = 0;
+      for (let q = k; q < e; q++) {
+        const alt = bestOf(chars[q].from, chars[q].to, isDigit(out[q]) ? isLetter : isDigit);
+        alts[q - k] = alt;
+        if (alt.bp < typeRatio * chars[q].p) {
+          if (isDigit(out[q])) sureDigits++;
+          else sureLetters++;
+        }
+      }
+      if (sureLetters !== sureDigits) {
+        const wantLetters = sureLetters > sureDigits;
+        for (let q = k; q < e; q++) {
+          if (wantLetters !== isDigit(out[q])) continue;
+          const alt = alts[q - k];
+          if (alt.bc > 0 && alt.bp >= typeRatio * chars[q].p) out[q] = alphabet[alt.bc];
+        }
+      }
+      k = e;
+    }
+  }
+  const conf = chars.reduce((s, c) => s + c.p, 0);
+  // Text with single spaces, and where each character sits along the line.
+  let text = "";
+  const positions: number[] = [];
+  out.forEach((ch, q) => {
+    const blank = /\s/.test(ch);
+    if (blank && (!text || text.endsWith(" "))) return;
+    text += blank ? " " : ch;
+    positions.push((chars[q].from + chars[q].to + 1) / 2 / steps);
+  });
+  if (text.endsWith(" ")) {
+    text = text.slice(0, -1);
+    positions.pop();
+  }
+  return { text, confidence: chars.length ? conf / chars.length : 0, positions };
 }
 
 /** Alphabet for the recognizer: blank, the dictionary, then a space. */
@@ -428,7 +521,7 @@ export function buildAlphabet(characters: string[]): string[] {
 // ── Reading order ──────────────────────────────────────────────────────────
 
 export interface TextLine {
-  /** Boxes of one visual line, left to right. */
+  /** Boxes of one visual line (or of one part of it, see `row`), left to right. */
   items: RecognizedLine[];
   text: string;
   top: number;
@@ -436,6 +529,11 @@ export interface TextLine {
   left: number;
   right: number;
   height: number;
+  /**
+   * Index of the visual row. A row whose boxes are far apart horizontally
+   * (two columns, a margin note) is split into several parts with the same row.
+   */
+  row: number;
 }
 
 function vExtent(b: TextBox): { top: number; bottom: number } {
@@ -443,9 +541,29 @@ function vExtent(b: TextBox): { top: number; bottom: number } {
   return { top: b.cy - half, bottom: b.cy + half };
 }
 
+const halfWidth = (i: RecognizedLine) => (Math.abs(i.box.ux) * i.box.w) / 2;
+
+function makeLine(items: RecognizedLine[], height: number, row: number): TextLine {
+  const ext = items.map((i) => vExtent(i.box));
+  return {
+    items,
+    text: items.map((i) => i.text).join(" "),
+    top: Math.min(...ext.map((e) => e.top)),
+    bottom: Math.max(...ext.map((e) => e.bottom)),
+    left: Math.min(...items.map((i) => i.box.cx - halfWidth(i))),
+    right: Math.max(...items.map((i) => i.box.cx + halfWidth(i))),
+    height,
+    row,
+  };
+}
+
+/** Horizontal gap (in line heights) that separates parts of a row. */
+const PART_GAP = 2;
+
 /**
  * Group recognized boxes into visual lines (overlapping vertically, allowing
- * for a slight slant), sorted top to bottom and left to right.
+ * for a slight slant), top to bottom; rows with a wide horizontal gap are
+ * returned as separate parts, left to right.
  */
 export function groupLines(items: RecognizedLine[]): TextLine[] {
   const sorted = items.filter((i) => i.text).sort((a, b) => a.box.cy - b.box.cy);
@@ -473,28 +591,81 @@ export function groupLines(items: RecognizedLine[]): TextLine[] {
       lines.push({ items: [it], cy: b.cy, h: b.h, slope: b.ux ? b.uy / b.ux : 0 });
     }
   }
-  return lines
-    .map((l) => {
-      const ext = l.items.map((i) => vExtent(i.box));
-      const top = Math.min(...ext.map((e) => e.top));
-      const bottom = Math.max(...ext.map((e) => e.bottom));
-      const halfW = (i: RecognizedLine) => (Math.abs(i.box.ux) * i.box.w) / 2;
-      const left = Math.min(...l.items.map((i) => i.box.cx - halfW(i)));
-      const right = Math.max(...l.items.map((i) => i.box.cx + halfW(i)));
-      return { items: l.items, text: l.items.map((i) => i.text).join(" "), top, bottom, left, right, height: l.h };
-    })
+  const rows = lines
+    .map((l) => makeLine(l.items, l.h, 0))
     .sort((a, b) => a.top + a.bottom - (b.top + b.bottom));
+  const out: TextLine[] = [];
+  rows.forEach((r, row) => {
+    let part: RecognizedLine[] = [];
+    r.items.forEach((it, k) => {
+      if (k > 0) {
+        const prev = r.items[k - 1];
+        const gap = it.box.cx - halfWidth(it) - (prev.box.cx + halfWidth(prev));
+        if (gap > PART_GAP * r.height) {
+          out.push(makeLine(part, r.height, row));
+          part = [];
+        }
+      }
+      part.push(it);
+    });
+    out.push(makeLine(part, r.height, row));
+  });
+  return out;
 }
+
+// ── Clean-up of note-taking conventions ────────────────────────────────────
+
+/** Words that follow the pronoun "I" (a lone "1" or "l" before them is an "I"). */
+const AFTER_I = new Set(
+  ("am do don't did didn't have haven't had hadn't will won't would wouldn't can can't could couldn't should shouldn't must " +
+    "may might was wasn't always never often usually sometimes also just really still think thought like liked love loved " +
+    "want wanted know knew need needed go went get got live lived see saw feel felt hope believe mean meant said say said " +
+    "agree remember forgot forget play played work worked study studied went came come make made take took give gave " +
+    "found find tried try hate hated prefer").split(" "),
+);
+/** Marks that start bullet lines in notes, as the recognizer tends to read "↳". */
+const HOOK_BULLETS = new Set(["L", "L)", "L>", "Ly", "Lу", "4", "Ь", "ь", "Ly)", "L,"]);
+
+/**
+ * Fix what the recognizer predictably gets wrong in notes: hand-drawn arrows
+ * ("-)" → "→"), the pronoun I written as a single stroke ("l'm", "1 always"),
+ * and hook bullets ("L)" / "4" starting several lines → "↳").
+ */
+export function cleanNoteLines(texts: string[]): string[] {
+  const fixed = texts.map((t) =>
+    t
+      // Arrows: "-)", "—)", "->", "-→", "=>" at the start of a word.
+      .replace(/(^|[\s(])[-—–=]+\s?[)>→]\s*/g, "$1→ ")
+      .replace(/→\s*/g, "→ ")
+      // Contractions of I.
+      .replace(/(^|[^\p{L}\d])[l1|]'(m|ve|d|ll)\b/gu, "$1I'$2")
+      // A lone l or | is I; a lone 1 is I before a word that follows I.
+      .replace(/(^|[\s(→"“])[l|](?=\s+\p{L})/gu, "$1I")
+      // (only at the start of a line, clause or bracket: "Step 1 do this" keeps its number).
+      .replace(/(^|[(→"“]\s*|[.!?,;:]\s+)1(?=\s+(\p{Ll}[\p{L}']*))/gu, (m, pre: string, next: string) => (AFTER_I.has(next) ? `${pre}I` : m))
+      // "I" run into the next word: "(1do)", "Ido", "lam" → "I do", "I am".
+      .replace(/(^|[\s(→"“])[1l|I](\p{Ll}+)(?=$|[\s).,!?;:])/gu, (m, pre: string, rest: string) => (AFTER_I.has(rest) ? `${pre}I ${rest}` : m))
+      .replace(/\s+/g, " ")
+      .trim(),
+  );
+  // Marks like these starting two or more lines are bullets, not words.
+  // A "4" counts when a letter-like hook ("L)") is on the page too, or when it
+  // starts a sentence ("4 It would be nice…"): a list of quantities
+  // ("4 eggs", "4 Eier") stays as it is.
+  const first = (t: string) => (t.includes(" ") ? t.split(" ")[0] : "");
+  const letterHook = fixed.some((t) => HOOK_BULLETS.has(first(t)) && first(t) !== "4");
+  const sentence = (t: string) => /^4 \p{Lu}/u.test(t) && t.split(" ").length >= 5;
+  const isHook = (t: string) => HOOK_BULLETS.has(first(t)) && (first(t) !== "4" || letterHook || sentence(t));
+  const hooks = fixed.filter(isHook).length;
+  return fixed.map((t) => (hooks >= 2 && isHook(t) ? "↳" + t.slice(first(t).length) : t));
+}
+
+// ── Assembly ───────────────────────────────────────────────────────────────
 
 export type Layout = "lines" | "paragraphs";
 
-/**
- * Plain text from lines: one output line per written line, or lines joined
- * into paragraphs. A paragraph ends at a large vertical gap, before an
- * indented line, or after a line that stops well short of the right margin;
- * words hyphenated at a line end are re-joined.
- */
-export function assembleText(lines: TextLine[], layout: Layout): string {
+/** Lines of one column (or of the whole page) as text. */
+function assembleStream(lines: TextLine[], layout: Layout): string {
   if (!lines.length) return "";
   const pick = (values: number[], q: number) => values.slice().sort((a, b) => a - b)[Math.floor((values.length - 1) * q)];
   const typical = pick(lines.map((l) => l.height), 0.5);
@@ -520,6 +691,133 @@ export function assembleText(lines: TextLine[], layout: Layout): string {
     }
   }
   return out;
+}
+
+/**
+ * Text of a row's boxes cut at a wide space whose next word starts where the
+ * right column starts (`columnLeft`, within `tolerance`), using character positions.
+ */
+function splitBoxText(items: RecognizedLine[], columnLeft: number, tolerance: number, minGap: number): [string, string] | null {
+  let best: { item: number; at: number; d: number } | null = null;
+  items.forEach((it, k) => {
+    const pos = it.positions;
+    const chars = [...it.text];
+    if (!pos || pos.length !== chars.length) return;
+    const start = it.box.cx - (it.box.ux * it.box.w) / 2;
+    const xAt = (q: number) => start + pos[q] * it.box.w * it.box.ux;
+    chars.forEach((ch, q) => {
+      if (ch !== " " || q === 0 || q + 1 >= chars.length) return;
+      if (xAt(q + 1) - xAt(q - 1) < minGap) return; // an ordinary word space
+      const d = Math.abs(xAt(q + 1) - columnLeft);
+      if (d < tolerance && (!best || d < best.d)) best = { item: k, at: q, d };
+    });
+  });
+  if (!best) return null;
+  const { item, at } = best as { item: number; at: number };
+  const chars = [...items[item].text];
+  const before = [...items.slice(0, item).map((i) => i.text), chars.slice(0, at).join("")].join(" ").trim();
+  const after = [chars.slice(at + 1).join(""), ...items.slice(item + 1).map((i) => i.text)].join(" ").trim();
+  return before && after ? [before, after] : null;
+}
+
+/**
+ * Plain text from lines: one output line per written line, or lines joined
+ * into paragraphs (a paragraph ends at a large vertical gap, before an
+ * indented line, or after a line that stops well short of the right margin;
+ * words hyphenated at a line end are re-joined).
+ *
+ * Two or more consecutive rows split at the same place are read as columns:
+ * the left column first, then the right one (side-by-side lists, margin
+ * notes). Other split rows are read left to right.
+ */
+export function assembleText(lines: TextLine[], layout: Layout): string {
+  if (!lines.length) return "";
+  const cleaned = cleanNoteLines(lines.map((l) => l.text));
+  const parts = lines.map((l, i) => ({ ...l, text: cleaned[i] }));
+  const rows: TextLine[][] = [];
+  for (const p of parts) {
+    if (rows.length && rows[rows.length - 1][0].row === p.row) rows[rows.length - 1].push(p);
+    else rows.push([p]);
+  }
+  const typical = parts.map((l) => l.height).sort((a, b) => a - b)[Math.floor((parts.length - 1) / 2)];
+  /** The row's widest gap: where its right part starts. */
+  const splitOf = (r: TextLine[]) => {
+    let best = 1, gap = -Infinity;
+    for (let k = 1; k < r.length; k++) {
+      const g = r[k].left - r[k - 1].right;
+      if (g > gap) {
+        gap = g;
+        best = k;
+      }
+    }
+    return { at: best, rightLeft: r[best].left };
+  };
+  const merge = (r: TextLine[]): TextLine => (r.length === 1 ? r[0] : { ...makeLine(r.flatMap((p) => p.items), r[0].height, r[0].row), text: r.map((p) => p.text).join(" ") });
+
+  const streams: TextLine[][] = [];
+  let cur: TextLine[] = [];
+  let i = 0;
+  while (i < rows.length) {
+    if (rows[i].length >= 2) {
+      // Columns are aligned on the right column's left edge.
+      const column = splitOf(rows[i]).rightLeft;
+      const left: TextLine[] = [], right: TextLine[] = [];
+      let j = i, split2 = 0;
+      for (; j < rows.length; j++) {
+        const r = rows[j];
+        if (r.length >= 2) {
+          const s = splitOf(r);
+          if (Math.abs(s.rightLeft - column) > typical * 3) break;
+          left.push(merge(r.slice(0, s.at)));
+          right.push(merge(r.slice(s.at)));
+          split2++;
+          continue;
+        }
+        const line = r[0];
+        if (line.right < column + typical * 0.5) {
+          left.push(line);
+          continue;
+        }
+        if (line.left > column - typical * 1.5) {
+          right.push(line);
+          continue;
+        }
+        // Columns close together: split at a box that starts at the column…
+        const items = line.items;
+        let at = -1;
+        for (let k = 1; k < items.length; k++) {
+          if (Math.abs(items[k].box.cx - halfWidth(items[k]) - column) < typical * 1.5) at = k;
+        }
+        if (at >= 0) {
+          const [lt, rt] = cleanNoteLines([items.slice(0, at), items.slice(at)].map((g) => g.map((x) => x.text).join(" ")));
+          left.push({ ...makeLine(items.slice(0, at), line.height, line.row), text: lt });
+          right.push({ ...makeLine(items.slice(at), line.height, line.row), text: rt });
+        } else {
+          // …or inside one box, at a wide space where a word starts at the column.
+          const cut = splitBoxText(items, column, typical * 1.5, typical * 1.5);
+          if (!cut) break;
+          const [lt, rt] = cleanNoteLines(cut);
+          left.push({ ...line, right: column, text: lt });
+          right.push({ ...line, left: column, text: rt });
+        }
+        split2++;
+      }
+      if (split2 >= 2) {
+        if (cur.length) streams.push(cur);
+        cur = [];
+        streams.push(left, right);
+        i = j;
+        continue;
+      }
+    }
+    cur.push(merge(rows[i]));
+    i++;
+  }
+  if (cur.length) streams.push(cur);
+  return streams
+    .map((s) => assembleStream(s, layout))
+    .filter(Boolean)
+    .join("\n\n");
 }
 
 // ── Orientation ────────────────────────────────────────────────────────────
