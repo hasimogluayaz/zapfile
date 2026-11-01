@@ -6,7 +6,7 @@
  * when nothing is heard from the worker for a while, it is restarted once in
  * safe mode (single-threaded WASM) and the pending pages are sent again.
  */
-import { IMAGE_MAX_SIDE } from "./models";
+import { IMAGE_MAX_SIDE, type OcrScript } from "./models";
 import type {
   OcrBackend,
   OcrErrorCode,
@@ -37,6 +37,7 @@ export interface OcrProgress {
 export interface OcrPageResult {
   width: number;
   height: number;
+  rotation: 0 | 90 | 180 | 270;
   lines: OcrLineResult[];
   backend: OcrBackend;
   ms: number;
@@ -44,6 +45,7 @@ export interface OcrPageResult {
 
 interface Job {
   source: ImageBitmap;
+  script: OcrScript;
   resolve: (r: OcrPageResult) => void;
   reject: (e: Error) => void;
 }
@@ -124,8 +126,9 @@ export class HandwritingEngine {
       ortBase: ORT_BASE,
       preferGpu: false,
       threads: false,
+      script: this.script,
     });
-    for (const [jobId, job] of this.jobs) void this.post(jobId, job.source);
+    for (const [jobId, job] of this.jobs) void this.post(jobId, job.source, job.script);
     this.arm();
   }
 
@@ -150,6 +153,7 @@ export class HandwritingEngine {
         job?.resolve({
           width: msg.width,
           height: msg.height,
+          rotation: msg.rotation,
           lines: msg.lines,
           backend: msg.backend,
           ms: msg.ms,
@@ -181,8 +185,11 @@ export class HandwritingEngine {
     this.jobs.clear();
   }
 
+  /** Script of the first load (the models for another one load when a page needs them). */
+  private script: OcrScript = "latin";
+
   /** Download (first use) and start the models. Safe to call repeatedly. */
-  load(): Promise<OcrBackend> {
+  load(script: OcrScript = this.script): Promise<OcrBackend> {
     if (!this.loadPromise) {
       this.loadPromise = new Promise(
         (resolve, reject) => (this.loadSettle = { resolve, reject }),
@@ -193,6 +200,7 @@ export class HandwritingEngine {
         ortBase: ORT_BASE,
         preferGpu: false,
         threads: !this.safe,
+        script: (this.script = script),
       });
       this.arm();
     }
@@ -200,7 +208,7 @@ export class HandwritingEngine {
   }
 
   /** Send a page (scaled to ≤ 2560 px on its long side) to the worker. */
-  private async post(jobId: number, source: ImageBitmap) {
+  private async post(jobId: number, source: ImageBitmap, script: OcrScript) {
     const k = Math.min(
       1,
       IMAGE_MAX_SIDE / Math.max(source.width, source.height),
@@ -213,18 +221,18 @@ export class HandwritingEngine {
             resizeQuality: "high",
           })
         : await createImageBitmap(source);
-    this.send({ type: "recognize", jobId, bitmap }, [bitmap]);
+    this.send({ type: "recognize", jobId, bitmap, script }, [bitmap]);
   }
 
   /** Recognize the text in an image. `source` must stay open until this settles. */
-  async recognize(source: ImageBitmap): Promise<OcrPageResult> {
-    await this.load();
+  async recognize(source: ImageBitmap, script: OcrScript): Promise<OcrPageResult> {
+    await this.load(script);
     const jobId = this.nextJob++;
     const done = new Promise<OcrPageResult>((resolve, reject) =>
-      this.jobs.set(jobId, { source, resolve, reject }),
+      this.jobs.set(jobId, { source, script, resolve, reject }),
     );
     this.stage = null;
-    await this.post(jobId, source);
+    await this.post(jobId, source, script);
     this.arm();
     return done;
   }

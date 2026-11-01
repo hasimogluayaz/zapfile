@@ -83,5 +83,10 @@
   "hw.startOver": "Baştan başla",
   "hw.downloadTxt": "TXT indir",
   "hw.tooManyPages": "Yalnızca ilk {n} sayfa okunur.",
-  "hw.safeMode": "Beklenenden uzun sürdü: uyumluluk modunda yeniden başlatılıyor…"
+  "hw.safeMode": "Beklenenden uzun sürdü: uyumluluk modunda yeniden başlatılıyor…",
+  "hw.pasted": "Yapıştırılan görsel",
+  "hw.pasteHint": "Ya da ekran görüntüsünü veya kopyaladığınız görseli {keys} ile yapıştırın",
+  "hw.script": "Yazı türü",
+  "hw.scriptLatin": "Latin harfleri",
+  "hw.time": "{seconds} sn'de okundu."
 }

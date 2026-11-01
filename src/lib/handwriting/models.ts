@@ -15,7 +15,7 @@ export interface OcrModelFile {
 }
 
 const REPO = "hasimogluayaz/zapfile";
-const COMMIT = "4493eca5055b18c5c4085957afb4787bb56153fe";
+const COMMIT = "ae145e3e8741452bb38bf7f607158564a52680d5";
 const DIR = "models/ppocrv6-small";
 
 function sources(name: string): string[] {
@@ -36,6 +36,28 @@ export const OCR_DETECTOR: OcrModelFile = {
   urls: sources("det.onnx"),
 };
 
+/**
+ * Recognizer for Latin script (Turkish, English, German, French, …, plus
+ * Greek): the full model with its output layer cut to 566 characters, which
+ * reads Latin text the same, downloads 4.4 MB less and decodes faster.
+ */
+export const OCR_RECOGNIZER_LATIN: OcrModelFile = {
+  id: "ppocrv6s-rec-latin-fp16",
+  name: "rec-latin.onnx",
+  bytes: 6_233_083,
+  sha256: "01efad51fcf62a4eaf0d2e8a10325c8d02da7b14fbe110af9ed29f03a379875a",
+  urls: sources("rec-latin.onnx"),
+};
+
+export const OCR_DICTIONARY_LATIN: OcrModelFile = {
+  id: "ppocrv6s-dict-latin",
+  name: "dict-latin.json",
+  bytes: 2_927,
+  sha256: "b1a1c5aa2cc7372f957a46aa664b9e5ca60a6d9a6183773366faa7a8ac4313d1",
+  urls: sources("dict-latin.json"),
+};
+
+/** Full recognizer (adds Chinese and Japanese), downloaded only when that script is chosen. */
 export const OCR_RECOGNIZER: OcrModelFile = {
   id: "ppocrv6s-rec-fp16",
   name: "rec.onnx",
@@ -52,10 +74,23 @@ export const OCR_DICTIONARY: OcrModelFile = {
   urls: sources("dict.json"),
 };
 
-export const OCR_FILES = [OCR_DETECTOR, OCR_RECOGNIZER, OCR_DICTIONARY];
+export type OcrScript = "latin" | "cjk";
 
-/** Total first-use download, for the UI. */
-export const OCR_DOWNLOAD_BYTES = OCR_FILES.reduce((s, f) => s + f.bytes, 0);
+/** Files needed for a script. */
+export function ocrFiles(script: OcrScript): { detector: OcrModelFile; recognizer: OcrModelFile; dictionary: OcrModelFile } {
+  return script === "cjk"
+    ? { detector: OCR_DETECTOR, recognizer: OCR_RECOGNIZER, dictionary: OCR_DICTIONARY }
+    : { detector: OCR_DETECTOR, recognizer: OCR_RECOGNIZER_LATIN, dictionary: OCR_DICTIONARY_LATIN };
+}
+
+/** First-use download for a script, for the UI. */
+export function ocrDownloadBytes(script: OcrScript): number {
+  const f = ocrFiles(script);
+  return f.detector.bytes + f.recognizer.bytes + f.dictionary.bytes;
+}
+
+/** Every file this version uses (older cached versions are pruned). */
+export const OCR_ALL_FILES = [OCR_DETECTOR, OCR_RECOGNIZER_LATIN, OCR_DICTIONARY_LATIN, OCR_RECOGNIZER, OCR_DICTIONARY];
 
 /** Own Cache Storage bucket: entries of older model versions are pruned on load. */
 export const OCR_CACHE = "zapfile-ocr-v1";

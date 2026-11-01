@@ -76,7 +76,3 @@ The default is `rec-latin.onnx`; the full `rec.onnx` + `dict.json` are only down
 The float16 files run on both ONNX Runtime Web execution providers (WebGPU and
 WASM) with the same results as the float32 originals on our test pages.
 Pre/post-processing: `src/lib/handwriting/pipeline.ts`.
-
-## lexicons/ — word lists for Handwriting to Text
-
-`<lang>.txt` (tr, en, de, fr, es, pt, it): the 50,000 most frequent alphabetic words of each language, most frequent first, from [wordfreq](https://github.com/rspeer/wordfreq) 3.1.1 by Robyn Speer. **Data license: CC BY-SA 4.0**; these filtered lists are shared under the same license (header lines starting with `#`). Used to re-score uncertain words with the recognizer's own character probabilities (CTC), not as blind spell-check.

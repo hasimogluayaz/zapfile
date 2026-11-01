@@ -107,15 +107,15 @@ const toolFaqs: Record<string, FaqItem[]> = {
     },
     {
       question: "Is my photo uploaded?",
-      answer: "No. The AI model (PP-OCRv6 from PaddleOCR, Apache-2.0) runs in your browser with WebGPU or WebAssembly. The first run downloads it once (about 16 MB) and caches it; after that it works offline.",
+      answer: "No. The AI model (PP-OCRv6 from PaddleOCR, Apache-2.0) runs in your browser with WebGPU or WebAssembly. The first run downloads it once (about 11 MB) and caches it; after that it works offline.",
     },
     {
       question: "Which languages and scripts can it read?",
-      answer: "Latin-script languages including Turkish (ç, ğ, ı, İ, ö, ş, ü), English, German, French, Spanish, Portuguese and Italian, plus Greek, Chinese and Japanese. Arabic, Cyrillic and Korean handwriting aren't supported yet.",
+      answer: "Latin-script languages including Turkish (ç, ğ, ı, İ, ö, ş, ü), English, German, French, Spanish, Portuguese and Italian, plus Greek; switch the writing system to 日本語・中文 for Japanese or Chinese. Arabic, Cyrillic and Korean handwriting aren't supported yet.",
     },
     {
       question: "How accurate is it?",
-      answer: "Neat handwriting and print are read almost perfectly. Very joined-up cursive, faint pencil or crumpled paper produce more mistakes, so the result is editable and the lines the model was unsure about are marked on the image. For best results photograph the page straight on, in good light, with dark ink.",
+      answer: "Neat handwriting and print are read almost perfectly. Very joined-up cursive, faint pencil or crumpled paper produce more mistakes, so the result is editable and the lines the model was unsure about are marked on the image. For best results photograph the page straight on, in good light, with dark ink; sideways or upside-down photos are turned upright automatically.",
     },
   ],
   "ocr-pdf": [

@@ -31,7 +31,7 @@ import {
   type OcrPageResult,
   type OcrProgress,
 } from "@/lib/handwriting/client";
-import { OCR_DOWNLOAD_BYTES } from "@/lib/handwriting/models";
+import { ocrDownloadBytes, type OcrScript } from "@/lib/handwriting/models";
 import {
   assembleText,
   groupLines,
@@ -55,7 +55,10 @@ const ACCEPT = {
 interface PageItem {
   id: number;
   label: string;
+  /** Object URL of the page as given (images: the file itself). */
   preview: string;
+  /** Upright version of `preview` when the photo was taken sideways or upside down. */
+  upright?: string;
   bitmap: ImageBitmap | null;
   status: "waiting" | "reading" | "done" | "error";
   result?: OcrPageResult;
@@ -122,6 +125,25 @@ function corners(b: TextBox): string {
     .join(" ");
 }
 
+/** The page turned upright (≤ 2000 px), for the preview the boxes refer to. */
+async function uprightPreview(
+  bitmap: ImageBitmap,
+  rotation: 90 | 180 | 270,
+): Promise<string> {
+  const k = Math.min(1, 2000 / Math.max(bitmap.width, bitmap.height));
+  const w = Math.round(bitmap.width * k),
+    h = Math.round(bitmap.height * k);
+  const c = document.createElement("canvas");
+  [c.width, c.height] = rotation === 180 ? [w, h] : [h, w];
+  const ctx = c.getContext("2d")!;
+  ctx.translate(c.width / 2, c.height / 2);
+  ctx.rotate((rotation * Math.PI) / 180);
+  ctx.drawImage(bitmap, -w / 2, -h / 2, w, h);
+  const blob = await canvasBlob(c);
+  c.width = c.height = 0;
+  return URL.createObjectURL(blob);
+}
+
 const mb = (bytes: number, locale: string) =>
   (bytes / 1_000_000).toLocaleString(locale, {
     maximumFractionDigits: 1,
@@ -143,6 +165,11 @@ export default function HandwritingToTextPage() {
   const [ready, setReady] = useState(false);
   /** Technical reason of the last failure, shown small so a screenshot tells what went wrong. */
   const [errorDetail, setErrorDetail] = useState("");
+  /** Latin letters (default) or Japanese/Chinese, which needs the full recognizer. */
+  const [script, setScriptState] = useState<OcrScript>("latin");
+  const scriptRef = useRef<OcrScript>("latin");
+  const textRef = useRef<HTMLTextAreaElement>(null);
+  const [isMac, setIsMac] = useState(false);
   const engineRef = useRef<HandwritingEngine | null>(null);
   const runningRef = useRef(false);
   const pagesRef = useRef<PageItem[]>([]);
@@ -171,14 +198,24 @@ export default function HandwritingToTextPage() {
 
   useEffect(() => {
     setCoarse(window.matchMedia?.("(pointer: coarse)").matches ?? false);
+    setIsMac(/Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent));
     return () => {
       engineRef.current?.dispose();
       for (const p of pagesRef.current) {
         URL.revokeObjectURL(p.preview);
+        if (p.upright) URL.revokeObjectURL(p.upright);
         p.bitmap?.close();
       }
     };
   }, []);
+
+  useEffect(() => {
+    const s: OcrScript = locale === "ja" ? "cjk" : "latin";
+    if (!pagesRef.current.length) {
+      scriptRef.current = s;
+      setScriptState(s);
+    }
+  }, [locale]);
 
   const engine = useCallback(() => {
     if (!engineRef.current) engineRef.current = new HandwritingEngine();
@@ -232,12 +269,23 @@ export default function HandwritingToTextPage() {
         update(page.id, { status: "reading" });
         eng.onProgress = onProgress(index, all.length);
         try {
-          const result = await eng.recognize(page.bitmap!);
-          page.bitmap?.close();
-          update(page.id, { status: "done", result, bitmap: null });
+          // Pages read before keep only their preview (a re-run after changing the script).
+          if (!page.bitmap) {
+            page.bitmap = (
+              await decodeImage(await (await fetch(page.preview)).blob())
+            ).bitmap;
+          }
+          const bitmap = page.bitmap;
+          const result = await eng.recognize(bitmap, scriptRef.current);
+          const upright = result.rotation
+            ? await uprightPreview(bitmap, result.rotation)
+            : undefined;
+          bitmap.close();
+          if (page.upright) URL.revokeObjectURL(page.upright);
+          update(page.id, { status: "done", result, bitmap: null, upright });
         } catch (error) {
           console.error(error);
-          update(page.id, { status: "error" });
+          update(page.id, { status: "error", bitmap: page.bitmap });
           setErrorDetail(
             error instanceof Error ? error.message : String(error),
           );
@@ -274,7 +322,7 @@ export default function HandwritingToTextPage() {
       if (!files.length) return;
       setOpening(true);
       engine()
-        .load()
+        .load(scriptRef.current)
         .catch(() => undefined); // start the model download right away
       const added: PageItem[] = [];
       const make = (
@@ -370,17 +418,84 @@ export default function HandwritingToTextPage() {
   );
 
   const retry = () => {
-    setPages((prev) =>
-      prev.map((p) =>
-        p.status === "error" && p.bitmap ? { ...p, status: "waiting" } : p,
-      ),
+    const next = pagesRef.current.map((p) =>
+      p.status === "error" ? { ...p, status: "waiting" as const } : p,
     );
-    setTimeout(() => void pump(), 0);
+    pagesRef.current = next;
+    setPages(next);
+    void pump();
+  };
+
+  /** Read every page again with the other script's recognizer. */
+  const setScript = (s: OcrScript) => {
+    scriptRef.current = s;
+    setScriptState(s);
+    if (!pagesRef.current.length) return;
+    const next = pagesRef.current.map((p) =>
+      p.status === "reading"
+        ? p
+        : { ...p, status: "waiting" as const, result: undefined },
+    );
+    pagesRef.current = next;
+    setPages(next);
+    void pump();
+  };
+
+  // Start downloading the model as soon as the user shows intent (drags a file over the page or
+  // opens the picker), so it's ready by the time the file is chosen. Not on page load.
+  const warm = useCallback(() => {
+    engine()
+      .load(scriptRef.current)
+      .catch(() => undefined);
+  }, [engine]);
+  useEffect(() => {
+    if (pages.length) return;
+    window.addEventListener("dragenter", warm, { once: true });
+    return () => window.removeEventListener("dragenter", warm);
+  }, [pages.length, warm]);
+
+  // Paste a screenshot or a copied image (Ctrl/⌘+V) anywhere on the page.
+  useEffect(() => {
+    const onPaste = (e: ClipboardEvent) => {
+      const files = Array.from(e.clipboardData?.files ?? []).filter(
+        (f) => f.type.startsWith("image/") || f.type === "application/pdf",
+      );
+      if (!files.length) return;
+      e.preventDefault();
+      void addFiles(
+        files.map((f, i) =>
+          f.name && f.name !== "image.png"
+            ? f
+            : new File(
+                [f],
+                `${t("hw.pasted")}${files.length > 1 ? ` ${i + 1}` : ""}.png`,
+                { type: f.type },
+              ),
+        ),
+      );
+    };
+    window.addEventListener("paste", onPaste);
+    return () => window.removeEventListener("paste", onPaste);
+  }, [addFiles, t]);
+
+  /** Select a line's text in the editor (clicking its box on the image). */
+  const selectLine = (lineText: string) => {
+    const ta = textRef.current;
+    if (!ta || !lineText) return;
+    const at = ta.value.indexOf(lineText);
+    if (at < 0) return;
+    ta.focus();
+    ta.setSelectionRange(at, at + lineText.length);
+    // Scroll the selection into view: measure the lines before it.
+    const before = ta.value.slice(0, at).split("\n").length - 1;
+    const lh = parseFloat(getComputedStyle(ta).lineHeight) || 24;
+    ta.scrollTop = Math.max(0, before * lh - ta.clientHeight / 3);
   };
 
   const reset = () => {
     for (const p of pages) {
       URL.revokeObjectURL(p.preview);
+      if (p.upright) URL.revokeObjectURL(p.upright);
       p.bitmap?.close();
     }
     setPages([]);
@@ -414,7 +529,8 @@ export default function HandwritingToTextPage() {
   const unsure =
     current?.result?.lines.filter((l) => l.text && l.confidence < UNSURE)
       .length ?? 0;
-  const failed = pages.some((p) => p.status === "error" && p.bitmap);
+  const failed = pages.some((p) => p.status === "error");
+  const seconds = done.reduce((s, p) => s + p.result!.ms, 0) / 1000;
   const nothingFound = !busy && done.length > 0 && !generated;
 
   const pickInput = (
@@ -466,13 +582,20 @@ export default function HandwritingToTextPage() {
           {!ready ? (
             <div className="dropzone min-h-[14rem]" aria-busy="true" />
           ) : (
-            <FileDropzone
-              onFilesSelected={addFiles}
-              accept={ACCEPT}
-              multiple
-              formats={["JPG", "PNG", "WEBP", "PDF"]}
-              label={opening ? t("p2o.opening") : t("hw.drop")}
-            />
+            <div onPointerDown={warm}>
+              <FileDropzone
+                onFilesSelected={addFiles}
+                accept={ACCEPT}
+                multiple
+                formats={["JPG", "PNG", "WEBP", "PDF"]}
+                label={opening ? t("p2o.opening") : t("hw.drop")}
+              />
+            </div>
+          )}
+          {!coarse && (
+            <p className="text-center text-[12.5px] text-t-tertiary">
+              {t("hw.pasteHint", { keys: isMac ? "⌘ V" : "Ctrl + V" })}
+            </p>
           )}
           {cameraButton && (
             <div className="flex justify-center">{cameraButton}</div>
@@ -490,7 +613,7 @@ export default function HandwritingToTextPage() {
             <p className="pt-1 text-[12.5px] text-t-tertiary">
               {t("hw.languages")}{" "}
               {t("hw.firstUse", {
-                size: `${mb(OCR_DOWNLOAD_BYTES, locale)} MB`,
+                size: `${mb(ocrDownloadBytes(script), locale)} MB`,
               })}
             </p>
           </div>
@@ -518,7 +641,7 @@ export default function HandwritingToTextPage() {
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={p.preview}
+                        src={p.upright ?? p.preview}
                         alt=""
                         className="h-full w-full object-cover"
                       />
@@ -536,7 +659,7 @@ export default function HandwritingToTextPage() {
                 <div className="relative overflow-hidden rounded-xl bg-bg-secondary">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={current.preview}
+                    src={current.upright ?? current.preview}
                     alt={current.label}
                     className="block max-h-[70vh] w-full object-contain"
                   />
@@ -555,6 +678,8 @@ export default function HandwritingToTextPage() {
                             <polygon
                               key={i}
                               points={corners(l.box)}
+                              className="pointer-events-auto cursor-pointer hover:[fill:rgba(255,214,10,0.32)]"
+                              onClick={() => selectLine(l.text)}
                               fill={
                                 low
                                   ? "rgba(245,158,11,0.18)"
@@ -616,16 +741,28 @@ export default function HandwritingToTextPage() {
             <div className="glass flex flex-col gap-3 p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <p className={sectionTitle}>{t("hw.text")}</p>
-                <Segmented<Layout>
-                  label={t("hw.layout")}
-                  size="sm"
-                  value={layout}
-                  onChange={setLayout}
-                  options={[
-                    { value: "lines", label: t("hw.layoutLines") },
-                    { value: "paragraphs", label: t("hw.layoutParagraphs") },
-                  ]}
-                />
+                <div className="flex flex-wrap gap-2">
+                  <Segmented<OcrScript>
+                    label={t("hw.script")}
+                    size="sm"
+                    value={script}
+                    onChange={setScript}
+                    options={[
+                      { value: "latin", label: t("hw.scriptLatin") },
+                      { value: "cjk", label: "日本語・中文" },
+                    ]}
+                  />
+                  <Segmented<Layout>
+                    label={t("hw.layout")}
+                    size="sm"
+                    value={layout}
+                    onChange={setLayout}
+                    options={[
+                      { value: "lines", label: t("hw.layoutLines") },
+                      { value: "paragraphs", label: t("hw.layoutParagraphs") },
+                    ]}
+                  />
+                </div>
               </div>
               {status && (
                 <ProgressBar progress={status.value} label={status.label} />
@@ -655,6 +792,7 @@ export default function HandwritingToTextPage() {
                 </p>
               )}
               <textarea
+                ref={textRef}
                 dir="auto"
                 value={text}
                 onChange={(e) => setText(e.target.value)}
@@ -669,6 +807,13 @@ export default function HandwritingToTextPage() {
                   t("hw.stats", {
                     lines: lineCount.toLocaleString(locale),
                     words: words.toLocaleString(locale),
+                  })}{" "}
+                {done.length > 0 &&
+                  !busy &&
+                  t("hw.time", {
+                    seconds: seconds.toLocaleString(locale, {
+                      maximumFractionDigits: 1,
+                    }),
                   })}{" "}
                 {t("hw.editHint")}
               </p>

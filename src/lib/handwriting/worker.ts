@@ -1,11 +1,11 @@
 /// <reference lib="webworker" />
 /**
- * Handwriting to Text worker: downloads and caches PP-OCRv6 small, then finds
- * text lines and reads them with ONNX Runtime Web (WebGPU when available,
- * WASM otherwise), all off the main thread. Nothing leaves the device.
+ * Handwriting to Text worker: downloads and caches PP-OCRv6 small, finds the
+ * text lines, turns sideways or upside-down photos upright and reads the
+ * lines with ONNX Runtime Web, all off the main thread. Nothing leaves the device.
  */
 import type * as OrtModule from "onnxruntime-web";
-import { OCR_CACHE, OCR_DETECTOR, OCR_DICTIONARY, OCR_FILES, OCR_RECOGNIZER, DETECT_MAX_SIDE, ocrCacheKey, type OcrModelFile } from "./models";
+import { DETECT_MAX_SIDE, OCR_ALL_FILES, OCR_CACHE, ocrCacheKey, ocrFiles, type OcrModelFile, type OcrScript } from "./models";
 import {
   boxesFromProbability,
   buildAlphabet,
@@ -13,11 +13,15 @@ import {
   ctcDecode,
   detectionInput,
   detectionSize,
+  flipBox,
   floatsToHalf,
   halfToFloats,
   recognitionWidth,
   REC_HEIGHT,
+  rotateRgba,
+  verticalShare,
   type Rgba,
+  type TextBox,
 } from "./pipeline";
 import type { OcrBackend, OcrErrorCode, OcrLineResult, OcrRequest, OcrResponse, OcrStage } from "./protocol";
 
@@ -38,11 +42,10 @@ const progress = (stage: OcrStage, extra: { jobId?: number; loaded?: number; tot
   post({ type: "progress", stage, ...extra });
 
 let ort: Ort | null = null;
-let det: OrtModule.InferenceSession | null = null;
-let rec: OrtModule.InferenceSession | null = null;
-let alphabet: string[] = [];
 let backend: OcrBackend = "wasm";
-let modelBytes: { det: Uint8Array; rec: Uint8Array } | null = null;
+let det: OrtModule.InferenceSession | null = null;
+/** One recognizer per script, created on first use. */
+const recognizers = new Map<OcrScript, { session: OrtModule.InferenceSession; alphabet: string[] }>();
 let loading: Promise<void> | null = null;
 
 // ── Model files ────────────────────────────────────────────────────────────
@@ -85,10 +88,12 @@ async function download(url: string, file: OcrModelFile, onBytes: (n: number) =>
   return buffer;
 }
 
-/** Every model file, from the cache or downloaded (with combined progress). */
-async function fetchModels(): Promise<Map<string, Uint8Array>> {
+let pruned = false;
+
+/** Files from the cache or downloaded, with combined progress. */
+async function fetchFiles(files: OcrModelFile[]): Promise<Uint8Array[]> {
   const cache = await openCache();
-  const total = OCR_FILES.reduce((s, f) => s + f.bytes, 0);
+  const total = files.reduce((s, f) => s + f.bytes, 0);
   const done = new Map<string, number>();
   let lastReport = 0;
   let allCached = true;
@@ -140,18 +145,19 @@ async function fetchModels(): Promise<Map<string, Uint8Array>> {
     throw new EngineError("download", failures.join("; "));
   };
 
-  const results = await Promise.all(OCR_FILES.map(one));
+  const results = await Promise.all(files.map(one));
   report(true);
-  if (cache) {
+  if (cache && !pruned) {
+    pruned = true;
     // Drop files of older model versions.
-    const keep = new Set(OCR_FILES.map(ocrCacheKey));
+    const keep = new Set(OCR_ALL_FILES.map(ocrCacheKey));
     try {
       for (const request of await cache.keys()) if (!keep.has(request.url)) await cache.delete(request);
     } catch {
       // best effort
     }
   }
-  return new Map(OCR_FILES.map((f, i) => [f.id, results[i]]));
+  return results;
 }
 
 // ── Runtime ────────────────────────────────────────────────────────────────
@@ -182,15 +188,25 @@ async function loadRuntime(base: string, gpu: boolean, threads: boolean): Promis
   return lib;
 }
 
-async function createSessions(target: OcrBackend) {
-  if (!ort || !modelBytes) throw new EngineError("runtime", "Runtime not loaded");
-  const opts = { executionProviders: [target], graphOptimizationLevel: "all" as const };
-  const [d, r] = await Promise.all([ort.InferenceSession.create(modelBytes.det, opts), ort.InferenceSession.create(modelBytes.rec, opts)]);
-  await det?.release().catch(() => undefined);
-  await rec?.release().catch(() => undefined);
-  det = d;
-  rec = r;
-  backend = target;
+function session(bytes: Uint8Array) {
+  return ort!.InferenceSession.create(bytes, { executionProviders: [backend], graphOptimizationLevel: "all" });
+}
+
+/** Detector plus the recognizer for `script`, downloading what's missing. */
+async function ensureModels(script: OcrScript) {
+  if (det && recognizers.has(script)) return;
+  const f = ocrFiles(script);
+  const wanted = [...(det ? [] : [f.detector]), f.recognizer, f.dictionary];
+  const bytes = await fetchFiles(wanted);
+  const get = (file: OcrModelFile) => bytes[wanted.indexOf(file)];
+  progress("init");
+  try {
+    if (!det) det = await session(get(f.detector));
+    const characters = JSON.parse(new TextDecoder().decode(get(f.dictionary))).characters as string[];
+    recognizers.set(script, { session: await session(get(f.recognizer)), alphabet: buildAlphabet(characters) });
+  } catch (error) {
+    throw toEngineError(error, "runtime");
+  }
 }
 
 async function load(request: Extract<OcrRequest, { type: "load" }>) {
@@ -200,24 +216,24 @@ async function load(request: Extract<OcrRequest, { type: "load" }>) {
   } catch (error) {
     throw new EngineError("runtime", `Could not load ONNX Runtime: ${(error as Error).message}`);
   }
-  const files = await fetchModels();
-  modelBytes = { det: files.get(OCR_DETECTOR.id)!, rec: files.get(OCR_RECOGNIZER.id)! };
-  alphabet = buildAlphabet(JSON.parse(new TextDecoder().decode(files.get(OCR_DICTIONARY.id)!)).characters as string[]);
-  progress("init");
-  if (gpu) {
-    try {
-      await createSessions("webgpu");
-    } catch {
-      det = rec = null;
-    }
+  backend = gpu ? "webgpu" : "wasm";
+  try {
+    await ensureModels(request.script);
+  } catch (error) {
+    if (backend !== "webgpu") throw error;
+    await fallBackToWasm(request.script);
   }
-  if (!det || !rec) {
-    try {
-      await createSessions("wasm");
-    } catch (error) {
-      throw toEngineError(error, "runtime");
-    }
-  }
+  post({ type: "loaded", backend });
+}
+
+/** Re-create the sessions on WASM after a WebGPU failure (bytes come from the cache). */
+async function fallBackToWasm(script: OcrScript) {
+  for (const r of recognizers.values()) await r.session.release().catch(() => undefined);
+  await det?.release().catch(() => undefined);
+  recognizers.clear();
+  det = null;
+  backend = "wasm";
+  await ensureModels(script);
   post({ type: "loaded", backend });
 }
 
@@ -246,18 +262,20 @@ function hasNaN(a: Float32Array) {
   return false;
 }
 
-async function runDetector(img: Rgba) {
+async function detect(img: Rgba): Promise<TextBox[]> {
   const size = detectionSize(img.width, img.height, DETECT_MAX_SIDE);
   const input = tensor(detectionInput(img, size.width, size.height), [1, 3, size.height, size.width]);
   const out = await det!.run({ [det!.inputNames[0]]: input });
   input.dispose();
   const prob = await floats(out[det!.outputNames[0]]);
   for (const k of det!.outputNames) out[k].dispose();
-  return { prob, size };
+  if (hasNaN(prob)) throw new EngineError("inference", "NaN");
+  return boxesFromProbability(prob, size.width, size.height, img.width / size.width, img.height / size.height);
 }
 
-/** Read lines in batches of similar width (one padded tensor per batch). */
-async function readLines(img: Rgba, boxes: ReturnType<typeof boxesFromProbability>, jobId: number): Promise<OcrLineResult[]> {
+/** Read boxes in batches of similar width (one padded tensor per batch). */
+async function read(img: Rgba, boxes: TextBox[], script: OcrScript, onBatch?: (done: number) => void): Promise<OcrLineResult[]> {
+  const { session: rec, alphabet } = recognizers.get(script)!;
   const order = boxes.map((box, i) => ({ box, i, ...recognitionWidth(box) })).sort((a, b) => a.content - b.content);
   const results: OcrLineResult[] = new Array(boxes.length);
   const maxBatch = backend === "webgpu" ? 8 : 4;
@@ -269,12 +287,12 @@ async function readLines(img: Rgba, boxes: ReturnType<typeof boxesFromProbabilit
     const data = new Float32Array(one * batch.length);
     batch.forEach((b, k) => cropLine(img, b.box, data.subarray(k * one, (k + 1) * one), tw, b.content));
     const input = tensor(data, [batch.length, 3, REC_HEIGHT, tw]);
-    const out = await rec!.run({ [rec!.inputNames[0]]: input });
+    const out = await rec.run({ [rec.inputNames[0]]: input });
     input.dispose();
-    const o = out[rec!.outputNames[0]];
+    const o = out[rec.outputNames[0]];
     const [, steps, classes] = o.dims as number[];
     const scores = await floats(o);
-    for (const k of rec!.outputNames) out[k].dispose();
+    for (const k of rec.outputNames) out[k].dispose();
     if (hasNaN(scores)) throw new EngineError("inference", "NaN");
     batch.forEach((b, k) => {
       // Only the steps covering this crop's content (the rest is padding).
@@ -283,15 +301,33 @@ async function readLines(img: Rgba, boxes: ReturnType<typeof boxesFromProbabilit
       results[b.i] = { box: b.box, text, confidence };
     });
     doneCount += batch.length;
-    progress("read", { jobId, loaded: doneCount, total: boxes.length });
+    onBatch?.(doneCount);
   }
   return results;
 }
 
+const meanConfidence = (lines: OcrLineResult[]) => lines.reduce((s, l) => s + l.confidence, 0) / Math.max(1, lines.length);
+
+/**
+ * Upside-down check: re-read the longest lines turned 180°. Upright text
+ * reads with clearly higher confidence the right way round.
+ */
+async function looksUpsideDown(img: Rgba, lines: OcrLineResult[], script: OcrScript): Promise<boolean> {
+  const sample = lines
+    .filter((l) => [...l.text].length >= 4)
+    .sort((a, b) => Math.max(b.box.w, b.box.h) - Math.max(a.box.w, a.box.h))
+    .slice(0, 4);
+  // Upright text reads with high confidence (≥ 0.8 even on messy handwriting
+  // in our tests; upside down ≈ 0.5): only doubt low-confidence pages.
+  if (!sample.length || meanConfidence(sample) >= 0.75) return false;
+  const flipped = await read(img, sample.map((l) => flipBox(l.box)), script);
+  return meanConfidence(flipped) > meanConfidence(sample) + 0.1;
+}
+
 async function recognize(request: Extract<OcrRequest, { type: "recognize" }>) {
-  if (!det || !rec) throw new EngineError("runtime", "Model not loaded");
   const started = performance.now();
-  const { bitmap, jobId } = request;
+  const { bitmap, jobId, script } = request;
+  await ensureModels(script);
   const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
   const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
   ctx.fillStyle = "#fff";
@@ -300,28 +336,41 @@ async function recognize(request: Extract<OcrRequest, { type: "recognize" }>) {
   bitmap.close();
   const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height);
   canvas.width = canvas.height = 0;
-  const img: Rgba = { data: pixels.data, width: pixels.width, height: pixels.height };
+  const original: Rgba = { data: pixels.data, width: pixels.width, height: pixels.height };
 
   const attempt = async () => {
+    let img = original;
+    let rotation: 0 | 90 | 180 | 270 = 0;
     progress("detect", { jobId });
-    const { prob, size } = await runDetector(img);
-    if (hasNaN(prob)) throw new EngineError("inference", "NaN");
-    const boxes = boxesFromProbability(prob, size.width, size.height, img.width / size.width, img.height / size.height);
-    return readLines(img, boxes, jobId);
+    let boxes = await detect(img);
+    // Photographed sideways: most text runs vertically. Turn it and look again
+    // (the upside-down check below settles which way).
+    if (boxes.length >= 2 && verticalShare(boxes) > 0.6) {
+      img = rotateRgba(img, 90);
+      rotation = 90;
+      boxes = await detect(img);
+    }
+    const readAll = (b: TextBox[]) => read(img, b, script, (n) => progress("read", { jobId, loaded: n, total: b.length }));
+    let lines = await readAll(boxes);
+    if (await looksUpsideDown(img, lines, script)) {
+      img = rotateRgba(img, 180);
+      rotation = rotation === 90 ? 270 : 180;
+      boxes = await detect(img);
+      lines = await readAll(boxes);
+    }
+    return { img, rotation, lines };
   };
 
-  let lines: OcrLineResult[];
+  let r: Awaited<ReturnType<typeof attempt>>;
   try {
-    lines = await attempt();
+    r = await attempt();
   } catch (error) {
     if (backend !== "webgpu") throw error;
     // Some GPU drivers fail or produce NaNs in float16: WASM is exact.
-    progress("init");
-    await createSessions("wasm");
-    post({ type: "loaded", backend });
-    lines = await attempt();
+    await fallBackToWasm(script);
+    r = await attempt();
   }
-  post({ type: "result", jobId, width: img.width, height: img.height, lines, backend, ms: performance.now() - started });
+  post({ type: "result", jobId, width: r.img.width, height: r.img.height, rotation: r.rotation, lines: r.lines, backend, ms: performance.now() - started });
 }
 
 // ── Message loop (sequential) ──────────────────────────────────────────────

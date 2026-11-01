@@ -135,5 +135,10 @@
   "hw.startOver": "Neu beginnen",
   "hw.downloadTxt": "TXT herunterladen",
   "hw.tooManyPages": "Nur die ersten {n} Seiten werden gelesen.",
-  "hw.safeMode": "Dauert länger als erwartet: Neustart im Kompatibilitätsmodus…"
+  "hw.safeMode": "Dauert länger als erwartet: Neustart im Kompatibilitätsmodus…",
+  "hw.pasted": "Eingefügtes Bild",
+  "hw.pasteHint": "Oder einen Screenshot bzw. ein kopiertes Bild mit {keys} einfügen",
+  "hw.script": "Schrift",
+  "hw.scriptLatin": "Lateinische Schrift",
+  "hw.time": "In {seconds} s gelesen."
 }

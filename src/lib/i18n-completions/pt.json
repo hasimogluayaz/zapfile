@@ -669,5 +669,10 @@
   "hw.startOver": "Recomeçar",
   "hw.downloadTxt": "Baixar TXT",
   "hw.tooManyPages": "Apenas as primeiras {n} páginas são lidas.",
-  "hw.safeMode": "Demorando mais que o esperado: reiniciando no modo de compatibilidade…"
+  "hw.safeMode": "Demorando mais que o esperado: reiniciando no modo de compatibilidade…",
+  "hw.pasted": "Imagem colada",
+  "hw.pasteHint": "Ou cole uma captura de tela ou uma imagem copiada com {keys}",
+  "hw.script": "Escrita",
+  "hw.scriptLatin": "Alfabeto latino",
+  "hw.time": "Lido em {seconds} s."
 }
