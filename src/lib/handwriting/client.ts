@@ -100,7 +100,10 @@ export class HandwritingEngine {
   load(): Promise<OcrBackend> {
     if (!this.loadPromise) {
       this.loadPromise = new Promise((resolve, reject) => (this.loadSettle = { resolve, reject }));
-      this.send({ type: "load", ortBase: ORT_BASE, preferGpu: true });
+      // WASM only: on some GPUs the float16 WebGPU session never finished
+      // starting (first real-world test). WASM is exact and, with threads on
+      // this cross-origin isolated page, fast enough for these small models.
+      this.send({ type: "load", ortBase: ORT_BASE, preferGpu: false });
     }
     return this.loadPromise;
   }

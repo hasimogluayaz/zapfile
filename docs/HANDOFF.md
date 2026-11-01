@@ -146,6 +146,8 @@ PR #7 merge edilmişti; branch `main`'den yeniden başlatıldı. Kullanıcı "el
 - **Neden bu model:** Bu ortamda Hugging Face engelli (TrOCR indirilemedi; zaten sadece İngilizce). PP-OCRv6 npm'den alındı; el yazısı fontlarıyla üretilen test sayfalarında (telefon fotoğrafı bozulmaları dahil) ~%2–6 karakter hatası. **Gerçek el yazısıyla henüz denenmedi**: kullanıcıdan örnek fotoğraf istendi.
 - Hız (headless Chromium, GPU yok, tek çekirdek): ilk kullanımda indirme dahil ~5 sn/sayfa.
 - Changelog v2.2.0, 9 dilde metinler, SEO başlıkları, SSS (EN).
+- **Kullanıcı testi (önizleme, Windows Chrome):** "Yapay zekâ modeli başlatılıyor %100"de takıldı → WebGPU fp16 oturumu açılmıyordu. Düzeltme: yalnız WASM + sayfaya COOP/COEP (çok çekirdek) + algılama 960 px. Headless'ta 4 sayfa 20 → 10 sn; tek fotoğraf ilk açılışta 5 sn, sonra ~3 sn. Kullanıcının gerçek el yazısı örneği (ekran görüntüsünden kırpılmış) büyük ölçüde doğru okundu.
+- Kullanıcı Hetzner sunucusunu büyütüp OCR'ı sunucuda yapmayı önerdi; önerilmedi: OCR kullanıcının cihazında bedava ve 1 vCPU sunucudan hızlı. Sunucu sadece Office → PDF için.
 - **PR açılmadı**; kullanıcı onay verirse PR + merge.
 
 ## Sıradaki işler

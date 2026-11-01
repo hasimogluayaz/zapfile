@@ -34,6 +34,12 @@ const OFFICE_TOOL_PATHS = [
   ),
 ];
 
+// Handwriting to Text: isolation gives ONNX Runtime's WASM backend threads.
+const HANDWRITING_PATHS = [
+  "/tools/handwriting-to-text",
+  ...Object.entries(localizedToolSlugs).map(([locale, slugs]) => `/${locale}/${slugs["handwriting-to-text"]}`),
+];
+
 const pkgVersion = (name) =>
   JSON.parse(fs.readFileSync(new URL(`./node_modules/${name}/package.json`, import.meta.url), "utf8")).version;
 
@@ -60,6 +66,19 @@ const nextConfig = {
   async headers() {
     return [
       ...OFFICE_TOOL_PATHS.map((source) => ({ source, headers: ISOLATION_HEADERS })),
+      ...HANDWRITING_PATHS.map((source) => ({ source, headers: ISOLATION_HEADERS })),
+      {
+        // A worker started by an isolated page must itself be served with COEP,
+        // or the browser blocks it (Handwriting to Text's worker is a Next chunk).
+        // Harmless for every other page: these are same-origin scripts.
+        source: "/_next/static/:path*",
+        headers: [{ key: "Cross-Origin-Embedder-Policy", value: "require-corp" }, { key: "Cross-Origin-Resource-Policy", value: "same-origin" }],
+      },
+      {
+        // ONNX Runtime's threaded WASM starts its own workers from here.
+        source: "/vendor/ort-:version/:file*",
+        headers: [...ISOLATION_HEADERS, { key: "Cross-Origin-Resource-Policy", value: "same-origin" }],
+      },
       {
         source: "/vendor/libreoffice-:version/:file*",
         headers: [...ISOLATION_HEADERS, { key: "Cross-Origin-Resource-Policy", value: "same-origin" }],

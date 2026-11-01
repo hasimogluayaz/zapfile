@@ -65,6 +65,6 @@ export function ocrCacheKey(file: OcrModelFile): string {
 }
 
 /** Long side the detector runs at (multiples of 32). */
-export const DETECT_MAX_SIDE = 1280;
+export const DETECT_MAX_SIDE = 960;
 /** Long side of the image lines are cut from. */
 export const IMAGE_MAX_SIDE = 2560;
