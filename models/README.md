@@ -68,6 +68,15 @@ To recreate the parts: `gzip -9 -n -c soffice.wasm | split -b 19000000 -d -a 2 -
 | `rec.onnx` | input `x` float16 [N, 3, 48, W ≥ 320], BGR, (x/255 − 0.5)/0.5 → CTC scores [N, W/8, 18711] (blank, `dict.json` characters, space). 10,624,002 bytes, SHA-256 `f6ee9c86013fdd02cf9dfdf311813e1f2fe56e83d2b5f12994617dfa05d3b9cb` |
 | `dict.json` | `{ characters: [...] }`, 112,408 bytes, SHA-256 `6e93cc028ff774c8bef0801ad08391f8284f7ef897013a9aeb9cbd515db3276d` |
 
+| `rec-latin.onnx` | `rec.onnx` with its output layer cut to the 566 Latin/Greek/punctuation characters of `dict-latin.json` (`tools/ocr_prune_charset.py`): same results on Latin text (checked on real and test pages), 6,233,083 bytes instead of 10.6 MB, and a 567-class output instead of 18,710 (faster decoding). SHA-256 `01efad51fcf62a4eaf0d2e8a10325c8d02da7b14fbe110af9ed29f03a379875a` |
+| `dict-latin.json` | 2,927 bytes, SHA-256 `b1a1c5aa2cc7372f957a46aa664b9e5ca60a6d9a6183773366faa7a8ac4313d1` |
+
+The default is `rec-latin.onnx`; the full `rec.onnx` + `dict.json` are only downloaded for Japanese or Chinese text.
+
 The float16 files run on both ONNX Runtime Web execution providers (WebGPU and
 WASM) with the same results as the float32 originals on our test pages.
 Pre/post-processing: `src/lib/handwriting/pipeline.ts`.
+
+## lexicons/ — word lists for Handwriting to Text
+
+`<lang>.txt` (tr, en, de, fr, es, pt, it): the 50,000 most frequent alphabetic words of each language, most frequent first, from [wordfreq](https://github.com/rspeer/wordfreq) 3.1.1 by Robyn Speer. **Data license: CC BY-SA 4.0**; these filtered lists are shared under the same license (header lines starting with `#`). Used to re-score uncertain words with the recognizer's own character probabilities (CTC), not as blind spell-check.
