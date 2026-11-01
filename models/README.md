@@ -76,3 +76,9 @@ The default is `rec-latin.onnx`; the full `rec.onnx` + `dict.json` are only down
 The float16 files run on both ONNX Runtime Web execution providers (WebGPU and
 WASM) with the same results as the float32 originals on our test pages.
 Pre/post-processing: `src/lib/handwriting/pipeline.ts`.
+
+## lexicons/ — Turkish word list for Handwriting to Text
+
+`tr.txt`: the 50,000 most frequent alphabetic Turkish words, most frequent first, from [wordfreq](https://github.com/rspeer/wordfreq) 3.1.1 by Robyn Speer, minus 920 English words that are far more frequent in English (loanword noise such as "get", "rain": Turkish rank > 1,000 and > 10 × their English rank). **Data license: CC BY-SA 4.0**; this filtered list is shared under the same license (header lines starting with `#`). 477,674 bytes (≈ 200 KB compressed), SHA-256 `28884a183b62be43b0337487222b0bd1c3067cf224192d67a40cf380c59a910e`.
+
+Downloaded only for Turkish pages. `src/lib/handwriting/language.ts` re-scores each word with the recognizer's own character probabilities (CTC) plus the word's frequency: it puts back ı/ş/ğ/ç (which the recognizer hardly ever outputs for handwriting) and fixes a handwritten "a" read as "o", but a word is only replaced by one the recognizer considers possible at every letter.
