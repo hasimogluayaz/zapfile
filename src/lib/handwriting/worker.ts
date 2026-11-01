@@ -5,8 +5,8 @@
  * lines with ONNX Runtime Web, all off the main thread. Nothing leaves the device.
  */
 import type * as OrtModule from "onnxruntime-web";
-import { correctLine, learnConfusions, lexicalPairs, looksTurkish, parseLexicon, sparsifyScores, type Confusions, type Lexicon, type SparseScores } from "./language";
-import { DETECT_MAX_SIDE, OCR_ALL_FILES, OCR_CACHE, OCR_LEXICON_TR, ocrCacheKey, ocrFiles, type OcrModelFile, type OcrScript } from "./models";
+import { correctLine, hasTurkish, learnConfusions, lexicalPairs, lineLanguage, looksTurkish, parseLexicon, sparsifyScores, type Confusions, type Lexicon, type SparseScores } from "./language";
+import { DETECT_MAX_SIDE, OCR_ALL_FILES, OCR_CACHE, OCR_LEXICON_EN, OCR_LEXICON_TR, ocrCacheKey, ocrFiles, type OcrModelFile, type OcrScript } from "./models";
 import {
   boxesFromProbability,
   buildAlphabet,
@@ -163,17 +163,21 @@ async function fetchFiles(files: OcrModelFile[], quiet = false): Promise<Uint8Ar
   return results;
 }
 
-/** Turkish word list, loaded once (null when it can't be: correction is skipped). */
-let lexicon: Promise<Lexicon | null> | null = null;
-function turkishLexicon(): Promise<Lexicon | null> {
-  lexicon ??= fetchFiles([OCR_LEXICON_TR], true)
-    .then(([bytes]) => parseLexicon(new TextDecoder().decode(bytes)))
-    .catch((error) => {
-      console.warn("[handwriting] word list unavailable", error);
-      lexicon = null; // try again with the next page
-      return null;
-    });
-  return lexicon;
+/** Word lists, loaded once each (null when one can't be: correction is skipped). */
+const lexicons = new Map<OcrModelFile, Promise<Lexicon | null>>();
+function wordList(file: OcrModelFile): Promise<Lexicon | null> {
+  let p = lexicons.get(file);
+  if (!p) {
+    p = fetchFiles([file], true)
+      .then(([bytes]) => parseLexicon(new TextDecoder().decode(bytes)))
+      .catch((error) => {
+        console.warn("[handwriting] word list unavailable", error);
+        lexicons.delete(file); // try again with the next page
+        return null;
+      });
+    lexicons.set(file, p);
+  }
+  return p;
 }
 
 // ── Runtime ────────────────────────────────────────────────────────────────
@@ -231,7 +235,7 @@ async function ensureModels(script: OcrScript) {
 
 async function load(request: Extract<OcrRequest, { type: "load" }>) {
   // Turkish UI: fetch the word list alongside the models.
-  if (request.language === "tr") void turkishLexicon();
+  if (request.language === "tr") void wordList(OCR_LEXICON_TR);
   const gpu = request.preferGpu && (await hasWebGpu());
   try {
     await loadRuntime(request.ortBase, gpu, request.threads);
@@ -358,16 +362,27 @@ async function looksUpsideDown(img: Rgba, lines: OcrLineResult[], script: OcrScr
  * letters get misread. Best effort: without the list the lines stay as read.
  */
 async function polish(lines: OcrLineResult[], kept: LineScores, script: OcrScript, language?: string): Promise<OcrLineResult[]> {
-  if (script !== "latin" || !looksTurkish(lines.map((l) => l.text), language)) return lines;
-  const lex = await turkishLexicon();
+  if (script !== "latin") return lines;
+  const texts = lines.map((l) => l.text);
+  const turkish = looksTurkish(texts, language);
+  // English lessons with Turkish explanations: correct the Turkish, leave the English.
+  const mixed = !turkish && hasTurkish(texts, language);
+  if (!turkish && !mixed) return lines;
+  const [lex, en] = await Promise.all([wordList(OCR_LEXICON_TR), mixed ? wordList(OCR_LEXICON_EN) : null]);
   const rec = recognizers.get(script);
-  if (!lex || !rec) return lines;
+  if (!lex || !rec || (mixed && !en)) return lines;
+  /** Mixed pages: lines that are clearly English stay as read. */
+  const english = (text: string) => {
+    if (!mixed || !en) return false;
+    const n = lineLanguage(text, lex, en);
+    return n.en >= 3 && n.en > 2 * n.tr;
+  };
   const pass = (confusions: Confusions) => {
     const words: [string, string][] = [];
     const out = lines.map((line) => {
       const k = kept.get(line);
-      if (!k || !line.positions) return line;
-      const fixed = correctLine({ text: line.text, positions: line.positions, spans: k.spans }, k.scores, rec.alphabet, lex, { confusions });
+      if (!k || !line.positions || english(line.text)) return line;
+      const fixed = correctLine({ text: line.text, positions: line.positions, spans: k.spans }, k.scores, rec.alphabet, lex, { confusions, protect: en ?? undefined });
       words.push(...fixed.words);
       return fixed.changed ? { ...line, text: fixed.text, positions: fixed.positions } : line;
     });
@@ -375,7 +390,7 @@ async function polish(lines: OcrLineResult[], kept: LineScores, script: OcrScrip
   };
   const first = pass({});
   // Second pass with what the page taught us about this hand (an "a" that looks like "o").
-  const confusions = learnConfusions([...first.words, ...lexicalPairs(lines.map((l) => l.text), lex)]);
+  const confusions = learnConfusions([...first.words, ...lexicalPairs(texts.filter((t) => !english(t)), lex)]);
   return Object.keys(confusions).length ? pass(confusions).out : first.out;
 }
 

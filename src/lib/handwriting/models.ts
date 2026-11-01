@@ -15,7 +15,7 @@ export interface OcrModelFile {
 }
 
 const REPO = "hasimogluayaz/zapfile";
-const COMMIT = "4b0398f3bb5eff2468e8dfc3f22478a5b951fbd6";
+const COMMIT = "a14afacdc16210222f106366c2c4876bc0d689ce";
 const DIR = "models/ppocrv6-small";
 
 function sources(name: string, dir = DIR): string[] {
@@ -88,6 +88,19 @@ export const OCR_LEXICON_TR: OcrModelFile = {
   urls: sources("tr.txt", "models/lexicons"),
 };
 
+/**
+ * English word list (30,000 words, wordfreq, CC BY-SA 4.0;
+ * models/lexicons/en.txt). Loaded only for pages mixing English and
+ * Turkish, so the English stays as read. About 75 KB compressed.
+ */
+export const OCR_LEXICON_EN: OcrModelFile = {
+  id: "en-words-30k",
+  name: "en.txt",
+  bytes: 177_710,
+  sha256: "caf4bd24d3c1bf2f51846e21fc4f19c7982a5441aa3a376f230fdf3398e12756",
+  urls: sources("en.txt", "models/lexicons"),
+};
+
 export type OcrScript = "latin" | "cjk";
 
 /** Files needed for a script. */
@@ -104,7 +117,7 @@ export function ocrDownloadBytes(script: OcrScript): number {
 }
 
 /** Every file this version uses (older cached versions are pruned). */
-export const OCR_ALL_FILES = [OCR_DETECTOR, OCR_RECOGNIZER_LATIN, OCR_DICTIONARY_LATIN, OCR_RECOGNIZER, OCR_DICTIONARY, OCR_LEXICON_TR];
+export const OCR_ALL_FILES = [OCR_DETECTOR, OCR_RECOGNIZER_LATIN, OCR_DICTIONARY_LATIN, OCR_RECOGNIZER, OCR_DICTIONARY, OCR_LEXICON_TR, OCR_LEXICON_EN];
 
 /** Own Cache Storage bucket: entries of older model versions are pruned on load. */
 export const OCR_CACHE = "zapfile-ocr-v1";

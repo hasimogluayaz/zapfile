@@ -169,6 +169,13 @@ export interface CorrectOptions {
    * the time (`learnConfusions`).
    */
   confusions?: Confusions;
+  /**
+   * English word list: a word read as a common English word that is more
+   * frequent in English than in Turkish stays as read ("would", "there").
+   */
+  protect?: Lexicon;
+  /** Least score for a change of letters (putting back diacritics needs none). */
+  minScore?: number;
 }
 
 export type Confusions = Record<string, Record<string, number>>;
@@ -191,7 +198,7 @@ export function correctLine(
   scores: SparseScores,
   alphabet: string[],
   lexicon: Lexicon,
-  { weight = 1, minLength = 3, onChange, confusions = {} }: CorrectOptions = {},
+  { weight = 1, minLength = 3, onChange, confusions = {}, protect, minScore = 0 }: CorrectOptions = {},
 ): { text: string; positions: number[]; changed: number; words: [string, string][] } {
   const chars = [...line.text];
   if (chars.length !== line.spans.length) return { text: line.text, positions: line.positions, changed: 0, words: [] };
@@ -256,6 +263,13 @@ export function correctLine(
     if (word.length < minLength) return null;
     // Acronyms and abbreviations ("TL", "ABD") stay as they are.
     if (word.every((c) => c === c.toLocaleUpperCase("tr") && c !== c.toLocaleLowerCase("tr"))) return null;
+    if (protect) {
+      const read = foldTurkish(word.join(""));
+      const en = protect.forms.get(read);
+      if (en && en.rank < (lexicon.forms.get(read)?.rank ?? Infinity)) return null;
+      // The pronoun run into the next word ("Ido" = "I do") isn't Turkish "İdo".
+      if (word[0] === "I" && protect.forms.has(read.slice(1))) return null;
+    }
     // The word's time steps, including the blanks around it.
     const t0 = k > 0 ? line.spans[k - 1][1] + 1 : 0;
     const t1 = e < chars.length ? line.spans[e][0] - 1 : scores.steps - 1;
@@ -315,7 +329,8 @@ export function correctLine(
     if (!best) return null;
     // Short words ("osm" for Osmanlı) need clear evidence to change letters;
     // putting back Turkish letters ("ait", "kız") needs none.
-    if (word.length <= 3 && best.score < 3 && foldTurkish(best.word) !== foldTurkish(word.join(""))) return null;
+    const sameLetters = foldTurkish(best.word) === foldTurkish(word.join(""));
+    if (!sameLetters && best.score < Math.max(minScore, word.length <= 3 ? 3 : 0)) return null;
     words.push([word.join(""), best.word]);
     // Keep a capital first letter (Turkish casing: i → İ).
     const first = word[0] !== word[0].toLowerCase();
@@ -417,6 +432,41 @@ const TURKISH_ENDINGS = /(lar|ler|nin|nun|dir|dur|tir|tur|mis|yor|dan|den|tan|te
  * Turkish page, text counts as Turkish unless it clearly reads as English.
  */
 export function looksTurkish(texts: string[], hint?: string): boolean {
+  const { tr, en } = languageScores(texts);
+  if (hint === "tr") return tr >= en;
+  return tr >= 3 && tr > 2 * en;
+}
+
+/**
+ * Whether a page that isn't mostly Turkish still has Turkish in it (English
+ * lessons with Turkish explanations): its Turkish words are corrected, its
+ * English words left alone (`protect` in correctLine).
+ */
+export function hasTurkish(texts: string[], hint?: string): boolean {
+  const { tr } = languageScores(texts);
+  return tr >= (hint === "tr" ? 2 : 4);
+}
+
+/**
+ * Words of a line that read as Turkish and as English, by the word lists: a
+ * word counts for the language where it is more frequent; a non-word that
+ * becomes a common Turkish word by swapping o/a/u counts as Turkish.
+ */
+export function lineLanguage(text: string, tr: Lexicon, en: Lexicon): { tr: number; en: number } {
+  let t = 0, e = 0;
+  for (const raw of text.split(/[^\p{L}]+/u)) {
+    if (!raw) continue;
+    const w = foldTurkish(raw);
+    const rt = tr.forms.get(w)?.rank ?? Infinity, re = en.forms.get(w)?.rank ?? Infinity;
+    if (re < rt) e++;
+    else if (rt <= 50_000) t++;
+    else if (rt === Infinity && w.length >= 4 && lexicalPairs([w], tr).length) t++;
+  }
+  return { tr: t, en: e };
+}
+
+/** Turkish and English evidence in recognized text (stopwords, Turkish letters and endings). */
+export function languageScores(texts: string[]): { tr: number; en: number } {
   let tr = 0, en = 0;
   for (const text of texts) {
     for (const raw of text.split(/[^\p{L}]+/u)) {
@@ -428,6 +478,5 @@ export function looksTurkish(texts: string[], hint?: string): boolean {
       else if (w.length >= 5 && TURKISH_ENDINGS.test(w)) tr += 0.5;
     }
   }
-  if (hint === "tr") return tr >= en;
-  return tr >= 3 && tr > 2 * en;
+  return { tr, en };
 }

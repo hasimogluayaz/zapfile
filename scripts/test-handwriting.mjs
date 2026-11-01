@@ -120,6 +120,28 @@ assert.deepEqual(P.cleanNoteLines(["L He comes."]), ["L He comes."], "one mark a
     assert.equal(L.correctLine(d, sparse, alphabet, rare).text, "korsi");
     assert.equal(L.correctLine(d, sparse, alphabet, rare, { confusions: { a: { o: 0.6 } } }).text, "karşı");
   }
+  // Mixed pages: English words stay; "Ido" is the pronoun, not "İdo".
+  {
+    const tr = L.parseLexicon("=100\n0ido\n=200\n0şey\n=3000\n0shane\n");
+    const en = L.parseLexicon("=50\n0do\n=300\n0shame\n");
+    const al = P.buildAlphabet(["I", "d", "o", "s", "h", "a", "m", "e", "n"]);
+    const word = (text) => {
+      const steps = [];
+      for (const c of text) {
+        steps.push(Array.from({ length: al.length - 1 }, (_, k) => (al[k] === c ? 1 : 0)));
+        steps.push(Array.from({ length: al.length - 1 }, (_, k) => (k === 0 ? 1 : 0)));
+      }
+      const scores = Float32Array.from(steps.flat());
+      const d = P.ctcDecode(scores, steps.length, al.length - 1, al);
+      return [d, L.sparsifyScores(scores, steps.length, al.length - 1, 4)];
+    };
+    const [ido, idoScores] = word("Ido");
+    assert.equal(L.correctLine(ido, idoScores, al, tr).text, "İdo");
+    assert.equal(L.correctLine(ido, idoScores, al, tr, { protect: en }).text, "Ido");
+    const [shame, shameScores] = word("shame");
+    assert.equal(L.correctLine(shame, shameScores, al, tr, { protect: en }).text, "shame");
+    assert.deepEqual(L.lineLanguage("it would be nice", L.parseLexicon("ve\n"), L.parseLexicon("it\nwould\nbe\nnice\n")), { tr: 0, en: 4 });
+  }
   // Language: Turkish notes vs English notes; a Turkish UI tips unclear text.
   assert.equal(L.looksTurkish(["Rusya ve italya arasinda yapildi", "Bu konuyu ayrica konusmaliyim"]), true);
   assert.equal(L.looksTurkish(["It is raining now, so take an umbrella", "I always drink coffee in the morning"], "tr"), false);
