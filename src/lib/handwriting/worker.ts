@@ -5,13 +5,15 @@
  * lines with ONNX Runtime Web, all off the main thread. Nothing leaves the device.
  */
 import type * as OrtModule from "onnxruntime-web";
-import { DETECT_MAX_SIDE, OCR_ALL_FILES, OCR_CACHE, ocrCacheKey, ocrFiles, type OcrModelFile, type OcrScript } from "./models";
+import { correctLine, looksTurkish, parseLexicon, sparsifyScores, type Lexicon, type SparseScores } from "./language";
+import { DETECT_MAX_SIDE, OCR_ALL_FILES, OCR_CACHE, OCR_LEXICON_TR, ocrCacheKey, ocrFiles, type OcrModelFile, type OcrScript } from "./models";
 import {
   boxesFromProbability,
   buildAlphabet,
   cropLine,
   ctcDecode,
   detectionInput,
+  dropMarginMarks,
   detectionSize,
   flipBox,
   floatsToHalf,
@@ -90,14 +92,15 @@ async function download(url: string, file: OcrModelFile, onBytes: (n: number) =>
 
 let pruned = false;
 
-/** Files from the cache or downloaded, with combined progress. */
-async function fetchFiles(files: OcrModelFile[]): Promise<Uint8Array[]> {
+/** Files from the cache or downloaded, with combined progress (none when `quiet`). */
+async function fetchFiles(files: OcrModelFile[], quiet = false): Promise<Uint8Array[]> {
   const cache = await openCache();
   const total = files.reduce((s, f) => s + f.bytes, 0);
   const done = new Map<string, number>();
   let lastReport = 0;
   let allCached = true;
   const report = (force = false) => {
+    if (quiet) return;
     const now = performance.now();
     if (!force && now - lastReport < 100) return;
     lastReport = now;
@@ -160,6 +163,19 @@ async function fetchFiles(files: OcrModelFile[]): Promise<Uint8Array[]> {
   return results;
 }
 
+/** Turkish word list, loaded once (null when it can't be: correction is skipped). */
+let lexicon: Promise<Lexicon | null> | null = null;
+function turkishLexicon(): Promise<Lexicon | null> {
+  lexicon ??= fetchFiles([OCR_LEXICON_TR], true)
+    .then(([bytes]) => parseLexicon(new TextDecoder().decode(bytes)))
+    .catch((error) => {
+      console.warn("[handwriting] word list unavailable", error);
+      lexicon = null; // try again with the next page
+      return null;
+    });
+  return lexicon;
+}
+
 // ── Runtime ────────────────────────────────────────────────────────────────
 
 async function hasWebGpu(): Promise<boolean> {
@@ -214,6 +230,8 @@ async function ensureModels(script: OcrScript) {
 }
 
 async function load(request: Extract<OcrRequest, { type: "load" }>) {
+  // Turkish UI: fetch the word list alongside the models.
+  if (request.language === "tr") void turkishLexicon();
   const gpu = request.preferGpu && (await hasWebGpu());
   try {
     await loadRuntime(request.ortBase, gpu, request.threads);
@@ -277,8 +295,11 @@ async function detect(img: Rgba): Promise<TextBox[]> {
   return boxesFromProbability(prob, size.width, size.height, img.width / size.width, img.height / size.height);
 }
 
-/** Read boxes in batches of similar width (one padded tensor per batch). */
-async function read(img: Rgba, boxes: TextBox[], script: OcrScript, onBatch?: (done: number) => void): Promise<OcrLineResult[]> {
+/** What the word-list correction needs of a line: character time steps and the likeliest classes per step. */
+type LineScores = Map<OcrLineResult, { spans: [number, number][]; scores: SparseScores }>;
+
+/** Read boxes in batches of similar width (one padded tensor per batch); `keep` collects LineScores. */
+async function read(img: Rgba, boxes: TextBox[], script: OcrScript, onBatch?: (done: number) => void, keep?: LineScores): Promise<OcrLineResult[]> {
   const { session: rec, alphabet } = recognizers.get(script)!;
   const order = boxes.map((box, i) => ({ box, i, ...recognitionWidth(box) })).sort((a, b) => a.content - b.content);
   const results: OcrLineResult[] = new Array(boxes.length);
@@ -301,9 +322,11 @@ async function read(img: Rgba, boxes: TextBox[], script: OcrScript, onBatch?: (d
     batch.forEach((b, k) => {
       // Only the steps covering this crop's content (the rest is padding).
       const used = Math.min(steps, Math.ceil((b.content / tw) * steps) + 1);
-      const { text, confidence, positions } = ctcDecode(scores.subarray(k * steps * classes, (k * steps + used) * classes), used, classes, alphabet, { typeRatio: 0.05 });
+      const own = scores.subarray(k * steps * classes, (k * steps + used) * classes);
+      const { text, confidence, positions, spans } = ctcDecode(own, used, classes, alphabet, { typeRatio: 0.05 });
       // Positions are along the content, which fills the box.
       results[b.i] = { box: b.box, text, confidence, positions: positions.map((p) => Math.min(1, (p * used * tw) / (steps * b.content))) };
+      keep?.set(results[b.i], { spans, scores: sparsifyScores(own, used, classes) });
     });
     doneCount += batch.length;
     onBatch?.(doneCount);
@@ -327,6 +350,23 @@ async function looksUpsideDown(img: Rgba, lines: OcrLineResult[], script: OcrScr
   if (!sample.length || meanConfidence(sample) >= 0.75) return false;
   const flipped = await read(img, sample.map((l) => flipBox(l.box)), script);
   return meanConfidence(flipped) > meanConfidence(sample) + 0.1;
+}
+
+/**
+ * Turkish pages: re-score words against the Turkish word list (ı/ş/ğ/ç, a/o
+ * confusions; see language.ts). Best effort: without the list the lines stay as read.
+ */
+async function polish(lines: OcrLineResult[], kept: LineScores, script: OcrScript, language?: string): Promise<OcrLineResult[]> {
+  if (script !== "latin" || !looksTurkish(lines.map((l) => l.text), language)) return lines;
+  const lex = await turkishLexicon();
+  const rec = recognizers.get(script);
+  if (!lex || !rec) return lines;
+  return lines.map((line) => {
+    const k = kept.get(line);
+    if (!k || !line.positions) return line;
+    const fixed = correctLine({ text: line.text, positions: line.positions, spans: k.spans }, k.scores, rec.alphabet, lex);
+    return fixed.changed ? { ...line, text: fixed.text, positions: fixed.positions } : line;
+  });
 }
 
 async function recognize(request: Extract<OcrRequest, { type: "recognize" }>) {
@@ -355,7 +395,8 @@ async function recognize(request: Extract<OcrRequest, { type: "recognize" }>) {
       rotation = 90;
       boxes = await detect(img);
     }
-    const readAll = (b: TextBox[]) => read(img, b, script, (n) => progress("read", { jobId, loaded: n, total: b.length }));
+    let kept: LineScores = new Map();
+    const readAll = (b: TextBox[]) => read(img, b, script, (n) => progress("read", { jobId, loaded: n, total: b.length }), (kept = new Map()));
     let lines = await readAll(boxes);
     if (await looksUpsideDown(img, lines, script)) {
       img = rotateRgba(img, 180);
@@ -363,7 +404,7 @@ async function recognize(request: Extract<OcrRequest, { type: "recognize" }>) {
       boxes = await detect(img);
       lines = await readAll(boxes);
     }
-    return { img, rotation, lines };
+    return { img, rotation, lines: await polish(dropMarginMarks(lines), kept, script, request.language) };
   };
 
   let r: Awaited<ReturnType<typeof attempt>>;

@@ -69,6 +69,8 @@ export class HandwritingEngine {
   private watchdog: ReturnType<typeof setTimeout> | null = null;
   private disposed = false;
   backend: OcrBackend | null = null;
+  /** The page's UI language: a hint for the language of the writing (Turkish word list). */
+  language: string | undefined;
   onProgress: ((event: OcrProgress) => void) | null = null;
 
   constructor() {
@@ -127,6 +129,7 @@ export class HandwritingEngine {
       preferGpu: false,
       threads: false,
       script: this.script,
+      language: this.language,
     });
     for (const [jobId, job] of this.jobs) void this.post(jobId, job.source, job.script);
     this.arm();
@@ -201,6 +204,7 @@ export class HandwritingEngine {
         preferGpu: false,
         threads: !this.safe,
         script: (this.script = script),
+        language: this.language,
       });
       this.arm();
     }
@@ -221,7 +225,7 @@ export class HandwritingEngine {
             resizeQuality: "high",
           })
         : await createImageBitmap(source);
-    this.send({ type: "recognize", jobId, bitmap, script }, [bitmap]);
+    this.send({ type: "recognize", jobId, bitmap, script, language: this.language }, [bitmap]);
   }
 
   /** Recognize the text in an image. `source` must stay open until this settles. */

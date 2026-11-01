@@ -428,7 +428,7 @@ export function ctcDecode(
   classes: number,
   alphabet: string[],
   { spaceBoost = 1, typeRatio = 0 }: DecodeOptions = {},
-): { text: string; confidence: number; positions: number[] } {
+): { text: string; confidence: number; positions: number[]; spans: [number, number][] } {
   let space = -1;
   for (let c = 1; c < alphabet.length && c < classes; c++) if (alphabet[c] === " ") { space = c; break; }
   // Greedy path, remembering each emitted character's time steps.
@@ -500,17 +500,20 @@ export function ctcDecode(
   // Text with single spaces, and where each character sits along the line.
   let text = "";
   const positions: number[] = [];
+  const spans: [number, number][] = [];
   out.forEach((ch, q) => {
     const blank = /\s/.test(ch);
     if (blank && (!text || text.endsWith(" "))) return;
     text += blank ? " " : ch;
     positions.push((chars[q].from + chars[q].to + 1) / 2 / steps);
+    spans.push([chars[q].from, chars[q].to]);
   });
   if (text.endsWith(" ")) {
     text = text.slice(0, -1);
     positions.pop();
+    spans.pop();
   }
-  return { text, confidence: chars.length ? conf / chars.length : 0, positions };
+  return { text, confidence: chars.length ? conf / chars.length : 0, positions, spans };
 }
 
 /** Alphabet for the recognizer: blank, the dictionary, then a space. */
@@ -636,7 +639,11 @@ export function cleanNoteLines(texts: string[]): string[] {
     t
       // Arrows: "-)", "—)", "->", "-→", "=>" at the start of a word.
       .replace(/(^|[\s(])[-—–=]+\s?[)>→]\s*/g, "$1→ ")
+      // An arrow whose shaft was lost: a line starting with ")" or ">".
+      .replace(/^\s*[)>]\s*(?=\p{L})/u, "→ ")
       .replace(/→\s*/g, "→ ")
+      // A dot bullet read as a full stop or middle dot: ". Item" → "• Item".
+      .replace(/^\s*[.·∙●]\s*(?=\p{L})/u, "• ")
       // Contractions of I.
       .replace(/(^|[^\p{L}\d])[l1|]'(m|ve|d|ll)\b/gu, "$1I'$2")
       // A lone l or | is I; a lone 1 is I before a word that follows I.
@@ -658,6 +665,43 @@ export function cleanNoteLines(texts: string[]): string[] {
   const isHook = (t: string) => HOOK_BULLETS.has(first(t)) && (first(t) !== "4" || letterHook || sentence(t));
   const hooks = fixed.filter(isHook).length;
   return fixed.map((t) => (hooks >= 2 && isHook(t) ? "↳" + t.slice(first(t).length) : t));
+}
+
+// ── Margin marks ───────────────────────────────────────────────────────────
+
+/** Characters of a box's text, without spaces. */
+const inkLength = (t: string) => [...t.replace(/\s/g, "")].length;
+
+/**
+ * Drop marks that aren't writing: the rings of a spiral binding or punched
+ * holes, read as a column of stray one- or two-character "words" ("9", "a",
+ * "0") beside the text, and single characters read with almost no confidence.
+ * A numbered list in the margin reads with high confidence and stays.
+ */
+export function dropMarginMarks<T extends RecognizedLine>(lines: T[]): T[] {
+  const small = (l: T) => inkLength(l.text) <= 2 && l.box.w <= 2.2 * l.box.h;
+  const text = lines.filter((l) => l.text && !small(l));
+  if (text.length < 3) return lines;
+  const heights = text.map((l) => l.box.h).sort((a, b) => a - b);
+  const typical = heights[Math.floor(heights.length / 2)];
+  const lefts = text.map((l) => l.box.cx - halfWidth(l)).sort((a, b) => a - b);
+  const rights = text.map((l) => l.box.cx + halfWidth(l)).sort((a, b) => a - b);
+  const leftEdge = lefts[Math.floor((lefts.length - 1) * 0.2)];
+  const rightEdge = rights[Math.floor((rights.length - 1) * 0.8)];
+  const drop = new Set<T>();
+  const marks = lines.filter((l) => l.text && small(l));
+  // Columns of marks outside the text block.
+  const used = new Set<T>();
+  for (const m of marks) {
+    if (used.has(m)) continue;
+    const column = marks.filter((o) => !used.has(o) && Math.abs(o.box.cx - m.box.cx) < typical * 1.5);
+    column.forEach((o) => used.add(o));
+    const outside = column.every((o) => o.box.cx + halfWidth(o) < leftEdge || o.box.cx - halfWidth(o) > rightEdge);
+    const confidence = column.reduce((s, o) => s + o.confidence, 0) / column.length;
+    if (column.length >= 3 && outside && confidence < 0.75) column.forEach((o) => drop.add(o));
+  }
+  for (const m of marks) if (inkLength(m.text) === 1 && m.confidence < 0.3) drop.add(m);
+  return drop.size ? lines.filter((l) => !drop.has(l)) : lines;
 }
 
 // ── Assembly ───────────────────────────────────────────────────────────────

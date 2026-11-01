@@ -15,16 +15,16 @@ export interface OcrModelFile {
 }
 
 const REPO = "hasimogluayaz/zapfile";
-const COMMIT = "ae145e3e8741452bb38bf7f607158564a52680d5";
+const COMMIT = "49e88ebf7831cb78801d14096f0f59bc1fde20ba";
 const DIR = "models/ppocrv6-small";
 
-function sources(name: string): string[] {
+function sources(name: string, dir = DIR): string[] {
   // Self-hosted copy (same files, CORS-enabled), e.g. for local testing.
   const base = process.env.NEXT_PUBLIC_OCR_MODEL_URL;
   return [
     ...(base ? [`${base.replace(/\/$/, "")}/${name}`] : []),
-    `https://cdn.jsdelivr.net/gh/${REPO}@${COMMIT}/${DIR}/${name}`,
-    `https://raw.githubusercontent.com/${REPO}/${COMMIT}/${DIR}/${name}`,
+    `https://cdn.jsdelivr.net/gh/${REPO}@${COMMIT}/${dir}/${name}`,
+    `https://raw.githubusercontent.com/${REPO}/${COMMIT}/${dir}/${name}`,
   ];
 }
 
@@ -74,6 +74,20 @@ export const OCR_DICTIONARY: OcrModelFile = {
   urls: sources("dict.json"),
 };
 
+/**
+ * Turkish word list (50,000 most frequent words, wordfreq, CC BY-SA 4.0;
+ * models/lexicons/tr.txt). Loaded only for Turkish pages, to put back
+ * ı/ş/ğ/ç and fix letters handwriting confuses (language.ts). About 200 KB
+ * compressed.
+ */
+export const OCR_LEXICON_TR: OcrModelFile = {
+  id: "wordfreq-tr-50k",
+  name: "tr.txt",
+  bytes: 477_674,
+  sha256: "28884a183b62be43b0337487222b0bd1c3067cf224192d67a40cf380c59a910e",
+  urls: sources("tr.txt", "models/lexicons"),
+};
+
 export type OcrScript = "latin" | "cjk";
 
 /** Files needed for a script. */
@@ -90,7 +104,7 @@ export function ocrDownloadBytes(script: OcrScript): number {
 }
 
 /** Every file this version uses (older cached versions are pruned). */
-export const OCR_ALL_FILES = [OCR_DETECTOR, OCR_RECOGNIZER_LATIN, OCR_DICTIONARY_LATIN, OCR_RECOGNIZER, OCR_DICTIONARY];
+export const OCR_ALL_FILES = [OCR_DETECTOR, OCR_RECOGNIZER_LATIN, OCR_DICTIONARY_LATIN, OCR_RECOGNIZER, OCR_DICTIONARY, OCR_LEXICON_TR];
 
 /** Own Cache Storage bucket: entries of older model versions are pruned on load. */
 export const OCR_CACHE = "zapfile-ocr-v1";

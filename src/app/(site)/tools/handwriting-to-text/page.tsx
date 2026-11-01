@@ -217,8 +217,10 @@ export default function HandwritingToTextPage() {
 
   const engine = useCallback(() => {
     if (!engineRef.current) engineRef.current = new HandwritingEngine();
+    // A hint for the writing's language (Turkish pages get the Turkish word list).
+    engineRef.current.language = locale;
     return engineRef.current;
-  }, []);
+  }, [locale]);
 
   /** Change a page now (the reading loop sees it at once) and in the next render. */
   const update = (id: number, patch: Partial<PageItem>) => {

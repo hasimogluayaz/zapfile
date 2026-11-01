@@ -14,8 +14,9 @@ export interface OcrLineResult {
 }
 
 export type OcrRequest =
-  | { type: "load"; ortBase: string; preferGpu: boolean; threads: boolean; script: OcrScript }
-  | { type: "recognize"; jobId: number; bitmap: ImageBitmap; script: OcrScript };
+  | { type: "load"; ortBase: string; preferGpu: boolean; threads: boolean; script: OcrScript; language?: string }
+  /** `language`: the page's UI language, a hint for the text's language. */
+  | { type: "recognize"; jobId: number; bitmap: ImageBitmap; script: OcrScript; language?: string };
 
 export type OcrResponse =
   | { type: "progress"; jobId?: number; stage: OcrStage; loaded?: number; total?: number; fromCache?: boolean }
