@@ -1,7 +1,7 @@
 # Devir notu (yeni Claude oturumu için)
 
 > Önceki Claude oturumlarında yapılanları, kararları ve sıradaki işleri anlatır.
-> Yeni oturumda önce bunu, sonra `AGENTS.md`'yi oku. Son güncelleme: 2026-10-19.
+> Yeni oturumda önce bunu, sonra `AGENTS.md`'yi oku. Son güncelleme: 2026-11-01.
 
 ## Kullanıcı ve çalışma kuralları
 
@@ -158,7 +158,7 @@ PR #7 merge edilmişti; branch `main`'den yeniden başlatıldı. Kullanıcı "el
 - **9. tur – kullanıcının 4 yeni gerçek fotoğrafı** (`images/4–7.webp`: M. Böcek mektubu (başka el), uzun tarih sayfası, İngilizce dersi + Türkçe açıklama iki sayfa). Doğru metinler yazılıp ölçüldü. Karışık sayfalar "İngilizce" sayıldığı için Türkçe kısımlar hiç düzeltilmiyordu → `hasTurkish` + `lineLanguage` + İngilizce liste (`en.txt`, 75 KB) ile İngilizce satır/kelimeler korunup Türkçe düzeltiliyor. Sonuç: mektup %19,4 → %13,9; tarih %28,5 → %14,8; karışık %23,4 → %22,4 ve %20,6 → %19,5; 35 sayfada kötüleşen yok. Model commit'i `a14afac`.
 - **10. tur – KARAR: araç kaldırıldı.** Kullanıcı hedefi: hata en fazla %5. Cihazda çalışan başka modeller de ölçüldü (PP-OCRv5 mobile ham hali %24–34, v6 small'dan kötü; v6 medium daha önce kötüydü; v5 server ONNX olarak bulunamadı, ~170 MB). Bulut/LLM istenmedi. Kullanıcının kuralı: **"ya tam olacak ya hiç; az ve öz"** → El Yazısı aracı tamamen silindi (hiç canlıya çıkmamıştı; kod git geçmişinde, son hali `700cfca`). Aynı kuralla bütün araçlar tarandı: Metni Sese Çevir (ses dosyası indiremiyor) kaldırıldı, Resimden Renk Seç (Renk Seçici'nin kopyası) ve Resimden Base64 (Base64'ün kopyası) birleştirildi; eski adresler 9 dilde 301 (`RETIRED_TOOLS`, next.config.mjs). Ses Kaydedici incelendi, MP3'ü gerçekten üretiyor → kaldı. 67 araç, 940 sayfa. Changelog v2.2.0 buna göre yazıldı.
 - Kullanıcı Hetzner sunucusunu büyütüp OCR'ı sunucuda yapmayı önerdi; önerilmedi: OCR kullanıcının cihazında bedava ve 1 vCPU sunucudan hızlı. Sunucu sadece Office → PDF için.
-- **PR açılmadı**; kullanıcı onay verirse PR + merge.
+- **Yayınlandı:** kullanıcı "yayınla" dedi → PR #8 (https://github.com/hasimogluayaz/zapfile/pull/8) 2026-11-01'de **squash** ile `main`'e alındı (el yazısı model dosyaları main geçmişine girmesin diye). Branch `main`'den yeniden başlatıldı; yeni iş = yeni PR.
 
 ## Sıradaki işler
 
