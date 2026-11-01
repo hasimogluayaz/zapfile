@@ -56,3 +56,18 @@ The browser concatenates the parts, checks the SHA-256 of the gzip stream, keeps
 unpacks it with `DecompressionStream`. The small loader scripts (`soffice.js`, `soffice.worker.js`,
 `browser.worker.global.js`) are copied from the npm package into `public/vendor/libreoffice-<version>/`.
 To recreate the parts: `gzip -9 -n -c soffice.wasm | split -b 19000000 -d -a 2 --additional-suffix=.bin - wasm-part-`.
+
+## ppocrv6-small/ — Handwriting to Text
+
+| | |
+|---|---|
+| Model | PP-OCRv6 small: DB text detector + SVTR/CTC text recognizer (printed and handwritten text; Latin incl. Turkish, Greek, Chinese, Japanese) |
+| Source | PaddleOCR v3.7.0 (rev `b03f4642`), ONNX exports as packaged in npm `@arcships/light-ocr-model-ppocrv6-small@0.3.4` (`bundle/webgpu/`), converted to float16 with `onnxruntime.transformers.float16` |
+| License | Apache-2.0 (see `ppocrv6-small/LICENSE`) |
+| `det.onnx` | input `x` float16 [1, 3, H, W] (multiples of 32), BGR, ImageNet mean/std → text probability map [1, 1, H, W]. 4,973,761 bytes, SHA-256 `2f0463ba51af55a9f49cae1f18cf905c578d4752236c30456325c817d8e47a1b` |
+| `rec.onnx` | input `x` float16 [N, 3, 48, W ≥ 320], BGR, (x/255 − 0.5)/0.5 → CTC scores [N, W/8, 18711] (blank, `dict.json` characters, space). 10,624,002 bytes, SHA-256 `f6ee9c86013fdd02cf9dfdf311813e1f2fe56e83d2b5f12994617dfa05d3b9cb` |
+| `dict.json` | `{ characters: [...] }`, 112,408 bytes, SHA-256 `6e93cc028ff774c8bef0801ad08391f8284f7ef897013a9aeb9cbd515db3276d` |
+
+The float16 files run on both ONNX Runtime Web execution providers (WebGPU and
+WASM) with the same results as the float32 originals on our test pages.
+Pre/post-processing: `src/lib/handwriting/pipeline.ts`.
