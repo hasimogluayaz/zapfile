@@ -261,6 +261,11 @@ export const toolSeoTr: Record<string, { title: string; description: string }> =
     description:
       "Fotoğrafın arka planını yapay zekâyla otomatik silin, şeffaf PNG indirin. Filigran yok, ücretsiz; fotoğrafınız yüklenmez.",
   },
+  "handwriting-to-text": {
+    title: "El Yazısını Metne Çevir – Ücretsiz Yapay Zekâ",
+    description:
+      "El yazısı notların fotoğrafını düzenlenebilir metne çevirin. Türkçe karakterler dahil, yapay zekâ tarayıcınızda çalışır; fotoğrafınız yüklenmez.",
+  },
   "color-dropper": {
     title: "Resimden Renk Seç – Renk Kodu Bul",
     description:

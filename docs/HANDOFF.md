@@ -138,6 +138,16 @@ Branch `main`'den yeniden başlatıldı (PR #3–#6 merge edilmişti). Kullanıc
 - **Test edilenler:** 959 site haritası adresi 200; 398 sayfa tarayıcıda (JS hatası, hydration, çevrilmemiş anahtar, h1, lang) temiz; telefon genişliğinde taşma yok; ~45 dosya aracı gerçek dosyalarla uçtan uca (indirilen çıktılar kontrol edildi: karartılan metin dosyada yok, şifreli PDF şifreyle açılıyor, form Türkçe karakterle dolu); Office → PDF yerel API ile; dönüştürme sunucusuna dosya sızdırma denemeleri (ODT bağlı bölüm, Word INCLUDETEXT, HTML iframe) başarısız = güvenli.
 - **Bilinen sınır:** Bilinmeyen adresler 404 kodu dönüyor ve 404 sayfası tarayıcıda çiziliyor (Next 14'te iki kök layout ile sunucuda çizilemiyor).
 
+## El Yazısını Metne Çevir (2026-11-01)
+
+PR #7 merge edilmişti; branch `main`'den yeniden başlatıldı. Kullanıcı "el yazısını metne dönüştürme getirelim" dedi.
+- **Yeni araç:** `/tools/handwriting-to-text` (TR: `/tr/el-yazisini-metne-cevir`). Görüntü kategorisinde, 71. araç. Ayrıntı: AGENTS.md "Handwriting to Text".
+- **Model:** PP-OCRv6 small (PaddleOCR, Apache-2.0), fp16, ~15,7 MB, `models/ppocrv6-small/`, commit `4493eca` üzerinden jsDelivr. Tarayıcıda çalışır (WebGPU / WASM), sunucu maliyeti yok, dosya yüklenmez. Türkçe harflerin hepsi var; Arapça/Kiril yok.
+- **Neden bu model:** Bu ortamda Hugging Face engelli (TrOCR indirilemedi; zaten sadece İngilizce). PP-OCRv6 npm'den alındı; el yazısı fontlarıyla üretilen test sayfalarında (telefon fotoğrafı bozulmaları dahil) ~%2–6 karakter hatası. **Gerçek el yazısıyla henüz denenmedi**: kullanıcıdan örnek fotoğraf istendi.
+- Hız (headless Chromium, GPU yok, tek çekirdek): ilk kullanımda indirme dahil ~5 sn/sayfa.
+- Changelog v2.2.0, 9 dilde metinler, SEO başlıkları, SSS (EN).
+- **PR açılmadı**; kullanıcı onay verirse PR + merge.
+
 ## Sıradaki işler
 
 0. **Bu oturumun branch'i önizlemede kontrol edilip `main`'e alınmalı** (kullanıcı onayıyla PR). Önizlemede dil değiştirme, `/tr/...` sayfaları, 404 ve Word → PDF denenmeli.

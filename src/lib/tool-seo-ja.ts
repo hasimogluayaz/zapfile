@@ -55,6 +55,7 @@ export const toolSeoJa: Record<string, { title: string; description: string }> =
   "color-contrast": { title: "色のコントラストチェック – WCAG", description: "文字色と背景色が WCAG AA・AAA を満たすかを確認。ブラウザですぐに結果が出ます。無料。" },
   "text-case": { title: "大文字・小文字変換 – オンライン", description: "英文を大文字、小文字、Title Case、camelCase、snake_case などにすぐ変換。無料。" },
   "background-remover": { title: "背景削除 – AI で無料で切り抜き", description: "AI で写真の背景を削除。髪の毛の境界もきれいに、フル解像度の透過 PNG で保存。無料・アップロード不要。" },
+  "handwriting-to-text": { title: "手書き文字をテキストに変換 – AI で無料", description: "手書きメモの写真を編集できるテキストに変換。AI はブラウザ内で動作し、写真はアップロードされません。日本語・英語などに対応。無料。" },
   "color-dropper": { title: "スポイト – 画像から色コードを取得", description: "画像を開いてピクセルをクリックすると、色を HEX・RGB・HSL でコピーできます。無料、画像はアップロードされません。" },
   "photo-filter": { title: "写真フィルター – オンラインで加工", description: "ビンテージ、モノクロ、セピアなどのフィルターを写真に適用。無料で、写真はアップロードされません。" },
   "redact-pdf": { title: "PDF 墨消し – 個人情報を完全に削除", description: "PDF の個人情報を墨消し：語句・メール・電話番号・IBAN を検索、または範囲を指定。文字は隠すだけでなく本当に削除されます。" },

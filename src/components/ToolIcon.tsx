@@ -47,6 +47,7 @@ import {
   ListOrdered,
   type LucideIcon,
   Palette,
+  NotebookPen,
   Pipette,
   QrCode,
   Regex,
@@ -116,6 +117,7 @@ const toolIcons: Record<string, LucideIcon> = {
   "image-to-base64": Binary,
   "svg-to-png": FileType,
   "background-remover": Eraser,
+  "handwriting-to-text": NotebookPen,
   "color-dropper": Pipette,
   "photo-filter": Wand2,
   // Video & audio

@@ -55,6 +55,7 @@ export const toolSeoPt: Record<string, { title: string; description: string }> =
   "color-contrast": { title: "Verificar contraste de cores – WCAG", description: "Verifique se texto e fundo atendem WCAG AA e AAA. Resultado na hora no navegador, grátis." },
   "text-case": { title: "Converter maiúsculas e minúsculas", description: "Converta texto em MAIÚSCULAS, minúsculas, Title Case, camelCase, snake_case e mais. Grátis e instantâneo." },
   "background-remover": { title: "Remover fundo de imagem – grátis com IA", description: "Remova o fundo de uma foto com IA, bordas de cabelo limpas e PNG transparente em resolução total. Grátis e sem enviar a foto." },
+  "handwriting-to-text": { title: "Manuscrito para texto – grátis com IA", description: "Converta fotos de anotações manuscritas em texto editável. A IA roda no seu navegador, com acentos. Grátis e sem enviar a foto." },
   "color-dropper": { title: "Conta-gotas – descobrir a cor de uma imagem", description: "Abra uma imagem, clique em um pixel e copie a cor em HEX, RGB ou HSL. Grátis, sua imagem não é enviada." },
   "photo-filter": { title: "Filtros de foto – efeitos online", description: "Aplique filtros vintage, preto e branco, sépia e outros às suas fotos. Grátis, sua foto não é enviada." },
   "redact-pdf": { title: "Ocultar dados em PDF – remoção permanente", description: "Oculte dados pessoais em PDFs: busque palavras, e-mails, telefones e IBAN ou marque áreas. O texto é removido de verdade, não só coberto." },

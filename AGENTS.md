@@ -26,7 +26,7 @@ src/
 │   │   ├── privacy/ terms/ about/ changelog/ workflows/ blog/
 │   │   └── tools/
 │   │       ├── page.tsx     # Browse all tools
-│   │       └── <slug>/      # 70 tool pages (one folder each)
+│   │       └── <slug>/      # 71 tool pages (one folder each)
 │   ├── [locale]/           # /tr, /de, … root layout lang=<locale> (home, tools, blog)
 │   ├── robots.ts, sitemap.ts, feed.xml/
 │   └── api/og/             # Open Graph images
@@ -42,7 +42,7 @@ src/
 │   ├── ErrorBoundary.tsx    # Catches render errors, shows refresh button
 │   └── AdPlaceholder.tsx    # Placeholder for future ads
 ├── lib/
-│   ├── tools.ts             # 70 tools registry (slug, name, description, category, acceptedFormats)
+│   ├── tools.ts             # 71 tools registry (slug, name, description, category, acceptedFormats)
 │   ├── tool-i18n.ts         # toolField() helper for localized tool names/descriptions
 │   ├── file-handoff.ts      # Home drop pad → tool page file handoff (in-memory)
 │   ├── search.ts            # searchTools(): diacritic-insensitive ranked tool search (header modal, home, /tools)
@@ -87,7 +87,7 @@ src/
 
 ## Tools
 
-Canonical list: `src/lib/tools.ts` — 70 tools across 4 categories (PDF, Image, Video/Audio, Utility). FFmpeg/AI/browser-fetch tools were removed in v1.4.0. v2.0 retired 13 off-brand or third-party-dependent tools and merged 5 duplicates; their URLs 301-redirect via `redirects()` in `next.config.mjs` — add a redirect whenever a tool slug is removed or renamed.
+Canonical list: `src/lib/tools.ts` — 71 tools across 4 categories (PDF, Image, Video/Audio, Utility). FFmpeg/AI/browser-fetch tools were removed in v1.4.0. v2.0 retired 13 off-brand or third-party-dependent tools and merged 5 duplicates; their URLs 301-redirect via `redirects()` in `next.config.mjs` — add a redirect whenever a tool slug is removed or renamed.
 
 ## Design System ("Voltage")
 
@@ -111,6 +111,13 @@ Workers/wasm that libraries load at runtime are copied from `node_modules` into 
 - `refine.ts`: speck/hole cleanup, colour guided filter (full-res edges), levels, blur-fusion foreground estimation (colour decontamination). Pure functions, testable in Node.
 - `document.ts` (brush erase/restore + tile undo/redo, outputs), `compose.ts` (backdrops + export), `components/bg-removal/CutoutEditor.tsx` (zoom/pan/pinch canvas).
 - Don't use the published 1024 BiRefNet ONNX files: they peak at ~6.7 GB and exceed WebAssembly's 4 GB limit.
+
+## Handwriting to Text (`src/lib/handwriting/`)
+
+- PP-OCRv6 small (PaddleOCR, Apache-2.0): DB text detector + SVTR/CTC recognizer, float16 ONNX (5 + 10.6 MB) plus `dict.json`, in `models/ppocrv6-small/`, served from a **pinned commit** via jsDelivr (fallback raw.githubusercontent), SHA-256 checked, cached in Cache Storage bucket `zapfile-ocr-v1`. `NEXT_PUBLIC_OCR_MODEL_URL` overrides the base URL (local testing). Provenance: `models/README.md`.
+- `pipeline.ts` is pure (Node-testable): detection input (BGR, ImageNet norm, long side 1280, multiples of 32), DB boxes (flood fill → convex hull → min-area rect → unclip 1.5), rotated 48 px line crops, greedy CTC, line grouping and text assembly ("as written" / "paragraphs"). `worker.ts` runs both models with onnxruntime-web (WebGPU only with `shader-f16`, else WASM; NaN/failed GPU runs retry on WASM), batching lines of similar width. `client.ts` scales images to ≤ 2560 px and transfers an ImageBitmap.
+- Reads Latin-script languages incl. all Turkish letters, Greek, Chinese, Japanese; no Arabic/Cyrillic/Korean. Measured on handwriting-font test pages (incl. phone-photo distortions): ~2–6 % character error rate.
+- UI: `app/(site)/tools/handwriting-to-text/page.tsx` (images, TIFF, PDF ≤ 20 pages; camera button on touch devices; line overlay with unsure lines in amber; editable text, copy, TXT).
 
 ## Image engine (`src/lib/image-engine/`) — use it for any image export
 

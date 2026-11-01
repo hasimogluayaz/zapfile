@@ -259,6 +259,11 @@ export const toolSeoFr: Record<string, { title: string; description: string }> =
     description:
       "Supprimez l'arrière-plan d'une photo avec l'IA, contours de cheveux nets, PNG transparent en pleine résolution. Gratuit, sans envoi.",
   },
+  "handwriting-to-text": {
+    title: "Écriture manuscrite en texte – gratuit avec l'IA",
+    description:
+      "Convertissez des photos de notes manuscrites en texte modifiable. L'IA fonctionne dans votre navigateur, accents compris. Gratuit, sans envoi.",
+  },
   "color-dropper": {
     title: "Pipette – trouver la couleur d'une image",
     description:

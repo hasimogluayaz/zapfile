@@ -259,6 +259,11 @@ export const toolSeoDe: Record<string, { title: string; description: string }> =
     description:
       "Bildhintergrund mit KI automatisch entfernen, saubere Haarkanten, transparentes PNG in voller Auflösung. Kostenlos, ohne Upload.",
   },
+  "handwriting-to-text": {
+    title: "Handschrift in Text umwandeln – kostenlos mit KI",
+    description:
+      "Fotos handschriftlicher Notizen in bearbeitbaren Text umwandeln. Die KI läuft in Ihrem Browser, Umlaute inklusive. Kostenlos, ohne Upload.",
+  },
   "color-dropper": {
     title: "Farbe aus Bild auslesen – Pipette",
     description:

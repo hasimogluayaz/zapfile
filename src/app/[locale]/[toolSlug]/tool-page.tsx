@@ -3,7 +3,7 @@
 /* Tool page components by catalog slug, for the localized routes. Each one is
  * loaded on its own (next/dynamic), so a page only ships its own tool's code.
  * This has to be a client module: a server component's next/dynamic map
- * would hand every page all 70 tools' code. */
+ * would hand every page all 71 tools' code. */
 import dynamic from "next/dynamic";
 import type { ComponentType } from "react";
 
@@ -59,6 +59,7 @@ const toolPages: Record<string, ComponentType> = {
   "color-contrast": dynamic(() => import("@/app/(site)/tools/color-contrast/page")),
   "text-case": dynamic(() => import("@/app/(site)/tools/text-case/page")),
   "background-remover": dynamic(() => import("@/app/(site)/tools/background-remover/page")),
+  "handwriting-to-text": dynamic(() => import("@/app/(site)/tools/handwriting-to-text/page")),
   "color-dropper": dynamic(() => import("@/app/(site)/tools/color-dropper/page")),
   "photo-filter": dynamic(() => import("@/app/(site)/tools/photo-filter/page")),
   "redact-pdf": dynamic(() => import("@/app/(site)/tools/redact-pdf/page")),

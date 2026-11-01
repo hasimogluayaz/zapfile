@@ -55,6 +55,7 @@ export const toolSeoEs: Record<string, { title: string; description: string }> =
   "color-contrast": { title: "Comprobar contraste de colores – WCAG", description: "Comprueba si el texto y el fondo cumplen WCAG AA y AAA. Resultado instantáneo en el navegador, gratis." },
   "text-case": { title: "Convertir mayúsculas y minúsculas", description: "Convierte texto a MAYÚSCULAS, minúsculas, Title Case, camelCase, snake_case y más. Gratis e instantáneo." },
   "background-remover": { title: "Quitar fondo de imagen – gratis con IA", description: "Quita el fondo de una foto con IA, bordes de pelo limpios y PNG transparente a resolución completa. Gratis y sin subir la foto." },
+  "handwriting-to-text": { title: "Escritura a mano a texto – gratis con IA", description: "Convierte fotos de notas escritas a mano en texto editable. La IA funciona en tu navegador, con acentos y ñ. Gratis y sin subir la foto." },
   "color-dropper": { title: "Cuentagotas – sacar el color de una imagen", description: "Abre una imagen, haz clic en un píxel y copia su color en HEX, RGB o HSL. Gratis, tu imagen no se sube." },
   "photo-filter": { title: "Filtros de fotos – efectos online", description: "Aplica filtros vintage, blanco y negro, sepia y más a tus fotos. Gratis, tu foto no se sube." },
   "redact-pdf": { title: "Censurar PDF – borrar datos de forma permanente", description: "Censura datos personales en PDF: busca palabras, correos, teléfonos e IBAN o marca zonas. El texto se elimina de verdad, no solo se tapa." },

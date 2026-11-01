@@ -55,6 +55,7 @@ export const toolSeoIt: Record<string, { title: string; description: string }> =
   "color-contrast": { title: "Verifica contrasto colori – WCAG", description: "Verifica se testo e sfondo rispettano WCAG AA e AAA. Risultato immediato nel browser, gratis." },
   "text-case": { title: "Convertire maiuscole e minuscole", description: "Converti il testo in MAIUSCOLO, minuscolo, Title Case, camelCase, snake_case e altro. Gratis e immediato." },
   "background-remover": { title: "Rimuovere lo sfondo – gratis con l'IA", description: "Rimuovi lo sfondo di una foto con l'IA, bordi dei capelli puliti e PNG trasparente a piena risoluzione. Gratis e senza upload." },
+  "handwriting-to-text": { title: "Scrittura a mano in testo – gratis con l'IA", description: "Converti le foto di appunti scritti a mano in testo modificabile. L'IA funziona nel browser, accenti compresi. Gratis e senza upload." },
   "color-dropper": { title: "Contagocce – trovare il colore di un'immagine", description: "Apri un'immagine, fai clic su un pixel e copia il colore in HEX, RGB o HSL. Gratis, l'immagine non viene caricata." },
   "photo-filter": { title: "Filtri foto – effetti online", description: "Applica filtri vintage, bianco e nero, seppia e altri alle tue foto. Gratis, la foto non viene caricata." },
   "redact-pdf": { title: "Oscurare PDF – rimuovere i dati per sempre", description: "Oscura i dati personali nei PDF: cerca parole, email, telefoni e IBAN o disegna aree. Il testo viene davvero rimosso, non solo coperto." },

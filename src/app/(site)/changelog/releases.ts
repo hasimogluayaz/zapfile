@@ -37,11 +37,33 @@ export const changelogCopy: Record<"title" | "subtitle" | "latest" | "new" | "im
 
 const october2026: Text = { en: "October 2026", tr: "Ekim 2026", de: "Oktober 2026", fr: "Octobre 2026", es: "Octubre de 2026", pt: "Outubro de 2026", it: "Ottobre 2026", ja: "2026年10月", ar: "أكتوبر 2026" };
 
+const november2026: Text = { en: "November 2026", tr: "Kasım 2026", de: "November 2026", fr: "Novembre 2026", es: "Noviembre de 2026", pt: "Novembro de 2026", it: "Novembre 2026", ja: "2026年11月", ar: "نوفمبر 2026" };
+
 export const releases: Release[] = [
+  {
+    version: "v2.2.0",
+    date: november2026,
+    latest: true,
+    items: [
+      {
+        type: "new",
+        text: {
+          en: "Handwriting to Text: photograph handwritten notes and get editable text, read by an AI model that runs in your browser (Turkish, English, German, French and more)",
+          tr: "El Yazısını Metne Çevir: el yazısı notların fotoğrafını çekin, tarayıcınızda çalışan yapay zekâ düzenlenebilir metne çevirsin (Türkçe, İngilizce, Almanca, Fransızca ve dahası)",
+          de: "Handschrift in Text: handschriftliche Notizen fotografieren und bearbeitbaren Text erhalten, gelesen von einem KI-Modell in Ihrem Browser (Deutsch, Englisch, Türkisch, Französisch und mehr)",
+          fr: "Écriture manuscrite en texte : photographiez des notes manuscrites et obtenez un texte modifiable, lu par un modèle d'IA qui fonctionne dans votre navigateur (français, anglais, turc, allemand et plus)",
+          es: "Escritura a mano a texto: fotografía notas escritas a mano y obtén texto editable, leído por un modelo de IA que funciona en tu navegador (español, inglés, turco, alemán y más)",
+          pt: "Manuscrito para texto: fotografe anotações manuscritas e obtenha texto editável, lido por um modelo de IA que roda no seu navegador (português, inglês, turco, alemão e mais)",
+          it: "Scrittura a mano in testo: fotografa appunti scritti a mano e ottieni testo modificabile, letto da un modello di IA che funziona nel browser (italiano, inglese, turco, tedesco e altro)",
+          ja: "手書き文字をテキストに変換：手書きメモを撮影すると、ブラウザ内で動く AI が編集できるテキストに変換します（日本語、英語、トルコ語、ドイツ語など）",
+          ar: "تحويل خط اليد إلى نص: صوّر ملاحظاتك المكتوبة بخط اليد واحصل على نص قابل للتعديل يقرؤه نموذج ذكاء اصطناعي يعمل في متصفحك (التركية والإنجليزية والألمانية والفرنسية وغيرها)",
+        },
+      },
+    ],
+  },
   {
     version: "v2.1.0",
     date: october2026,
-    latest: true,
     items: [
       {
         type: "new",

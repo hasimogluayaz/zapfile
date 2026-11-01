@@ -595,6 +595,17 @@ export const tools: Tool[] = [
       "Remove image backgrounds with AI that runs entirely in your browser. Clean hair edges, erase/restore brush, new backgrounds, full-resolution PNG. No uploads, free.",
   },
   {
+    slug: "handwriting-to-text",
+    name: "Handwriting to Text",
+    description: "Turn photos of handwritten notes into editable text with on-device AI",
+    emoji: "✍️",
+    category: "image",
+    acceptedFormats: [".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tif", ".tiff", ".pdf"],
+    metaTitle: "Handwriting to Text - Convert Handwritten Notes Free | ZapFile",
+    metaDescription:
+      "Convert photos and scans of handwritten notes to editable text with AI that runs in your browser. Turkish, English, German, French and more. Copy or download TXT. No upload, free.",
+  },
+  {
     slug: "color-dropper",
     name: "Color Dropper",
     description: "Pick colors from any image and get the HEX code",
