@@ -3,7 +3,7 @@
 /* Tool page components by catalog slug, for the localized routes. Each one is
  * loaded on its own (next/dynamic), so a page only ships its own tool's code.
  * This has to be a client module: a server component's next/dynamic map
- * would hand every page all 71 tools' code. */
+ * would hand every page every tool's code. */
 import dynamic from "next/dynamic";
 import type { ComponentType } from "react";
 
@@ -31,7 +31,6 @@ const toolPages: Record<string, ComponentType> = {
   "exif-viewer": dynamic(() => import("@/app/(site)/tools/exif-viewer/page")),
   "image-collage": dynamic(() => import("@/app/(site)/tools/image-collage/page")),
   "meme-generator": dynamic(() => import("@/app/(site)/tools/meme-generator/page")),
-  "image-to-base64": dynamic(() => import("@/app/(site)/tools/image-to-base64/page")),
   "qr-generator": dynamic(() => import("@/app/(site)/tools/qr-generator/page")),
   "svg-to-png": dynamic(() => import("@/app/(site)/tools/svg-to-png/page")),
   "base64-encode": dynamic(() => import("@/app/(site)/tools/base64-encode/page")),
@@ -59,8 +58,6 @@ const toolPages: Record<string, ComponentType> = {
   "color-contrast": dynamic(() => import("@/app/(site)/tools/color-contrast/page")),
   "text-case": dynamic(() => import("@/app/(site)/tools/text-case/page")),
   "background-remover": dynamic(() => import("@/app/(site)/tools/background-remover/page")),
-  "handwriting-to-text": dynamic(() => import("@/app/(site)/tools/handwriting-to-text/page")),
-  "color-dropper": dynamic(() => import("@/app/(site)/tools/color-dropper/page")),
   "photo-filter": dynamic(() => import("@/app/(site)/tools/photo-filter/page")),
   "redact-pdf": dynamic(() => import("@/app/(site)/tools/redact-pdf/page")),
   "pdf-encrypt": dynamic(() => import("@/app/(site)/tools/pdf-encrypt/page")),
@@ -78,7 +75,6 @@ const toolPages: Record<string, ComponentType> = {
   "pdf-compress": dynamic(() => import("@/app/(site)/tools/pdf-compress/page")),
   "video-to-gif": dynamic(() => import("@/app/(site)/tools/video-to-gif/page")),
   "audio-recorder": dynamic(() => import("@/app/(site)/tools/audio-recorder/page")),
-  "text-to-speech": dynamic(() => import("@/app/(site)/tools/text-to-speech/page")),
 };
 
 export default function LocalizedToolPage({ slug }: { slug: string }) {

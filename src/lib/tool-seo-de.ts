@@ -119,11 +119,6 @@ export const toolSeoDe: Record<string, { title: string; description: string }> =
     description:
       "Memes aus eigenen Bildern erstellen: klassischer Meme-Text, Bildunterschriften, Schatten. In voller Auflösung herunterladen, ohne Wasserzeichen.",
   },
-  "image-to-base64": {
-    title: "Bild in Base64 umwandeln – Data-URI",
-    description:
-      "Bilder in Base64-Strings oder Data-URIs zum Einbetten in HTML und CSS umwandeln. Kostenlos, privat und direkt im Browser.",
-  },
   "qr-generator": {
     title: "QR-Code Generator – kostenlos & unbegrenzt",
     description:
@@ -259,16 +254,6 @@ export const toolSeoDe: Record<string, { title: string; description: string }> =
     description:
       "Bildhintergrund mit KI automatisch entfernen, saubere Haarkanten, transparentes PNG in voller Auflösung. Kostenlos, ohne Upload.",
   },
-  "handwriting-to-text": {
-    title: "Handschrift in Text umwandeln – kostenlos mit KI",
-    description:
-      "Fotos handschriftlicher Notizen in bearbeitbaren Text umwandeln. Die KI läuft in Ihrem Browser, Umlaute inklusive. Kostenlos, ohne Upload.",
-  },
-  "color-dropper": {
-    title: "Farbe aus Bild auslesen – Pipette",
-    description:
-      "Ein Bild öffnen, auf einen Pixel klicken und die Farbe als HEX, RGB oder HSL kopieren. Kostenlos, Ihr Bild wird nicht hochgeladen.",
-  },
   "photo-filter": {
     title: "Foto-Filter – online Effekte anwenden",
     description:
@@ -353,10 +338,5 @@ export const toolSeoDe: Record<string, { title: string; description: string }> =
     title: "Audio aufnehmen – online Sprachrekorder",
     description:
       "Mit dem Mikrofon im Browser aufnehmen und als MP3 oder WAV herunterladen. Kostenlos, ohne Anmeldung und ohne Installation.",
-  },
-  "text-to-speech": {
-    title: "Text vorlesen lassen – Sprachausgabe",
-    description:
-      "Text mit natürlicher Stimme vorlesen lassen, auf Deutsch, Englisch und vielen weiteren Sprachen. Kostenlos, ohne Anmeldung.",
   },
 };

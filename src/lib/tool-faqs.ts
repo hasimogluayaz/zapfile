@@ -100,24 +100,6 @@ const toolFaqs: Record<string, FaqItem[]> = {
       answer: "Not always: a file that was cut off very early or overwritten has no page data left to recover. Repair works best on PDFs with broken offsets, missing cross-reference tables or truncated endings, the most common damage from interrupted downloads and email.",
     },
   ],
-  "handwriting-to-text": [
-    {
-      question: "How do I convert handwriting to text?",
-      answer: "Take a photo of the page (or drop a scan or PDF) into ZapFile's Handwriting to Text tool. An AI model finds every line of writing and reads it; the text appears in an editor where you can correct it, then copy it or download it as TXT.",
-    },
-    {
-      question: "Is my photo uploaded?",
-      answer: "No. The AI model (PP-OCRv6 from PaddleOCR, Apache-2.0) runs in your browser with WebGPU or WebAssembly. The first run downloads it once (about 11 MB) and caches it; after that it works offline.",
-    },
-    {
-      question: "Which languages and scripts can it read?",
-      answer: "Latin-script languages including Turkish (ç, ğ, ı, İ, ö, ş, ü), English, German, French, Spanish, Portuguese and Italian, plus Greek; switch the writing system to 日本語・中文 for Japanese or Chinese. Arabic, Cyrillic and Korean handwriting aren't supported yet.",
-    },
-    {
-      question: "How accurate is it?",
-      answer: "Neat handwriting and print are read almost perfectly. Very joined-up cursive, faint pencil or crumpled paper produce more mistakes, so the result is editable and the lines the model was unsure about are marked on the image. For best results photograph the page straight on, in good light, with dark ink; sideways or upside-down photos are turned upright automatically.",
-    },
-  ],
   "ocr-pdf": [
     {
       question: "How do I make a scanned PDF searchable?",

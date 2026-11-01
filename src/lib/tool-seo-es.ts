@@ -27,7 +27,6 @@ export const toolSeoEs: Record<string, { title: string; description: string }> =
   "exif-viewer": { title: "Ver y borrar datos EXIF de fotos", description: "Consulta y elimina los metadatos EXIF de tus fotos: cámara, ajustes y ubicación GPS. Gratis, tu foto no se sube." },
   "image-collage": { title: "Hacer collage de fotos – gratis online", description: "Crea collages en cuadrícula o mosaico, en formatos 1:1, 4:5 y 9:16, hasta 4096 px. Gratis, tus fotos no se suben." },
   "meme-generator": { title: "Generador de memes – crea tu meme", description: "Crea memes con tus imágenes: texto clásico, pies de foto y sombras. Descarga a resolución completa, sin marca de agua ni subidas." },
-  "image-to-base64": { title: "Imagen a Base64 – data URI", description: "Convierte imágenes en cadenas Base64 o data URI para incrustar en HTML y CSS. Gratis, privado y en el navegador." },
   "qr-generator": { title: "Generador de códigos QR – gratis e ilimitado", description: "Crea códigos QR para enlaces, texto o teléfonos, con colores y logo, en PNG o SVG. Gratis y sin caducidad." },
   "svg-to-png": { title: "SVG a PNG – convertir gratis", description: "Convierte archivos SVG en PNG de alta calidad al tamaño que quieras. Gratis, tu archivo no se sube." },
   "base64-encode": { title: "Codificar y decodificar Base64 – online", description: "Codifica texto o archivos en Base64 o decodifica Base64. Gratis, rápido y totalmente en el navegador." },
@@ -55,8 +54,6 @@ export const toolSeoEs: Record<string, { title: string; description: string }> =
   "color-contrast": { title: "Comprobar contraste de colores – WCAG", description: "Comprueba si el texto y el fondo cumplen WCAG AA y AAA. Resultado instantáneo en el navegador, gratis." },
   "text-case": { title: "Convertir mayúsculas y minúsculas", description: "Convierte texto a MAYÚSCULAS, minúsculas, Title Case, camelCase, snake_case y más. Gratis e instantáneo." },
   "background-remover": { title: "Quitar fondo de imagen – gratis con IA", description: "Quita el fondo de una foto con IA, bordes de pelo limpios y PNG transparente a resolución completa. Gratis y sin subir la foto." },
-  "handwriting-to-text": { title: "Escritura a mano a texto – gratis con IA", description: "Convierte fotos de notas escritas a mano en texto editable. La IA funciona en tu navegador, con acentos y ñ. Gratis y sin subir la foto." },
-  "color-dropper": { title: "Cuentagotas – sacar el color de una imagen", description: "Abre una imagen, haz clic en un píxel y copia su color en HEX, RGB o HSL. Gratis, tu imagen no se sube." },
   "photo-filter": { title: "Filtros de fotos – efectos online", description: "Aplica filtros vintage, blanco y negro, sepia y más a tus fotos. Gratis, tu foto no se sube." },
   "redact-pdf": { title: "Censurar PDF – borrar datos de forma permanente", description: "Censura datos personales en PDF: busca palabras, correos, teléfonos e IBAN o marca zonas. El texto se elimina de verdad, no solo se tapa." },
   "pdf-encrypt": { title: "Proteger PDF con contraseña – AES-256", description: "Cifra un PDF con AES-256, limita la impresión y la copia o quita una contraseña que conoces. Gratis y sin subir el archivo." },
@@ -74,5 +71,4 @@ export const toolSeoEs: Record<string, { title: string; description: string }> =
   "pdf-compress": { title: "Comprimir PDF – reducir el tamaño", description: "Reduce el tamaño de un PDF recomprimiendo sus imágenes, ideal para enviar por correo. Gratis, privado y en tu navegador." },
   "video-to-gif": { title: "Vídeo a GIF – convertir gratis", description: "Convierte clips de vídeo cortos (MP4, WebM, MOV) en GIF animados. Gratis, sin marca de agua y en tu navegador." },
   "audio-recorder": { title: "Grabadora de audio online – gratis", description: "Graba con tu micrófono en el navegador y descarga en MP3 o WAV. Gratis, sin registro ni instalación." },
-  "text-to-speech": { title: "Texto a voz – leer texto en voz alta", description: "Escucha tu texto con una voz natural en español, inglés y muchos otros idiomas. Gratis y sin registro." },
 };

@@ -25,7 +25,6 @@ const synonyms: Record<string, string> = {
   "resize-image": "scale dimensions width height boyutlandir",
   "convert-image": "jpg png webp heic avif format donustur",
   "background-remover": "remove bg transparent cutout arka plan sil",
-  "handwriting-to-text": "ocr handwritten notes image to text photo to text read scan el yazisi metne cevir yazi tanima resimden yaziya",
   "qr-generator": "qrcode barcode karekod",
   "qr-scanner": "qrcode read decode camera karekod",
   "json-formatter": "beautify prettify validate minify",
@@ -38,7 +37,6 @@ const synonyms: Record<string, string> = {
   "hash-generator": "md5 sha1 sha256 checksum",
   "base64-encode": "decode encode",
   "video-to-gif": "mp4 animation",
-  "text-to-speech": "tts voice read aloud seslendir",
   "unit-converter": "length weight temperature",
   "timestamp-converter": "unix epoch date",
 };

@@ -119,11 +119,6 @@ export const toolSeoFr: Record<string, { title: string; description: string }> =
     description:
       "Créez des mèmes avec vos images : texte classique, légendes, ombres. Téléchargez en pleine résolution, sans filigrane ni envoi.",
   },
-  "image-to-base64": {
-    title: "Image en Base64 – data URI",
-    description:
-      "Convertissez des images en chaînes Base64 ou data URI à intégrer dans HTML et CSS. Gratuit, privé, dans le navigateur.",
-  },
   "qr-generator": {
     title: "Générateur de QR code – gratuit et illimité",
     description:
@@ -259,16 +254,6 @@ export const toolSeoFr: Record<string, { title: string; description: string }> =
     description:
       "Supprimez l'arrière-plan d'une photo avec l'IA, contours de cheveux nets, PNG transparent en pleine résolution. Gratuit, sans envoi.",
   },
-  "handwriting-to-text": {
-    title: "Écriture manuscrite en texte – gratuit avec l'IA",
-    description:
-      "Convertissez des photos de notes manuscrites en texte modifiable. L'IA fonctionne dans votre navigateur, accents compris. Gratuit, sans envoi.",
-  },
-  "color-dropper": {
-    title: "Pipette – trouver la couleur d'une image",
-    description:
-      "Ouvrez une image, cliquez sur un pixel et copiez sa couleur en HEX, RGB ou HSL. Gratuit, votre image n'est pas envoyée.",
-  },
   "photo-filter": {
     title: "Filtre photo – effets en ligne",
     description:
@@ -353,10 +338,5 @@ export const toolSeoFr: Record<string, { title: string; description: string }> =
     title: "Enregistreur audio en ligne – gratuit",
     description:
       "Enregistrez avec votre micro dans le navigateur et téléchargez en MP3 ou WAV. Gratuit, sans inscription ni installation.",
-  },
-  "text-to-speech": {
-    title: "Synthèse vocale – lire un texte à voix haute",
-    description:
-      "Faites lire votre texte avec une voix naturelle, en français, anglais et de nombreuses autres langues. Gratuit, sans inscription.",
   },
 };

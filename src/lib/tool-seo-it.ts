@@ -27,7 +27,6 @@ export const toolSeoIt: Record<string, { title: string; description: string }> =
   "exif-viewer": { title: "Vedere e rimuovere i dati EXIF delle foto", description: "Visualizza e rimuovi i metadati EXIF delle foto: fotocamera, impostazioni e posizione GPS. Gratis, la foto non viene caricata." },
   "image-collage": { title: "Creare un collage di foto – gratis online", description: "Crea collage a griglia o mosaico nei formati 1:1, 4:5 e 9:16, fino a 4096 px. Gratis, le foto non vengono caricate." },
   "meme-generator": { title: "Generatore di meme – crea il tuo meme", description: "Crea meme con le tue immagini: testo classico, didascalie e ombre. Scarica a piena risoluzione, senza filigrana né upload." },
-  "image-to-base64": { title: "Immagine in Base64 – data URI", description: "Converti immagini in stringhe Base64 o data URI da inserire in HTML e CSS. Gratis, privato e nel browser." },
   "qr-generator": { title: "Generatore di codici QR – gratis e illimitato", description: "Crea codici QR per link, testo o numeri di telefono, con colori e logo, in PNG o SVG. Gratis e senza scadenza." },
   "svg-to-png": { title: "SVG in PNG – convertire gratis", description: "Converti file SVG in PNG di alta qualità alla dimensione che vuoi. Gratis, il file non viene caricato." },
   "base64-encode": { title: "Codifica e decodifica Base64 – online", description: "Codifica testo o file in Base64 o decodifica Base64. Gratis, veloce e interamente nel browser." },
@@ -55,8 +54,6 @@ export const toolSeoIt: Record<string, { title: string; description: string }> =
   "color-contrast": { title: "Verifica contrasto colori – WCAG", description: "Verifica se testo e sfondo rispettano WCAG AA e AAA. Risultato immediato nel browser, gratis." },
   "text-case": { title: "Convertire maiuscole e minuscole", description: "Converti il testo in MAIUSCOLO, minuscolo, Title Case, camelCase, snake_case e altro. Gratis e immediato." },
   "background-remover": { title: "Rimuovere lo sfondo – gratis con l'IA", description: "Rimuovi lo sfondo di una foto con l'IA, bordi dei capelli puliti e PNG trasparente a piena risoluzione. Gratis e senza upload." },
-  "handwriting-to-text": { title: "Scrittura a mano in testo – gratis con l'IA", description: "Converti le foto di appunti scritti a mano in testo modificabile. L'IA funziona nel browser, accenti compresi. Gratis e senza upload." },
-  "color-dropper": { title: "Contagocce – trovare il colore di un'immagine", description: "Apri un'immagine, fai clic su un pixel e copia il colore in HEX, RGB o HSL. Gratis, l'immagine non viene caricata." },
   "photo-filter": { title: "Filtri foto – effetti online", description: "Applica filtri vintage, bianco e nero, seppia e altri alle tue foto. Gratis, la foto non viene caricata." },
   "redact-pdf": { title: "Oscurare PDF – rimuovere i dati per sempre", description: "Oscura i dati personali nei PDF: cerca parole, email, telefoni e IBAN o disegna aree. Il testo viene davvero rimosso, non solo coperto." },
   "pdf-encrypt": { title: "Proteggere PDF con password – AES-256", description: "Cifra un PDF con AES-256, limita stampa e copia o rimuovi una password che conosci. Gratis e senza upload." },
@@ -74,5 +71,4 @@ export const toolSeoIt: Record<string, { title: string; description: string }> =
   "pdf-compress": { title: "Comprimere PDF – ridurre le dimensioni", description: "Riduci le dimensioni di un PDF ricomprimendo le immagini, ideale per l'email. Gratis, privato e nel browser." },
   "video-to-gif": { title: "Video in GIF – convertire gratis", description: "Converti brevi clip video (MP4, WebM, MOV) in GIF animate. Gratis, senza filigrana e nel browser." },
   "audio-recorder": { title: "Registratore audio online – gratis", description: "Registra con il microfono nel browser e scarica in MP3 o WAV. Gratis, senza registrazione né installazione." },
-  "text-to-speech": { title: "Sintesi vocale – leggere un testo ad alta voce", description: "Ascolta il tuo testo con una voce naturale in italiano, inglese e molte altre lingue. Gratis e senza registrazione." },
 };

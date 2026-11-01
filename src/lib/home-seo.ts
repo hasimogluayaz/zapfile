@@ -10,42 +10,42 @@ export const homeSeo: Record<Locale, { title: string; description: string }> = {
   tr: {
     title: "ZapFile – Ücretsiz Online PDF, Resim ve Dosya Araçları",
     description:
-      "PDF birleştir, sıkıştır ve Word'e çevir; resim sıkıştır, dönüştür, arka planını sil; QR kod oluştur. 71 ücretsiz araç, üyelik yok. Araçların çoğu dosyanı yüklemeden tarayıcında çalışır.",
+      "PDF birleştir, sıkıştır ve Word'e çevir; resim sıkıştır, dönüştür, arka planını sil; QR kod oluştur. 67 ücretsiz araç, üyelik yok. Araçların çoğu dosyanı yüklemeden tarayıcında çalışır.",
   },
   de: {
     title: "ZapFile – Kostenlose Online-Tools für PDF, Bilder und Dateien",
     description:
-      "PDFs zusammenfügen, komprimieren und in Word umwandeln; Bilder komprimieren, konvertieren und freistellen; QR-Codes erstellen. 71 kostenlose Tools ohne Anmeldung. Die meisten laufen direkt im Browser, ohne Upload.",
+      "PDFs zusammenfügen, komprimieren und in Word umwandeln; Bilder komprimieren, konvertieren und freistellen; QR-Codes erstellen. 67 kostenlose Tools ohne Anmeldung. Die meisten laufen direkt im Browser, ohne Upload.",
   },
   fr: {
     title: "ZapFile – Outils en ligne gratuits pour PDF, images et fichiers",
     description:
-      "Fusionnez, compressez et convertissez vos PDF en Word ; compressez, convertissez et détourez vos images ; créez des QR codes. 71 outils gratuits, sans inscription. La plupart fonctionnent dans votre navigateur, sans envoi de fichier.",
+      "Fusionnez, compressez et convertissez vos PDF en Word ; compressez, convertissez et détourez vos images ; créez des QR codes. 67 outils gratuits, sans inscription. La plupart fonctionnent dans votre navigateur, sans envoi de fichier.",
   },
   es: {
     title: "ZapFile – Herramientas online gratis para PDF, imágenes y archivos",
     description:
-      "Une, comprime y convierte PDF a Word; comprime, convierte y quita el fondo de imágenes; crea códigos QR. 71 herramientas gratis y sin registro. La mayoría funcionan en tu navegador, sin subir archivos.",
+      "Une, comprime y convierte PDF a Word; comprime, convierte y quita el fondo de imágenes; crea códigos QR. 67 herramientas gratis y sin registro. La mayoría funcionan en tu navegador, sin subir archivos.",
   },
   pt: {
     title: "ZapFile – Ferramentas online grátis para PDF, imagens e arquivos",
     description:
-      "Junte, comprima e converta PDF em Word; comprima, converta e remova o fundo de imagens; crie QR codes. 71 ferramentas grátis, sem cadastro. A maioria funciona no seu navegador, sem enviar arquivos.",
+      "Junte, comprima e converta PDF em Word; comprima, converta e remova o fundo de imagens; crie QR codes. 67 ferramentas grátis, sem cadastro. A maioria funciona no seu navegador, sem enviar arquivos.",
   },
   it: {
     title: "ZapFile – Strumenti online gratuiti per PDF, immagini e file",
     description:
-      "Unisci, comprimi e converti PDF in Word; comprimi, converti e scontorna immagini; crea codici QR. 71 strumenti gratuiti, senza registrazione. La maggior parte funziona nel browser, senza caricare file.",
+      "Unisci, comprimi e converti PDF in Word; comprimi, converti e scontorna immagini; crea codici QR. 67 strumenti gratuiti, senza registrazione. La maggior parte funziona nel browser, senza caricare file.",
   },
   ja: {
     title: "ZapFile – 無料のオンライン PDF・画像・ファイルツール",
     description:
-      "PDF の結合・圧縮・Word 変換、画像の圧縮・変換・背景削除、QR コード作成など 71 の無料ツール。登録不要。ほとんどのツールはファイルをアップロードせずブラウザ内で動作します。",
+      "PDF の結合・圧縮・Word 変換、画像の圧縮・変換・背景削除、QR コード作成など 67 の無料ツール。登録不要。ほとんどのツールはファイルをアップロードせずブラウザ内で動作します。",
   },
   ar: {
     title: "ZapFile – أدوات مجانية عبر الإنترنت لملفات PDF والصور",
     description:
-      "دمج ملفات PDF وضغطها وتحويلها إلى Word، وضغط الصور وتحويلها وإزالة خلفيتها، وإنشاء رموز QR. 71 أداة مجانية بلا تسجيل، ومعظمها يعمل في متصفحك دون رفع الملفات.",
+      "دمج ملفات PDF وضغطها وتحويلها إلى Word، وضغط الصور وتحويلها وإزالة خلفيتها، وإنشاء رموز QR. 67 أداة مجانية بلا تسجيل، ومعظمها يعمل في متصفحك دون رفع الملفات.",
   },
 };
 

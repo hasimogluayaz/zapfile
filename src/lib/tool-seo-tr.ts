@@ -121,11 +121,6 @@ export const toolSeoTr: Record<string, { title: string; description: string }> =
     description:
       "Kendi fotoğrafınıza üst ve alt yazı ekleyerek caps (meme) yapın, PNG olarak indirin. Ücretsiz, filigransız.",
   },
-  "image-to-base64": {
-    title: "Resmi Base64'e Çevir – Data URI Oluştur",
-    description:
-      "Resimleri Base64 metnine veya data URI'ye dönüştürün; HTML ve CSS için hazır kodu kopyalayın. Ücretsiz ve tarayıcınızda.",
-  },
   "qr-generator": {
     title: "QR Kod Oluştur – Ücretsiz QR Kod Yapma",
     description:
@@ -261,16 +256,6 @@ export const toolSeoTr: Record<string, { title: string; description: string }> =
     description:
       "Fotoğrafın arka planını yapay zekâyla otomatik silin, şeffaf PNG indirin. Filigran yok, ücretsiz; fotoğrafınız yüklenmez.",
   },
-  "handwriting-to-text": {
-    title: "El Yazısını Metne Çevir – Ücretsiz Yapay Zekâ",
-    description:
-      "El yazısı notların fotoğrafını düzenlenebilir metne çevirin. Türkçe karakterler dahil, yapay zekâ tarayıcınızda çalışır; fotoğrafınız yüklenmez.",
-  },
-  "color-dropper": {
-    title: "Resimden Renk Seç – Renk Kodu Bul",
-    description:
-      "Bir resim açın, herhangi bir noktaya tıklayarak rengin HEX ve RGB kodunu alın. Ücretsiz, resminiz yüklenmez.",
-  },
   "photo-filter": {
     title: "Fotoğraf Filtresi – Online Efekt Ekle",
     description:
@@ -355,10 +340,5 @@ export const toolSeoTr: Record<string, { title: string; description: string }> =
     title: "Ses Kaydedici – Online Ses Kaydı",
     description:
       "Mikrofonunuzla tarayıcıda ses kaydedin, MP3 veya WAV olarak indirin. Ücretsiz, üyelik ve kurulum gerekmez.",
-  },
-  "text-to-speech": {
-    title: "Metni Sese Çevir – Türkçe Seslendirme",
-    description:
-      "Yazdığınız metni Türkçe, İngilizce ve diğer dillerde doğal bir sesle okutun. Ücretsiz, üyelik gerekmez.",
   },
 };

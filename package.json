@@ -11,8 +11,7 @@
     "analyze": "cross-env ANALYZE=true next build",
     "vendor": "node scripts/copy-vendor-assets.mjs",
     "predev": "npm run -s vendor",
-    "prebuild": "npm run -s vendor",
-    "test:handwriting": "node --experimental-strip-types --no-warnings scripts/test-handwriting.mjs"
+    "prebuild": "npm run -s vendor"
   },
   "dependencies": {
     "@breezystack/lamejs": "^1.2.7",

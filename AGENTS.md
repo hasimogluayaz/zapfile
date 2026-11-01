@@ -26,7 +26,7 @@ src/
 │   │   ├── privacy/ terms/ about/ changelog/ workflows/ blog/
 │   │   └── tools/
 │   │       ├── page.tsx     # Browse all tools
-│   │       └── <slug>/      # 71 tool pages (one folder each)
+│   │       └── <slug>/      # 67 tool pages (one folder each)
 │   ├── [locale]/           # /tr, /de, … root layout lang=<locale> (home, tools, blog)
 │   ├── robots.ts, sitemap.ts, feed.xml/
 │   └── api/og/             # Open Graph images
@@ -42,7 +42,7 @@ src/
 │   ├── ErrorBoundary.tsx    # Catches render errors, shows refresh button
 │   └── AdPlaceholder.tsx    # Placeholder for future ads
 ├── lib/
-│   ├── tools.ts             # 71 tools registry (slug, name, description, category, acceptedFormats)
+│   ├── tools.ts             # 67 tools registry (slug, name, description, category, acceptedFormats)
 │   ├── tool-i18n.ts         # toolField() helper for localized tool names/descriptions
 │   ├── file-handoff.ts      # Home drop pad → tool page file handoff (in-memory)
 │   ├── search.ts            # searchTools(): diacritic-insensitive ranked tool search (header modal, home, /tools)
@@ -74,7 +74,7 @@ src/
 
 ## Static rendering (keep it)
 
-- Every page is prerendered at build time (967 pages) and served from Vercel's CDN: no function invocation per visit or per link prefetch. Before, the root layout read cookies, which made every page and every prefetch (30–50 per page view) a serverless render.
+- Every page is prerendered at build time (940 pages) and served from Vercel's CDN: no function invocation per visit or per link prefetch. Before, the root layout read cookies, which made every page and every prefetch (30–50 per page view) a serverless render.
 - Two root layouts share `app/root-shell.tsx`: `(site)/layout.tsx` (English) and `[locale]/layout.tsx` (other languages, `generateStaticParams`). Never call `cookies()`/`headers()` or use `force-dynamic` in pages or layouts. Localized pages list their params with `generateStaticParams`; unknown params render on demand and 404.
 - The visitor's language on English URLs is applied in the browser (`I18nProvider`: saved choice, geo cookie set by `middleware.ts`, time zone, browser language), loading that language's chunk.
 - Dictionaries never travel as props: the provider loads the page's language with `use(loadMessages(...))` (one cached JS chunk per language), so HTML and RSC payloads stay small and prefetches cost a few KB.
@@ -87,7 +87,7 @@ src/
 
 ## Tools
 
-Canonical list: `src/lib/tools.ts` — 71 tools across 4 categories (PDF, Image, Video/Audio, Utility). FFmpeg/AI/browser-fetch tools were removed in v1.4.0. v2.0 retired 13 off-brand or third-party-dependent tools and merged 5 duplicates; their URLs 301-redirect via `redirects()` in `next.config.mjs` — add a redirect whenever a tool slug is removed or renamed.
+Canonical list: `src/lib/tools.ts` — 67 tools across 4 categories (PDF, Image, Video/Audio, Utility). FFmpeg/AI/browser-fetch tools were removed in v1.4.0. v2.0 retired 13 off-brand or third-party-dependent tools and merged 5 duplicates; their URLs 301-redirect via `redirects()` in `next.config.mjs` — add a redirect whenever a tool slug is removed or renamed. v2.2 ("fewer, better tools") retired Text to Speech (no audio export possible), merged Color Dropper into Color Picker and Image to Base64 into Base64 (`RETIRED_TOOLS` in `next.config.mjs` redirects every language's old URL), and dropped Handwriting to Text before release: on real notebook photos the best on-device recognizer stayed at 13–20 % character errors even with word-list correction (the code is in git history, commit `700cfca`). A tool ships only when it does its job completely; otherwise it is fixed or removed.
 
 ## Design System ("Voltage")
 
@@ -111,24 +111,6 @@ Workers/wasm that libraries load at runtime are copied from `node_modules` into 
 - `refine.ts`: speck/hole cleanup, colour guided filter (full-res edges), levels, blur-fusion foreground estimation (colour decontamination). Pure functions, testable in Node.
 - `document.ts` (brush erase/restore + tile undo/redo, outputs), `compose.ts` (backdrops + export), `components/bg-removal/CutoutEditor.tsx` (zoom/pan/pinch canvas).
 - Don't use the published 1024 BiRefNet ONNX files: they peak at ~6.7 GB and exceed WebAssembly's 4 GB limit.
-
-## Handwriting to Text (`src/lib/handwriting/`)
-
-- PP-OCRv6 small (PaddleOCR, Apache-2.0), float16 ONNX in `models/ppocrv6-small/`, served from a **pinned commit** (`COMMIT` in `models.ts`) via jsDelivr (fallback raw.githubusercontent), SHA-256 checked, Cache Storage bucket `zapfile-ocr-v1`. Default download ≈ 11 MB: `det.onnx` (5 MB) + `rec-latin.onnx` (6.2 MB: the recognizer with its output layer cut to 566 Latin/Greek characters by `models/tools/ocr_prune_charset.py`, same accuracy on Latin text) + `dict-latin.json`. The full `rec.onnx` + `dict.json` (Chinese/Japanese) load only when the user picks 日本語・中文 (default on `/ja`). `NEXT_PUBLIC_OCR_MODEL_URL` overrides the base URL (local testing).
-- `pipeline.ts` is pure (Node-testable): detection input (BGR, ImageNet norm, long side 960), DB boxes (flood fill → convex hull of pixel *centres*, like OpenCV → min-area rect → unclip 1.5 → thickness × 0.9), rotated 48 px line crops, greedy CTC, `rotateRgba`/`verticalShare`/`flipBox`, line grouping and text assembly ("as written" / "paragraphs").
-  - Measured on real notebook photos: hull from pixel corners instead of centres made boxes ~10 % taller and cost 28.8 % vs 22.4 % character errors; thickness × 0.9 gives a further 22.4 → 20.9 % (and 26.1 → 23.0 %). Larger unclip, the v6 medium recognizer and the v6 tiny detector were all worse. Dictionary re-scoring (CTC + word lists) was tried and dropped: no gain on real handwriting, and it produced plausible wrong words.
-- Decoding and note conventions (all in `pipeline.ts`, checked by `npm run test:handwriting`, `scripts/test-handwriting.mjs`):
-  - `ctcDecode(…, { typeRatio: 0.05 })`: inside a word, the characters the recognizer is sure of decide letters vs number; unsure digits in a letter word become the likeliest letter at their time steps ("d0" → "do"), and the reverse in numbers. It also returns each character's position along the box.
-  - `cleanNoteLines`: drawn arrows ("-)", "—)", "->") → "→"; the pronoun I ("l'm", "(1do)", "Ido", "1 always" — a lone 1 only at a line/clause/bracket start and before a word from `AFTER_I`); hook bullets ("L", "L)", "4 It…") → "↳" only when two or more lines start that way. Cases that must stay untouched ("Step 1 do", "1 tane", "(-s)", "4 eggs / 4 Eier") are in the test.
-  - `groupLines` splits rows at wide gaps; `assembleText` reads two or more consecutive split rows aligned on the same right-column edge as columns (left column, then right), splitting a row at a box boundary or, inside one box, at a wide space (character positions) when the columns are close.
-  - Measured on the second real notebook photo (two columns, arrows, hooks): 36.0 % → 21.1 % character errors; others unchanged or better. A larger space weight was tried and not kept (helps one photo, hurts another).
-- Turkish pages (`language.ts`, pure): the recognizer almost never outputs ı/ş/ğ/ç for handwriting and reads a handwritten "a" as "o". When `looksTurkish` (stopwords/endings; the UI language `tr` tips unclear text) the worker loads `models/lexicons/tr.txt` (~288k words from wordfreq + OpenSubtitles frequencies, CC BY-SA, compact rank-grouped front-coded format, ≈ 610 KB brotli, same pinned commit; details in `models/README.md`) and `correctLine` re-scores each word: candidates are built from the recognizer's top letters per character (plus o↔a, u→o), scored by CTC likelihood over the word's time steps (letter ± diacritic counted together) + log-frequency by rank; 3-letter words need a clear margin ("osm" stays). Then `learnConfusions` learns this hand's misreadings (e.g. 60 % of its "a"s read as "o") from the first pass's corrections plus `lexicalPairs` (common words read as is; non-words that become a common word by swapping only o/a/u — this also works when the recognizer was sure of every "o", where re-scoring alone can't start), and a second pass scores with the recognizer's "o" as weak evidence for "a" (not for ≤ 3-letter words). Pages mixing English and Turkish (`hasTurkish` but not `looksTurkish`: English lessons with Turkish explanations) also load `models/lexicons/en.txt` (30k English words, ≈ 75 KB): lines that are clearly English by `lineLanguage` stay as read, and in the others a word more frequent in English than in Turkish (and "I"+English word, "Ido") is protected. Nothing is tuned per word: no word or topic is hard-coded. Measured on a real Turkish history notebook page: 29.2 % → 18.4 % (50k list, one pass) → 13.4 % (this list, two passes; "Trablusgarp" fixed); on 30 generated pages of other topics (biology, recipe, geography, diary, meeting notes; 3 handwriting fonts, blur, slant; half with "a" drawn as "o" 60 % of the time) 10.5 % → 8.5 % on average and no page worse; tidy pages learn no confusion; English pages untouched. Real photos from the user (4 pages, other hands too): letter 19.4 → 13.9 %, history notes 28.5 → 14.8 %, mixed English/Turkish lessons 23.4 → 22.4 % and 20.6 → 19.5 %; 35 pages, none worse. Rejected: pure diacritic restoration without re-scoring (no gain: the words themselves were wrong).
-- `dropMarginMarks` (pipeline.ts): a column of ≥ 3 tiny low-confidence boxes outside the text block (spiral binding rings read as "9", "a", "0") and lone characters under 0.3 confidence are dropped. `cleanNoteLines` also turns a line-start ")" / ">" before a word into "→" and a line-start "." / "·" into "•".
-- `worker.ts`: onnxruntime-web on **WASM** (WebGPU path off: a real user's float16 WebGPU session never finished starting), lines batched by width. Orientation: if most text runs vertically the image is turned 90° and detected again; if the longest lines read with low confidence (< 0.75) they are re-read turned 180° and the page is flipped when that's clearly better (all 12 rotations of the test pages correct). The result carries `rotation`; the page shows an upright preview.
-- Threads need cross-origin isolation: `next.config.mjs` sends COOP/COEP on the tool's pages (`HANDWRITING_PATHS`), COEP+CORP on `/_next/static/*` (a worker started by an isolated page must be served with COEP, else `ERR_BLOCKED_BY_RESPONSE`), `/vendor/ort-*` and CORP on the favicons (else Chrome shows a stale icon). The page reloads itself once after client-side navigation (handed-off files kept).
-- Page reading loop (`pump` in the page): keep `pagesRef` updated synchronously in `update` (the loop runs between renders), never re-pick a page with a closed bitmap (re-decode its preview), yield (`setTimeout 0`) after an error. Paste: `FileDropzone` handles it while it's shown; the page's own listener skips `defaultPrevented` events. A stale page list plus a duplicated paste once made the loop spin in microtasks and froze the tab. ORT threads: ≤ half the logical cores and ≤ 4.
-- `client.ts` watchdog: no message for 20 s (45 s while reading) → restart the worker single-threaded and resend the pages; failing again shows the technical reason under the error.
-- UI `app/(site)/tools/handwriting-to-text/page.tsx`: images, TIFF, PDF ≤ 20 pages, paste (Ctrl/⌘+V), camera button on touch devices, model download starts on intent (dragenter / pointerdown on the drop zone), boxes on the image (unsure lines amber; clicking one selects its text), editable text, writing-system and layout switches (pages are re-read from their previews), copy, TXT, reading time.
 
 ## Image engine (`src/lib/image-engine/`) — use it for any image export
 

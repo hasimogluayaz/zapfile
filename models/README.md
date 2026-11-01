@@ -56,33 +56,3 @@ The browser concatenates the parts, checks the SHA-256 of the gzip stream, keeps
 unpacks it with `DecompressionStream`. The small loader scripts (`soffice.js`, `soffice.worker.js`,
 `browser.worker.global.js`) are copied from the npm package into `public/vendor/libreoffice-<version>/`.
 To recreate the parts: `gzip -9 -n -c soffice.wasm | split -b 19000000 -d -a 2 --additional-suffix=.bin - wasm-part-`.
-
-## ppocrv6-small/ — Handwriting to Text
-
-| | |
-|---|---|
-| Model | PP-OCRv6 small: DB text detector + SVTR/CTC text recognizer (printed and handwritten text; Latin incl. Turkish, Greek, Chinese, Japanese) |
-| Source | PaddleOCR v3.7.0 (rev `b03f4642`), ONNX exports as packaged in npm `@arcships/light-ocr-model-ppocrv6-small@0.3.4` (`bundle/webgpu/`), converted to float16 with `onnxruntime.transformers.float16` |
-| License | Apache-2.0 (see `ppocrv6-small/LICENSE`) |
-| `det.onnx` | input `x` float16 [1, 3, H, W] (multiples of 32), BGR, ImageNet mean/std → text probability map [1, 1, H, W]. 4,973,761 bytes, SHA-256 `2f0463ba51af55a9f49cae1f18cf905c578d4752236c30456325c817d8e47a1b` |
-| `rec.onnx` | input `x` float16 [N, 3, 48, W ≥ 320], BGR, (x/255 − 0.5)/0.5 → CTC scores [N, W/8, 18711] (blank, `dict.json` characters, space). 10,624,002 bytes, SHA-256 `f6ee9c86013fdd02cf9dfdf311813e1f2fe56e83d2b5f12994617dfa05d3b9cb` |
-| `dict.json` | `{ characters: [...] }`, 112,408 bytes, SHA-256 `6e93cc028ff774c8bef0801ad08391f8284f7ef897013a9aeb9cbd515db3276d` |
-
-| `rec-latin.onnx` | `rec.onnx` with its output layer cut to the 566 Latin/Greek/punctuation characters of `dict-latin.json` (`tools/ocr_prune_charset.py`): same results on Latin text (checked on real and test pages), 6,233,083 bytes instead of 10.6 MB, and a 567-class output instead of 18,710 (faster decoding). SHA-256 `01efad51fcf62a4eaf0d2e8a10325c8d02da7b14fbe110af9ed29f03a379875a` |
-| `dict-latin.json` | 2,927 bytes, SHA-256 `b1a1c5aa2cc7372f957a46aa664b9e5ca60a6d9a6183773366faa7a8ac4313d1` |
-
-The default is `rec-latin.onnx`; the full `rec.onnx` + `dict.json` are only downloaded for Japanese or Chinese text.
-
-The float16 files run on both ONNX Runtime Web execution providers (WebGPU and
-WASM) with the same results as the float32 originals on our test pages.
-Pre/post-processing: `src/lib/handwriting/pipeline.ts`.
-
-## lexicons/ — Turkish word list for Handwriting to Text
-
-`tr.txt`: about 288,000 Turkish words with approximate frequency ranks, merged from [wordfreq](https://github.com/rspeer/wordfreq) 3.1.1 by Robyn Speer (top 50,000) and [FrequencyWords](https://github.com/hermitdave/FrequencyWords) by Hermit Dave (OpenSubtitles 2018, top 300,000; rank = the better of the two). Filtered: alphabetic words only, one spelling per form without Turkish letters (the most frequent), no q/w/x, and English words far more frequent in English removed (Turkish rank > 1,000 and > 10 × their wordfreq English rank: "get", "rain", …). **Data license: CC BY-SA 4.0** (both sources); this derived list is shared under the same license (header lines starting with `#`).
-
-Compact format (read by `parseLexicon`): `=R` starts a group of words of about rank R (groups are half powers of two), and inside a group each line is the number of characters shared with the previous word followed by the rest of it. 1,826,254 bytes (≈ 610 KB brotli / 750 KB gzip as jsDelivr serves it), SHA-256 `c7c03dc8d13481e383c861d983aadfa82965da27599ccb988a07f6c27ba99e38`.
-
-Downloaded only for Turkish pages. `src/lib/handwriting/language.ts` re-scores each word with the recognizer's own character probabilities (CTC) plus the word's frequency: it puts back ı/ş/ğ/ç (which the recognizer hardly ever outputs for handwriting) and fixes a handwritten "a" read as "o", but a word is only replaced by one the recognizer considers possible at every letter. Measured on a real notebook page: 50k wordfreq list 18.4 %, this list 17.6 % character errors; with the second, writer-adaptive pass 15.3 % vs 13.4 % (and "Trablusgarp", rank ≈ 250,000, is only in this one).
-
-`en.txt`: the 30,000 most frequent alphabetic English words from wordfreq 3.1.1 (CC BY-SA 4.0, same compact format), 177,710 bytes (≈ 75 KB compressed), SHA-256 `caf4bd24d3c1bf2f51846e21fc4f19c7982a5441aa3a376f230fdf3398e12756`. Loaded only for pages that mix English and Turkish (English lessons with Turkish explanations): clearly English lines and words that are more frequent in English stay as read, only the Turkish is corrected.
