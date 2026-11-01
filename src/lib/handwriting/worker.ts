@@ -5,7 +5,7 @@
  * lines with ONNX Runtime Web, all off the main thread. Nothing leaves the device.
  */
 import type * as OrtModule from "onnxruntime-web";
-import { correctLine, looksTurkish, parseLexicon, sparsifyScores, type Lexicon, type SparseScores } from "./language";
+import { correctLine, learnConfusions, looksTurkish, parseLexicon, sparsifyScores, type Confusions, type Lexicon, type SparseScores } from "./language";
 import { DETECT_MAX_SIDE, OCR_ALL_FILES, OCR_CACHE, OCR_LEXICON_TR, ocrCacheKey, ocrFiles, type OcrModelFile, type OcrScript } from "./models";
 import {
   boxesFromProbability,
@@ -354,19 +354,29 @@ async function looksUpsideDown(img: Rgba, lines: OcrLineResult[], script: OcrScr
 
 /**
  * Turkish pages: re-score words against the Turkish word list (ı/ş/ğ/ç, a/o
- * confusions; see language.ts). Best effort: without the list the lines stay as read.
+ * confusions; see language.ts), twice: the second pass knows how this hand's
+ * letters get misread. Best effort: without the list the lines stay as read.
  */
 async function polish(lines: OcrLineResult[], kept: LineScores, script: OcrScript, language?: string): Promise<OcrLineResult[]> {
   if (script !== "latin" || !looksTurkish(lines.map((l) => l.text), language)) return lines;
   const lex = await turkishLexicon();
   const rec = recognizers.get(script);
   if (!lex || !rec) return lines;
-  return lines.map((line) => {
-    const k = kept.get(line);
-    if (!k || !line.positions) return line;
-    const fixed = correctLine({ text: line.text, positions: line.positions, spans: k.spans }, k.scores, rec.alphabet, lex);
-    return fixed.changed ? { ...line, text: fixed.text, positions: fixed.positions } : line;
-  });
+  const pass = (confusions: Confusions) => {
+    const words: [string, string][] = [];
+    const out = lines.map((line) => {
+      const k = kept.get(line);
+      if (!k || !line.positions) return line;
+      const fixed = correctLine({ text: line.text, positions: line.positions, spans: k.spans }, k.scores, rec.alphabet, lex, { confusions });
+      words.push(...fixed.words);
+      return fixed.changed ? { ...line, text: fixed.text, positions: fixed.positions } : line;
+    });
+    return { out, words };
+  };
+  const first = pass({});
+  // Second pass with what the page taught us about this hand (an "a" that looks like "o").
+  const confusions = learnConfusions(first.words);
+  return Object.keys(confusions).length ? pass(confusions).out : first.out;
 }
 
 async function recognize(request: Extract<OcrRequest, { type: "recognize" }>) {

@@ -101,6 +101,22 @@ assert.deepEqual(P.cleanNoteLines(["L He comes."]), ["L He comes."], "one mark a
   assert.equal(fix([{ ç: 0.95, g: 0.05 }, { a: 1 }, { y: 1 }]), "çay");
   // Words that aren't close to a listed word stay as read.
   assert.equal(fix([{ x: 1 }, { q: 1 }, { z: 1 }, { a: 1 }]), "xqza");
+  // The list's compact format: rank groups, front-coded words.
+  const compact = L.parseLexicon("# c\n=1\n0ve\n=3\n0da\n1e\n=40\n0savaş\n5ı\n");
+  assert.deepEqual([...compact.forms.values()], [
+    { word: "ve", rank: 1 }, { word: "da", rank: 3 }, { word: "de", rank: 3 }, { word: "savaş", rank: 40 }, { word: "savaşı", rank: 40 },
+  ]);
+  // A hand whose "a" reads as "o": learned from the page, then "o" counts as weak "a".
+  const pairs = [["kodor", "kadar"], ["olmosi", "olması"], ["sovos", "savaş"], ["Vor", "Var"], ["holk", "halk"], ["masa", "masa"]];
+  assert.deepEqual(L.learnConfusions(pairs), { a: { o: 0.6 } });
+  assert.deepEqual(L.learnConfusions([["masa", "masa"], ["kadar", "kadar"], ["araba", "araba"]]), {}, "a tidy hand teaches nothing");
+  {
+    // "korsi": both vowels read as sure "o"s. Plain scoring keeps it; with this hand's confusion it is "karşı".
+    const rare = L.parseLexicon("=200000\n0karşı\n");
+    const { d, sparse } = decode([{ k: 1 }, { o: 0.99, a: 0.01 }, { r: 1 }, { s: 1 }, { i: 1 }]);
+    assert.equal(L.correctLine(d, sparse, alphabet, rare).text, "korsi");
+    assert.equal(L.correctLine(d, sparse, alphabet, rare, { confusions: { a: { o: 0.6 } } }).text, "karşı");
+  }
   // Language: Turkish notes vs English notes; a Turkish UI tips unclear text.
   assert.equal(L.looksTurkish(["Rusya ve italya arasinda yapildi", "Bu konuyu ayrica konusmaliyim"]), true);
   assert.equal(L.looksTurkish(["It is raining now, so take an umbrella", "I always drink coffee in the morning"], "tr"), false);

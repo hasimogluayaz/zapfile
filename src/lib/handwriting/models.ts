@@ -15,7 +15,7 @@ export interface OcrModelFile {
 }
 
 const REPO = "hasimogluayaz/zapfile";
-const COMMIT = "49e88ebf7831cb78801d14096f0f59bc1fde20ba";
+const COMMIT = "4b0398f3bb5eff2468e8dfc3f22478a5b951fbd6";
 const DIR = "models/ppocrv6-small";
 
 function sources(name: string, dir = DIR): string[] {
@@ -75,16 +75,16 @@ export const OCR_DICTIONARY: OcrModelFile = {
 };
 
 /**
- * Turkish word list (50,000 most frequent words, wordfreq, CC BY-SA 4.0;
- * models/lexicons/tr.txt). Loaded only for Turkish pages, to put back
- * ı/ş/ğ/ç and fix letters handwriting confuses (language.ts). About 200 KB
- * compressed.
+ * Turkish word list (~288,000 words, wordfreq + OpenSubtitles frequencies,
+ * CC BY-SA 4.0; models/lexicons/tr.txt, compact format). Loaded only for
+ * Turkish pages, to put back ı/ş/ğ/ç and fix letters handwriting confuses
+ * (language.ts). About 610 KB compressed.
  */
 export const OCR_LEXICON_TR: OcrModelFile = {
-  id: "wordfreq-tr-50k",
+  id: "tr-words-288k",
   name: "tr.txt",
-  bytes: 477_674,
-  sha256: "28884a183b62be43b0337487222b0bd1c3067cf224192d67a40cf380c59a910e",
+  bytes: 1_826_254,
+  sha256: "c7c03dc8d13481e383c861d983aadfa82965da27599ccb988a07f6c27ba99e38",
   urls: sources("tr.txt", "models/lexicons"),
 };
 

@@ -30,16 +30,32 @@ export interface Lexicon {
   forms: Map<string, { word: string; rank: number }>;
 }
 
-/** Word list text: one word per line, most frequent first; lines starting with # are comments. */
+/**
+ * Word list text (models/lexicons/tr.txt). Lines starting with # are
+ * comments. "=R" starts a group of words of about frequency rank R, whose
+ * lines are front-coded: a digit (characters shared with the previous word)
+ * then the rest of the word. Plain word lines (most frequent first, rank =
+ * line number) are read too.
+ */
 export function parseLexicon(text: string): Lexicon {
   const forms = new Map<string, { word: string; rank: number }>();
-  let rank = 0;
+  let rank = 0, group = 0, prev = "";
   for (const raw of text.split("\n")) {
-    const word = raw.trim();
-    if (!word || word.startsWith("#")) continue;
+    const line = raw.trim();
+    if (!line || line.startsWith("#")) continue;
+    if (line.startsWith("=")) {
+      group = Number(line.slice(1)) || 1;
+      prev = "";
+      continue;
+    }
+    let word = line;
+    if (line[0] >= "0" && line[0] <= "9") {
+      word = prev.slice(0, Number(line[0])) + line.slice(1);
+      prev = word;
+    }
     rank++;
     const key = foldTurkish(word);
-    if (!forms.has(key)) forms.set(key, { word, rank });
+    if (!forms.has(key)) forms.set(key, { word, rank: group || rank });
   }
   return { forms };
 }
@@ -83,15 +99,28 @@ export function sparsifyScores(scores: Float32Array, steps: number, classes: num
 
 const FLOOR = 1e-6;
 
-/** Probability of any class of `set` at step `t`. */
-function prob(s: SparseScores, t: number, set: number[]): number {
+/**
+ * A CTC label: classes that count as this letter, each with a weight (1 for
+ * the letter with or without its diacritic; less for a letter this writer's
+ * hand is often read as, see `learnConfusions`).
+ */
+export interface Label {
+  ids: number[];
+  weights: number[];
+}
+
+/** Probability of the label at step `t`. */
+function prob(s: SparseScores, t: number, label: Label): number {
   const o = t * s.k;
   let p = 0;
-  for (let i = 0; i < s.k; i++) if (set.includes(s.cls[o + i])) p += s.p[o + i];
+  for (let i = 0; i < s.k; i++) {
+    const j = label.ids.indexOf(s.cls[o + i]);
+    if (j >= 0) p += label.weights[j] * s.p[o + i];
+  }
   return Math.max(FLOOR, p);
 }
 
-const BLANK = [0];
+const BLANK: Label = { ids: [0], weights: [1] };
 
 const logAdd = (a: number, b: number) => (a === -Infinity ? b : b === -Infinity ? a : Math.max(a, b) + Math.log1p(Math.exp(-Math.abs(a - b))));
 
@@ -100,8 +129,8 @@ const logAdd = (a: number, b: number) => (a === -Infinity ? b : b === -Infinity 
  * label is a set of equivalent classes (a letter with and without its
  * Turkish diacritic); blank = class 0.
  */
-export function ctcLogLikelihood(s: SparseScores, t0: number, t1: number, labels: number[][]): number {
-  const ext: number[][] = [BLANK];
+export function ctcLogLikelihood(s: SparseScores, t0: number, t1: number, labels: Label[]): number {
+  const ext: Label[] = [BLANK];
   for (const c of labels) ext.push(c, BLANK);
   const n = ext.length;
   let a = new Float64Array(n).fill(-Infinity);
@@ -134,7 +163,15 @@ export interface CorrectOptions {
   minLength?: number;
   /** Called for each replaced word (tests, tuning). */
   onChange?: (from: string, to: string, score: number) => void;
+  /**
+   * How often this writer's letters are read as another letter, by folded
+   * letter: `{ a: { o: 0.4 } }` = an "a" of this hand is read as "o" 40 % of
+   * the time (`learnConfusions`).
+   */
+  confusions?: Confusions;
 }
+
+export type Confusions = Record<string, Record<string, number>>;
 
 export interface DecodedLine {
   text: string;
@@ -154,17 +191,34 @@ export function correctLine(
   scores: SparseScores,
   alphabet: string[],
   lexicon: Lexicon,
-  { weight = 1, minLength = 3, onChange }: CorrectOptions = {},
-): { text: string; positions: number[]; changed: number } {
+  { weight = 1, minLength = 3, onChange, confusions = {} }: CorrectOptions = {},
+): { text: string; positions: number[]; changed: number; words: [string, string][] } {
   const chars = [...line.text];
-  if (chars.length !== line.spans.length) return { text: line.text, positions: line.positions, changed: 0 };
+  if (chars.length !== line.spans.length) return { text: line.text, positions: line.positions, changed: 0, words: [] };
   // Classes of each folded letter, by case: "c" → c, ç; "I" → I, İ.
-  const groups = new Map<string, number[]>();
+  const classes = new Map<string, number[]>();
   alphabet.forEach((c, i) => {
     if (!c || !isLetter(c)) return;
     const key = foldTurkish(c) + (c === c.toLocaleLowerCase("tr") ? "" : "^");
-    groups.set(key, [...(groups.get(key) ?? []), i]);
+    classes.set(key, [...(classes.get(key) ?? []), i]);
   });
+  // One Label object per letter and case (CTC compares labels by identity);
+  // short words ("osm") only get the plain letters.
+  const groups = new Map<string, Label>();
+  const plain = new Map<string, Label>();
+  for (const [key, ids] of classes) {
+    plain.set(key, { ids, weights: ids.map(() => 1) });
+    const letter = key.replace("^", ""), upper = key.endsWith("^");
+    const label: Label = { ids: [...ids], weights: ids.map(() => 1) };
+    for (const [other, rate] of Object.entries(confusions[letter] ?? {})) {
+      for (const id of classes.get(other + (upper ? "^" : "")) ?? []) {
+        label.ids.push(id);
+        label.weights.push(rate);
+      }
+    }
+    groups.set(key, label);
+  }
+  const words: [string, string][] = [];
   const outText: string[] = [];
   const outPos: number[] = [];
   let changed = 0;
@@ -196,7 +250,7 @@ export function correctLine(
     }
     k = e;
   }
-  return { text: outText.join(""), positions: outPos, changed };
+  return { text: outText.join(""), positions: outPos, changed, words };
 
   function correctWord(word: string[], k: number, e: number): string | null {
     if (word.length < minLength) return null;
@@ -226,12 +280,13 @@ export function correctLine(
       return list;
     });
     // Labels for scoring: the folded letters (with or without diacritic), in the case the recognizer read.
-    const labels = (folded: string): number[][] | null => {
-      const out: number[][] = [];
+    const labels = (folded: string): Label[] | null => {
+      const out: Label[] = [];
       const f = [...folded];
       for (let q = 0; q < f.length; q++) {
         const upper = q < word.length && word[q] !== word[q].toLocaleLowerCase("tr");
-        const set = (upper && groups.get(f[q] + "^")) || groups.get(f[q]);
+        const g = word.length <= 3 ? plain : groups;
+        const set = (upper && g.get(f[q] + "^")) || g.get(f[q]);
         if (!set) return null;
         out.push(set);
       }
@@ -261,6 +316,7 @@ export function correctLine(
     // Short words ("osm" for Osmanlı) need clear evidence to change letters;
     // putting back Turkish letters ("ait", "kız") needs none.
     if (word.length <= 3 && best.score < 3 && foldTurkish(best.word) !== foldTurkish(word.join(""))) return null;
+    words.push([word.join(""), best.word]);
     // Keep a capital first letter (Turkish casing: i → İ).
     const first = word[0] !== word[0].toLowerCase();
     const result = first ? best.word[0].toLocaleUpperCase("tr") + best.word.slice(1) : best.word;
@@ -268,6 +324,41 @@ export function correctLine(
     return result;
   }
 }
+
+/**
+ * Learn how this writer's vowels get misread, from the words of a page that
+ * matched the word list: if many words came out right only after an "o"
+ * became "a" ("kodor" → "kadar", "olmosi" → "olması"), this hand's "a" looks
+ * like an "o", and a second pass lets the recognizer's "o" count as weak
+ * evidence for "a" everywhere — enough for rarer words ("Troblusgorp").
+ */
+export function learnConfusions(words: [string, string][], { minSamples = 8, minRate = 0.15, maxRate = 0.6 } = {}): Confusions {
+  const seen: Record<string, number> = {};
+  const misread: Record<string, Record<string, number>> = {};
+  for (const [read, final] of words) {
+    const r = [...foldTurkish(read)], f = [...foldTurkish(final)];
+    if (r.length !== f.length) continue;
+    f.forEach((letter, i) => {
+      if (!CONFUSABLE.has(letter)) return;
+      seen[letter] = (seen[letter] ?? 0) + 1;
+      if (r[i] !== letter && CONFUSED[r[i]] !== undefined) {
+        misread[letter] ??= {};
+        misread[letter][r[i]] = (misread[letter][r[i]] ?? 0) + 1;
+      }
+    });
+  }
+  const out: Confusions = {};
+  for (const [letter, counts] of Object.entries(misread)) {
+    if ((seen[letter] ?? 0) < minSamples) continue;
+    for (const [as, n] of Object.entries(counts)) {
+      const rate = n / seen[letter];
+      if (rate >= minRate) (out[letter] ??= {})[as] = Math.min(maxRate, rate);
+    }
+  }
+  return out;
+}
+
+const CONFUSABLE = new Set(Object.keys(CONFUSED));
 
 // ── Language detection ─────────────────────────────────────────────────────
 
