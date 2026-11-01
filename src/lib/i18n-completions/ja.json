@@ -672,7 +672,6 @@
   "hw.tooManyPages": "最初の {n} ページのみ読み取ります。",
   "hw.safeMode": "予想より時間がかかっています。互換モードで再起動しています…",
   "hw.pasted": "貼り付けた画像",
-  "hw.pasteHint": "スクリーンショットやコピーした画像は {keys} で貼り付けることもできます",
   "hw.script": "文字の種類",
   "hw.scriptLatin": "ラテン文字",
   "hw.time": "{seconds} 秒で読み取りました。"

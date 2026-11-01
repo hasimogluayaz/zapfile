@@ -137,7 +137,6 @@
   "hw.tooManyPages": "Seules les {n} premières pages sont lues.",
   "hw.safeMode": "Plus long que prévu : redémarrage en mode compatibilité…",
   "hw.pasted": "Image collée",
-  "hw.pasteHint": "Ou collez une capture d'écran ou une image copiée avec {keys}",
   "hw.script": "Écriture",
   "hw.scriptLatin": "Alphabet latin",
   "hw.time": "Lu en {seconds} s."

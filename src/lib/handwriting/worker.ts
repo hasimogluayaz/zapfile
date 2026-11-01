@@ -182,7 +182,11 @@ async function loadRuntime(base: string, gpu: boolean, threads: boolean): Promis
   lib.env.wasm.wasmPaths = base;
   lib.env.wasm.proxy = false;
   const cores = self.navigator.hardwareConcurrency || 4;
-  lib.env.wasm.numThreads = threads && self.crossOriginIsolated ? Math.max(1, Math.min(cores - 1, 8)) : 1;
+  // At most half the logical cores (and 4): ONNX Runtime's pool threads spin
+  // while waiting, and with every core busy the page itself stopped
+  // responding on a user's laptop ("Page unresponsive"). These small models
+  // gain little beyond 4 threads anyway.
+  lib.env.wasm.numThreads = threads && self.crossOriginIsolated ? Math.max(1, Math.min(Math.floor(cores / 2), 4)) : 1;
   lib.env.logLevel = "error";
   ort = lib;
   return lib;

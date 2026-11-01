@@ -3297,7 +3297,6 @@ const en: Record<string, string> = {
     "hw.downloading": "Downloading the AI model ({loaded} / {total} MB)…",
     "hw.starting": "Starting the AI model…",
     "hw.pasted": "Pasted image",
-    "hw.pasteHint": "Or paste a screenshot or copied image with {keys}",
     "hw.script": "Writing system",
     "hw.scriptLatin": "Latin letters",
     "hw.time": "Read in {seconds} s.",

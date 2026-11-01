@@ -671,7 +671,6 @@
   "hw.tooManyPages": "Vengono lette solo le prime {n} pagine.",
   "hw.safeMode": "Più lento del previsto: riavvio in modalità compatibilità…",
   "hw.pasted": "Immagine incollata",
-  "hw.pasteHint": "Oppure incolla uno screenshot o un'immagine copiata con {keys}",
   "hw.script": "Scrittura",
   "hw.scriptLatin": "Alfabeto latino",
   "hw.time": "Letto in {seconds} s."

@@ -671,7 +671,6 @@
   "hw.tooManyPages": "Solo se leen las primeras {n} páginas.",
   "hw.safeMode": "Tarda más de lo esperado: reiniciando en modo de compatibilidad…",
   "hw.pasted": "Imagen pegada",
-  "hw.pasteHint": "O pega una captura de pantalla o una imagen copiada con {keys}",
   "hw.script": "Escritura",
   "hw.scriptLatin": "Alfabeto latino",
   "hw.time": "Leído en {seconds} s."

@@ -169,7 +169,6 @@ export default function HandwritingToTextPage() {
   const [script, setScriptState] = useState<OcrScript>("latin");
   const scriptRef = useRef<OcrScript>("latin");
   const textRef = useRef<HTMLTextAreaElement>(null);
-  const [isMac, setIsMac] = useState(false);
   const engineRef = useRef<HandwritingEngine | null>(null);
   const runningRef = useRef(false);
   const pagesRef = useRef<PageItem[]>([]);
@@ -198,7 +197,6 @@ export default function HandwritingToTextPage() {
 
   useEffect(() => {
     setCoarse(window.matchMedia?.("(pointer: coarse)").matches ?? false);
-    setIsMac(/Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent));
     return () => {
       engineRef.current?.dispose();
       for (const p of pagesRef.current) {
@@ -222,8 +220,13 @@ export default function HandwritingToTextPage() {
     return engineRef.current;
   }, []);
 
-  const update = (id: number, patch: Partial<PageItem>) =>
-    setPages((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch } : p)));
+  /** Change a page now (the reading loop sees it at once) and in the next render. */
+  const update = (id: number, patch: Partial<PageItem>) => {
+    pagesRef.current = pagesRef.current.map((p) =>
+      p.id === id ? { ...p, ...patch } : p,
+    );
+    setPages(pagesRef.current);
+  };
 
   /** Read waiting pages one after another. */
   const pump = useCallback(async () => {
@@ -270,7 +273,8 @@ export default function HandwritingToTextPage() {
         eng.onProgress = onProgress(index, all.length);
         try {
           // Pages read before keep only their preview (a re-run after changing the script).
-          if (!page.bitmap) {
+          // A closed bitmap has no size: decode the page again from its preview.
+          if (!page.bitmap || !page.bitmap.width) {
             page.bitmap = (
               await decodeImage(await (await fetch(page.preview)).blob())
             ).bitmap;
@@ -285,7 +289,10 @@ export default function HandwritingToTextPage() {
           update(page.id, { status: "done", result, bitmap: null, upright });
         } catch (error) {
           console.error(error);
-          update(page.id, { status: "error", bitmap: page.bitmap });
+          update(page.id, {
+            status: "error",
+            bitmap: page.bitmap?.width ? page.bitmap : null,
+          });
           setErrorDetail(
             error instanceof Error ? error.message : String(error),
           );
@@ -301,13 +308,14 @@ export default function HandwritingToTextPage() {
           );
           if (code === "download" || code === "runtime") {
             // Nothing else can run: put the remaining pages back for a retry.
-            setPages((prev) =>
-              prev.map((p) =>
-                p.status === "waiting" ? { ...p, status: "error" } : p,
-              ),
+            pagesRef.current = pagesRef.current.map((p) =>
+              p.status === "waiting" ? { ...p, status: "error" } : p,
             );
+            setPages(pagesRef.current);
             break;
           }
+          // Let the page render before the next one, whatever happens.
+          await new Promise((resolve) => setTimeout(resolve, 0));
         }
       }
     } finally {
@@ -457,6 +465,8 @@ export default function HandwritingToTextPage() {
   // Paste a screenshot or a copied image (Ctrl/⌘+V) anywhere on the page.
   useEffect(() => {
     const onPaste = (e: ClipboardEvent) => {
+      // The drop zone (shown before the first page) handles paste itself.
+      if (e.defaultPrevented) return;
       const files = Array.from(e.clipboardData?.files ?? []).filter(
         (f) => f.type.startsWith("image/") || f.type === "application/pdf",
       );
@@ -591,11 +601,6 @@ export default function HandwritingToTextPage() {
                 label={opening ? t("p2o.opening") : t("hw.drop")}
               />
             </div>
-          )}
-          {!coarse && (
-            <p className="text-center text-[12.5px] text-t-tertiary">
-              {t("hw.pasteHint", { keys: isMac ? "⌘ V" : "Ctrl + V" })}
-            </p>
           )}
           {cameraButton && (
             <div className="flex justify-center">{cameraButton}</div>
