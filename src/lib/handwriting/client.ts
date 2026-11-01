@@ -1,8 +1,20 @@
 /**
  * Main-thread handle for the Handwriting to Text worker.
+ *
+ * A watchdog guards against a worker that silently stops (e.g. ONNX Runtime's
+ * thread pool never starting because a browser blocks its worker threads):
+ * when nothing is heard from the worker for a while, it is restarted once in
+ * safe mode (single-threaded WASM) and the pending pages are sent again.
  */
 import { IMAGE_MAX_SIDE } from "./models";
-import type { OcrBackend, OcrErrorCode, OcrLineResult, OcrRequest, OcrResponse, OcrStage } from "./protocol";
+import type {
+  OcrBackend,
+  OcrErrorCode,
+  OcrLineResult,
+  OcrRequest,
+  OcrResponse,
+  OcrStage,
+} from "./protocol";
 
 export class OcrError extends Error {
   constructor(
@@ -15,7 +27,7 @@ export class OcrError extends Error {
 }
 
 export interface OcrProgress {
-  stage: OcrStage;
+  stage: OcrStage | "retry";
   jobId?: number;
   loaded?: number;
   total?: number;
@@ -30,26 +42,91 @@ export interface OcrPageResult {
   ms: number;
 }
 
-type Pending = { resolve: (r: OcrPageResult) => void; reject: (e: Error) => void };
+interface Job {
+  source: ImageBitmap;
+  resolve: (r: OcrPageResult) => void;
+  reject: (e: Error) => void;
+}
 
 const ORT_BASE = `/vendor/ort-${process.env.NEXT_PUBLIC_ORT_VERSION}/`;
+/** Silence (ms) after which the worker counts as stuck: while starting, and while reading. */
+const STALL_LOADING = 20_000;
+const STALL_READING = 45_000;
 
 export class HandwritingEngine {
-  private worker: Worker;
+  private worker!: Worker;
   private nextJob = 1;
-  private pending = new Map<number, Pending>();
+  private jobs = new Map<number, Job>();
   private loadPromise: Promise<OcrBackend> | null = null;
-  private loadSettle: { resolve: (b: OcrBackend) => void; reject: (e: Error) => void } | null = null;
+  private loadSettle: {
+    resolve: (b: OcrBackend) => void;
+    reject: (e: Error) => void;
+  } | null = null;
+  private safe = false;
+  private stage: OcrStage | null = null;
+  private watchdog: ReturnType<typeof setTimeout> | null = null;
+  private disposed = false;
   backend: OcrBackend | null = null;
   onProgress: ((event: OcrProgress) => void) | null = null;
 
   constructor() {
-    this.worker = new Worker(new URL("./worker.ts", import.meta.url), { type: "module" });
-    this.worker.onmessage = (event: MessageEvent<OcrResponse>) => this.handle(event.data);
+    this.spawn();
+  }
+
+  private spawn() {
+    this.worker = new Worker(new URL("./worker.ts", import.meta.url), {
+      type: "module",
+    });
+    this.worker.onmessage = (event: MessageEvent<OcrResponse>) =>
+      this.handle(event.data);
     this.worker.onerror = (event) => {
       event.preventDefault();
-      this.failAll(new OcrError("runtime", event.message || "Worker crashed"));
+      this.stuck(event.message || "Worker crashed");
     };
+    this.worker.onmessageerror = () =>
+      this.stuck("Unreadable message from worker");
+  }
+
+  private busy() {
+    return !!this.loadSettle || this.jobs.size > 0;
+  }
+
+  /** (Re)start the stall timer while anything is outstanding. */
+  private arm() {
+    if (this.watchdog) clearTimeout(this.watchdog);
+    this.watchdog = null;
+    if (this.disposed || !this.busy()) return;
+    const reading = this.stage === "detect" || this.stage === "read";
+    this.watchdog = setTimeout(
+      () => this.stuck(`No response at stage "${this.stage ?? "start"}"`),
+      reading ? STALL_READING : STALL_LOADING,
+    );
+  }
+
+  /** The worker hung or crashed: restart once in safe mode, else give up. */
+  private stuck(reason: string) {
+    if (this.disposed) return;
+    if (this.watchdog) clearTimeout(this.watchdog);
+    this.watchdog = null;
+    this.worker.terminate();
+    if (this.safe) {
+      this.failAll(new OcrError("runtime", reason));
+      this.spawn(); // ready for a manual retry
+      return;
+    }
+    console.warn(`[handwriting] ${reason}; restarting single-threaded`);
+    this.safe = true;
+    this.stage = null;
+    this.onProgress?.({ stage: "retry" });
+    this.spawn();
+    this.send({
+      type: "load",
+      ortBase: ORT_BASE,
+      preferGpu: false,
+      threads: false,
+    });
+    for (const [jobId, job] of this.jobs) void this.post(jobId, job.source);
+    this.arm();
   }
 
   private send(msg: OcrRequest, transfer: Transferable[] = []) {
@@ -59,6 +136,7 @@ export class HandwritingEngine {
   private handle(msg: OcrResponse) {
     switch (msg.type) {
       case "progress":
+        this.stage = msg.stage;
         this.onProgress?.(msg);
         break;
       case "loaded":
@@ -67,9 +145,15 @@ export class HandwritingEngine {
         this.loadSettle = null;
         break;
       case "result": {
-        const job = this.pending.get(msg.jobId);
-        this.pending.delete(msg.jobId);
-        job?.resolve({ width: msg.width, height: msg.height, lines: msg.lines, backend: msg.backend, ms: msg.ms });
+        const job = this.jobs.get(msg.jobId);
+        this.jobs.delete(msg.jobId);
+        job?.resolve({
+          width: msg.width,
+          height: msg.height,
+          lines: msg.lines,
+          backend: msg.backend,
+          ms: msg.ms,
+        });
         break;
       }
       case "error": {
@@ -79,51 +163,75 @@ export class HandwritingEngine {
           this.loadSettle = null;
           this.loadPromise = null;
         } else {
-          const job = this.pending.get(msg.jobId);
-          this.pending.delete(msg.jobId);
+          const job = this.jobs.get(msg.jobId);
+          this.jobs.delete(msg.jobId);
           job?.reject(error);
         }
         break;
       }
     }
+    this.arm();
   }
 
   private failAll(error: Error) {
     this.loadSettle?.reject(error);
     this.loadSettle = null;
     this.loadPromise = null;
-    this.pending.forEach((p) => p.reject(error));
-    this.pending.clear();
+    this.jobs.forEach((j) => j.reject(error));
+    this.jobs.clear();
   }
 
   /** Download (first use) and start the models. Safe to call repeatedly. */
   load(): Promise<OcrBackend> {
     if (!this.loadPromise) {
-      this.loadPromise = new Promise((resolve, reject) => (this.loadSettle = { resolve, reject }));
-      // WASM only: on some GPUs the float16 WebGPU session never finished
-      // starting (first real-world test). WASM is exact and, with threads on
-      // this cross-origin isolated page, fast enough for these small models.
-      this.send({ type: "load", ortBase: ORT_BASE, preferGpu: false });
+      this.loadPromise = new Promise(
+        (resolve, reject) => (this.loadSettle = { resolve, reject }),
+      );
+      // WASM only: on some GPUs the float16 WebGPU session never finished starting.
+      this.send({
+        type: "load",
+        ortBase: ORT_BASE,
+        preferGpu: false,
+        threads: !this.safe,
+      });
+      this.arm();
     }
     return this.loadPromise;
   }
 
-  /** Recognize the text in an image (scaled to ≤ 2560 px on its long side). */
-  async recognize(source: ImageBitmap): Promise<OcrPageResult> {
-    await this.load();
-    const k = Math.min(1, IMAGE_MAX_SIDE / Math.max(source.width, source.height));
+  /** Send a page (scaled to ≤ 2560 px on its long side) to the worker. */
+  private async post(jobId: number, source: ImageBitmap) {
+    const k = Math.min(
+      1,
+      IMAGE_MAX_SIDE / Math.max(source.width, source.height),
+    );
     const bitmap =
       k < 1
-        ? await createImageBitmap(source, { resizeWidth: Math.round(source.width * k), resizeHeight: Math.round(source.height * k), resizeQuality: "high" })
+        ? await createImageBitmap(source, {
+            resizeWidth: Math.round(source.width * k),
+            resizeHeight: Math.round(source.height * k),
+            resizeQuality: "high",
+          })
         : await createImageBitmap(source);
+    this.send({ type: "recognize", jobId, bitmap }, [bitmap]);
+  }
+
+  /** Recognize the text in an image. `source` must stay open until this settles. */
+  async recognize(source: ImageBitmap): Promise<OcrPageResult> {
+    await this.load();
     const jobId = this.nextJob++;
-    return new Promise((resolve, reject) => {
-      this.pending.set(jobId, { resolve, reject });
-      this.send({ type: "recognize", jobId, bitmap }, [bitmap]);
-    });
+    const done = new Promise<OcrPageResult>((resolve, reject) =>
+      this.jobs.set(jobId, { source, resolve, reject }),
+    );
+    this.stage = null;
+    await this.post(jobId, source);
+    this.arm();
+    return done;
   }
 
   dispose() {
+    this.disposed = true;
+    if (this.watchdog) clearTimeout(this.watchdog);
     this.failAll(new DOMException("Aborted", "AbortError") as unknown as Error);
     this.worker.terminate();
   }

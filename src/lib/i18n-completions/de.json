@@ -134,5 +134,6 @@
   "hw.addMore": "Seiten hinzufügen",
   "hw.startOver": "Neu beginnen",
   "hw.downloadTxt": "TXT herunterladen",
-  "hw.tooManyPages": "Nur die ersten {n} Seiten werden gelesen."
+  "hw.tooManyPages": "Nur die ersten {n} Seiten werden gelesen.",
+  "hw.safeMode": "Dauert länger als erwartet: Neustart im Kompatibilitätsmodus…"
 }

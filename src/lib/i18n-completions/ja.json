@@ -669,5 +669,6 @@
   "hw.addMore": "ページを追加",
   "hw.startOver": "最初からやり直す",
   "hw.downloadTxt": "TXT をダウンロード",
-  "hw.tooManyPages": "最初の {n} ページのみ読み取ります。"
+  "hw.tooManyPages": "最初の {n} ページのみ読み取ります。",
+  "hw.safeMode": "予想より時間がかかっています。互換モードで再起動しています…"
 }

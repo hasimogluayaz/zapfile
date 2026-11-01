@@ -168,7 +168,7 @@ async function hasWebGpu(): Promise<boolean> {
   }
 }
 
-async function loadRuntime(base: string, gpu: boolean): Promise<Ort> {
+async function loadRuntime(base: string, gpu: boolean, threads: boolean): Promise<Ort> {
   if (ort) return ort;
   const file = gpu ? "ort.webgpu.min.mjs" : "ort.wasm.min.mjs";
   const mod = (await import(/* webpackIgnore: true */ `${base}${file}`)) as Ort & { default?: Ort };
@@ -176,7 +176,7 @@ async function loadRuntime(base: string, gpu: boolean): Promise<Ort> {
   lib.env.wasm.wasmPaths = base;
   lib.env.wasm.proxy = false;
   const cores = self.navigator.hardwareConcurrency || 4;
-  lib.env.wasm.numThreads = self.crossOriginIsolated ? Math.max(1, Math.min(cores - 1, 8)) : 1;
+  lib.env.wasm.numThreads = threads && self.crossOriginIsolated ? Math.max(1, Math.min(cores - 1, 8)) : 1;
   lib.env.logLevel = "error";
   ort = lib;
   return lib;
@@ -196,7 +196,7 @@ async function createSessions(target: OcrBackend) {
 async function load(request: Extract<OcrRequest, { type: "load" }>) {
   const gpu = request.preferGpu && (await hasWebGpu());
   try {
-    await loadRuntime(request.ortBase, gpu);
+    await loadRuntime(request.ortBase, gpu, request.threads);
   } catch (error) {
     throw new EngineError("runtime", `Could not load ONNX Runtime: ${(error as Error).message}`);
   }

@@ -82,5 +82,6 @@
   "hw.addMore": "Sayfa ekle",
   "hw.startOver": "Baştan başla",
   "hw.downloadTxt": "TXT indir",
-  "hw.tooManyPages": "Yalnızca ilk {n} sayfa okunur."
+  "hw.tooManyPages": "Yalnızca ilk {n} sayfa okunur.",
+  "hw.safeMode": "Beklenenden uzun sürdü: uyumluluk modunda yeniden başlatılıyor…"
 }

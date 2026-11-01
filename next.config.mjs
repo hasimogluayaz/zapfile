@@ -68,6 +68,11 @@ const nextConfig = {
       ...OFFICE_TOOL_PATHS.map((source) => ({ source, headers: ISOLATION_HEADERS })),
       ...HANDWRITING_PATHS.map((source) => ({ source, headers: ISOLATION_HEADERS })),
       {
+        // Isolated pages (COEP) can't use a favicon without CORP: Chrome then shows a stale cached icon.
+        source: "/:file(favicon.ico|favicon.svg|favicon-32x32.png|favicon-16x16.png|apple-touch-icon.png|site.webmanifest)",
+        headers: [{ key: "Cross-Origin-Resource-Policy", value: "same-origin" }],
+      },
+      {
         // A worker started by an isolated page must itself be served with COEP,
         // or the browser blocks it (Handwriting to Text's worker is a Next chunk).
         // Harmless for every other page: these are same-origin scripts.

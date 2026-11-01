@@ -519,5 +519,6 @@
   "hw.addMore": "إضافة صفحات",
   "hw.startOver": "البدء من جديد",
   "hw.downloadTxt": "تنزيل TXT",
-  "hw.tooManyPages": "تُقرأ أول {n} صفحة فقط."
+  "hw.tooManyPages": "تُقرأ أول {n} صفحة فقط.",
+  "hw.safeMode": "استغرق الأمر أطول من المتوقع: إعادة التشغيل في وضع التوافق…"
 }

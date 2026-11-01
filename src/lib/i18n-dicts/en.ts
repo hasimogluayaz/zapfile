@@ -3296,6 +3296,7 @@ const en: Record<string, string> = {
     "hw.firstUse": "The first run downloads the AI model once ({size}); after that it starts instantly, even offline. Your images never leave your device.",
     "hw.downloading": "Downloading the AI model ({loaded} / {total} MB)…",
     "hw.starting": "Starting the AI model…",
+    "hw.safeMode": "Taking longer than expected: restarting in compatibility mode…",
     "hw.reading": "Reading the handwriting…",
     "hw.readingPage": "Reading page {n} of {total}…",
     "hw.page": "Page {n}",

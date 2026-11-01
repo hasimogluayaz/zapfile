@@ -11,7 +11,7 @@ export interface OcrLineResult {
 }
 
 export type OcrRequest =
-  | { type: "load"; ortBase: string; preferGpu: boolean }
+  | { type: "load"; ortBase: string; preferGpu: boolean; threads: boolean }
   | { type: "recognize"; jobId: number; bitmap: ImageBitmap };
 
 export type OcrResponse =

@@ -668,5 +668,6 @@
   "hw.addMore": "Aggiungi pagine",
   "hw.startOver": "Ricomincia",
   "hw.downloadTxt": "Scarica TXT",
-  "hw.tooManyPages": "Vengono lette solo le prime {n} pagine."
+  "hw.tooManyPages": "Vengono lette solo le prime {n} pagine.",
+  "hw.safeMode": "Più lento del previsto: riavvio in modalità compatibilità…"
 }

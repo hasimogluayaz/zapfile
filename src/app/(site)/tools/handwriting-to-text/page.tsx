@@ -141,6 +141,8 @@ export default function HandwritingToTextPage() {
   const [baseName, setBaseName] = useState("text");
   const [coarse, setCoarse] = useState(false);
   const [ready, setReady] = useState(false);
+  /** Technical reason of the last failure, shown small so a screenshot tells what went wrong. */
+  const [errorDetail, setErrorDetail] = useState("");
   const engineRef = useRef<HandwritingEngine | null>(null);
   const runningRef = useRef(false);
   const pagesRef = useRef<PageItem[]>([]);
@@ -203,6 +205,8 @@ export default function HandwritingToTextPage() {
                 total: mb(e.total, locale),
               }),
         });
+      } else if (e.stage === "retry") {
+        setStatus({ value: 100, label: t("hw.safeMode") });
       } else if (e.stage === "init") {
         setStatus({ value: 100, label: t("hw.starting") });
       } else {
@@ -234,6 +238,9 @@ export default function HandwritingToTextPage() {
         } catch (error) {
           console.error(error);
           update(page.id, { status: "error" });
+          setErrorDetail(
+            error instanceof Error ? error.message : String(error),
+          );
           const code = error instanceof OcrError ? error.code : "inference";
           toast.error(
             t(
@@ -625,7 +632,14 @@ export default function HandwritingToTextPage() {
               )}
               {failed && !busy && (
                 <div className="flex flex-wrap items-center gap-3 rounded-xl border border-red-500/40 bg-red-500/5 p-3 text-[13.5px] text-t-primary">
-                  <span className="min-w-0 flex-1">{t("hw.failed")}</span>
+                  <span className="min-w-0 flex-1">
+                    {t("hw.failed")}
+                    {errorDetail && (
+                      <span className="mt-1 block break-all font-mono text-[11.5px] text-t-tertiary">
+                        {errorDetail}
+                      </span>
+                    )}
+                  </span>
                   <button
                     type="button"
                     className={buttonSecondary}
