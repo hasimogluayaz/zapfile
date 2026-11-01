@@ -306,7 +306,6 @@
   "meme.selectHint": "Haz clic en una capa de texto de arriba o en el texto de la vista previa para editarlo.",
   "meme.preset.classic": "Clásico arriba/abajo",
   "meme.preset.bottomCaption": "Pie de foto",
-  "imgb64.readFail": "No se pudo leer el archivo.",
   "gifmaker.outputWidth": "Ancho de salida",
   "vid2gif.dropLabel": "Suelta un vídeo aquí o haz clic para subirlo",
   "vid2gif.frameRate": "Fotogramas por segundo",

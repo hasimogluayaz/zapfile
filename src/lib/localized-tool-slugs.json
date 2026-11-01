@@ -23,7 +23,6 @@
     "exif-viewer": "exif-goruntuleyici",
     "image-collage": "kolaj-yap",
     "meme-generator": "caps-olustur",
-    "image-to-base64": "resim-base64-cevir",
     "qr-generator": "qr-kod-olustur",
     "svg-to-png": "svg-png-cevir",
     "base64-encode": "base64-cevir",
@@ -51,7 +50,6 @@
     "color-contrast": "renk-kontrasti-kontrol",
     "text-case": "buyuk-kucuk-harf-cevir",
     "background-remover": "arka-plan-kaldir",
-    "color-dropper": "resimden-renk-sec",
     "photo-filter": "fotograf-filtresi",
     "redact-pdf": "pdf-karart",
     "pdf-encrypt": "pdf-sifrele",
@@ -68,8 +66,7 @@
     "repair-pdf": "pdf-onar",
     "pdf-compress": "pdf-sikistir",
     "video-to-gif": "video-gif-yap",
-    "audio-recorder": "ses-kaydedici",
-    "text-to-speech": "metni-sese-cevir"
+    "audio-recorder": "ses-kaydedici"
   },
   "de": {
     "merge-pdf": "pdf-zusammenfuegen",
@@ -95,7 +92,6 @@
     "exif-viewer": "exif-daten-anzeigen",
     "image-collage": "collage-erstellen",
     "meme-generator": "meme-generator",
-    "image-to-base64": "bild-in-base64",
     "qr-generator": "qr-code-generator",
     "svg-to-png": "svg-in-png",
     "base64-encode": "base64-kodieren",
@@ -123,7 +119,6 @@
     "color-contrast": "farbkontrast-pruefen",
     "text-case": "gross-kleinschreibung-umwandeln",
     "background-remover": "hintergrund-entfernen",
-    "color-dropper": "farbe-aus-bild",
     "photo-filter": "foto-filter",
     "redact-pdf": "pdf-schwaerzen",
     "pdf-encrypt": "pdf-passwort-schuetzen",
@@ -140,8 +135,7 @@
     "repair-pdf": "pdf-reparieren",
     "pdf-compress": "pdf-verkleinern",
     "video-to-gif": "video-in-gif",
-    "audio-recorder": "audio-aufnehmen",
-    "text-to-speech": "text-vorlesen"
+    "audio-recorder": "audio-aufnehmen"
   },
   "fr": {
     "merge-pdf": "fusionner-pdf",
@@ -167,7 +161,6 @@
     "exif-viewer": "lecteur-exif",
     "image-collage": "creer-collage",
     "meme-generator": "generateur-meme",
-    "image-to-base64": "image-en-base64",
     "qr-generator": "generateur-qr-code",
     "svg-to-png": "svg-en-png",
     "base64-encode": "encodeur-base64",
@@ -195,7 +188,6 @@
     "color-contrast": "verifier-contraste-couleurs",
     "text-case": "convertir-majuscules-minuscules",
     "background-remover": "supprimer-arriere-plan",
-    "color-dropper": "pipette-couleur-image",
     "photo-filter": "filtre-photo",
     "redact-pdf": "caviarder-pdf",
     "pdf-encrypt": "proteger-pdf",
@@ -212,8 +204,7 @@
     "repair-pdf": "reparer-pdf",
     "pdf-compress": "compresser-pdf",
     "video-to-gif": "video-en-gif",
-    "audio-recorder": "enregistreur-audio",
-    "text-to-speech": "synthese-vocale"
+    "audio-recorder": "enregistreur-audio"
   },
   "es": {
     "merge-pdf": "unir-pdf",
@@ -239,7 +230,6 @@
     "exif-viewer": "ver-datos-exif",
     "image-collage": "hacer-collage",
     "meme-generator": "generador-memes",
-    "image-to-base64": "imagen-a-base64",
     "qr-generator": "generador-codigo-qr",
     "svg-to-png": "svg-a-png",
     "base64-encode": "codificar-base64",
@@ -267,7 +257,6 @@
     "color-contrast": "comprobar-contraste",
     "text-case": "convertir-mayusculas-minusculas",
     "background-remover": "quitar-fondo",
-    "color-dropper": "cuentagotas-color",
     "photo-filter": "filtros-de-fotos",
     "redact-pdf": "censurar-pdf",
     "pdf-encrypt": "proteger-pdf",
@@ -284,8 +273,7 @@
     "repair-pdf": "reparar-pdf",
     "pdf-compress": "comprimir-pdf",
     "video-to-gif": "video-a-gif",
-    "audio-recorder": "grabadora-de-audio",
-    "text-to-speech": "texto-a-voz"
+    "audio-recorder": "grabadora-de-audio"
   },
   "pt": {
     "merge-pdf": "juntar-pdf",
@@ -311,7 +299,6 @@
     "exif-viewer": "ver-dados-exif",
     "image-collage": "fazer-colagem",
     "meme-generator": "gerador-de-memes",
-    "image-to-base64": "imagem-para-base64",
     "qr-generator": "gerador-qr-code",
     "svg-to-png": "svg-para-png",
     "base64-encode": "codificar-base64",
@@ -339,7 +326,6 @@
     "color-contrast": "verificar-contraste",
     "text-case": "converter-maiusculas-minusculas",
     "background-remover": "remover-fundo",
-    "color-dropper": "conta-gotas-cor",
     "photo-filter": "filtros-de-foto",
     "redact-pdf": "ocultar-dados-pdf",
     "pdf-encrypt": "proteger-pdf",
@@ -356,8 +342,7 @@
     "repair-pdf": "reparar-pdf",
     "pdf-compress": "comprimir-pdf",
     "video-to-gif": "video-para-gif",
-    "audio-recorder": "gravador-de-audio",
-    "text-to-speech": "texto-para-voz"
+    "audio-recorder": "gravador-de-audio"
   },
   "it": {
     "merge-pdf": "unire-pdf",
@@ -383,7 +368,6 @@
     "exif-viewer": "visualizzatore-exif",
     "image-collage": "creare-collage",
     "meme-generator": "generatore-meme",
-    "image-to-base64": "immagine-in-base64",
     "qr-generator": "generatore-codice-qr",
     "svg-to-png": "svg-in-png",
     "base64-encode": "codifica-base64",
@@ -411,7 +395,6 @@
     "color-contrast": "verifica-contrasto-colori",
     "text-case": "convertire-maiuscole-minuscole",
     "background-remover": "rimuovere-sfondo",
-    "color-dropper": "contagocce-colore",
     "photo-filter": "filtri-foto",
     "redact-pdf": "oscurare-pdf",
     "pdf-encrypt": "proteggere-pdf",
@@ -428,8 +411,7 @@
     "repair-pdf": "riparare-pdf",
     "pdf-compress": "comprimere-pdf",
     "video-to-gif": "video-in-gif",
-    "audio-recorder": "registratore-audio",
-    "text-to-speech": "sintesi-vocale"
+    "audio-recorder": "registratore-audio"
   },
   "ja": {
     "merge-pdf": "merge-pdf",
@@ -455,7 +437,6 @@
     "exif-viewer": "exif-viewer",
     "image-collage": "image-collage",
     "meme-generator": "meme-generator",
-    "image-to-base64": "image-to-base64",
     "qr-generator": "qr-generator",
     "svg-to-png": "svg-to-png",
     "base64-encode": "base64-encode",
@@ -483,7 +464,6 @@
     "color-contrast": "color-contrast",
     "text-case": "text-case",
     "background-remover": "background-remover",
-    "color-dropper": "color-dropper",
     "photo-filter": "photo-filter",
     "redact-pdf": "redact-pdf",
     "pdf-encrypt": "pdf-encrypt",
@@ -500,8 +480,7 @@
     "repair-pdf": "repair-pdf",
     "pdf-compress": "pdf-compress",
     "video-to-gif": "video-to-gif",
-    "audio-recorder": "audio-recorder",
-    "text-to-speech": "text-to-speech"
+    "audio-recorder": "audio-recorder"
   },
   "ar": {
     "merge-pdf": "merge-pdf",
@@ -527,7 +506,6 @@
     "exif-viewer": "exif-viewer",
     "image-collage": "image-collage",
     "meme-generator": "meme-generator",
-    "image-to-base64": "image-to-base64",
     "qr-generator": "qr-generator",
     "svg-to-png": "svg-to-png",
     "base64-encode": "base64-encode",
@@ -555,7 +533,6 @@
     "color-contrast": "color-contrast",
     "text-case": "text-case",
     "background-remover": "background-remover",
-    "color-dropper": "color-dropper",
     "photo-filter": "photo-filter",
     "redact-pdf": "redact-pdf",
     "pdf-encrypt": "pdf-encrypt",
@@ -572,7 +549,6 @@
     "repair-pdf": "repair-pdf",
     "pdf-compress": "pdf-compress",
     "video-to-gif": "video-to-gif",
-    "audio-recorder": "audio-recorder",
-    "text-to-speech": "text-to-speech"
+    "audio-recorder": "audio-recorder"
   }
 }

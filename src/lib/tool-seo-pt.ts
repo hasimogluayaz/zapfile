@@ -27,7 +27,6 @@ export const toolSeoPt: Record<string, { title: string; description: string }> =
   "exif-viewer": { title: "Ver e remover dados EXIF de fotos", description: "Veja e remova os metadados EXIF das fotos: câmera, configurações e localização GPS. Grátis, sua foto não é enviada." },
   "image-collage": { title: "Fazer colagem de fotos – grátis online", description: "Crie colagens em grade ou mosaico, nos formatos 1:1, 4:5 e 9:16, até 4096 px. Grátis, suas fotos não são enviadas." },
   "meme-generator": { title: "Gerador de memes – crie seu meme", description: "Crie memes com suas imagens: texto clássico, legendas e sombras. Baixe em resolução total, sem marca d'água e sem envio." },
-  "image-to-base64": { title: "Imagem para Base64 – data URI", description: "Converta imagens em strings Base64 ou data URI para usar em HTML e CSS. Grátis, privado e no navegador." },
   "qr-generator": { title: "Gerador de QR Code – grátis e ilimitado", description: "Crie QR Codes para links, texto ou telefones, com cores e logo, em PNG ou SVG. Grátis e sem expiração." },
   "svg-to-png": { title: "SVG para PNG – converter grátis", description: "Converta arquivos SVG em PNG de alta qualidade no tamanho que quiser. Grátis, seu arquivo não é enviado." },
   "base64-encode": { title: "Codificar e decodificar Base64 – online", description: "Codifique texto ou arquivos em Base64 ou decodifique Base64. Grátis, rápido e totalmente no navegador." },
@@ -55,7 +54,6 @@ export const toolSeoPt: Record<string, { title: string; description: string }> =
   "color-contrast": { title: "Verificar contraste de cores – WCAG", description: "Verifique se texto e fundo atendem WCAG AA e AAA. Resultado na hora no navegador, grátis." },
   "text-case": { title: "Converter maiúsculas e minúsculas", description: "Converta texto em MAIÚSCULAS, minúsculas, Title Case, camelCase, snake_case e mais. Grátis e instantâneo." },
   "background-remover": { title: "Remover fundo de imagem – grátis com IA", description: "Remova o fundo de uma foto com IA, bordas de cabelo limpas e PNG transparente em resolução total. Grátis e sem enviar a foto." },
-  "color-dropper": { title: "Conta-gotas – descobrir a cor de uma imagem", description: "Abra uma imagem, clique em um pixel e copie a cor em HEX, RGB ou HSL. Grátis, sua imagem não é enviada." },
   "photo-filter": { title: "Filtros de foto – efeitos online", description: "Aplique filtros vintage, preto e branco, sépia e outros às suas fotos. Grátis, sua foto não é enviada." },
   "redact-pdf": { title: "Ocultar dados em PDF – remoção permanente", description: "Oculte dados pessoais em PDFs: busque palavras, e-mails, telefones e IBAN ou marque áreas. O texto é removido de verdade, não só coberto." },
   "pdf-encrypt": { title: "Proteger PDF com senha – AES-256", description: "Criptografe um PDF com AES-256, restrinja impressão e cópia ou remova uma senha que você conhece. Grátis e sem envio." },
@@ -73,5 +71,4 @@ export const toolSeoPt: Record<string, { title: string; description: string }> =
   "pdf-compress": { title: "Comprimir PDF – reduzir o tamanho", description: "Reduza o tamanho de um PDF recomprimindo as imagens, ideal para e-mail. Grátis, privado e no navegador." },
   "video-to-gif": { title: "Vídeo para GIF – converter grátis", description: "Converta clipes curtos (MP4, WebM, MOV) em GIFs animados. Grátis, sem marca d'água e no navegador." },
   "audio-recorder": { title: "Gravador de áudio online – grátis", description: "Grave com o microfone no navegador e baixe em MP3 ou WAV. Grátis, sem cadastro e sem instalação." },
-  "text-to-speech": { title: "Texto para voz – ler texto em voz alta", description: "Ouça seu texto com voz natural em português, inglês e muitos outros idiomas. Grátis e sem cadastro." },
 };

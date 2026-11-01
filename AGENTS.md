@@ -26,7 +26,7 @@ src/
 │   │   ├── privacy/ terms/ about/ changelog/ workflows/ blog/
 │   │   └── tools/
 │   │       ├── page.tsx     # Browse all tools
-│   │       └── <slug>/      # 70 tool pages (one folder each)
+│   │       └── <slug>/      # 67 tool pages (one folder each)
 │   ├── [locale]/           # /tr, /de, … root layout lang=<locale> (home, tools, blog)
 │   ├── robots.ts, sitemap.ts, feed.xml/
 │   └── api/og/             # Open Graph images
@@ -42,7 +42,7 @@ src/
 │   ├── ErrorBoundary.tsx    # Catches render errors, shows refresh button
 │   └── AdPlaceholder.tsx    # Placeholder for future ads
 ├── lib/
-│   ├── tools.ts             # 70 tools registry (slug, name, description, category, acceptedFormats)
+│   ├── tools.ts             # 67 tools registry (slug, name, description, category, acceptedFormats)
 │   ├── tool-i18n.ts         # toolField() helper for localized tool names/descriptions
 │   ├── file-handoff.ts      # Home drop pad → tool page file handoff (in-memory)
 │   ├── search.ts            # searchTools(): diacritic-insensitive ranked tool search (header modal, home, /tools)
@@ -74,7 +74,7 @@ src/
 
 ## Static rendering (keep it)
 
-- Every page is prerendered at build time (967 pages) and served from Vercel's CDN: no function invocation per visit or per link prefetch. Before, the root layout read cookies, which made every page and every prefetch (30–50 per page view) a serverless render.
+- Every page is prerendered at build time (940 pages) and served from Vercel's CDN: no function invocation per visit or per link prefetch. Before, the root layout read cookies, which made every page and every prefetch (30–50 per page view) a serverless render.
 - Two root layouts share `app/root-shell.tsx`: `(site)/layout.tsx` (English) and `[locale]/layout.tsx` (other languages, `generateStaticParams`). Never call `cookies()`/`headers()` or use `force-dynamic` in pages or layouts. Localized pages list their params with `generateStaticParams`; unknown params render on demand and 404.
 - The visitor's language on English URLs is applied in the browser (`I18nProvider`: saved choice, geo cookie set by `middleware.ts`, time zone, browser language), loading that language's chunk.
 - Dictionaries never travel as props: the provider loads the page's language with `use(loadMessages(...))` (one cached JS chunk per language), so HTML and RSC payloads stay small and prefetches cost a few KB.
@@ -87,7 +87,7 @@ src/
 
 ## Tools
 
-Canonical list: `src/lib/tools.ts` — 70 tools across 4 categories (PDF, Image, Video/Audio, Utility). FFmpeg/AI/browser-fetch tools were removed in v1.4.0. v2.0 retired 13 off-brand or third-party-dependent tools and merged 5 duplicates; their URLs 301-redirect via `redirects()` in `next.config.mjs` — add a redirect whenever a tool slug is removed or renamed.
+Canonical list: `src/lib/tools.ts` — 67 tools across 4 categories (PDF, Image, Video/Audio, Utility). FFmpeg/AI/browser-fetch tools were removed in v1.4.0. v2.0 retired 13 off-brand or third-party-dependent tools and merged 5 duplicates; their URLs 301-redirect via `redirects()` in `next.config.mjs` — add a redirect whenever a tool slug is removed or renamed. v2.2 ("fewer, better tools") retired Text to Speech (no audio export possible), merged Color Dropper into Color Picker and Image to Base64 into Base64 (`RETIRED_TOOLS` in `next.config.mjs` redirects every language's old URL), and dropped Handwriting to Text before release: on real notebook photos the best on-device recognizer stayed at 13–20 % character errors even with word-list correction (the code is in git history, commit `700cfca`). A tool ships only when it does its job completely; otherwise it is fixed or removed.
 
 ## Design System ("Voltage")
 

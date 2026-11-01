@@ -37,7 +37,6 @@ const synonyms: Record<string, string> = {
   "hash-generator": "md5 sha1 sha256 checksum",
   "base64-encode": "decode encode",
   "video-to-gif": "mp4 animation",
-  "text-to-speech": "tts voice read aloud seslendir",
   "unit-converter": "length weight temperature",
   "timestamp-converter": "unix epoch date",
 };

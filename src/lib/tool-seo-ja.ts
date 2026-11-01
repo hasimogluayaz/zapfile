@@ -27,7 +27,6 @@ export const toolSeoJa: Record<string, { title: string; description: string }> =
   "exif-viewer": { title: "EXIF 確認・削除 – 写真の情報を見る", description: "写真の EXIF メタデータ（カメラ、撮影設定、GPS 位置）を表示・削除。無料で、写真はアップロードされません。" },
   "image-collage": { title: "写真コラージュ作成 – 無料オンライン", description: "グリッドやモザイクのレイアウトで、1:1・4:5・9:16、最大 4096px のコラージュを作成。無料、写真はアップロードされません。" },
   "meme-generator": { title: "ミーム作成 – オリジナルのミームを作る", description: "自分の画像でミームを作成：定番のテキスト、キャプション、影。フル解像度で保存、透かしなし・アップロードなし。" },
-  "image-to-base64": { title: "画像を Base64 に変換 – data URI", description: "画像を Base64 文字列や data URI に変換し、HTML や CSS に埋め込めます。無料・プライベート・ブラウザで完結。" },
   "qr-generator": { title: "QR コード作成 – 無料・無制限", description: "URL・テキスト・電話番号の QR コードを作成。色やロゴも追加でき、PNG や SVG で保存。無料・有効期限なし。" },
   "svg-to-png": { title: "SVG を PNG に変換 – 無料", description: "SVG ファイルを好きなサイズの高画質 PNG に変換。無料で、ファイルはアップロードされません。" },
   "base64-encode": { title: "Base64 エンコード・デコード – オンライン", description: "テキストやファイルを Base64 にエンコード、または Base64 をデコード。無料・高速・ブラウザで完結。" },
@@ -55,7 +54,6 @@ export const toolSeoJa: Record<string, { title: string; description: string }> =
   "color-contrast": { title: "色のコントラストチェック – WCAG", description: "文字色と背景色が WCAG AA・AAA を満たすかを確認。ブラウザですぐに結果が出ます。無料。" },
   "text-case": { title: "大文字・小文字変換 – オンライン", description: "英文を大文字、小文字、Title Case、camelCase、snake_case などにすぐ変換。無料。" },
   "background-remover": { title: "背景削除 – AI で無料で切り抜き", description: "AI で写真の背景を削除。髪の毛の境界もきれいに、フル解像度の透過 PNG で保存。無料・アップロード不要。" },
-  "color-dropper": { title: "スポイト – 画像から色コードを取得", description: "画像を開いてピクセルをクリックすると、色を HEX・RGB・HSL でコピーできます。無料、画像はアップロードされません。" },
   "photo-filter": { title: "写真フィルター – オンラインで加工", description: "ビンテージ、モノクロ、セピアなどのフィルターを写真に適用。無料で、写真はアップロードされません。" },
   "redact-pdf": { title: "PDF 墨消し – 個人情報を完全に削除", description: "PDF の個人情報を墨消し：語句・メール・電話番号・IBAN を検索、または範囲を指定。文字は隠すだけでなく本当に削除されます。" },
   "pdf-encrypt": { title: "PDF にパスワード設定 – AES-256", description: "PDF を AES-256 で暗号化し、印刷やコピーを制限。わかっているパスワードの解除も可能。無料・アップロード不要。" },
@@ -73,5 +71,4 @@ export const toolSeoJa: Record<string, { title: string; description: string }> =
   "pdf-compress": { title: "PDF 圧縮 – ファイルサイズを小さく", description: "PDF 内の画像を再圧縮してファイルサイズを削減。メール添付に最適。無料・プライベート・ブラウザで完結。" },
   "video-to-gif": { title: "動画を GIF に変換 – 無料", description: "短い動画（MP4・WebM・MOV）をアニメーション GIF に変換。無料・透かしなし、ブラウザで完結。" },
   "audio-recorder": { title: "オンライン録音 – 無料ボイスレコーダー", description: "ブラウザでマイク録音し、MP3 や WAV でダウンロード。無料・登録不要・インストール不要。" },
-  "text-to-speech": { title: "テキスト読み上げ – 音声に変換", description: "入力したテキストを自然な音声で読み上げ。日本語・英語など多言語対応。無料・登録不要。" },
 };

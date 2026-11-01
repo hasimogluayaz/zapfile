@@ -216,7 +216,6 @@
   "meme.selectHint": "انقر على طبقة نص أعلاه أو على النص في المعاينة لتعديله.",
   "meme.preset.classic": "كلاسيكي أعلى/أسفل",
   "meme.preset.bottomCaption": "تعليق سفلي",
-  "imgb64.readFail": "تعذّرت قراءة الملف.",
   "gifmaker.outputWidth": "عرض الناتج",
   "vid2gif.dropLabel": "أفلت فيديو هنا أو انقر للرفع",
   "vid2gif.frameRate": "معدل الإطارات",

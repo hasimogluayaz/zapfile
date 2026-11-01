@@ -37,11 +37,33 @@ export const changelogCopy: Record<"title" | "subtitle" | "latest" | "new" | "im
 
 const october2026: Text = { en: "October 2026", tr: "Ekim 2026", de: "Oktober 2026", fr: "Octobre 2026", es: "Octubre de 2026", pt: "Outubro de 2026", it: "Ottobre 2026", ja: "2026年10月", ar: "أكتوبر 2026" };
 
+const november2026: Text = { en: "November 2026", tr: "Kasım 2026", de: "November 2026", fr: "Novembre 2026", es: "Noviembre de 2026", pt: "Novembro de 2026", it: "Novembre 2026", ja: "2026年11月", ar: "نوفمبر 2026" };
+
 export const releases: Release[] = [
+  {
+    version: "v2.2.0",
+    date: november2026,
+    latest: true,
+    items: [
+      {
+        type: "improved",
+        text: {
+          en: "Fewer, better tools: Color Dropper is now part of Color Picker, Image to Base64 part of Base64, and Text to Speech was retired because browsers can't save its voices as a file",
+          tr: "Daha az ama daha iyi araç: Resimden Renk Seç artık Renk Seçici'nin, Resimden Base64 ise Base64 aracının içinde; Metni Sese Çevir, tarayıcılar sesi dosya olarak kaydedemediği için kaldırıldı",
+          de: "Weniger, dafür bessere Werkzeuge: Farbe aus Bild gehört jetzt zum Farbwähler, Bild in Base64 zu Base64, und Text vorlesen wurde eingestellt, weil Browser die Stimmen nicht als Datei speichern können",
+          fr: "Moins d'outils, mais meilleurs : la pipette couleur fait désormais partie du sélecteur de couleur, Image en Base64 de l'encodeur Base64, et la synthèse vocale a été retirée car les navigateurs ne peuvent pas enregistrer ses voix dans un fichier",
+          es: "Menos herramientas, pero mejores: el cuentagotas de color ahora forma parte del selector de color, Imagen a Base64 del codificador Base64, y Texto a voz se retiró porque los navegadores no pueden guardar sus voces como archivo",
+          pt: "Menos ferramentas, mas melhores: o conta-gotas de cor agora faz parte do seletor de cores, Imagem para Base64 do codificador Base64, e Texto para voz foi removido porque os navegadores não conseguem salvar as vozes como arquivo",
+          it: "Meno strumenti, ma migliori: il contagocce colore ora fa parte del selettore colori, Immagine in Base64 del codificatore Base64, e la sintesi vocale è stata ritirata perché i browser non possono salvarne le voci come file",
+          ja: "ツールを厳選しました：画像からの色抽出はカラーピッカーに、画像の Base64 変換は Base64 ツールに統合し、ブラウザーが音声をファイルに保存できないため読み上げツールは終了しました",
+          ar: "أدوات أقل ولكن أفضل: أصبحت قطّارة الألوان جزءًا من منتقي الألوان، وتحويل الصورة إلى Base64 جزءًا من أداة Base64، وأُوقفت أداة تحويل النص إلى كلام لأن المتصفحات لا تستطيع حفظ أصواتها في ملف",
+        },
+      },
+    ],
+  },
   {
     version: "v2.1.0",
     date: october2026,
-    latest: true,
     items: [
       {
         type: "new",

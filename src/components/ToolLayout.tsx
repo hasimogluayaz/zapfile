@@ -122,7 +122,7 @@ export default function ToolLayout({
         { q: t("faq.formats.q"), a: t("faq.formats.a") },
         { q: t("faq.filesize.q"), a: t("faq.filesize.a") },
       ];
-    } else if (category === "video" && (slug === "text-to-speech" || slug === "audio-recorder")) {
+    } else if (category === "video" && slug === "audio-recorder") {
       // Nothing to upload or convert here: offline/mobile answers fit better.
       categoryFaqs = [
         { q: t("faq.offline.q"), a: t("faq.offline.a") },

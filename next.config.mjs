@@ -34,6 +34,29 @@ const OFFICE_TOOL_PATHS = [
   ),
 ];
 
+// Retired tools (v2.2): old URL slug per language → where its visitors go.
+const RETIRED_TOOLS = [
+  {
+    to: "/tools",
+    slugs: { en: "text-to-speech", tr: "metni-sese-cevir", de: "text-vorlesen", fr: "synthese-vocale", es: "texto-a-voz", pt: "texto-para-voz", it: "sintesi-vocale", ja: "text-to-speech", ar: "text-to-speech" },
+  },
+  {
+    to: "color-picker",
+    slugs: { en: "color-dropper", tr: "resimden-renk-sec", de: "farbe-aus-bild", fr: "pipette-couleur-image", es: "cuentagotas-color", pt: "conta-gotas-cor", it: "contagocce-colore", ja: "color-dropper", ar: "color-dropper" },
+  },
+  {
+    to: "base64-encode",
+    slugs: { en: "image-to-base64", tr: "resim-base64-cevir", de: "bild-in-base64", fr: "image-en-base64", es: "imagen-a-base64", pt: "imagem-para-base64", it: "immagine-in-base64", ja: "image-to-base64", ar: "image-to-base64" },
+  },
+];
+const retiredRedirects = RETIRED_TOOLS.flatMap(({ to, slugs }) =>
+  Object.entries(slugs).map(([locale, slug]) => {
+    // No successor: the tool list in English, the language's home page otherwise.
+    const target = locale === "en" ? (to.startsWith("/") ? to : `/tools/${to}`) : to.startsWith("/") ? `/${locale}` : `/${locale}/${localizedToolSlugs[locale][to]}`;
+    return { source: locale === "en" ? `/tools/${slug}` : `/${locale}/${slug}`, destination: target, permanent: true };
+  }),
+);
+
 const pkgVersion = (name) =>
   JSON.parse(fs.readFileSync(new URL(`./node_modules/${name}/package.json`, import.meta.url), "utf8")).version;
 
@@ -61,6 +84,11 @@ const nextConfig = {
     return [
       ...OFFICE_TOOL_PATHS.map((source) => ({ source, headers: ISOLATION_HEADERS })),
       {
+        // Isolated pages (COEP) can't use a favicon without CORP: Chrome then shows a stale cached icon.
+        source: "/:file(favicon.ico|favicon.svg|favicon-32x32.png|favicon-16x16.png|apple-touch-icon.png|site.webmanifest)",
+        headers: [{ key: "Cross-Origin-Resource-Policy", value: "same-origin" }],
+      },
+      {
         source: "/vendor/libreoffice-:version/:file*",
         headers: [...ISOLATION_HEADERS, { key: "Cross-Origin-Resource-Policy", value: "same-origin" }],
       },
@@ -87,6 +115,7 @@ const nextConfig = {
       { source: "/tools/random-color", destination: "/tools/color-picker", permanent: true },
       { source: "/tools/password-strength", destination: "/tools/password-generator", permanent: true },
       { source: "/tools/image-pipeline", destination: "/tools/compress-image", permanent: true },
+      ...retiredRedirects,
       { source: "/blog/html-to-pdf-from-url-or-snippet", destination: "/blog", permanent: true },
       { source: "/blog/typing-speed-test-wpm-explained", destination: "/blog", permanent: true },
       { source: "/blog/audio-waveform-for-podcasts", destination: "/blog", permanent: true },

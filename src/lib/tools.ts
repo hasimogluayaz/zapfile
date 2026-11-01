@@ -282,17 +282,6 @@ export const tools: Tool[] = [
     metaDescription:
       "Make memes in your browser: classic outlined meme text with auto wrapping, modern caption bars, labels and shadows. Drag, resize, rotate, undo, and download at full resolution. No watermark, no upload.",
   },
-  {
-    slug: "image-to-base64",
-    name: "Image to Base64",
-    description: "Convert images to Base64 encoded strings",
-    emoji: "\ud83d\udd24",
-    category: "image",
-    acceptedFormats: [".jpg", ".jpeg", ".png", ".webp", ".svg", ".gif"],
-    metaTitle: "Image to Base64 Converter - Free Online Tool | ZapFile",
-    metaDescription:
-      "Convert images to Base64 strings for embedding in HTML/CSS. Free, private, browser-based.",
-  },
   // Utility Tools
   {
     slug: "qr-generator",
@@ -595,17 +584,6 @@ export const tools: Tool[] = [
       "Remove image backgrounds with AI that runs entirely in your browser. Clean hair edges, erase/restore brush, new backgrounds, full-resolution PNG. No uploads, free.",
   },
   {
-    slug: "color-dropper",
-    name: "Color Dropper",
-    description: "Pick colors from any image and get the HEX code",
-    emoji: "💧",
-    category: "image",
-    acceptedFormats: [".jpg", ".jpeg", ".png", ".webp", ".gif"],
-    metaTitle: "Color Dropper - Pick Colors from Any Image | ZapFile",
-    metaDescription:
-      "Pick any pixel color from an image and copy it as HEX, RGB or HSL. Free, private, browser-based eyedropper.",
-  },
-  {
     slug: "photo-filter",
     name: "Photo Filter",
     description: "Apply vintage, grayscale and other CSS filters to photos",
@@ -793,17 +771,6 @@ export const tools: Tool[] = [
     metaTitle: "Online Audio Recorder - Record & Download MP3/WAV | ZapFile",
     metaDescription:
       "Record audio from your microphone and download it as MP3 or WAV. No sign-up, runs free in your browser.",
-  },
-  {
-    slug: "text-to-speech",
-    name: "Text to Speech",
-    description: "Read text aloud with every voice your device offers",
-    emoji: "🔊",
-    category: "video",
-    acceptedFormats: [],
-    metaTitle: "Text to Speech - Free Online TTS | ZapFile",
-    metaDescription:
-      "Convert text to natural-sounding speech in many languages including English and Turkish. Free browser-based TTS.",
   },
 ];
 

@@ -306,7 +306,6 @@
   "meme.selectHint": "Clique em uma camada de texto acima ou no texto da prévia para editá-lo.",
   "meme.preset.classic": "Clássico em cima/embaixo",
   "meme.preset.bottomCaption": "Legenda embaixo",
-  "imgb64.readFail": "Não foi possível ler o arquivo.",
   "gifmaker.outputWidth": "Largura de saída",
   "vid2gif.dropLabel": "Solte um vídeo aqui ou clique para enviar",
   "vid2gif.frameRate": "Quadros por segundo",
