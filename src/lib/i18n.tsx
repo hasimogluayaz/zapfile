@@ -14,7 +14,7 @@ import type { Locale } from "./locales";
 import { SUPPORTED_LOCALES, isRtlLocale } from "./locales";
 import { LOCALE_COOKIE, LOCALE_PREF_COOKIE } from "./locale-cookies";
 import { loadMessages, type Messages } from "./i18n-dicts/load";
-import { blogHref as buildBlogHref, homeHref as buildHomeHref, pathForLocale, toolHref as buildToolHref, urlLocaleFromPathname } from "./localized-routes";
+import { blogHref as buildBlogHref, homeHref as buildHomeHref, pathForLocale, toolHref as buildToolHref, toolsIndexHref, urlLocaleFromPathname } from "./localized-routes";
 
 export type { Locale } from "./locales";
 
@@ -42,6 +42,8 @@ interface I18nContextType {
   blogHref: (slug?: string) => string;
   /** Home page in the current language (`/tr` or `/`). */
   homeHref: () => string;
+  /** List of all tools in the current language (`/tr/tools` or `/tools`). */
+  toolsHref: () => string;
 }
 
 const I18nContext = createContext<I18nContextType>({
@@ -51,6 +53,7 @@ const I18nContext = createContext<I18nContextType>({
   toolHref: (slug) => `/tools/${slug}`,
   blogHref: (slug) => (slug ? `/blog/${slug}` : "/blog"),
   homeHref: () => "/",
+  toolsHref: () => "/tools",
 });
 
 function readCookieValue(name: string): string | null {
@@ -250,9 +253,13 @@ export function I18nProvider({
         window.location.assign(target);
         return;
       }
+      // Other pages switch in place. No `?lang=` in the URL: it would make
+      // another address for the same page (the middleware redirects it away).
       const url = new URL(window.location.href);
-      url.searchParams.set("lang", newLocale);
-      window.history.replaceState({}, "", url);
+      if (url.searchParams.has("lang")) {
+        url.searchParams.delete("lang");
+        window.history.replaceState({}, "", url);
+      }
     }
   }, []);
 
@@ -272,9 +279,10 @@ export function I18nProvider({
   const toolHref = useCallback((slug: string) => buildToolHref(slug, locale), [locale]);
   const blogHref = useCallback((slug?: string) => buildBlogHref(locale, slug), [locale]);
   const homeHref = useCallback(() => buildHomeHref(locale), [locale]);
+  const toolsHref = useCallback(() => toolsIndexHref(locale), [locale]);
 
   return (
-    <I18nContext.Provider value={{ locale, setLocale, t, toolHref, blogHref, homeHref }}>
+    <I18nContext.Provider value={{ locale, setLocale, t, toolHref, blogHref, homeHref, toolsHref }}>
       {children}
     </I18nContext.Provider>
   );

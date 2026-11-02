@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { tools, type Tool, type ToolCategory } from "@/lib/tools";
 import { useI18n } from "@/lib/i18n";
-import { parseLocalizedToolPath } from "@/lib/localized-routes";
+import { parseLocalizedToolPath, parseLocalizedToolsIndexPath } from "@/lib/localized-routes";
 import { toolField } from "@/lib/tool-i18n";
 import { useFavoriteTools } from "@/hooks/useFavoriteTools";
 import { useRecentTools } from "@/hooks/useRecentTools";
@@ -279,7 +279,7 @@ function MobileMenu({
   onSearch: () => void;
 }) {
   const [expandedCat, setExpandedCat] = useState<ToolCategory | null>(null);
-  const { t, toolHref, blogHref } = useI18n();
+  const { t, toolHref, blogHref, toolsHref } = useI18n();
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -393,7 +393,7 @@ function MobileMenu({
           ].map((link, i) => (
             <Link
               key={link.href}
-              href={link.href === "/blog" ? blogHref() : link.href}
+              href={link.href === "/blog" ? blogHref() : link.href === "/tools" ? toolsHref() : link.href}
               onClick={onClose}
               className={`block px-4 py-3.5 text-[15px] text-t-primary hover:bg-bg-secondary ${
                 i > 0 ? "border-t border-border" : ""
@@ -445,7 +445,7 @@ function ConvertMenu({ onNavigate }: { onNavigate: () => void }) {
 
 // ─── Tools mega menu ───────────────────────────────────────────
 function ToolsMenu({ onNavigate }: { onNavigate: () => void }) {
-  const { t, toolHref, blogHref } = useI18n();
+  const { t, toolHref, blogHref, toolsHref } = useI18n();
   const { favorites, ready } = useFavoriteTools();
   const favoriteTools = tools.filter((tool) => favorites.includes(tool.slug));
   const menuLink = (slug: string) => {
@@ -514,7 +514,7 @@ function ToolsMenu({ onNavigate }: { onNavigate: () => void }) {
       </div>
       <div className="flex items-center justify-between border-t border-border px-3 pb-1 pt-2.5">
         <Link
-          href="/tools"
+          href={toolsHref()}
           onClick={onNavigate}
           className="text-[13px] font-medium text-t-primary hover:underline"
         >
@@ -643,7 +643,7 @@ export default function Header() {
               })}
               {(["convert", "tools"] as const).map((key) => {
                 const open = openMenu === key;
-                const active = key === "tools" && pathname === "/tools";
+                const active = key === "tools" && (pathname === "/tools" || parseLocalizedToolsIndexPath(pathname) !== null);
                 return (
                   <div
                     key={key}

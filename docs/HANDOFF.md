@@ -123,7 +123,7 @@ Kullanıcının teklif PDF'i ve düz metin bir raporla test edildi. Bulunan ve d
 - **Dil ana sayfaları (2026-10-15):** `/tr`, `/de`, `/fr`, `/es`, `/pt`, `/it`, `/ja`, `/ar`; o dilde başlık/açıklama, hreflang, site haritası (959 adres). Logo ve "Ana sayfa" linkleri dilin ana sayfasına gidiyor.
 - **IndexNow (2026-10-15):** `main`'e her push'tan 5 dk sonra GitHub Action site haritasındaki tüm adresleri Bing/Yandex'e bildiriyor. Sonuç: GitHub → Actions → IndexNow.
 - **Tanıtım metinleri:** `docs/TANITIM.md` (Reddit, AlternativeTo, Product Hunt, Türkçe forumlar). Kullanıcı paylaşacak.
-- **Sonraki adımlar:** Search Console'da yeni dil sayfaları için dizine ekleme isteği; `/tools` sayfasının dil adresleri (şu an `?lang=`).
+- **Sonraki adımlar:** Search Console'da yeni dil sayfaları için dizine ekleme isteği. (`/tools` dil adresleri 2026-11-02'de yapıldı, aşağıya bak.)
 
 ## Detaylı tarama ve düzeltmeler (2026-10-19)
 
@@ -181,6 +181,16 @@ npm run build                             # vendor kopyalama + next build
 npm run verify:i18n
 PORT=8099 node server/office-api/server.mjs   # API'yi yerelde çalıştır (soffice gerekli)
 ```
+
+## Search Console dizin sorunları (2026-11-02)
+
+Kullanıcı GSC ekranlarını attı: 7 dizinde, 20 dizinde değil ("Tarandı – şu anda dizine eklenmiş değil" 15, "Doğru standart etikete sahip alternatif sayfa" 3, "Yönlendirmeli sayfa" 2; 16 Eylül'de "Kopya, Google farklı standart seçti" e-postası). Örnek adresler: `zapfile.xyz/tools/regex-tester?lang=de`, `?lang=es`, apex (www'suz) adresler, eski `/tools/typing-speed-test`.
+- Build'deki 941 sayfanın hepsi taranıp kontrol edildi: canonical'lar doğru, tekrar eden başlık yok, dil sayfaları sunucuda kendi dilinde.
+- **Bulunan hata:** `/tools` sayfasının hreflang'leri `/tools?lang=tr` gibi adreslerdi (hepsi aynı İngilizce HTML, canonical `/tools`). Google bu kopyaları tarayıp eliyordu. Ayrıca dil değiştirince adrese `?lang=` yazılıyordu, insanlar bu adresleri paylaşıyordu.
+- **Yapılan:** `/tr/tools`, `/de/tools` … (9 dilde başlık/açıklama, hreflang, site haritası; 940 adres); bütün "/tools" linkleri dile göre; middleware her `?lang=xx`'i 301 ile o dilin adresine (yoksa `?lang=`'siz adrese) yönlendiriyor; dil değiştirme artık `?lang=` yazmıyor.
+- Apex (`zapfile.xyz/...`) ve kaldırılmış araç adresleri zaten www/yeni adrese yönleniyor: "Yönlendirmeli sayfa" ve eski taramalar zamanla düşer, kod sorunu değil.
+- "Tarandı – dizine eklenmemiş" listesindeki gerçek sayfalar (`/tools/css-minifier`, `/about` …) Temmuz–Eylül'de taranmış; Google'ın kalite/otorite kararı, yeniden tarama + dış bağlantılarla düzelir.
+- Kullanıcıya söylenecekler: merge sonrası GSC → Site Haritaları durumu ("Başarılı", bulunan URL ~940 olmalı; "Bilinen sayfa" 27 olması site haritasının hâlâ okunmadığını gösterebilir), sorun satırlarında "Düzeltmeyi doğrula".
 
 Notlar:
 - Bu geliştirme ortamında `soffice` (LibreOffice 24.2) ve Playwright var: `/opt/node22/lib/node_modules/playwright/index.mjs`.

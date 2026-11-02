@@ -67,10 +67,17 @@ export function parseLocalizedHomePath(pathname: string | null | undefined): Too
   return parts.length === 1 && isToolUrlLocale(parts[0]) ? parts[0] : null;
 }
 
-/** The language a localized URL fixes (home, tool or blog page), else null. */
+/** `/tr/tools` → "tr" (a language's tool list); null for any other path. */
+export function parseLocalizedToolsIndexPath(pathname: string | null | undefined): ToolUrlLocale | null {
+  const parts = (pathname ?? "").split("/").filter(Boolean);
+  return parts.length === 2 && isToolUrlLocale(parts[0]) && parts[1] === "tools" ? parts[0] : null;
+}
+
+/** The language a localized URL fixes (home, tool list, tool or blog page), else null. */
 export function urlLocaleFromPathname(pathname: string | null | undefined): ToolUrlLocale | null {
   return (
     parseLocalizedHomePath(pathname) ??
+    parseLocalizedToolsIndexPath(pathname) ??
     parseLocalizedToolPath(pathname)?.locale ??
     parseLocalizedBlogPath(pathname)?.locale ??
     null
@@ -82,6 +89,11 @@ export function homeHref(locale: Locale): string {
   return isToolUrlLocale(locale) ? `/${locale}` : "/";
 }
 
+/** The list of all tools in the given UI language: `/tr/tools`, … or `/tools`. */
+export function toolsIndexHref(locale: Locale): string {
+  return isToolUrlLocale(locale) ? `/${locale}/tools` : "/tools";
+}
+
 /** Blog index (no slug) or post in the given UI language. */
 export function blogHref(locale: Locale, slug?: string): string {
   const base = isToolUrlLocale(locale) ? `/${locale}/blog` : "/blog";
@@ -90,10 +102,11 @@ export function blogHref(locale: Locale, slug?: string): string {
 
 /**
  * The same page in another language: `/tools/merge-pdf` ⇄ `/tr/pdf-birlestir`,
- * `/blog/x` ⇄ `/de/blog/x`, `/` ⇄ `/fr`. Null when the page has no per-language URLs.
+ * `/blog/x` ⇄ `/de/blog/x`, `/` ⇄ `/fr`, `/tools` ⇄ `/es/tools`. Null when the page has no per-language URLs.
  */
 export function pathForLocale(pathname: string, locale: Locale): string | null {
   if (pathname === "/" || parseLocalizedHomePath(pathname)) return homeHref(locale);
+  if (/^\/tools\/?$/.test(pathname) || parseLocalizedToolsIndexPath(pathname)) return toolsIndexHref(locale);
   const localized = parseLocalizedToolPath(pathname);
   if (localized) return toolHref(localized.slug, locale);
   const m = /^\/tools\/([^/]+)\/?$/.exec(pathname);
@@ -110,6 +123,14 @@ export function homeLanguagePaths(): Record<string, string> {
   const paths: Record<string, string> = { en: "/" };
   for (const locale of TOOL_URL_LOCALES) paths[locale] = homeHref(locale);
   paths["x-default"] = "/";
+  return paths;
+}
+
+/** hreflang map (paths) for the tool list: `/tools` is English and the x-default. */
+export function toolsIndexLanguagePaths(): Record<string, string> {
+  const paths: Record<string, string> = { en: "/tools" };
+  for (const locale of TOOL_URL_LOCALES) paths[locale] = toolsIndexHref(locale);
+  paths["x-default"] = "/tools";
   return paths;
 }
 

@@ -7,7 +7,7 @@ import Illustration from "@/components/Illustration";
 import { useI18n } from "@/lib/i18n";
 
 export default function NotFound() {
-  const { t, homeHref } = useI18n();
+  const { t, homeHref, toolsHref } = useI18n();
   return (
     <>
       <Header />
@@ -28,7 +28,7 @@ export default function NotFound() {
             {t("404.cta")}
           </Link>
           <Link
-            href="/tools"
+            href={toolsHref()}
             className="px-5 py-2.5 rounded-lg text-[13px] font-medium text-t-secondary bg-bg-secondary border border-border hover:text-t-primary hover:bg-bg-tertiary transition-colors"
           >
             {t("nav.allTools")}

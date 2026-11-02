@@ -30,7 +30,7 @@ export default function ConversionMarketingClient({
   conversion: ConversionDef;
   allConversions: ConversionDef[];
 }) {
-  const { t } = useI18n();
+  const { t, toolsHref } = useI18n();
   const from = conv.fromLabel;
   const to = conv.toLabel;
 
@@ -74,7 +74,7 @@ export default function ConversionMarketingClient({
               {t("tool.home")}
             </Link>
             <BreadcrumbArrow />
-            <Link href="/tools" className="hover:text-accent transition-colors">
+            <Link href={toolsHref()} className="hover:text-accent transition-colors">
               {t("tool.tools")}
             </Link>
             <BreadcrumbArrow />
