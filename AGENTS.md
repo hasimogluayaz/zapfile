@@ -70,6 +70,8 @@ src/
 - Link to tools with `toolHref(slug)` from `useI18n()`, never a hard-coded `/tools/${slug}`. Tool pages get hreflang alternates (`toolLanguagePaths`) and the sitemap lists every language version.
 - To add a language: finish its UI translation first, then add its slug table to the JSON, the locale to `TOOL_URL_LOCALES`, a `tool-seo-<locale>.ts` and its entry in the route's `seo` map.
 - Home pages too: `/tr`, `/de`, … (`src/app/[locale]/page.tsx`, same `HomeClient` as `/`; titles/descriptions in `src/lib/home-seo.ts`). Link home with `homeHref()` from `useI18n()`, never `href="/"`. Switching language on a home, tool or blog page goes to that page's URL in the new language (`pathForLocale`).
+- The tool list too: `/tr/tools`, `/de/tools`, … (`src/app/[locale]/tools/page.tsx`, same component as `/tools`; SEO in `src/lib/tools-index-seo.ts`). Link it with `toolsHref()` from `useI18n()`, never `href="/tools"`.
+- No `?lang=` URLs: they are the same page under another address (Search Console: "Crawled – currently not indexed", "Alternate page with proper canonical"). `middleware.ts` 301-redirects any `?lang=xx` to the page's URL in that language (`pathForLocale`) or to the URL without it, and switching language never writes `?lang=` into the address. Never use `?lang=` in hreflang, links or the sitemap.
 - The blog has the same per-language URLs: `/tr/blog`, `/de/blog/<post-slug>` (post slugs stay English). Post bodies: `src/lib/blog-i18n/<locale>.ts` (markdown keyed by slug, server-only; `localizedPostContent` rewrites `/tools/<slug>` links to that language's tool URL). Titles/summaries: `blog-post-locales*.ts`; index SEO: `blog-seo.ts`; shared page code: `src/app/(site)/blog/blog-pages.tsx`. Link with `blogHref()` from `useI18n()`. A new English post needs its body in every `blog-i18n/<locale>.ts` (same headings and tool links): `npm run verify:i18n` (`scripts/verify-blog-i18n.mjs`) fails otherwise, and a missing translation 404s.
 
 ## Static rendering (keep it)
@@ -80,6 +82,10 @@ src/
 - Dictionaries never travel as props: the provider loads the page's language with `use(loadMessages(...))` (one cached JS chunk per language), so HTML and RSC payloads stay small and prefetches cost a few KB.
 - Unmatched URLs render `NotFoundPage` client-side with a 404 status: Next 14 has no app-wide not-found without a single root layout.
 - No third-party requests on page load: fonts are self-hosted (Geist via `next/font/local`, Noto Sans Arabic via `@fontsource`, downloaded only for Arabic text).
+
+## Sitemaps
+
+`/sitemap.xml` (`app/sitemap.ts`, every URL in one ~1 MB file; IndexNow reads it) and the same entries split per language behind `/sitemap-index.xml` → `/sitemaps/<lang>.xml` (`lib/sitemap-xml.ts`, ~110 KB each, static route handlers). Search Console sat on "Couldn't fetch" for the single file for months without ever reading it; submit `sitemap-index.xml` there. robots.txt lists both.
 
 ## IndexNow
 

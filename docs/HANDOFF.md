@@ -1,7 +1,7 @@
 # Devir notu (yeni Claude oturumu için)
 
 > Önceki Claude oturumlarında yapılanları, kararları ve sıradaki işleri anlatır.
-> Yeni oturumda önce bunu, sonra `AGENTS.md`'yi oku. Son güncelleme: 2026-10-19.
+> Yeni oturumda önce bunu, sonra `AGENTS.md`'yi oku. Son güncelleme: 2026-11-01.
 
 ## Kullanıcı ve çalışma kuralları
 
@@ -123,7 +123,7 @@ Kullanıcının teklif PDF'i ve düz metin bir raporla test edildi. Bulunan ve d
 - **Dil ana sayfaları (2026-10-15):** `/tr`, `/de`, `/fr`, `/es`, `/pt`, `/it`, `/ja`, `/ar`; o dilde başlık/açıklama, hreflang, site haritası (959 adres). Logo ve "Ana sayfa" linkleri dilin ana sayfasına gidiyor.
 - **IndexNow (2026-10-15):** `main`'e her push'tan 5 dk sonra GitHub Action site haritasındaki tüm adresleri Bing/Yandex'e bildiriyor. Sonuç: GitHub → Actions → IndexNow.
 - **Tanıtım metinleri:** `docs/TANITIM.md` (Reddit, AlternativeTo, Product Hunt, Türkçe forumlar). Kullanıcı paylaşacak.
-- **Sonraki adımlar:** Search Console'da yeni dil sayfaları için dizine ekleme isteği; `/tools` sayfasının dil adresleri (şu an `?lang=`).
+- **Sonraki adımlar:** Search Console'da yeni dil sayfaları için dizine ekleme isteği. (`/tools` dil adresleri 2026-11-02'de yapıldı, aşağıya bak.)
 
 ## Detaylı tarama ve düzeltmeler (2026-10-19)
 
@@ -158,7 +158,7 @@ PR #7 merge edilmişti; branch `main`'den yeniden başlatıldı. Kullanıcı "el
 - **9. tur – kullanıcının 4 yeni gerçek fotoğrafı** (`images/4–7.webp`: M. Böcek mektubu (başka el), uzun tarih sayfası, İngilizce dersi + Türkçe açıklama iki sayfa). Doğru metinler yazılıp ölçüldü. Karışık sayfalar "İngilizce" sayıldığı için Türkçe kısımlar hiç düzeltilmiyordu → `hasTurkish` + `lineLanguage` + İngilizce liste (`en.txt`, 75 KB) ile İngilizce satır/kelimeler korunup Türkçe düzeltiliyor. Sonuç: mektup %19,4 → %13,9; tarih %28,5 → %14,8; karışık %23,4 → %22,4 ve %20,6 → %19,5; 35 sayfada kötüleşen yok. Model commit'i `a14afac`.
 - **10. tur – KARAR: araç kaldırıldı.** Kullanıcı hedefi: hata en fazla %5. Cihazda çalışan başka modeller de ölçüldü (PP-OCRv5 mobile ham hali %24–34, v6 small'dan kötü; v6 medium daha önce kötüydü; v5 server ONNX olarak bulunamadı, ~170 MB). Bulut/LLM istenmedi. Kullanıcının kuralı: **"ya tam olacak ya hiç; az ve öz"** → El Yazısı aracı tamamen silindi (hiç canlıya çıkmamıştı; kod git geçmişinde, son hali `700cfca`). Aynı kuralla bütün araçlar tarandı: Metni Sese Çevir (ses dosyası indiremiyor) kaldırıldı, Resimden Renk Seç (Renk Seçici'nin kopyası) ve Resimden Base64 (Base64'ün kopyası) birleştirildi; eski adresler 9 dilde 301 (`RETIRED_TOOLS`, next.config.mjs). Ses Kaydedici incelendi, MP3'ü gerçekten üretiyor → kaldı. 67 araç, 940 sayfa. Changelog v2.2.0 buna göre yazıldı.
 - Kullanıcı Hetzner sunucusunu büyütüp OCR'ı sunucuda yapmayı önerdi; önerilmedi: OCR kullanıcının cihazında bedava ve 1 vCPU sunucudan hızlı. Sunucu sadece Office → PDF için.
-- **PR açılmadı**; kullanıcı onay verirse PR + merge.
+- **Yayınlandı:** kullanıcı "yayınla" dedi → PR #8 (https://github.com/hasimogluayaz/zapfile/pull/8) 2026-11-01'de **squash** ile `main`'e alındı (el yazısı model dosyaları main geçmişine girmesin diye). Branch `main`'den yeniden başlatıldı; yeni iş = yeni PR.
 
 ## Sıradaki işler
 
@@ -181,6 +181,17 @@ npm run build                             # vendor kopyalama + next build
 npm run verify:i18n
 PORT=8099 node server/office-api/server.mjs   # API'yi yerelde çalıştır (soffice gerekli)
 ```
+
+## Search Console dizin sorunları (2026-11-02)
+
+Kullanıcı GSC ekranlarını attı: 7 dizinde, 20 dizinde değil ("Tarandı – şu anda dizine eklenmiş değil" 15, "Doğru standart etikete sahip alternatif sayfa" 3, "Yönlendirmeli sayfa" 2; 16 Eylül'de "Kopya, Google farklı standart seçti" e-postası). Örnek adresler: `zapfile.xyz/tools/regex-tester?lang=de`, `?lang=es`, apex (www'suz) adresler, eski `/tools/typing-speed-test`.
+- Build'deki 941 sayfanın hepsi taranıp kontrol edildi: canonical'lar doğru, tekrar eden başlık yok, dil sayfaları sunucuda kendi dilinde.
+- **Bulunan hata:** `/tools` sayfasının hreflang'leri `/tools?lang=tr` gibi adreslerdi (hepsi aynı İngilizce HTML, canonical `/tools`). Google bu kopyaları tarayıp eliyordu. Ayrıca dil değiştirince adrese `?lang=` yazılıyordu, insanlar bu adresleri paylaşıyordu.
+- **Yapılan:** `/tr/tools`, `/de/tools` … (9 dilde başlık/açıklama, hreflang, site haritası; 940 adres); bütün "/tools" linkleri dile göre; middleware her `?lang=xx`'i 301 ile o dilin adresine (yoksa `?lang=`'siz adrese) yönlendiriyor; dil değiştirme artık `?lang=` yazmıyor.
+- Apex (`zapfile.xyz/...`) ve kaldırılmış araç adresleri zaten www/yeni adrese yönleniyor: "Yönlendirmeli sayfa" ve eski taramalar zamanla düşer, kod sorunu değil.
+- "Tarandı – dizine eklenmemiş" listesindeki gerçek sayfalar (`/tools/css-minifier`, `/about` …) Temmuz–Eylül'de taranmış; Google'ın kalite/otorite kararı, yeniden tarama + dış bağlantılarla düzelir.
+- **Site haritası (aynı gün):** GSC'de `sitemap.xml` 20 Ekim'de gönderilmiş, "Getirilemedi", son okuma tarihi boş (Mayıs'tan beri aynı). Dosya yerelde geçerli (940 adres, 1 MB). Dile göre bölündü: `/sitemap-index.xml` → `/sitemaps/<dil>.xml`. Kullanıcıya: merge sonrası eski `sitemap.xml` kayıtlarını silip `sitemap-index.xml` göndermesi söylendi (alan adı mülkünde tam adres, www mülkünde sadece `sitemap-index.xml`).
+- Kullanıcıya söylenecekler: merge sonrası GSC → Site Haritaları durumu ("Başarılı", bulunan URL ~940 olmalı; "Bilinen sayfa" 27 olması site haritasının hâlâ okunmadığını gösterebilir), sorun satırlarında "Düzeltmeyi doğrula".
 
 Notlar:
 - Bu geliştirme ortamında `soffice` (LibreOffice 24.2) ve Playwright var: `/opt/node22/lib/node_modules/playwright/index.mjs`.

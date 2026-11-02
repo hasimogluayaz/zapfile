@@ -1,32 +1,9 @@
 import type { Metadata } from "next";
-import { SITE_URL } from "@/lib/site-url";
+import { toolsIndexMetadata } from "@/lib/tools-index-seo";
 
-export const metadata: Metadata = {
-  title: { absolute: "All Free Online File Tools | ZapFile" },
-  description:
-    "Browse all free online file tools: PDF, image, video, and utility tools. Fast, private, and browser-based.",
-  openGraph: {
-    title: "All Free Online File Tools | ZapFile",
-    description:
-      "Browse all free online file tools. Fast, private, browser-based processing.",
-    url: `${SITE_URL}/tools`,
-  },
-  alternates: {
-    canonical: `${SITE_URL}/tools`,
-    languages: {
-      en: `${SITE_URL}/tools?lang=en`,
-      tr: `${SITE_URL}/tools?lang=tr`,
-      de: `${SITE_URL}/tools?lang=de`,
-      fr: `${SITE_URL}/tools?lang=fr`,
-      es: `${SITE_URL}/tools?lang=es`,
-      pt: `${SITE_URL}/tools?lang=pt`,
-      it: `${SITE_URL}/tools?lang=it`,
-      ja: `${SITE_URL}/tools?lang=ja`,
-      ar: `${SITE_URL}/tools?lang=ar`,
-      "x-default": `${SITE_URL}/tools`,
-    },
-  },
-};
+// The tool list's metadata (`/tools`; `/tr/tools`, … in [locale]/tools).
+// Every tool page under /tools sets its own title, description, canonical and hreflang.
+export const metadata: Metadata = toolsIndexMetadata("en");
 
 export default function ToolsLayout({
   children,

@@ -11,6 +11,8 @@ import {
   homeLanguagePaths,
   localizedToolParams,
   toolLanguagePaths,
+  toolsIndexHref,
+  toolsIndexLanguagePaths,
 } from "@/lib/localized-routes";
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -96,14 +98,22 @@ export default function sitemap(): MetadataRoute.Sitemap {
     alternates: { languages: homeLanguages },
   }));
 
+  const toolsIndexLanguages = Object.fromEntries(
+    Object.entries(toolsIndexLanguagePaths())
+      .filter(([lang]) => lang !== "x-default")
+      .map(([lang, path]) => [lang, `${baseUrl}${path}`]),
+  );
+  const toolsIndexPages: MetadataRoute.Sitemap = pageLocales.map((locale) => ({
+    url: `${baseUrl}${toolsIndexHref(locale)}`,
+    lastModified: new Date(),
+    changeFrequency: "weekly" as const,
+    priority: 0.9,
+    alternates: { languages: toolsIndexLanguages },
+  }));
+
   return [
     ...homePages,
-    {
-      url: `${baseUrl}/tools`,
-      lastModified: new Date(),
-      changeFrequency: "weekly" as const,
-      priority: 0.9,
-    },
+    ...toolsIndexPages,
     ...toolPages,
     ...localizedToolPages,
     ...imageConversionPages,
