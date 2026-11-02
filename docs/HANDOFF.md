@@ -190,6 +190,7 @@ Kullanıcı GSC ekranlarını attı: 7 dizinde, 20 dizinde değil ("Tarandı –
 - **Yapılan:** `/tr/tools`, `/de/tools` … (9 dilde başlık/açıklama, hreflang, site haritası; 940 adres); bütün "/tools" linkleri dile göre; middleware her `?lang=xx`'i 301 ile o dilin adresine (yoksa `?lang=`'siz adrese) yönlendiriyor; dil değiştirme artık `?lang=` yazmıyor.
 - Apex (`zapfile.xyz/...`) ve kaldırılmış araç adresleri zaten www/yeni adrese yönleniyor: "Yönlendirmeli sayfa" ve eski taramalar zamanla düşer, kod sorunu değil.
 - "Tarandı – dizine eklenmemiş" listesindeki gerçek sayfalar (`/tools/css-minifier`, `/about` …) Temmuz–Eylül'de taranmış; Google'ın kalite/otorite kararı, yeniden tarama + dış bağlantılarla düzelir.
+- **Site haritası (aynı gün):** GSC'de `sitemap.xml` 20 Ekim'de gönderilmiş, "Getirilemedi", son okuma tarihi boş (Mayıs'tan beri aynı). Dosya yerelde geçerli (940 adres, 1 MB). Dile göre bölündü: `/sitemap-index.xml` → `/sitemaps/<dil>.xml`. Kullanıcıya: merge sonrası eski `sitemap.xml` kayıtlarını silip `sitemap-index.xml` göndermesi söylendi (alan adı mülkünde tam adres, www mülkünde sadece `sitemap-index.xml`).
 - Kullanıcıya söylenecekler: merge sonrası GSC → Site Haritaları durumu ("Başarılı", bulunan URL ~940 olmalı; "Bilinen sayfa" 27 olması site haritasının hâlâ okunmadığını gösterebilir), sorun satırlarında "Düzeltmeyi doğrula".
 
 Notlar:

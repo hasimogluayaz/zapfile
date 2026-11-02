@@ -83,6 +83,10 @@ src/
 - Unmatched URLs render `NotFoundPage` client-side with a 404 status: Next 14 has no app-wide not-found without a single root layout.
 - No third-party requests on page load: fonts are self-hosted (Geist via `next/font/local`, Noto Sans Arabic via `@fontsource`, downloaded only for Arabic text).
 
+## Sitemaps
+
+`/sitemap.xml` (`app/sitemap.ts`, every URL in one ~1 MB file; IndexNow reads it) and the same entries split per language behind `/sitemap-index.xml` → `/sitemaps/<lang>.xml` (`lib/sitemap-xml.ts`, ~110 KB each, static route handlers). Search Console sat on "Couldn't fetch" for the single file for months without ever reading it; submit `sitemap-index.xml` there. robots.txt lists both.
+
 ## IndexNow
 
 `public/<key>.txt` is the IndexNow key. `.github/workflows/indexnow.yml` runs on pushes to `main` that touch `src/` (and on demand): it waits 5 minutes for the Vercel deploy, then `scripts/indexnow.mjs` submits every sitemap URL to Bing/Yandex & co. Google doesn't use IndexNow (Search Console + sitemap).
