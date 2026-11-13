@@ -5,10 +5,12 @@ export function generateStaticParams() {
   return getAllPosts().map((post) => ({ slug: post.slug }));
 }
 
-export function generateMetadata({ params }: { params: { slug: string } }) {
-  return blogPostMetadata(params.slug, "en");
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  return blogPostMetadata(slug, "en");
 }
 
-export default function Page({ params }: { params: { slug: string } }) {
-  return <BlogPostPage slug={params.slug} locale="en" />;
+export default async function Page({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  return <BlogPostPage slug={slug} locale="en" />;
 }

@@ -7,8 +7,7 @@ import { LOCALE_COOKIE, LOCALE_PREF_COOKIE } from "@/lib/locale-cookies";
 import { pathForLocale } from "@/lib/localized-routes";
 
 function detectCountry(request: NextRequest): string | undefined {
-  const g = request.geo;
-  if (g?.country) return g.country;
+  // Next 15 removed `request.geo`; on Vercel the same country comes in this header.
   const v = request.headers.get("x-vercel-ip-country");
   if (v && v !== "ZZ") return v;
   const cf = request.headers.get("cf-ipcountry");

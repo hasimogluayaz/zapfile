@@ -14,11 +14,13 @@ import { homeMetadata } from "../home-page";
 
 type Params = { locale: string };
 
-export function generateMetadata({ params }: { params: Params }): Metadata {
+export async function generateMetadata(props: { params: Promise<Params> }): Promise<Metadata> {
+  const params = await props.params;
   return isToolUrlLocale(params.locale) ? homeMetadata(params.locale) : {};
 }
 
-export default function LocalizedHome({ params }: { params: Params }) {
+export default async function LocalizedHome(props: { params: Promise<Params> }) {
+  const params = await props.params;
   if (!isToolUrlLocale(params.locale)) notFound();
   return <HomeClient />;
 }

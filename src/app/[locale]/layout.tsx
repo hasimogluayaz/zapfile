@@ -13,6 +13,13 @@ export function generateStaticParams() {
   return TOOL_URL_LOCALES.map((locale) => ({ locale }));
 }
 
-export default function LocaleLayout({ children, params }: { children: React.ReactNode; params: { locale: string } }) {
-  return <RootShell locale={isToolUrlLocale(params.locale) ? params.locale : "en"}>{children}</RootShell>;
+export default async function LocaleLayout({
+  children,
+  params,
+}: {
+  children: React.ReactNode;
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  return <RootShell locale={isToolUrlLocale(locale) ? locale : "en"}>{children}</RootShell>;
 }

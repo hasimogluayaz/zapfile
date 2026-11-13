@@ -10,11 +10,13 @@ export function generateStaticParams() {
 
 type Params = { locale: string; slug: string };
 
-export function generateMetadata({ params }: { params: Params }) {
+export async function generateMetadata(props: { params: Promise<Params> }) {
+  const params = await props.params;
   return isToolUrlLocale(params.locale) ? blogPostMetadata(params.slug, params.locale) : {};
 }
 
-export default function Page({ params }: { params: Params }) {
+export default async function Page(props: { params: Promise<Params> }) {
+  const params = await props.params;
   if (!isToolUrlLocale(params.locale)) notFound();
   return <BlogPostPage slug={params.slug} locale={params.locale} />;
 }

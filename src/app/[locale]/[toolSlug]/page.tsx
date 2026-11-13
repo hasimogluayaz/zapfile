@@ -68,7 +68,8 @@ function absoluteLanguages(slug: string): Record<string, string> {
   );
 }
 
-export function generateMetadata({ params }: { params: Params }): Metadata {
+export async function generateMetadata(props: { params: Promise<Params> }): Promise<Metadata> {
+  const params = await props.params;
   const r = resolve(params);
   if (!r) return {};
   const url = `${SITE_URL}/${params.locale}/${params.toolSlug}`;
@@ -96,7 +97,8 @@ export function generateMetadata({ params }: { params: Params }): Metadata {
   };
 }
 
-export default function LocalizedToolPage({ params }: { params: Params }) {
+export default async function LocalizedToolPage(props: { params: Promise<Params> }) {
+  const params = await props.params;
   const r = resolve(params);
   if (!r) notFound();
   const { slug, meta } = r;
